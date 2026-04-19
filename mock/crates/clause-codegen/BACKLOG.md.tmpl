@@ -1,0 +1,43 @@
+# clause-codegen — backlog
+
+## clause-jomini extension repo bootstrap
+
+Post-R3 round: create the `clause-jomini` sibling repo with its
+own mockspace, implementing `CodegenTarget` for Clausewitz script
+output. Bind targets: Country, Pop, Planet, etc. (per
+stellar-heritage/Python prior art). Landing in its own
+orgrinrt/clause-jomini GitHub repo.
+
+## Stage reordering via topological sort
+
+Current `Stage` enum fixes the five-stage order (PreTypecheck →
+PostTypecheck → CodegenPre → Codegen → Link). If a target needs
+to declare "my stage X must happen before target Y's stage Z",
+the schedule crate grows a target-stage dep resolver. Defer until
+a concrete multi-target workflow surfaces the need.
+
+## Target-provided lints
+
+Targets may want to emit target-specific warnings during codegen
+(e.g. Clausewitz-only "this pattern will OOM Stellaris at
+runtime"). Current Diagnostic flow handles this via severity
+tagging; a dedicated "lint scope" annotation could help IDEs
+filter target-specific noise. Defer until a target surfaces
+real need.
+
+## SymbolRef cross-target resolution
+
+R3 ships `SymbolRef` as the opaque type that targets use to
+reference symbols across boundaries (clause-jomini references
+clause-builtin symbols, etc.). The resolution ALGORITHM
+(link-stage walker that matches SymbolRef producers ↔ consumers)
+is deferred — first clause-jomini release will likely go without
+cross-target references, and the algorithm lands when a concrete
+need arrives.
+
+## Multi-target parallel codegen
+
+Current design is sequential: compile all units with target A,
+then target B, etc. Parallel-codegen across targets (for
+tooling-friendly UX) is a future optimisation — needs shared
+ArtefactCache locking story.

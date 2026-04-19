@@ -23,14 +23,53 @@ contract; the full contract shape is R3 scope.
   implementing CodegenTarget.
 - Pass DAG scheduling (clause-schedule).
 
-## Deferred to R3
+## Extension-point contract (R3, finalised 2026-04-26)
 
-- Extension-point contract shape: trait method signatures, how
-  targets are selected (cfg? manifest declaration? CLI flag?),
-  how target-specific diagnostics surface through the shared
-  diagnostic framework.
-- Whether codegen is strictly sequential post-schedule or allows
-  target-specific parallel codegen phases.
+`CodegenTarget` is a trait that game-specific target repos
+(`clause-jomini`, future `clause-w3`, etc.) implement.
+
+```rust
+pub trait CodegenTarget: Send + Sync + 'static {
+    const NAME: &'static str;
+    const VERSION: u32;
+
+    fn accepts(&self, kind: AstNodeKind) -> bool;
+    fn stages(&self) -> &'static [Stage];
+
+    fn compile(
+        &self,
+        unit: &TypedUnit,
+        ctx: &mut CodegenCtx<'_>,
+    ) -> Result<CodegenOutput, Diagnostic>;
+
+    fn render_diagnostic(&self, err: &TargetError) -> Diagnostic;
+}
+```
+
+Stages: PreTypecheck / PostTypecheck / CodegenPre / Codegen /
+Link. Targets opt in via `stages()`.
+
+`TargetRegistry` is const-sized `[Option<&'static dyn
+CodegenTarget>; MAX_TARGETS]`. The `dyn CodegenTarget` is the ONE
+exception to the no-dyn discipline; acceptable because (a) it's
+static-lifetime, (b) const-sized, (c) limited to the registry
+iteration surface while individual `compile` calls monomorphise
+via impl bound elsewhere.
+
+Target selection priority: CLI `--target <name>` wins; then
+package-level `[targets]` in Clause.toml; then `[workspace.targets]`;
+then the built-in fallback (`clause-builtin` — identity codegen
+emitting typed IR).
+
+`CodegenCtx<'a>` bundles `&mut DiagnosticSink`, `&mut ArtefactCache`,
+and `&Workspace`.
+
+`CodegenOutput` is `{ bytes: Vec<u8>, manifest: ManifestFragment,
+references: &'static [SymbolRef] }` — opaque payload +
+distribution hints + cross-target reference symbols.
+
+Built-in targets: `clause-builtin` identity codegen only.
+Clausewitz / W3 / Lua targets ship in sibling repos.
 
 ## Dependencies
 
@@ -41,8 +80,17 @@ contract; the full contract shape is R3 scope.
 
 - `codegen.rs` — top-level Codegen driver.
 - `target_ir.rs` — TargetIr types.
-- `target.rs` — CodegenTarget trait scaffolding (R3 finalises).
-- `registry.rs` — TargetRegistry scaffolding.
+- `target.rs` — CodegenTarget trait (R3 contract).
+- `registry.rs` — TargetRegistry const-sized `[Option<&'static dyn
+  CodegenTarget>; MAX_TARGETS]` + `register` / `get` / `iter`.
+- `ctx.rs` — CodegenCtx bundling DiagnosticSink + ArtefactCache +
+  Workspace refs.
+- `output.rs` — CodegenOutput + ManifestFragment + SymbolRef.
+- `selection.rs` — target-selection priority (CLI → package →
+  workspace → builtin).
+- `builtin.rs` — identity CodegenTarget impl (`clause-builtin`).
+- `stage.rs` — Stage enum (PreTypecheck / PostTypecheck /
+  CodegenPre / Codegen / Link).
 - `artifact.rs` — CodegenArtifact.
 - `diagnostics.rs` — codegen error construction.
 
