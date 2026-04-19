@@ -12,6 +12,43 @@ dependencies = [
 ]
 
 [[package]]
+name = "arvo"
+version = "0.1.0"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#5e9f5a3a117c23cc91caec2d70ae90b8522b0c8d"
+dependencies = [
+ "mockspace",
+]
+
+[[package]]
+name = "arvo-bitmask"
+version = "0.1.0"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#5e9f5a3a117c23cc91caec2d70ae90b8522b0c8d"
+dependencies = [
+ "arvo",
+ "arvo-bits",
+ "mockspace",
+]
+
+[[package]]
+name = "arvo-bits"
+version = "0.1.0"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#5e9f5a3a117c23cc91caec2d70ae90b8522b0c8d"
+dependencies = [
+ "arvo",
+ "mockspace",
+]
+
+[[package]]
+name = "arvo-graph"
+version = "0.1.0"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#5e9f5a3a117c23cc91caec2d70ae90b8522b0c8d"
+dependencies = [
+ "arvo",
+ "arvo-bitmask",
+ "mockspace",
+]
+
+[[package]]
 name = "cc"
 version = "1.2.60"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -31,6 +68,72 @@ checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 name = "clause"
 version = "0.1.0"
 dependencies = [
+ "mockspace",
+]
+
+[[package]]
+name = "clause-codegen"
+version = "0.1.0"
+dependencies = [
+ "clause-ir",
+ "clause-schedule",
+ "mockspace",
+]
+
+[[package]]
+name = "clause-ir"
+version = "0.1.0"
+dependencies = [
+ "mockspace",
+]
+
+[[package]]
+name = "clause-lex"
+version = "0.1.0"
+dependencies = [
+ "clause-ir",
+ "mockspace",
+]
+
+[[package]]
+name = "clause-resolve"
+version = "0.1.0"
+dependencies = [
+ "clause-ir",
+ "clause-syntax",
+ "mockspace",
+]
+
+[[package]]
+name = "clause-schedule"
+version = "0.1.0"
+dependencies = [
+ "arvo",
+ "arvo-bitmask",
+ "arvo-graph",
+ "clause-ir",
+ "clause-typecheck",
+ "mockspace",
+]
+
+[[package]]
+name = "clause-syntax"
+version = "0.1.0"
+dependencies = [
+ "clause-ir",
+ "clause-lex",
+ "mockspace",
+]
+
+[[package]]
+name = "clause-typecheck"
+version = "0.1.0"
+dependencies = [
+ "arvo",
+ "arvo-bitmask",
+ "clause-ir",
+ "clause-resolve",
+ "clause-syntax",
  "mockspace",
 ]
 

@@ -1,0 +1,57 @@
+# clause-codegen — Design
+
+Target-agnostic codegen. Consumes a scheduled IR from
+clause-schedule. Emits an intermediate representation consumed by
+extension targets. Defines the `CodegenTarget` extension-point
+contract; the full contract shape is R3 scope.
+
+## Scope
+
+- `Codegen` — top-level codegen driver.
+- `TargetIr` — target-agnostic IR consumed by extension codegens.
+- `CodegenTarget` trait — extension point. Concrete signature +
+  contract finalised in R3.
+- `TargetRegistry` — registered codegen targets (built-in + plugin).
+  Final shape post-R3.
+- `CodegenArtifact` — per-file output bundle.
+- Codegen diagnostics.
+
+## Non-scope
+
+- Concrete targets (clause-jomini for Clausewitz, future
+  clause-w3, clause-lua). Each ships as its own repo / crate
+  implementing CodegenTarget.
+- Pass DAG scheduling (clause-schedule).
+
+## Deferred to R3
+
+- Extension-point contract shape: trait method signatures, how
+  targets are selected (cfg? manifest declaration? CLI flag?),
+  how target-specific diagnostics surface through the shared
+  diagnostic framework.
+- Whether codegen is strictly sequential post-schedule or allows
+  target-specific parallel codegen phases.
+
+## Dependencies
+
+- `clause-ir`, `clause-schedule`.
+- `#![no_std]`, no alloc.
+
+## Provisional module layout
+
+- `codegen.rs` — top-level Codegen driver.
+- `target_ir.rs` — TargetIr types.
+- `target.rs` — CodegenTarget trait scaffolding (R3 finalises).
+- `registry.rs` — TargetRegistry scaffolding.
+- `artifact.rs` — CodegenArtifact.
+- `diagnostics.rs` — codegen error construction.
+
+## Sources
+
+- 202604191300_topic.clause-design-seed.md
+- 202604191300_topic.clause-compiler-prune-plan-seed.md (codegen
+  + extension target prior art)
+- 202604191500_changelist.doc.md (R1 round)
+- 202604????????_changelist.doc.md (R3 round — extension-point
+  contract, to come)
+- stellar-heritage/tools/clause/grammar/clause/codegen.py + transpile.py (Python parity)

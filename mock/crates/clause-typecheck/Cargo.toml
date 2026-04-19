@@ -1,0 +1,18 @@
+[package]
+name = "clause-typecheck"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+clause-ir.workspace = true
+clause-syntax.workspace = true
+clause-resolve.workspace = true
+arvo.workspace = true
+arvo-bitmask.workspace = true
+
+[build-dependencies]
+mockspace.workspace = true
+
+[features]
+default = []

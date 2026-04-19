@@ -1,0 +1,14 @@
+[package]
+name = "clause-lex"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+clause-ir.workspace = true
+
+[build-dependencies]
+mockspace.workspace = true
+
+[features]
+default = []

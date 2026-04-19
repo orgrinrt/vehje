@@ -1,0 +1,63 @@
+# clause-typecheck — Design
+
+Type checking, generic resolution, coherence checking, bind-target
+resolution, and the validator framework. Consumes a resolved
+program graph from clause-resolve; produces a typed graph.
+
+## Scope
+
+- `TypeChecker` — top-level state + drive loop.
+- `TypeEnv` — type environment per scope.
+- `Generics` — generic parameter handling, substitution, bounds.
+- `Coherence` — overlap detection for trait impls.
+- `BindTarget` — resolution of target-language types (generic
+  scaffolding; concrete targets land in clause-jomini and friends
+  via the extension point from R3).
+- **Validator framework** — the R4-scoped framework lives here.
+  R4 decides the concrete Rust shape (tagged-union trait? compile-
+  time dispatch? plugin registry?) and which validators live in
+  core vs plugins.
+- Type diagnostics.
+
+## Non-scope
+
+- Pass DAG scheduling (clause-schedule).
+- Codegen (clause-codegen).
+- Concrete target bind-table content (extension crates).
+
+## Dependencies
+
+- `clause-ir`, `clause-syntax`, `clause-resolve`.
+- arvo for numeric / newtype discipline.
+- arvo-bitmask for validator access sets (one validator ↔ one
+  AccessSet over Namespace/Scope entries).
+- `#![no_std]`, no alloc.
+
+## Provisional module layout
+
+- `checker.rs` — top-level TypeChecker + drive loop.
+- `env.rs` — TypeEnv.
+- `generics.rs` — generic param handling.
+- `coherence.rs` — overlap detection.
+- `bind_target.rs` — target-language type resolution scaffolding.
+- `validator/` — framework subtree, final shape from R4:
+  - `framework.rs` — trait + dispatch scaffolding.
+  - `registry.rs` — validator registration (if plugin-based).
+  - `builtin/` — built-in validators (STRICT1-7 from Python era).
+- `diagnostics.rs` — type error construction.
+
+## Deferred to R4
+
+- Validator framework shape (tagged-union trait vs plugin registry
+  vs compile-time dispatch).
+- Which validators (STRICT1-7) live in core vs optional plugins.
+- Ownership of the validator registry (core crate vs extension
+  plugin API).
+
+## Sources
+
+- 202604191300_topic.clause-design-seed.md
+- 202604191300_topic.clause-lang-audit-seed.md (state snapshot of
+  Python impl — names the STRICT1-7 batch)
+- 202604191500_changelist.doc.md (R1 round)
+- stellar-heritage/tools/clause/grammar/clause/typecheck.py (Python parity)
