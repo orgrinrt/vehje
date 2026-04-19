@@ -1,135 +1,147 @@
 ---
 skill_name: lint-rules
-skill_description: Guide for polka-dots custom lint rules. Use this when adding new lints, fixing lint violations, or when `cargo mock` reports lint errors.
+skill_description: Guide for Clause custom lint rules. Use this when adding new lints, fixing lint violations, or when `cargo mock` reports lint errors.
 ---
 
-# Lint rules
+# Lint rules — clause
 
-All lints live in `tools/mockspace/lint-rules/`. `cargo mock` depends on this
-crate. Every lint has tests. Every enforceable rule has a lint.
+## Status
+
+`mock/crates/` is empty at seed. Custom per-crate lints for the
+Clause compiler and runtime are **deferred to post-R1–R4** (the first
+four design rounds that decide the crate split). Once crates exist,
+this skill grows a full lint table. Until then, only built-in lints
+run.
 
 ## Severity system
 
-Every lint declares three independent gate levels: what happens on commit, on
-build, and on push. No single-gate concept; all three gates are always active.
+Every lint has three independent gate levels — what happens on
+commit, on build, and on push. Four levels per gate: **error**
+(blocks), **warn** (reported, no block), **info** (informational),
+**off** (silent).
 
-Four levels per gate: **error** (blocks), **warn** (prominent, no block),
-**info** (reported, no block), **pass** (silent).
+| Flag / context | Mode | Who uses it |
+|---|---|---|
+| `--commit` | Commit | pre-commit hook |
+| _(default)_ | Build | local `cargo mock`, CI |
+| `--strict` | Push | pre-push hook |
 
-Named presets (convenience constants, all lints use the full three-gate struct):
+Set per-gate severity in `mock/mockspace.toml`:
 
-| Preset | Commit | Build | Push | Use case |
-|--------|--------|-------|------|----------|
-| `HARD_ERROR` | error | error | error | Critical invariants |
-| `BUILD_GATE` | warn | error | error | Must fix before building |
-| `PUSH_GATE` | warn | warn | error | Clean before sharing |
-| `ADVISORY` | warn | warn | warn | Never blocks |
-| `INFO_ONLY` | info | info | info | Informational |
+```toml
+[lints.no-todo]
+commit = "off"
+build = "warn"
+push = "error"
+```
 
-Three validation modes (from CLI flags):
+## Built-in lints active today
 
-| Flag | Mode | Who uses it |
-|------|------|-------------|
-| `--commit` | Commit | Pre-commit hook |
-| _(default)_ | Build | Standalone `cargo mock`, CI |
-| `--strict` | Push | Pre-push hook |
+These are always available; severity is tuned per repo in
+`mockspace.toml`.
 
-## Per-crate lints
+| Lint | Purpose | Applicability today |
+|---|---|---|
+| `no-empty-crate` | Crate has no `pub` items | N/A while `mock/crates/` is empty — lint skips |
+| `no-todo` | `todo!()` in source | Active once crates exist |
+| `file-size` | File exceeds `max_lines` | Active once crates exist; cap = 400 |
+| `undocumented-type` | Source type missing from design docs | Active once crates exist |
+| `changelist-required` | Source changes without `src` changelist | Always on |
+| `changelist-doc-gate` | Doc edits without `doc` changelist | Always on |
+| `changelist-lock` | Edits to locked changelist | Always on |
+| `changelist-immutability` | Edits to deprecated or frozen changelist | Always on |
 
-| Lint | Preset | What it catches | Fix |
-|------|--------|----------------|-----|
-| `no-toml-value` | HARD_ERROR | `toml::Value` outside `polka-data` | Use `DataValue` trait from SDK |
-| `no-ui-below-cli` | HARD_ERROR | `&Ui` parameter in non-CLI crates | Return structured results instead |
-| `no-concrete-in-sdk` | HARD_ERROR | Concrete implementations in SDK crates | SDK exports only traits and `repr(C)` types |
-| `no-upward-dep` | HARD_ERROR | Extension depending on non-SDK crate | Extensions depend on `polka-sdk` only |
-| `no-direct-parse` | HARD_ERROR | Direct `polka.toml` parsing outside `polka-project` | Use `polka-project::load()` |
-| `no-dyn` | HARD_ERROR | `dyn Trait` in framework code | Use trait-based dispatch or enum wrappers |
-| `no-std-any` | HARD_ERROR | `std::any::TypeId` or type erasure | Use typed dispatch |
-| `file-size` | HARD_ERROR | Files over 500 LOC | Split into multiple files |
-| `export-count` | ADVISORY | More than 5 `pub` items at module root | Split into submodules |
-| `no-todo` | PUSH_GATE | `todo!()` in source | Implement the function |
+The four `changelist-*` lints are built into mockspace and
+non-negotiable — they enforce the design-round state machine.
 
-## Cross-crate lints
+## Post-R1–R4 lint roadmap
 
-| Lint | Preset | What it catches | Fix |
-|------|--------|----------------|-----|
-| `no-duplicate-fn` | HARD_ERROR | Functions with matching signatures across crates | Extract to shared crate, reuse |
-| `single-source` | HARD_ERROR | Same type name defined in multiple crates | One definition per concept |
-| `undocumented-type` | BUILD_GATE | Source type not mentioned in any design doc | Add to DESIGN.md.tmpl or SHAME.md.tmpl (50+ words) |
-| `changelist-doc-gate` | HARD_ERROR | Doc template edits when no doc changelist exists (TOPIC phase) | Write a doc changelist first to enter DOC phase |
-| `changelist-lock` | HARD_ERROR | Doc template edits while doc changelist is locked (SRC-PLAN/SRC/DONE) | Doc edits only in DOC phase; use SHAME.md.tmpl for gaps |
-| `changelist-required` | HARD_ERROR | Source edits without a source changelist (TOPIC/DOC/SRC-PLAN) | Create a source changelist to enter SRC phase |
-| `changelist-immutability` | HARD_ERROR | Edits to a locked or deprecated changelist | Changelist is frozen; use SHAME.md.tmpl or deprecate to revise |
+Once the compiler crate split lands (expected crates: `clause-lex`,
+`clause-syntax`, `clause-resolve`, `clause-typecheck`, `clause-schedule`,
+`clause-codegen`, `clause` orchestrator), the following categories of
+lint will be authored:
 
-## SHAME paradigm
+| Lint (planned) | Preset | What it catches | Fix |
+|---|---|---|---|
+| `no-unsafe` | HARD_ERROR | `unsafe` block or fn in any compiler crate | Use safe abstraction; runtime C ABI is the only `unsafe` boundary and lives in the runtime repo |
+| `no-dyn` | HARD_ERROR | `dyn Trait` / `TypeId` / `std::any::*` in framework code | Tagged enum or monomorphised trait dispatch |
+| `strict-posture` | HARD_ERROR | Crate root missing `#![deny(unused, unreachable_code, unused_must_use, unused_imports, dead_code)]` | Add the deny attribute |
+| `no-unwrap` | BUILD_GATE | `.unwrap()` / `.expect()` outside `#[cfg(test)]` | Propagate with `?`; invariant unwraps need `// invariant:` comment |
+| `no-game-vocabulary` | BUILD_GATE | `clausewitz`, `witcher`, `stellaris`, `paradox`, `ck3`, `hoi4`, `eu4`, `the_sims`, `cities_skylines` in source or tests | Move the feature to an extension repo |
+| `no-substrate-reimpl` | BUILD_GATE | Local graph / DAG / bitmask / sparse types shadowing `arvo` | Consume the substrate |
+| `compiler-phase-layering` | HARD_ERROR | Upward or skipping imports between phases (lex → syntax → resolve → typecheck → codegen) | Respect the DAG; extract shared contracts to a lower crate |
 
-When `undocumented-type` blocks a type, you have two options:
+Most of the compiler-phase layering lands as `[lints.forbidden-imports]`
+rules in `mockspace.toml` rather than hand-authored `mock/lints/*.rs`
+files. Rule skeleton:
 
-1. **Proper fix**: add the type to DESIGN.md.tmpl via a design round.
-2. **Temporary unblock**: create `SHAME.md.tmpl` in the crate directory with
-   a `## TypeName` section containing 50+ words explaining why the type exists
-   and how it will be properly documented. This downgrades the violation to
-   ADVISORY (warn everywhere, never blocks).
+```toml
+[lints.forbidden-imports]
+commit = "warn"
+build = "error"
+push = "error"
+rules = [
+    { scope = "{prefix}-lex",       forbidden = "{prefix}-syntax, {prefix}-resolve, {prefix}-typecheck, {prefix}-codegen, {prefix}-schedule", reason = "lex sits at the bottom of the compiler DAG" },
+    { scope = "{prefix}-syntax",    forbidden = "{prefix}-resolve, {prefix}-typecheck, {prefix}-codegen, {prefix}-schedule", reason = "syntax consumes lex only" },
+    # … continue the ladder after R1–R4 finalises names
+]
+```
 
-SHAME entries are technical debt. They unblock iteration but must be resolved.
+## Custom lint authoring (when the time comes)
 
-## Git hooks
+Custom lints live in `mock/lints/<name>.rs`. Each file exports:
 
-| Hook | What it catches | Mode |
-|------|----------------|------|
-| `pre-commit` | cargo check + all lints | Commit (most permissive) |
-| `commit-msg` | Commit message format, byline policy | Pre-commit |
-| `pre-push` | cargo check + cargo test + all lints | Push (most strict) |
+```rust
+pub fn lint() -> Box<dyn mockspace_lint_rules::Lint> { … }        // per-crate
+pub fn cross_lint() -> Box<dyn mockspace_lint_rules::CrossCrateLint> { … }  // cross-crate
+```
 
-**Scoped commits:** the pre-commit hook extracts crate names from staged files
-and passes `--scope crate1,crate2` to `cargo mock`. Only those crates are linted.
-Infrastructure-only commits (lint rules, mockspace, hooks, agent templates) have no
-crates in scope, so no lints run and the commit proceeds. This allows committing
-lint improvements that detect existing violations without requiring all violations
-to be fixed in the same commit. Cargo check always runs regardless of scope.
+Files ending in `_cross.rs` are treated as cross-crate. Bootstrap
+discovers them and wires them into the generated proxy crate on the
+next `cargo mock` run.
 
-## No exceptions policy
+Reference pattern: `~/Dev/saalis/mock/lints/no_vec_in_signatures.rs`
+— a simple line-by-line scan with per-crate exemption.
 
-If a lint flags something, the code MUST be fixed. Never add exceptions, never
-add `#[allow]` attributes, never add crates to exempt lists without explicit
-approval.
+## Hook coverage today
 
-Exempt crates are hard-coded per lint (e.g., `polka-data` for `no-toml-value`,
-`polka-derive` for proc macro internals). These exemptions exist because those
-crates define the infrastructure the lint enforces.
+Two built-in hooks are always generated:
 
-Items marked with `// lint:allow(<rule>)` can be suppressed per-line.
-Explained suppressions (8+ words after `--`) become ADVISORY; unexplained
-ones stay at their original severity.
+- `check-byline.sh` — byline policy from `mock/agent/config.toml`.
+- `mockspace-write-guard.sh` — blocks writes to `.claude/**`,
+  `.github/copilot-instructions.md`, `.github/instructions/`,
+  `.github/skills/`, `.github/hooks/` from outside `mock/`.
+
+Two repo-specific hooks ship today as reminders (not blockers):
+
+- `no-game-vocabulary-reminder.sh` — nudges when game-specific
+  vocabulary appears in a Write/Edit, pointing at the extension-repo
+  pattern.
+- `no-python-port-literal-guard.sh` — reminds that the Python
+  prototype is a parity oracle, not a line-by-line translation source,
+  when Write/Edit target Rust files in the compiler tree.
+
+Crate-specific hooks (block `unsafe`, block `dyn`, block `.unwrap()`)
+wait for R1–R4. They will be added alongside the matching lints.
 
 ## Running lints
 
 ```bash
-# Standalone build mode (default -- BUILD_GATE lints block)
+# Default (Build mode) — standalone run
 cargo mock --lint-only
 
-# Commit mode (most permissive -- only HARD_ERROR blocks)
+# Commit mode — pre-commit hook equivalent
 cargo mock --lint-only --commit
 
-# Push mode (most strict -- everything that can block, blocks)
+# Push mode — pre-push hook equivalent
 cargo mock --lint-only --strict
 
-# Full pipeline (check + lint + docs)
+# Full pipeline (check + lint + docs + agent regen)
 cargo mock
-
-# Run lint tests
-cd tools/mockspace/lint-rules && cargo test
 ```
 
-## Adding a new lint
+## No-exception policy
 
-You MUST add a lint when adding any enforceable rule to PRINCIPLES, WORKFLOW,
-or agent instructions. The rule does not exist until the lint exists.
-
-1. Add a new file in `tools/mockspace/lint-rules/src/`
-2. Implement the `Lint` trait (per-crate) or `CrossCrateLint` trait (cross-crate)
-3. Declare severity using `Severity::new(on_commit, on_build, on_push)` or a preset
-4. Register it in `tools/mockspace/lint-rules/src/lib.rs`
-5. Write tests in `tools/mockspace/lint-rules/tests/lint_tests.rs`
-6. Update this skill's lint table
-7. Run `cargo test` in the lint-rules crate to verify
+Once a lint is enabled at `error`, flagged code is fixed — not
+suppressed. `#[allow(...)]` for mockspace-driven lints is not accepted
+without a design-round note justifying the carve-out.

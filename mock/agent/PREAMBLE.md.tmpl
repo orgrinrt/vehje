@@ -1,0 +1,33 @@
+# Preamble — clause invariants
+
+Re-read these before every action in this repo.
+
+- **Game-agnostic core.** Nothing here names a specific game. If a
+  feature can't be articulated without saying "Clausewitz",
+  "Stellaris", "Witcher", "Sims", or similar, it belongs in an
+  extension repo (`clause-jomini`, future), not here.
+- **Two languages.** Rust compiler (dev-time, single-binary) + Zig
+  runtime (embeddable, C ABI). Do not blur the boundary.
+- **Single-binary distribution.** No dynamic runtime dep. No dlopen
+  plugins from the compiler. Cross-compilation stays first-class.
+- **Strict by default.** Shadowing, unused bindings, unreachable code
+  — errors, not warnings. The compiler denies these at the crate
+  root.
+- **No `.unwrap()` / `.expect()`** in non-test code without a
+  documented invariant. Use `?` with tagged error enums.
+- **No `dyn` / `TypeId` / `std::any`** in framework code. Tagged enum
+  or monomorphised trait dispatch instead.
+- **Procedural macros only** for Clause language semantics. Internal
+  Rust `macro_rules!` for boilerplate is fine; Clause's macro story
+  is proc-only, scheduler-driven, typechecked.
+- **Reuse the substrate.** `arvo` owns graph / bitmask / sparse.
+  `hilavitkutin` owns pipeline execution. Don't reimplement either.
+- **Python prototype is a parity oracle**, not a translation source.
+  Read `~/Dev/stellar-heritage/tools/clause/` for semantics; author
+  Rust from the design docs.
+- **Design-round state machine** drives every change. Use
+  `cargo mock lock / unlock / deprecate / close`. Do not hand-rename
+  `design_rounds/*.md` files.
+- **Crates are deferred.** `mock/crates/` is empty; the split is
+  decided by R1–R4. Lints and hooks that depend on crate names wait
+  on that.
