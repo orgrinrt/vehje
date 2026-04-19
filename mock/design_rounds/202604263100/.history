@@ -1,0 +1,45 @@
+29c726d chore: lock src CL 202604263300 for clause-syntax skeleton
+a7278b7 feat: clause-syntax skeleton
+180dcb7 chore: deprecate 263200 src CL, replace with 263300 for clause-syntax skeleton
+9834c66 chore: lock src CL 202604263200 for clause-syntax skeleton
+514118f docs: add src CL for clause-syntax skeleton
+9141172 chore: lock doc CL 202604263100 for clause-syntax skeleton
+5d7d051 docs: expand clause-syntax DESIGN + BACKLOG for skeleton round
+55ddfea docs: start clause-syntax skeleton round
+a8ec142 chore: close clause-lex round 202604262900
+dbf9fd7 chore: lock src CL 202604263000 for clause-lex
+76535cf feat: clause-lex skeleton + clause-ir foundations
+ea659ca docs: add src CL for clause-lex skeleton
+58f06e6 chore: lock doc CL 202604262900 for clause-lex skeleton
+0060c24 docs: start clause-lex skeleton round
+c18070d chore: close R4 round 202604262500
+046ac4b chore: lock src CL 202604262600 for R4
+22f8e77 docs: R4 src CL (design-only)
+85a3d22 chore: lock doc CL 202604262500 for R4
+1a83307 docs: R4 — refine clause-typecheck DESIGN with validator framework + BACKLOG
+0b7ccd5 docs: start clause R4 — validator framework Rust shape
+6798ad4 chore: close R3 round 202604262300
+6d53596 chore: lock src CL 202604262400 for R3
+56c1133 docs: R3 src CL (design-only)
+a3efb94 chore: lock doc CL 202604262300 for R3
+6e379a3 docs: R3 — refine clause-codegen DESIGN with finalised contract + BACKLOG
+1a84f3a docs: start clause R3 — extension-point contract
+1c0f6d1 chore: close R2 round 202604262100
+4365fd3 chore: lock src CL 202604262200 for R2
+fe5dd91 docs: R2 src CL (design-only, scaffolds)
+8de0fd7 chore: lock doc CL 202604262100 for R2
+125fe3b docs: R2 scaffold — 3 Rust runtime crates + Zig runtime tree
+f1105ea docs: start clause R2 — Zig runtime + C ABI split
+fda7b13 chore: close clause R1 round 202604261500
+4a64a3d chore: lock src CL 202604261600 for clause R1
+0ace93b docs: add R1 src CL (design-only round, scaffolds only)
+8dcc813 chore: lock doc CL 202604261500 for clause R1
+ab22244 docs: clause R1 — add 7 compiler phase crate scaffolds
+ed8440f docs: start clause R1 — compiler crate split design round
+488f08a chore: add clause placeholder crate + bootstrap artifacts
+7126aa6 chore: clause bootstrap — pin arvo+hilavitkutin to dev, add rust-toolchain.toml, loimu-lint disables, placeholder clause crate for mockspace proxy build
+13d77ad refactor: compress PREAMBLE and POSTAMBLE to <=25 words each
+05f2f7f chore: gitignore mockspace-generated agent artifact paths
+ca2800a refactor: rewrite mock/agent for clause compiler+runtime domain
+92e5916 fix: rename changelist to conform to state-machine naming
+551c9e2 initial: mockspace seed — Clause language (extracted from stellar-heritage)
