@@ -1,0 +1,57 @@
+# clause-resolve — Design
+
+Module resolution, use-tree expansion, visibility, scope
+construction, and manifest-driven crate graph. Consumes AST
+from clause-syntax; produces a resolved program graph with
+bound names.
+
+## Scope
+
+- `Resolver` — top-level state: crate graph, scope stack, bind
+  table.
+- `ScopeTree` — lexical scope hierarchy with ScopeId (from
+  clause-ir) keys.
+- `BindTable` — `NodeId → Binding` map. Each name-referencing AST
+  node gets an entry.
+- Use-tree expansion: `use foo::{bar, baz as quux};` becomes a set
+  of per-name imports resolved against the crate graph.
+- Visibility resolution: `pub` / `pub(crate)` / `pub(super)` /
+  private semantics applied per-binding.
+- **Manifest parsing** — `Clause.toml` workspace + package parser
+  lives here (not its own crate); drives the crate graph.
+- Resolve diagnostics (unresolved paths, ambiguous imports,
+  cycle detection).
+
+## Non-scope
+
+- Type checking (clause-typecheck).
+- Trait resolution (clause-typecheck).
+- Pass DAG scheduling (clause-schedule).
+
+## Dependencies
+
+- `clause-ir` for ScopeId / NodeId / Diagnostic.
+- `clause-syntax` for AST.
+- arvo for USize / Cap / newtype discipline.
+- arvo-graph (possibly) for crate-graph topological sort.
+- `#![no_std]`, no alloc. Bind tables + scope trees are const-sized
+  arena-allocated.
+
+## Provisional module layout
+
+- `resolver.rs` — top-level Resolver + drive loop.
+- `scope.rs` — ScopeTree, scope entry/exit helpers.
+- `binding.rs` — BindTable, Binding enum.
+- `use_tree.rs` — use-statement expansion.
+- `visibility.rs` — access rule checking.
+- `manifest.rs` — Clause.toml parser + workspace model.
+- `diagnostics.rs` — resolve error construction.
+
+## Sources
+
+- 202604191300_topic.clause-design-seed.md
+- 202604191300_topic.clause-manifest-spec-seed.md (356 lines;
+  manifest format normative)
+- 202604191500_changelist.doc.md (R1 round)
+- stellar-heritage/tools/clause/grammar/clause/resolver.py (Python parity)
+- stellar-heritage/tools/clause/manifest.py (Python parity)

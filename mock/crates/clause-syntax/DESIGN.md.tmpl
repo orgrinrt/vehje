@@ -1,0 +1,50 @@
+# clause-syntax — Design
+
+Parser + AST construction phase. Consumes a TokenStream from
+clause-lex, produces a concrete syntax tree. Emits syntax-level
+diagnostics.
+
+## Scope
+
+- G0 grammar primitives: Cursor, Stream, NodeBuilder, error-recovery
+  scaffolding. Hosted here (rather than clause-ir) because they're
+  parser-specific.
+- Concrete AST node types — one per grammar production.
+- `Parser` — drives token consumption, builds AST.
+- `AstArena` — const-sized node storage (arvo-style stack-only;
+  arena size is a const generic chosen by the caller).
+- Syntax diagnostics via clause-ir::Diagnostic.
+- Error recovery: parser can synchronise at statement boundaries
+  and continue parsing — multiple errors per invocation.
+
+## Non-scope
+
+- Name binding / scope resolution (clause-resolve).
+- Type checking (clause-typecheck).
+- AST rewriting / macros (separate round post-core).
+
+## Dependencies
+
+- `clause-ir` for Span / NodeId / AstNodeKind / Diagnostic.
+- `clause-lex` for Token + TokenStream.
+- arvo for USize / Cap / newtype discipline.
+- `#![no_std]`, no alloc. AST arena is const-generic.
+
+## Provisional module layout
+
+- `parser.rs` — top-level Parser + drive loop.
+- `grammar/` — one file per grammar production (expr, stmt, item,
+  type, pattern, etc.).
+- `ast.rs` — concrete AST node structs.
+- `arena.rs` — const-sized NodeArena.
+- `framework.rs` — G0 primitives (Cursor, Stream, NodeBuilder).
+- `diagnostics.rs` — syntax error construction.
+
+## Sources
+
+- 202604191300_topic.clause-design-seed.md (authoritative)
+- 202604191300_topic.clause-grammar-seed.md (grammar normative)
+- 202604191300_topic.clause-ebnf-seed.md (EBNF reference)
+- 202604191300_topic.clause-grammar-framework-seed.md (G0 primitives)
+- 202604191500_changelist.doc.md (R1 round)
+- stellar-heritage/tools/clause/grammar/ (Python parity oracle)

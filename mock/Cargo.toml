@@ -2,9 +2,13 @@
 resolver = "2"
 members = [
     "crates/clause",
-    # Compiler phase crates (clause-lex, clause-syntax, clause-resolve,
-    # clause-typecheck, clause-schedule, clause-codegen) land with
-    # Phase 2b (R1) design round.
+    "crates/clause-ir",
+    "crates/clause-lex",
+    "crates/clause-syntax",
+    "crates/clause-resolve",
+    "crates/clause-typecheck",
+    "crates/clause-schedule",
+    "crates/clause-codegen",
 ]
 
 [workspace.package]
@@ -28,3 +32,12 @@ arvo-comb = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev" }
 hilavitkutin-api = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", branch = "dev" }
 hilavitkutin = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", branch = "dev" }
 hilavitkutin-build = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", branch = "dev" }
+
+# In-workspace phase crates — path deps for inter-phase consumption.
+clause-ir = { path = "crates/clause-ir" }
+clause-lex = { path = "crates/clause-lex" }
+clause-syntax = { path = "crates/clause-syntax" }
+clause-resolve = { path = "crates/clause-resolve" }
+clause-typecheck = { path = "crates/clause-typecheck" }
+clause-schedule = { path = "crates/clause-schedule" }
+clause-codegen = { path = "crates/clause-codegen" }

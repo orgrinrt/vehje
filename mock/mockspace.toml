@@ -9,9 +9,19 @@ module_crates = []
 primary_domain_macro = "pass"
 primary_domain_label = "Passes"
 
-# Layer labels by depth index — finalised once R1–R4 decides the
-# compiler + runtime crate split.
-layers = []
+# Layer labels by depth index. R1 finalised the 8-crate compiler
+# split (clause-ir, lex, syntax, resolve, typecheck, schedule,
+# codegen, clause binary). Runtime split lands with R2.
+layers = [
+    "IR",         # clause-ir
+    "Lex",        # clause-lex
+    "Syntax",     # clause-syntax
+    "Resolve",    # clause-resolve
+    "TypeCheck",  # clause-typecheck
+    "Schedule",   # clause-schedule
+    "CodeGen",    # clause-codegen
+    "CLI",        # clause (binary)
+]
 
 # Domain kind labels for STRUCTURE.md domain items table
 [domain_kinds]
