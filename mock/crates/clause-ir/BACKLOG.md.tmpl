@@ -1,0 +1,20 @@
+# clause-ir — backlog
+
+## Span de-duplication via interning
+
+Files with many same-span references waste memory. A future round
+can intern spans into a shared table, with Span becoming a u32
+handle. Defer until profiling surfaces the waste.
+
+## Type-safe NodeId<T>
+
+Current NodeId is untyped — any NodeId can be passed to any
+consumer. Type-safe variants (NodeId<Expr>, NodeId<Pat>, etc.)
+would catch cross-kind misuse at compile time but add friction.
+Defer until a consumer surfaces the need.
+
+## Severity widening
+
+Current Severity enum: Error / Warning / Info / Help. May need
+to grow: Fatal (abort immediately), Lint (separate from Warning
+for downstream filtering). Defer until consumer surfaces.
