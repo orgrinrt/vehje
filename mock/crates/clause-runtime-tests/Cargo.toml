@@ -1,0 +1,14 @@
+[package]
+name = "clause-runtime-tests"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+clause-runtime-abi.workspace = true
+
+[build-dependencies]
+mockspace.workspace = true
+
+[features]
+default = []

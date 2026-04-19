@@ -9,6 +9,9 @@ members = [
     "crates/clause-typecheck",
     "crates/clause-schedule",
     "crates/clause-codegen",
+    "crates/clause-runtime-abi",
+    "crates/clause-runtime-driver",
+    "crates/clause-runtime-tests",
 ]
 
 [workspace.package]
@@ -41,3 +44,6 @@ clause-resolve = { path = "crates/clause-resolve" }
 clause-typecheck = { path = "crates/clause-typecheck" }
 clause-schedule = { path = "crates/clause-schedule" }
 clause-codegen = { path = "crates/clause-codegen" }
+clause-runtime-abi = { path = "crates/clause-runtime-abi" }
+clause-runtime-driver = { path = "crates/clause-runtime-driver" }
+clause-runtime-tests = { path = "crates/clause-runtime-tests" }

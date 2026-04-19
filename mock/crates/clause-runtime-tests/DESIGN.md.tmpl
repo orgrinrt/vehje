@@ -1,0 +1,30 @@
+# clause-runtime-tests — Design
+
+Soundness tests for the C ABI. Runs under `cargo test`; does NOT
+depend on the real Zig runtime.
+
+## Scope
+
+- Struct shape assertions — `size_of`, `align_of`, `offset_of` on
+  every `#[repr(C)]` type in clause-runtime-abi.
+- Enum discriminant stability — every public enum has asserted
+  discriminant values.
+- ABI version checks — the abi_version constants stay
+  monotonically increasing.
+- Minimal Zig stub dylib — `tests/zig_stub/` builds a small dylib
+  implementing the ABI; tests dlopen it and round-trip buffers.
+
+## Non-scope
+
+- Real runtime functionality — that's clause-runtime-zig + Phase 6
+  impl round.
+- Performance benchmarks — separate bench round.
+
+## Dependencies
+
+- `clause-runtime-abi` only.
+- libloading (via dev-dep) for the stub-dylib dlopen.
+
+## Sources
+
+- 202604262100_changelist.doc.md (R2 round)

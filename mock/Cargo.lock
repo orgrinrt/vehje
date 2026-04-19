@@ -105,6 +105,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "clause-runtime-abi"
+version = "0.1.0"
+dependencies = [
+ "clause-ir",
+ "mockspace",
+]
+
+[[package]]
+name = "clause-runtime-driver"
+version = "0.1.0"
+dependencies = [
+ "clause-ir",
+ "clause-runtime-abi",
+ "clause-schedule",
+ "mockspace",
+]
+
+[[package]]
+name = "clause-runtime-tests"
+version = "0.1.0"
+dependencies = [
+ "clause-runtime-abi",
+ "mockspace",
+]
+
+[[package]]
 name = "clause-schedule"
 version = "0.1.0"
 dependencies = [
