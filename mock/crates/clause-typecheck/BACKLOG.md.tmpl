@@ -1,0 +1,36 @@
+# clause-typecheck — backlog
+
+## Per-node parallel validator execution
+
+Current schedule walks validators sequentially per node. For large
+workspaces this becomes the dominant compile cost. A rayon-backed
+per-node fan-out lands once the ValidatorCtx becomes sync-safe
+(Arc + DashMap or similar).
+
+## Diagnostic localisation
+
+Current messages are English literals. Future round adds a
+message-code table with catalogue IDs; translations live in
+`.po`-style files alongside the binary.
+
+## Cross-validator dependencies
+
+Some validators want to consult another validator's output (e.g.
+STRICT7 clippy-batch wants to know STRICT2 unused's results).
+Current design runs validators independently. When a consumer
+surfaces a dep, the registry grows a `requires(&self) -> &[&str]`
+method and schedule walks validators in topological order.
+
+## Per-validator config
+
+Some validators need config (e.g. STRICT4 integer-overflow accepts
+a list of integer types to audit). Current design hardcodes each
+validator's behaviour; adding config means Clause.toml grows a
+`[lints.validator_name]` subsection.
+
+## Mandatory-reason suppression
+
+Python-era convention: `#[allow(name, reason = "...")]` with a
+reason string above a threshold length. Port once the core
+suppression mechanism lands and consumers start generating
+suppression-noise pressure.
