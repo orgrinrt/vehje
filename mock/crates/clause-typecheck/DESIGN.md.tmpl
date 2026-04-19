@@ -38,21 +38,80 @@ program graph from clause-resolve; produces a typed graph.
 - `checker.rs` — top-level TypeChecker + drive loop.
 - `env.rs` — TypeEnv.
 - `generics.rs` — generic param handling.
-- `coherence.rs` — overlap detection.
+- `coherence.rs` — overlap detection (also available as a core
+  Validator).
 - `bind_target.rs` — target-language type resolution scaffolding.
-- `validator/` — framework subtree, final shape from R4:
-  - `framework.rs` — trait + dispatch scaffolding.
-  - `registry.rs` — validator registration (if plugin-based).
-  - `builtin/` — built-in validators (STRICT1-7 from Python era).
+- `validator/` — framework subtree (R4 finalised shape):
+  - `trait.rs` — Validator trait, Category enum.
+  - `registry.rs` — ValidatorRegistry const-sized array +
+    register / get / iter.
+  - `ctx.rs` — ValidatorCtx (typecheck state + workspace +
+    suppression map accessors).
+  - `suppression.rs` — attribute parsing + crate config lookup.
+  - `severity.rs` — Category → Severity mapping.
+  - `builtin/` — shipped validators:
+    - `strict1_no_shadow.rs`
+    - `strict2_unused.rs`
+    - `strict3_assign_to_immut.rs`
+    - `strict4_int_overflow.rs`
+    - `strict5_use_after_move.rs`
+    - `strict6_ambiguous_imports.rs`
+    - `strict7_clippy_batch.rs`
+    - `coherence.rs` — overlap detection as a Validator wrapper.
+    - `orphan_rule.rs`
+    - `bind_target_shape.rs`
 - `diagnostics.rs` — type error construction.
 
-## Deferred to R4
+## Validator framework (R4, finalised 2026-04-26)
 
-- Validator framework shape (tagged-union trait vs plugin registry
-  vs compile-time dispatch).
-- Which validators (STRICT1-7) live in core vs optional plugins.
-- Ownership of the validator registry (core crate vs extension
-  plugin API).
+`Validator` is a trait; `ValidatorRegistry` is const-sized
+`[Option<&'static dyn Validator>; MAX_VALIDATORS]`. Same sanctioned
+`&'static dyn` exception as clause-codegen's TargetRegistry —
+confined to registry iteration surface, static-lifetime.
+
+```rust
+pub trait Validator: Sized + Send + Sync + 'static {
+    const NAME: &'static str;
+    const CATEGORY: Category;
+
+    fn accepts(&self, kind: AstNodeKind) -> bool;
+    fn check(
+        &self,
+        node: &TypedNode,
+        ctx: &ValidatorCtx<'_>,
+        sink: &mut DiagnosticSink,
+    );
+}
+
+pub enum Category {
+    Strict,       // STRICT1-7; default Error severity.
+    Type,         // coherence, orphan-rule, bind-target-shape.
+    Style,        // default Warning.
+    Performance,  // default Info.
+    Custom,       // consumer-defined; trait provides default.
+}
+```
+
+Core validators ship with the crate:
+- STRICT1 `no-shadow`
+- STRICT2 `unused`
+- STRICT3 `assign-to-immut`
+- STRICT4 `int-overflow`
+- STRICT5 `use-after-move`
+- STRICT6 `ambiguous-imports`
+- STRICT7 `clippy-batch`
+- `coherence`, `orphan-rule`, `bind-target-shape`.
+
+Plugin validators register via `ValidatorRegistry::register` from
+consumer build-scripts / main functions. No compile-time magic.
+
+Suppression tiers: per-item `#[allow / warn / deny]` attributes on
+AST nodes → per-crate `[lints]` in Clause.toml → per-workspace
+`[workspace.lints]` → Category default severity.
+
+Scheduling: `clause-schedule` walks validators per AST node via
+`accepts(kind)`. Sequential per-node; parallelisable across nodes
+as a future optimisation.
 
 ## Sources
 
