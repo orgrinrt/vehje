@@ -1,23 +1,25 @@
 # clause-typecheck — Design
 
 Type checking, generic resolution, coherence checking, bind-target
-resolution, and the validator framework. Consumes a resolved
-program graph from clause-resolve; produces a typed graph.
+resolution, and the validator framework. Consumes the `Resolved`
+bundle from clause-resolve; produces a typed graph plus a flat
+vec of `Diagnostic`.
 
 ## Scope
 
-- `TypeChecker` — top-level state + drive loop.
-- `TypeEnv` — type environment per scope.
-- `Generics` — generic parameter handling, substitution, bounds.
-- `Coherence` — overlap detection for trait impls.
+- `TypeChecker` — top-level state + drive loop (future round).
+- `TypeEnv` — type environment per scope (future round).
+- `Generics` — generic parameter handling, substitution, bounds
+  (future round).
+- `Coherence` — overlap detection for trait impls (ships this
+  round as a ZST validator stub; body is future round).
 - `BindTarget` — resolution of target-language types (generic
   scaffolding; concrete targets land in clause-jomini and friends
   via the extension point from R3).
-- **Validator framework** — the R4-scoped framework lives here.
-  R4 decides the concrete Rust shape (tagged-union trait? compile-
-  time dispatch? plugin registry?) and which validators live in
-  core vs plugins.
-- Type diagnostics.
+- **Validator framework** — ships this round in skeleton form
+  (trait + registry + 10 ZST stubs, each returning `Vec::new()`).
+- Type diagnostics (currently: each validator constructs its own
+  `Diagnostic` and the registry flattens; sink API is BACKLOG).
 
 ## Non-scope
 
@@ -30,93 +32,110 @@ program graph from clause-resolve; produces a typed graph.
 - `clause-ir`, `clause-syntax`, `clause-resolve`.
 - arvo for numeric / newtype discipline.
 - arvo-bitmask for validator access sets (one validator ↔ one
-  AccessSet over Namespace/Scope entries).
-- `#![no_std]`, no alloc.
+  AccessSet over Namespace/Scope entries; surfaces in a future
+  round).
+- `std` allowed (host-side compiler crate, not embedded).
 
-## Provisional module layout
+## Module layout (skeleton round, 2026-04-20)
 
-- `checker.rs` — top-level TypeChecker + drive loop.
-- `env.rs` — TypeEnv.
-- `generics.rs` — generic param handling.
-- `coherence.rs` — overlap detection (also available as a core
-  Validator).
-- `bind_target.rs` — target-language type resolution scaffolding.
-- `validator/` — framework subtree (R4 finalised shape):
-  - `trait.rs` — Validator trait, Category enum.
-  - `registry.rs` — ValidatorRegistry const-sized array +
-    register / get / iter.
-  - `ctx.rs` — ValidatorCtx (typecheck state + workspace +
-    suppression map accessors).
-  - `suppression.rs` — attribute parsing + crate config lookup.
-  - `severity.rs` — Category → Severity mapping.
-  - `builtin/` — shipped validators:
-    - `strict1_no_shadow.rs`
-    - `strict2_unused.rs`
-    - `strict3_assign_to_immut.rs`
-    - `strict4_int_overflow.rs`
-    - `strict5_use_after_move.rs`
-    - `strict6_ambiguous_imports.rs`
-    - `strict7_clippy_batch.rs`
-    - `coherence.rs` — overlap detection as a Validator wrapper.
-    - `orphan_rule.rs`
-    - `bind_target_shape.rs`
-- `diagnostics.rs` — type error construction.
+- `validator.rs` — `Validator` trait.
+- `registry.rs` — `ValidatorRegistry` with const `VALIDATORS`
+  list and `run_all` collector.
+- `ctx.rs` — `ValidatorCtx<'a>` carrier.
+- `strict1.rs` … `strict7.rs` — one ZST per STRICT validator.
+- `coherence.rs` — `Coherence` ZST.
+- `orphan_rule.rs` — `OrphanRule` ZST.
+- `bind_target_shape.rs` — `BindTargetShape` ZST.
+- `lib.rs` — module decls + re-exports + top-level `typecheck`
+  entry.
 
-## Validator framework (R4, finalised 2026-04-26)
+Future rounds expand this into the richer layout originally
+envisaged by R4 (`validator/` subtree with `trait.rs`,
+`registry.rs`, `ctx.rs`, `suppression.rs`, `severity.rs`,
+`builtin/` subdir). Deferred until the first real validator
+body lands and surfaces the need.
 
-`Validator` is a trait; `ValidatorRegistry` is const-sized
-`[Option<&'static dyn Validator>; MAX_VALIDATORS]`. Same sanctioned
-`&'static dyn` exception as clause-codegen's TargetRegistry —
-confined to registry iteration surface, static-lifetime.
+## Validator framework — current shape (skeleton round)
+
+`Validator` is a trait; `ValidatorRegistry` hosts a const
+`&[&'static dyn Validator]` slice with ten entries. Same
+`&'static dyn` exception as clause-codegen's `TargetRegistry` —
+confined to the registry iteration surface, static-lifetime.
 
 ```rust
-pub trait Validator: Sized + Send + Sync + 'static {
-    const NAME: &'static str;
-    const CATEGORY: Category;
-
-    fn accepts(&self, kind: AstNodeKind) -> bool;
-    fn check(
-        &self,
-        node: &TypedNode,
-        ctx: &ValidatorCtx<'_>,
-        sink: &mut DiagnosticSink,
-    );
+pub trait Validator: Sync {
+    fn name(&self) -> &'static str;
+    fn validate(&self, ctx: &ValidatorCtx) -> Vec<Diagnostic>;
 }
 
-pub enum Category {
-    Strict,       // STRICT1-7; default Error severity.
-    Type,         // coherence, orphan-rule, bind-target-shape.
-    Style,        // default Warning.
-    Performance,  // default Info.
-    Custom,       // consumer-defined; trait provides default.
+pub struct ValidatorCtx<'a> {
+    resolved: &'a Resolved,
+}
+
+impl ValidatorCtx<'_> {
+    pub fn new(resolved: &Resolved) -> ValidatorCtx<'_> { /* ... */ }
+}
+
+pub struct ValidatorRegistry;
+
+impl ValidatorRegistry {
+    pub const VALIDATORS: &[&'static dyn Validator] = &[
+        &Strict1, &Strict2, &Strict3, &Strict4,
+        &Strict5, &Strict6, &Strict7,
+        &Coherence, &OrphanRule, &BindTargetShape,
+    ];
+
+    pub fn run_all(ctx: &ValidatorCtx) -> Vec<Diagnostic> { /* ... */ }
 }
 ```
 
-Core validators ship with the crate:
-- STRICT1 `no-shadow`
-- STRICT2 `unused`
-- STRICT3 `assign-to-immut`
-- STRICT4 `int-overflow`
-- STRICT5 `use-after-move`
-- STRICT6 `ambiguous-imports`
-- STRICT7 `clippy-batch`
-- `coherence`, `orphan-rule`, `bind-target-shape`.
+Core validators (ship in clause-typecheck, bodies TBD):
+- STRICT1 `no-shadow` — variable shadowing detection.
+- STRICT2 `unused` — dead binding detection.
+- STRICT3 `assign-to-immut` — immutable binding reassignment.
+- STRICT4 `int-overflow` — compile-time integer-overflow audit.
+- STRICT5 `use-after-move` — move-semantics invariant check.
+- STRICT6 `ambiguous-imports` — use-tree ambiguity.
+- STRICT7 `clippy-batch` — curated style / bug-prone batch.
+- `coherence` — trait-impl overlap detection.
+- `orphan-rule` — foreign-type / foreign-trait impl guard.
+- `bind-target-shape` — target-registry entry-format check.
 
-Plugin validators register via `ValidatorRegistry::register` from
-consumer build-scripts / main functions. No compile-time magic.
+Each validator's `validate` this round returns `Vec::new()` —
+the skeleton keeps `run_all` safe (no `todo!()` panic) so
+downstream consumers can exercise the registry surface.
 
-Suppression tiers: per-item `#[allow / warn / deny]` attributes on
-AST nodes → per-crate `[lints]` in Clause.toml → per-workspace
-`[workspace.lints]` → Category default severity.
+## R4 retrofit (deferred)
 
-Scheduling: `clause-schedule` walks validators per AST node via
-`accepts(kind)`. Sequential per-node; parallelisable across nodes
-as a future optimisation.
+The R4 doc CL (2026-04-26) finalised a richer trait shape with
+associated `NAME` / `CATEGORY` consts, `accepts(kind)` node
+routing, and a `DiagnosticSink` emission API. That shape lands
+retrospectively once the first real validator body surfaces the
+need; it does not change the consumer-visible registry surface
+(a `&[&'static dyn Validator]` slice), so the retrofit is
+non-breaking downstream.
+
+## Suppression (deferred)
+
+R4 section 5 describes the three-tier suppression model
+(per-item attributes → crate `[lints]` → workspace
+`[workspace.lints]`). Not in this skeleton; lands with the first
+validator body that produces real diagnostics.
+
+## Scheduling (deferred)
+
+`clause-schedule` will eventually walk validators per AST node.
+The current skeleton's `run_all` is sequential and per-registry,
+not per-node; real per-node routing lands with the
+`accepts(kind)` retrofit.
 
 ## Sources
 
-- 202604191300_topic.clause-design-seed.md
-- 202604191300_topic.clause-lang-audit-seed.md (state snapshot of
-  Python impl — names the STRICT1-7 batch)
-- 202604191500_changelist.doc.md (R1 round)
-- stellar-heritage/tools/clause/grammar/clause/typecheck.py (Python parity)
+- 202604191301/202604191300_topic.clause-design-seed.md
+- 202604191301/202604191300_topic.clause-lang-audit-seed.md
+  (STRICT1-7 batch in Python)
+- 202604262500/202604262500_changelist.doc.lock.md (R4)
+- 202604263500/202604263500_changelist.doc.lock.md (clause-resolve
+  skeleton — produces the `Resolved` this round consumes)
+- stellar-heritage/tools/clause/grammar/clause/typecheck.py
+  (Python parity)

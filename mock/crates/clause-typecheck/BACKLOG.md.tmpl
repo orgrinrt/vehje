@@ -1,5 +1,48 @@
 # clause-typecheck — backlog
 
+## Deferred validator implementations
+
+One micro-round per validator body; each flips its `Vec::new()`
+skeleton stub into a real check.
+
+- STRICT1 `no-shadow` — variable-shadow detection.
+- STRICT2 `unused` — dead-binding detection.
+- STRICT3 `assign-to-immut` — immutable-binding reassignment.
+- STRICT4 `int-overflow` — compile-time integer-overflow audit
+  in const-eval + literal contexts.
+- STRICT5 `use-after-move` — move-semantics invariant check.
+- STRICT6 `ambiguous-imports` — use-tree ambiguity detection
+  (coordinates with clause-resolve).
+- STRICT7 `clippy-batch` — curated style / bug-prone pattern
+  batch (named after Python's clippy inspiration).
+- Coherence — trait-impl overlap detection.
+- OrphanRule — foreign-type + foreign-trait impl guard.
+- BindTargetShape — target-registry entry-format check.
+
+## Deferred framework features
+
+- **ValidatorCtx expansion** — diagnostics sink, workspace info,
+  per-validator config. Skeleton round carries only
+  `resolved: &Resolved`.
+- **Per-validator config** — Clause.toml `[lints.validator_name]`
+  subsection. Per R4 BACKLOG. Currently hardcoded per validator.
+- **Cross-validator dependencies** — some validators want to
+  consult another validator's outputs (e.g. STRICT7 clippy-batch
+  wants STRICT2 unused's results). Per R4 BACKLOG. Requires
+  `requires(&self) -> &[&str]` on the trait and a topological
+  walk in the registry.
+- **Parallel validator execution** — rayon fan-out across nodes
+  once `ValidatorCtx` becomes sync-safe (`Arc` + `DashMap` or
+  similar). Per R4 BACKLOG.
+- **Diagnostic localisation** — message-code table with catalogue
+  IDs; translations in `.po`-style files. Per R4 BACKLOG.
+- **R4 trait-shape retrofit** — associated `NAME` / `CATEGORY`
+  consts, `accepts(kind)` AST routing, `&mut DiagnosticSink`
+  emission API. Skeleton round ships a narrower instance-method
+  trait (`name(&self)`, `validate(&self, ctx) -> Vec<Diagnostic>`)
+  for trait-object compatibility; retrofit lands once real
+  validator bodies surface the need.
+
 ## Per-node parallel validator execution
 
 Current schedule walks validators sequentially per node. For large
