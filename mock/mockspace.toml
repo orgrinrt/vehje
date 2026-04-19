@@ -54,3 +54,86 @@ max_lines = "400"
 commit = "off"
 build = "warn"
 push = "warn"
+
+# --- Built-in mockspace lints that don't apply to clause -------------------
+# Disables a family of lints carried over from loimu (the original home of
+# mockspace) that encode loimu's plugin / registrable / visibility-macro
+# conventions. clause has its own compiler-phase and no-unsafe / no-dyn
+# custom lints (deferred to post-R1–R4). The loimu-ancestry lints are
+# irrelevant here. Matches the disables in hilavitkutin and saalis
+# mockspace.toml.
+
+[lints.no-bare-pub]
+commit = "off"
+build = "off"
+push = "off"
+
+[lints.registrable-completeness]
+commit = "off"
+build = "off"
+push = "off"
+
+[lints.no-bare-macro-types]
+commit = "off"
+build = "off"
+push = "off"
+
+[lints.no-bare-result]
+commit = "off"
+build = "off"
+push = "off"
+
+[lints.no-bare-string]
+commit = "off"
+build = "off"
+push = "off"
+
+[lints.no-box]
+commit = "off"
+build = "off"
+push = "off"
+
+[lints.no-manual-id]
+commit = "off"
+build = "off"
+push = "off"
+
+[lints.no-primitive-key]
+commit = "off"
+build = "off"
+push = "off"
+
+[lints.no-raw-error-outside-primitives]
+commit = "off"
+build = "off"
+push = "off"
+
+[lints.no-self-define]
+commit = "off"
+build = "off"
+push = "off"
+
+[lints.no-pool-access]
+commit = "off"
+build = "off"
+push = "off"
+
+[lints.no-adhoc-error-enum]
+commit = "off"
+build = "off"
+push = "off"
+
+[lints.no-adhoc-framework]
+commit = "off"
+build = "off"
+push = "off"
+
+[lints.no-entry-suffix]
+commit = "off"
+build = "off"
+push = "off"
+
+[lints.no-float]
+commit = "off"
+build = "off"
+push = "off"
