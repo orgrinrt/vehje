@@ -1,50 +1,71 @@
 # clause-syntax — Design
 
-Parser + AST construction phase. Consumes a TokenStream from
-clause-lex, produces a concrete syntax tree. Emits syntax-level
-diagnostics.
+Parser + AST construction phase. Consumes a token slice from
+clause-lex, produces an `Ast` — a flat arena of `AstNode`s keyed
+by `NodeId`. Emits syntax-level diagnostics via `SyntaxError`
+which converts to `clause-ir::Diagnostic`.
 
-## Scope
+The crate ships as a skeleton first: type surface + driver loop +
+a minimal `parse` that handles the two trivial programs (empty
+input, single literal). Each grammar production lands as its own
+follow-up micro-round on top of the stable harness — see
+`BACKLOG.md` for the per-production queue.
 
-- G0 grammar primitives: Cursor, Stream, NodeBuilder, error-recovery
-  scaffolding. Hosted here (rather than clause-ir) because they're
-  parser-specific.
-- Concrete AST node types — one per grammar production.
-- `Parser` — drives token consumption, builds AST.
-- `AstArena` — const-sized node storage (arvo-style stack-only;
-  arena size is a const generic chosen by the caller).
-- Syntax diagnostics via clause-ir::Diagnostic.
-- Error recovery: parser can synchronise at statement boundaries
-  and continue parsing — multiple errors per invocation.
+## Scope (this round — skeleton)
+
+- `Ast` — root container, flat arena of `AstNode`s, root `NodeId`.
+- `AstNode { kind: AstNodeKind, span: Span, children: [NodeId; N] }`
+  — const-sized child array, arvo-style, no alloc.
+- `Parser<'a>` — holds `&'a [Token]` + cursor state + an `Ast`
+  under construction. Peek / bump / expect helpers.
+- `SyntaxError { span, kind, message }` — `Copy`, alloc-free.
+- `SyntaxErrorKind { UnexpectedToken, UnexpectedEof,
+  InvalidLiteral }`.
+- `parse(tokens: &[Token]) -> Result<Ast, SyntaxError>` —
+  top-level entry; empty input and single literal supported.
+
+## Scope (follow-up rounds — see BACKLOG)
+
+Per-production micro-rounds land each grammar form (primary,
+binary, unary, call, block, let, if, match, fn, type, struct,
+enum, module, pattern) and finally error recovery + incremental
+reparse. Each round extends `Parser` with a new production
+method + a test file; the skeleton harness does not change.
 
 ## Non-scope
 
 - Name binding / scope resolution (clause-resolve).
 - Type checking (clause-typecheck).
 - AST rewriting / macros (separate round post-core).
+- Concrete lossless syntax tree for formatter round-trip —
+  deferred until the formatter drives the requirement.
 
 ## Dependencies
 
-- `clause-ir` for Span / NodeId / AstNodeKind / Diagnostic.
-- `clause-lex` for Token + TokenStream.
-- arvo for USize / Cap / newtype discipline.
-- `#![no_std]`, no alloc. AST arena is const-generic.
+- `clause-ir` for `Span`, `NodeId`, `AstNodeKind`, `Diagnostic`,
+  `Severity`.
+- `clause-lex` for `Token` and `TokenKind` (re-exported).
+- `#![no_std]`, no alloc. AST arena is const-generic (size
+  chosen by caller); skeleton tests use a small default.
 
-## Provisional module layout
+## Module layout (this round)
 
-- `parser.rs` — top-level Parser + drive loop.
-- `grammar/` — one file per grammar production (expr, stmt, item,
-  type, pattern, etc.).
-- `ast.rs` — concrete AST node structs.
-- `arena.rs` — const-sized NodeArena.
-- `framework.rs` — G0 primitives (Cursor, Stream, NodeBuilder).
-- `diagnostics.rs` — syntax error construction.
+- `lib.rs` — module decls, re-exports, top-level `parse` fn.
+- `ast.rs` — `Ast`, `AstNode`, arena push/get.
+- `parser.rs` — `Parser<'a>` + driver loop + peek/bump helpers.
+- `error.rs` — `SyntaxError`, `SyntaxErrorKind`,
+  `From<SyntaxError> for Diagnostic`.
+
+Follow-up rounds add `grammar/` with one file per production.
 
 ## Sources
 
 - 202604191300_topic.clause-design-seed.md (authoritative)
 - 202604191300_topic.clause-grammar-seed.md (grammar normative)
 - 202604191300_topic.clause-ebnf-seed.md (EBNF reference)
-- 202604191300_topic.clause-grammar-framework-seed.md (G0 primitives)
+- 202604191300_topic.clause-grammar-framework-seed.md (G0
+  primitives)
 - 202604191500_changelist.doc.md (R1 round)
+- 202604262900_changelist.doc.lock.md (clause-lex skeleton —
+  produces the tokens this round consumes)
 - stellar-heritage/tools/clause/grammar/ (Python parity oracle)
