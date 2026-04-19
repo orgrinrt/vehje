@@ -1,0 +1,30 @@
+[workspace]
+resolver = "2"
+members = [
+    # Crates land after the first design-round session decides the
+    # compiler/runtime split. Keep the array empty until then — the
+    # mockspace tool accepts zero-member workspaces and validates
+    # only the root shape.
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MPL-2.0"
+
+[workspace.dependencies]
+mockspace = { git = "ssh://git@github.com/hiisi-digital/mockspace.git", branch = "main" }
+
+# Consumed substrate. Resolved to live git deps as the Clause workspace
+# grows into real crates.
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
+arvo-bits = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
+arvo-bitmask = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
+arvo-graph = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
+arvo-sparse = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
+arvo-spectral = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
+arvo-comb = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
+
+hilavitkutin-api = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", branch = "main" }
+hilavitkutin = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", branch = "main" }
+hilavitkutin-build = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", branch = "main" }

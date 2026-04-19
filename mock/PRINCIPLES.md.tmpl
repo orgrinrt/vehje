@@ -1,0 +1,72 @@
+# clause — Architecture Principles
+
+## Game-agnostic core
+
+The Clause language knows nothing about Clausewitz, Witcher, Sims,
+Lua, or any specific target. All game-specific surface — bind
+targets, content types, codegen, vocabulary — ships as separate
+extension repos (`clause-jomini`, future others).
+
+If a feature can't be articulated without naming a specific game,
+it doesn't belong in this repo.
+
+## Single-binary distribution
+
+End users should not need to install Python, Deno, .NET, or any
+runtime alongside Clause. `cargo build --release` produces one
+static binary per target platform. Cross-compilation is a
+first-class concern.
+
+## Strict by default
+
+Shadowing is an error. Unused bindings / imports are errors.
+Unreachable code is an error. Path-unresolved is an error. Mutating
+an immutable binding is an error. Integer literals out of range are
+errors.
+
+Strict mode is not opt-in. The assumption is that authors writing
+Clause code want their mistakes surfaced immediately, and the macro
+hygiene story depends on the strict posture being reliable.
+
+## Reuse the substrate
+
+- `arvo` owns numeric primitives + graph / sparse / bitmask / spectral
+  / comb algorithms. Clause consumes.
+- `hilavitkutin` owns pipeline execution. Clause runtime consumes.
+- Don't reimplement DAG topology, bitmask ops, or pipeline scheduling
+  in Clause. Use the crates.
+
+## Dogfood in Clause
+
+The Clause compiler is written in Rust because it has to exist
+before any Clause code can run. Everything else (deploy tooling,
+content pipelines, orchestration, LSP server eventually) gets
+written IN Clause. The language earns its design critique by being
+forced to express real tooling.
+
+## Macros are procedural, run at compile time
+
+Clause macros are proc-only — no `macro_rules!`. They execute as a
+scheduler pass at compile time, using the same grammar primitives
+the parser uses. Macro bodies are Clause code — typechecked by the
+same typecheck the rest of the code sees.
+
+## Generalise, don't exception
+
+Language rules (visibility, attributes, item forms, pattern shapes)
+apply uniformly to every item kind. Exceptions get flagged as
+exceptions with justification in design rounds. If `impl` accepts
+attributes, every item kind accepts attributes the same way.
+
+## Compiler crate = do one thing
+
+The `clause` compiler binary produces Clause IR / codegen output.
+It does not orchestrate builds, manage playsets, fetch art, or
+deploy to games. Those live in Clause-authored programs (dogfood
+endgame) or target-specific extension repos.
+
+## Runtime is embeddable
+
+The Zig runtime speaks C ABI. Other tools (game engines, mod
+managers, IDEs) can embed it. The runtime does not pull `std` or
+the Rust runtime; no cross-language friction at the embed boundary.
