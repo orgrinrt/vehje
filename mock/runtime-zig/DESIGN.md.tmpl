@@ -1,0 +1,43 @@
+# clause-runtime-zig — Design
+
+Zig implementation of the clause runtime. Consumes the C ABI
+(clause-runtime-abi); implements the entry points with a Clause-
+IR interpreter, scratch-var folding, and generative expansion.
+
+## Scope
+
+- Arena allocator — per-session state owning compile-time
+  buffers.
+- IR interpreter — evaluates macro bodies + generative subgraph
+  blueprints against the incoming ABI node buffers.
+- Scratch-var evaluator — folds compile-time expressions to byte
+  blobs the compiler re-inserts into the AST.
+- TokenStream emitter — macros return AbiToken arrays.
+- Error reporter — maps Zig-side failures to AbiDiagnostic.
+
+## Non-scope
+
+- The ABI contract itself (clause-runtime-abi).
+- The compiler-side dispatch (clause-runtime-driver).
+- Runtime performance tuning (post-Phase 6).
+
+## Build integration
+
+- `build.zig` drives the Zig compilation.
+- Output: `zig-out/lib/libclause_runtime.{so|dylib|dll}`.
+- Target-triple-specific builds; a distribution bundle pairs the
+  Rust compiler binary with the matching dylib for each supported
+  platform.
+
+## Dependencies
+
+- Standard Zig library only. No third-party Zig packages. No
+  runtime allocator — arena-only.
+
+## Sources
+
+- 202604191301/202604191300_research.macros-slice3.md (macro interp
+  path)
+- 202604191301/202604191300_research.scratch-variables.md
+- 202604191301/202604191300_research.generative-pipeline.md
+- 202604262100_changelist.doc.md (R2 round)

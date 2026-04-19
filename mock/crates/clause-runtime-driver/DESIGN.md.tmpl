@@ -1,0 +1,37 @@
+# clause-runtime-driver — Design
+
+Compiler-side dispatcher. Owns the dylib handle; routes calls
+through the ABI.
+
+## Scope
+
+- `Runtime` struct wrapping the dylib handle.
+- Dylib loading via libloading with version validation.
+- Per-entry-point safe wrappers over the `extern "C"` declarations.
+- Error mapping from `AbiDiagnostic` to clause-ir::Diagnostic.
+- Integration with clause-schedule's pass DAG (macro-expansion
+  pass + generative-expansion pass).
+
+## Non-scope
+
+- ABI contract (clause-runtime-abi).
+- Runtime logic (clause-runtime-zig).
+- Dylib bundling / distribution (separate round).
+
+## Dependencies
+
+- `clause-ir`, `clause-runtime-abi`, `clause-schedule`.
+- libloading for dlopen/dlsym.
+
+## Provisional module layout
+
+- `runtime.rs` — Runtime struct + lifecycle.
+- `invoke.rs` — macro invocation wrapper.
+- `scratch.rs` — scratch-eval wrapper.
+- `generative.rs` — generative-expansion wrapper.
+- `error.rs` — AbiDiagnostic → Diagnostic conversion.
+
+## Sources
+
+- 202604191301/202604191300_topic.clause-design-seed.md
+- 202604262100_changelist.doc.md (R2 round)

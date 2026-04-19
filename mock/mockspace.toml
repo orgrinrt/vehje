@@ -20,6 +20,9 @@ layers = [
     "TypeCheck",  # clause-typecheck
     "Schedule",   # clause-schedule
     "CodeGen",    # clause-codegen
+    "Rt:ABI",     # clause-runtime-abi
+    "Rt:Driver",  # clause-runtime-driver
+    "Rt:Tests",   # clause-runtime-tests
     "CLI",        # clause (binary)
 ]
 
