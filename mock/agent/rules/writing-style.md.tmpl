@@ -21,10 +21,10 @@ No "Sure!", no emojis, no exclamation marks in prose.
 Use `///` for items, `//!` for modules.
 
 ```rust
-/// A resolved path to a dotfile source.
+/// A resolved import path.
 ///
-/// Paths are resolved relative to the project root and validated
-/// against the catalogue before use.
+/// Paths are resolved relative to the importing module and validated
+/// against the crate's module tree before use.
 pub struct ResolvedPath { ... }
 ```
 
@@ -48,10 +48,10 @@ State the problem and how to fix:
 
 ```rust
 // Bad
-Error: entry not found
+Error: name not found
 
 // Good
-Error: catalogue entry {name:?} not found. Is it listed in polka.toml [catalogue]?
+Error: cannot resolve {name:?} in scope {scope_path}. Add `use {suggested};` or check the module tree.
 ```
 
 ## Quick rules

@@ -4,29 +4,65 @@ apply_to: ["**/Cargo.toml"]
 
 ## Cargo workspace rules
 
-### Mock workspace
+### Status
 
-- All polka crates use `version.workspace = true`, `edition.workspace = true`
-- Sibling dependencies use `.workspace = true` syntax
-- External dependencies declared in `[workspace.dependencies]`
-- Edition 2024 for all crates
+`mock/crates/` is empty at seed. The compiler + runtime crate split is
+decided by the first four design rounds (R1–R4). Detailed layer
+discipline and forbidden-import rules land after that. What is known
+today is listed below; anything more specific waits on R1–R4.
 
-### Dependency direction
+### Known today
 
-- **SDK** (primitives, derive, sdk): no polka crate deps (primitives), or only lower SDK crates
-- **Core: Data** (data, catalogue, project): depends on polka-sdk
-- **Core: Execution** (pipeline, scheduler, audit): depends on polka-sdk + relevant core:data crates
-- **CLI** (cli): depends on core crates + polka-sdk
-- **Extensions** (lang-polka, source-brew, etc.): depends on polka-sdk ONLY
+- Workspace inheritance: every Clause crate uses
+  `version.workspace = true`, `edition.workspace = true`,
+  `license.workspace = true`. Edition 2024.
+- Shared deps go in `[workspace.dependencies]`. Sibling crates in this
+  workspace use `{ workspace = true }` once they exist.
+- License: MPL-2.0 across the workspace.
+- `mockspace` is a build-script dependency, pinned to the git repo.
 
-### Proc-macro crates
+### Substrate dependencies
 
-- `polka-derive` is `[lib] proc-macro = true`
-- Only exports procedural macros
-- Depends on polka-primitives for type references
+Clause consumes two sibling substrate repos as git deps, defined once
+at `[workspace.dependencies]`:
 
-### Extension crates (cdylib)
+- `arvo`, `arvo-bits`, `arvo-bitmask`, `arvo-graph`, `arvo-sparse`,
+  `arvo-spectral`, `arvo-comb` — numeric + graph primitives.
+- `hilavitkutin-api`, `hilavitkutin`, `hilavitkutin-build` — pipeline
+  execution. Runtime only; the compiler rarely needs the frame engine.
 
-- Extension crates use `[lib] crate-type = ["cdylib"]`
-- Depend on polka-sdk only — no core crate dependencies
-- Compiled as dynamic libraries for plugin loading
+Both are currently pinned to `branch = "main"`. Cross-repo iteration
+(touching an arvo or hilavitkutin API while working in clause) uses a
+temporary `[patch."…"]` block in `mock/Cargo.toml` pointing at the
+local sibling. Remove the patch before pushing.
+
+### Single-binary distribution
+
+- No runtime dynamic dep. No dlopen / shared-object plugin loading
+  from the compiler layer.
+- Cross-compilation is a first-class concern. Avoid deps that break
+  cross-builds (e.g. `openssl-sys` with system linkage; prefer
+  pure-Rust or rustls alternatives).
+- The Rust compiler may use `std`. The Zig runtime does not depend on
+  Rust or on `std` — it communicates via C ABI the Rust side defines.
+  No `no_std` concern for the compiler crates; that constraint lives
+  downstream in the runtime.
+
+### Proc macros
+
+- Clause language macros are procedural and live in the compiler
+  itself (scheduler-pass-driven), not in separate `proc-macro = true`
+  crates like traditional Rust proc macros.
+- If the Rust implementation needs internal `macro_rules!` for
+  boilerplate (trait derivation, span forwarding), that is acceptable.
+  `macro_rules!` is forbidden for expressing Clause language semantics.
+
+### After R1–R4
+
+Once the crate split is decided, this document grows:
+
+- Per-layer dependency direction (e.g. `clause-lex` → none;
+  `clause-syntax` → `clause-lex`; …; `clause` top-level orchestrator).
+- `forbidden-imports` rules in `mockspace.toml` per scope to enforce
+  the layering.
+- Proc-macro / cdylib / build-dependency posture per crate.

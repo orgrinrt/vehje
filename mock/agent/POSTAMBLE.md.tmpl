@@ -1,0 +1,28 @@
+# Postamble — closing reminders
+
+Before handing a change off (commit, PR, sign-off):
+
+- **Ran `cargo mock`?** It runs `cargo check`, lints, regenerates
+  `docs/`, and rebuilds `.claude/` + `.github/` from these templates.
+  If the generated files drift from source, you edited the wrong
+  place.
+- **Changelist in the right phase?** Doc edits require an open doc
+  changelist. Source edits require an open src changelist. If unsure,
+  `cargo mock` prints the current phase.
+- **No game-specific vocabulary slipped in?** Search for
+  `clausewitz / witcher / stellaris / paradox / ck3 / hoi4 / eu4 /
+  the_sims / cities_skylines` in the diff. If the reference is to the
+  parity oracle at `stellar-heritage`, name that path explicitly so
+  the reminder hook can skip it.
+- **Errors carry context?** No `Error::Other("msg")`; phase-specific
+  enum variant with span + relevant identifiers.
+- **Substrate used, not reimplemented?** If you added a graph / DAG /
+  bitmask / sparse type, double-check it's not already in `arvo`.
+- **Python prototype referenced for semantics only?** Translate test
+  intent, not implementation. If a Rust function mirrors a Python one
+  line-by-line, that's a signal to restructure.
+- **Byline policy respected?** See `mock/agent/config.toml`
+  `[attribution]`. Assistant mode = no `Co-Authored-By`. Autonomous
+  mode = byline matching the configured pattern.
+- **Commit message shape?** `type: lowercase imperative`, no parens,
+  no trailing period, under 72 chars. See `skills/commit-style/`.

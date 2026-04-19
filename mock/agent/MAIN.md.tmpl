@@ -1,87 +1,132 @@
-# polka-dots agent instructions
-
-## The one rule
-
-`polka.toml` is the project entry point. `.polka` is the only built-in templating format.
-Everything in `.polka/build/` is generated. If you edit generated output directly, your changes
-will be lost on next build.
+# clause agent instructions
 
 ## Identity
 
-polka-dots is a plugin-extensible dotfiles build engine. {{crate_count}} crates:
+Clause is a general-purpose scripting language for game modding and
+embeddable runtimes. Game-agnostic core: compiler + runtime + language
+spec. Anything that names a specific game belongs in a sibling
+extension repo, not here.
 
-**SDK** (traits only — what extensions depend on):
-- `polka-primitives` — `repr(C)` atoms, newtypes, base registration traits
-- `polka-derive` — proc macros (`#[register]`, `#[derive(Settings)]`)
-- `polka-sdk` — re-exports + domain trait contracts
+## Two-language strategy
 
-**Core: Data** (host-side data management):
-- `polka-data` — file-backed data store, settings resolution, typed access
-- `polka-catalogue` — app/package/service catalogue (TOML registry files)
-- `polka-project` — project loading, single entry point
+**Rust compiler + Zig runtime, joined by a C ABI defined and validated
+in Rust.**
 
-**Core: Execution** (host-side orchestration):
-- `polka-pipeline` — build/stage/deploy orchestration, manifest tracking
-- `polka-scheduler` — task scheduling, routine management
-- `polka-audit` — system audit against catalogue
+- **Compiler** (Rust): lex, parse, resolve, typecheck, transpile,
+  codegen, pass scheduler. Runs at dev time. Ships as a single static
+  binary per target platform. Cross-compilation is a first-class
+  concern.
+- **Runtime** (Zig): executes macros, scratch variables, generative
+  pipelines. Small, fast, embeddable. Speaks C ABI. Pulls no `std`,
+  no Rust runtime.
+- **Build tooling / deploy / orchestration**: written in Clause
+  itself once the language is usable (rustc/cargo pattern — the
+  compiler does one thing; tooling runs on top of what the compiler
+  emits).
 
-**CLI:**
-- `polka-cli` — clap shell, I/O, output rendering, plugin loading
+## Crates
 
-**First-party extensions** (cdylib, depend on SDK only):
-- `polka-lang-polka` — the `.polka` DSL (just a language plugin)
-- `polka-source-brew` — Homebrew/Cask/Tap source
-- `polka-source-mas` — Mac App Store source
-- `polka-platform-macos` — macOS platform
-- `polka-platform-linux` — Linux platform
-- `polka-keybinds` — keybind resolution
+`mock/crates/` is intentionally empty at seed. The compiler crate
+split is decided by the first four design rounds (R1–R4). Provisional
+targets, not binding:
 
-## Crate table
+- `clause-lex` — tokenisation
+- `clause-syntax` — parser + AST
+- `clause-resolve` — module resolution, use-tree, visibility
+- `clause-typecheck` — coherence, bind targets, generics, validator framework
+- `clause-schedule` — pass DAG (consumes `arvo-graph`)
+- `clause-codegen` — target-agnostic codegen
+- `clause` — top-level binary + orchestration
 
-{{crate_table}}
+Until R1–R4 lands, crate-level rules and lints are stubs. The
+framework is set; the contents arrive with the crates.
 
-## Architecture rules
+## Substrate
 
-- Dependencies flow downward only. Extensions → SDK only. Core → SDK. CLI → Core.
-- The SDK exports only traits, `repr(C)` types, and proc macros. No concrete implementations.
-- Plugins register via `#[register]` on trait impl blocks. `inventory` handles discovery.
-- No `toml::Value` outside of `polka-data`. All consumers use `DataValue` trait from SDK.
-- No `&Ui` below the CLI layer. Pipeline stages return structured results.
-- All commands go through `polka-project::load()`. No independent polka.toml parsing.
-- Platform is an extensible trait, not a closed enum. Registered by platform extensions.
-- The `.polka` DSL is NOT special — it's a language plugin following the `Language` trait contract.
+This repo consumes two sibling substrate repos:
 
-## Type taxonomy
+- [`arvo`](https://github.com/orgrinrt/arvo) — numeric primitives +
+  graph / sparse / bitmask / spectral / comb algorithms. Used for the
+  pass DAG (`arvo-graph`) and artifact read/write sets
+  (`arvo-bitmask`).
+- [`hilavitkutin`](https://github.com/orgrinrt/hilavitkutin) —
+  pipeline execution engine. Used by the **runtime** for morsel-driven
+  macro / scratch / generative execution. The compiler itself does
+  single-shot DAG walks and rarely needs the frame runtime.
 
-| Category | When |
-|----------|------|
-| **Trait** | Varying behavior, shared contract, extensible |
-| **Newtype** | Fixed representation, validation at construction |
-| **`repr(C)` enum** | Closed set, crosses ABI boundary |
-| **Primitive** | No semantic meaning beyond raw value |
+Reuse the substrate. Do not reimplement DAG topology, bitmask ops,
+sparse storage, or pipeline scheduling in Clause.
 
-If it might need plugin extensions → trait, not enum.
+## Extension pattern
+
+Game-specific targets ship as **separate repos** that extend Clause:
+
+- `clause-jomini` (future) — Clausewitz (Stellaris / CK3 / HOI4 /
+  Vic3 / EU4) grammar, bind targets, codegen to Clausewitz script.
+- `clause-w3` (future) — Witcher 3 target.
+- `clause-ts4` (future) — Sims 4 target.
+- `clause-lua` (future) — generic Lua target.
+
+The extension-point contract is one of the early design rounds. Until
+then, do not inline game-specific vocabulary, types, or codegen into
+this repo — it makes the core extraction harder later.
+
+## Parity oracle
+
+A Python prototype of Clause lives at
+`~/Dev/stellar-heritage/tools/clause/` (~15k lines, 1500+ tests). It
+is the **parity oracle** during the Rust port — run its test corpus
+against the Rust implementation to verify semantic equivalence.
+
+It is **not** a line-by-line translation source. The Rust shape
+differs: tagged enums over Protocol duck-typing, monomorphised trait
+dispatch over `isinstance` checks, `Result` over exceptions, static
+composition over runtime registry lookups. Read the Python for
+semantics; author the Rust from the design docs.
+
+## Compiler posture
+
+Strict by default, across both the Clause language and the Rust
+compiler implementation:
+
+- Deny warnings at crate roots: `unused`, `unreachable_code`,
+  `unused_must_use`, `unused_imports`, `dead_code`.
+- No `.unwrap()` / `.expect()` outside tests and documented infallible
+  paths.
+- Tagged enum + trait dispatch; no `dyn Trait` / `TypeId` / `std::any`
+  in framework code. Compile-time dispatch wins.
+- Descriptive error variants. Errors carry context (span, phase,
+  expected/actual), not just a string.
+- Procedural macros only for Clause language semantics. `macro_rules!`
+  is acceptable internally in the Rust compiler implementation for
+  boilerplate reduction, but never for Clause itself — macros in the
+  language are proc-only, scheduler-pass-driven, and typechecked.
+
+## Single-binary distribution
+
+End users should not need Python, Deno, .NET, JVM, or any runtime
+alongside Clause. `cargo build --release` produces one static binary
+per target. No dynamic runtime deps. No plugin shared-object loading
+at the compiler layer (the runtime may embed differently).
 
 ## Commit style
 
-Format: `type: lowercase imperative message`
-
-Types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`
-
-## Code style
-
-- Rust 2024 edition. `anyhow` for errors, `clap` derive for CLI, `serde` + `toml` for config.
-- Target < 300 LOC per file, max 500.
-- Tests live alongside source in `#[cfg(test)] mod tests`.
-- No `unwrap()` in non-test code; use `?` or `anyhow::bail!`.
+See `skills/commit-style/`. Short version: `type: lowercase imperative
+message`, no parens, no trailing period, under 72 characters.
 
 ## What not to do
 
-- Do not edit files in `.polka/build/`. They are generated.
-- Do not edit CLAUDE.md or `.claude/rules/` directly. They are generated by `cargo mock`.
-- Do not bypass the DSL pipeline for config generation. Use `.polka` files.
-- Do not add `&Ui` parameters to non-CLI crates.
-- Do not use `toml::Value` outside of `polka-data`.
-- Do not bypass `polka-project::load()` to parse polka.toml directly.
-- Do not put concrete implementations in SDK crates.
-- Do not make extensions depend on anything other than `polka-sdk`.
+- Do not edit `.claude/` or `.github/` output. Those are generated
+  from `mock/agent/*.tmpl` by `cargo mock`. Edit the template.
+- Do not inline game-specific vocabulary (`clausewitz`, `witcher`,
+  `stellaris`, `paradox`, …) into compiler or runtime code. Use an
+  extension repo.
+- Do not reimplement graph / DAG / bitmask / sparse / pipeline types.
+  Use `arvo` and `hilavitkutin`.
+- Do not translate the Python prototype line-by-line. Use it as a
+  parity oracle, not a template.
+- Do not bypass the design-round state machine by renaming changelist
+  files manually. Use `cargo mock lock / unlock / deprecate / close`.
+- Do not add crate-specific lints or hooks before R1–R4 decides the
+  crate split. Document intent in the skill or framework doc; author
+  the enforcement once crates exist.

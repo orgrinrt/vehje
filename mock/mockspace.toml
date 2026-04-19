@@ -9,7 +9,8 @@ module_crates = []
 primary_domain_macro = "pass"
 primary_domain_label = "Passes"
 
-# Layer labels by depth index — finalised in first design-round session
+# Layer labels by depth index — finalised once R1–R4 decides the
+# compiler + runtime crate split.
 layers = []
 
 # Domain kind labels for STRUCTURE.md domain items table
@@ -20,11 +21,17 @@ pass = "🧩 compiler pass"
 [known_macros]
 
 # Crate header colors for dependency graph (bg_color | fg_color) —
-# populated once crate names are decided
+# populated once crate names are decided.
 [crate_colors]
 
 # ---------------------------------------------------------------------------
 # Lint configuration
+#
+# Most crate-specific lints (no-unsafe, no-dyn, no-unwrap, compiler-phase
+# layering via forbidden-imports, no-game-vocabulary, no-substrate-reimpl,
+# strict-posture) are DEFERRED to post-R1–R4 — the crate split has to land
+# before they can scope correctly. Today's config covers universal
+# mockspace built-ins that work regardless of crate layout.
 # ---------------------------------------------------------------------------
 
 [lints.no-empty-crate]
@@ -37,7 +44,13 @@ commit = "off"
 build = "warn"
 push = "error"
 
-[lints.no-fixme]
+[lints.file-size]
 commit = "off"
 build = "warn"
 push = "error"
+max_lines = "400"
+
+[lints.undocumented-type]
+commit = "off"
+build = "warn"
+push = "warn"
