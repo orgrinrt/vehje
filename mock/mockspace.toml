@@ -1,0 +1,43 @@
+project_name = "clause"
+crate_prefix = "clause"
+abi_version = 1
+
+proc_macro_crates = []
+module_crates = []
+
+# Which macro to track per-crate in domain items
+primary_domain_macro = "pass"
+primary_domain_label = "Passes"
+
+# Layer labels by depth index — finalised in first design-round session
+layers = []
+
+# Domain kind labels for STRUCTURE.md domain items table
+[domain_kinds]
+pass = "🧩 compiler pass"
+
+# Known macros for DESIGN.md table (description | usage)
+[known_macros]
+
+# Crate header colors for dependency graph (bg_color | fg_color) —
+# populated once crate names are decided
+[crate_colors]
+
+# ---------------------------------------------------------------------------
+# Lint configuration
+# ---------------------------------------------------------------------------
+
+[lints.no-empty-crate]
+commit = "off"
+build = "warn"
+push = "warn"
+
+[lints.no-todo]
+commit = "off"
+build = "warn"
+push = "error"
+
+[lints.no-fixme]
+commit = "off"
+build = "warn"
+push = "error"
