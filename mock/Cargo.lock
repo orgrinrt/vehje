@@ -76,8 +76,7 @@ name = "clause-codegen"
 version = "0.1.0"
 dependencies = [
  "clause-ir",
- "clause-schedule",
- "clause-typecheck",
+ "clause-resolve",
  "mockspace",
 ]
 
