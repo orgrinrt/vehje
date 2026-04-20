@@ -187,3 +187,61 @@ push = "off"
 commit = "off"
 build = "off"
 push = "off"
+
+# Pack lints (from mockspace-hilavitkutin-stack-lints) — graceful ramp.
+# These fire against pre-existing skeleton code that will be fixed in the
+# clause sweep (#73). Set to advisory during the sweep, flip to error
+# afterwards. Entries here only — no duplicates of the builtin lints
+# above (no-bare-result / no-bare-string / no-bare-vec / forbidden-imports
+# already have their own overrides).
+[lints.lint-allow-requires-task-id]
+severity = "advisory"
+
+[lints.no-alloc]
+severity = "advisory"
+
+[lints.no-std]
+severity = "advisory"
+
+[lints.trait-first-signatures]
+severity = "advisory"
+
+[lints.no-bare-numeric]
+severity = "advisory"
+
+[lints.no-bare-option]
+severity = "advisory"
+
+[lints.no-dyn-dispatch]
+severity = "advisory"
+
+[lints.no-runtime-spawn]
+severity = "advisory"
+
+[lints.no-runtime-registration]
+severity = "advisory"
+
+[lints.no-public-raw-field]
+severity = "advisory"
+
+[lints.no-vec-in-trait-sig]
+severity = "advisory"
+
+[lints.arvo-types-only]
+severity = "advisory"
+
+[lints.strategy-marker-required]
+severity = "advisory"
+
+# ---------------------------------------------------------------------------
+# External lint packs (mockspace #94 feature)
+# ---------------------------------------------------------------------------
+#
+# Git-based dep spec only — committed config must be portable.
+
+[lint-crates]
+mockspace-hilavitkutin-stack-lints = { git = "ssh://git@github.com/orgrinrt/mockspace-hilavitkutin-stack-lints.git", branch = "main" }
+
+# Writing-style gate — pre-existing docs trip this until sweeps tidy them.
+[lints.writing-style]
+severity = "advisory"
