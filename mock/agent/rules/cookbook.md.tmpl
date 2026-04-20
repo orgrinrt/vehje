@@ -1,0 +1,95 @@
+---
+apply_to: ["crates/**/*.rs", "src/**/*.rs"]
+---
+
+# Cookbook — intent → trait / type
+
+A pattern book for "I need to X" questions. Pick the matching intent,
+use the suggested trait / type. When none fits, the correct answer is
+usually "add a trait to the ecosystem", not "use a std primitive".
+
+Clause's compiler phases (resolve, typecheck, schedule, codegen) may
+use std; clause-ir / clause-lex / clause-syntax and the runtime crates
+are `#![no_std]` and follow the stricter discipline.
+
+## "I need to return an optional value"
+
+Return `Maybe<T>` (from `notko`) in no_std crates. `Option<T>` is
+acceptable in std-permitting crates but prefer `Maybe<T>` for ABI
+stability across the compiler / runtime boundary.
+
+## "I need a fallible operation"
+
+Return `Outcome<T, E>` (from `notko`). Use `Result<T, E>` only when
+interfacing with a std-permitting API (e.g., CLI argument parsing).
+
+## "I need to emit diagnostics from a compiler phase"
+
+Take `&mut impl DiagnosticSink<Diagnostic>` — consumes `clause-ir::Diagnostic`.
+Return `Outcome<PhaseOutput, PhaseAborted>`. DO NOT return
+`Vec<Diagnostic>` in public APIs. (Pending: #73 sweep + #83 sink
+traits.)
+
+## "I need to walk the AST"
+
+Take `&Ast` (read-only) or `&mut Ast` (mutation). `Ast` is an arena;
+node access goes through `NodeId`. Never clone node subtrees — take a
+reference or a `NodeId`.
+
+## "I need a pass DAG"
+
+`arvo_graph::Dag<PassId>`. Use arvo-graph's `topo_sort`,
+`rank_levels`, `spanning_tree` — do not reimplement.
+
+## "I need to represent a span / source location"
+
+`clause_ir::Span` — (`FileId`, `ByteOffset`, `ByteOffset`). Pass by
+value; it's small.
+
+## "I need an interned string / symbol"
+
+`clause_ir::Symbol` (when it ships) or `hilavitkutin_str::Str`. Never
+`String` in shipped code.
+
+## "I need artifact read/write sets for a pass"
+
+`arvo_bitmask::Mask64` keyed on a const-indexed artifact enum.
+
+## "I need to emit codegen output bytes"
+
+Take `&mut impl ByteEmitter` (pending #83). Return
+`Outcome<ArtifactMeta, _>`. DO NOT return `Vec<u8>` even in
+std-permitting crates — the codegen contract must survive moving to
+no_std if the architecture shifts.
+
+## "I need to iterate tokens from the lexer"
+
+`impl Iterator<Item = Token>` or `&[Token]`.
+
+## "I need a pass scheduler"
+
+Consume `hilavitkutin` (the engine). Clause runtime's macro
+expansion / generative pipelines run on the engine. Compiler's own
+single-shot DAG walks use `arvo-graph` directly.
+
+## "I genuinely need std in a no_std crate"
+
+The correct answer is always "reshape". If clause-ir / clause-lex /
+clause-syntax seem to need std, the API is leaking runtime concerns
+into the front end. File a design round; don't reach for
+`extern crate alloc`.
+
+## "I need to parity-test against the Python prototype"
+
+Run the prototype's test corpus. Do NOT translate the Python
+line-by-line — the Rust shape differs (tagged enums over Protocol,
+monomorphisation over isinstance, Result over exceptions).
+
+## See also
+
+- `.claude/rules/type-surface.md` — the decision test, DO/DON'T table
+- `.claude/rules/no-heap.md` — dedicated no-heap rule (scoped to
+  no_std crates)
+- `PRINCIPLES.md` — first principles
+- Python prototype at `~/Dev/stellar-heritage/tools/clause/` — parity
+  oracle, not a template
