@@ -11,12 +11,28 @@
 //! at runtime. The body becomes real once the runtime backend
 //! (`mock/runtime-zig/`) ships a real allocator + state struct.
 
+use core::marker::{PhantomData, PhantomPinned};
+
 /// Opaque handle to a runtime session.
 ///
-/// Never construct this type directly in Rust. It exists only
-/// as a type-level marker for `*mut ClauseRuntime` pointers
-/// crossing the FFI boundary.
+/// The handle points to foreign-owned memory (the Zig runtime's
+/// session struct); only the Zig runtime may dereference it.
+/// Rust treats it as an opaque token — never inspected, never
+/// moved, never pinned on this side. Never construct this type
+/// directly in Rust: it exists only as a type-level marker for
+/// `*mut ClauseRuntime` pointers crossing the FFI boundary.
+///
+/// The `PhantomData<(*mut u8, PhantomPinned)>` marker makes the
+/// handle `!Send`, `!Sync`, and `!Unpin`, blocking the default
+/// auto-trait implementations that would otherwise let a caller
+/// move the handle across threads or pin-project through it.
+/// The raw-pointer component denies `Send`/`Sync`; the
+/// `PhantomPinned` component denies `Unpin`.
 #[repr(C)]
 pub struct ClauseRuntime {
-    _private: [u8; 0],
+    _opaque: [u8; 0],
+    // PhantomData here makes the handle !Send, !Sync, !Unpin.
+    // The handle points to foreign-owned memory; only the Zig
+    // runtime may dereference it.
+    _marker: PhantomData<(*mut u8, PhantomPinned)>,
 }

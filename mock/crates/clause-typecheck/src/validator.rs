@@ -35,5 +35,12 @@ pub trait Validator: Sync {
     ///
     /// Skeleton implementations return `Vec::new()`; real bodies
     /// land in follow-up rounds (one per validator).
+    ///
+    /// # Implementor note
+    ///
+    /// `Diagnostic.message` is `&'static str`. Validators must use
+    /// string literals or `const` slices — no `format!`-produced
+    /// strings. Span-enriched rendering is the responsibility of
+    /// the diagnostic renderer, not the validator body.
     fn validate(&self, ctx: &ValidatorCtx) -> Vec<Diagnostic>;
 }
