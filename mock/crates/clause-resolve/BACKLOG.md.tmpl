@@ -57,3 +57,21 @@ rounds do not churn it.
 - The `From<ResolveError> for Diagnostic` conversion currently
   emits static placeholder messages; follow-up rounds replace
   them with per-variant messages once the producer rules land.
+
+## Front-end review notes
+
+- **`ResolveError` is not `Copy`** because
+  `UnresolvedIdentifier.name` and `DuplicateDefinition.name` hold
+  owned `String`. This breaks the `E: Copy + Into<Diagnostic>`
+  symmetry that the rest of the front-end preserves
+  (`SyntaxError` is `Copy`; `Diagnostic` is `Copy`). The fix
+  lands naturally with the Symbol-interning round listed under
+  "Non-blocking follow-ups" above: once `Symbol::name` is an
+  `InternedSymbol` (or similar small `Copy` handle), the two
+  `ResolveError` variants become `Copy` at no extra cost and
+  `ResolveError` itself becomes `Copy`. Do not try to work
+  around the issue before the interning round lands — the
+  owned `String` is load-bearing while names are raw strings,
+  and short-term workarounds (e.g. splitting the enum into
+  `Copy` and non-`Copy` halves) create more surface than they
+  save.

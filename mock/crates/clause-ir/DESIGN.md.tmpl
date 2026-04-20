@@ -16,9 +16,14 @@ Types consumed by two or more phase crates:
   parse time; stable across later phases for cross-phase
   annotations (resolution info, type info).
 - `ScopeId` — dense interned identifier for lexical scopes.
-- `Diagnostic` — `{ severity, span, message, labels }`. The common
-  error / warning / info structure.
+- `Diagnostic` — `{ phase, severity, span, message, related }`. The
+  common error / warning / info structure. `Copy`; owns no heap;
+  `message` is `&'static str` and `related` is `&'static [Span]`.
 - `Severity` — enum: `Error`, `Warning`, `Info`, `Help`.
+- `DiagPhase` — enum discriminating which compiler phase emitted a
+  diagnostic: `Lex`, `Syntax`, `Resolve`, `Typecheck`, `Codegen`,
+  `Runtime`. Lets a diagnostic renderer / filter route by phase
+  without parsing the static message.
 - `TokenKind` — enum discriminating lex tokens. Shared between
   `clause-lex` (producer) and `clause-syntax` (consumer).
 - `AstNodeKind` — enum discriminating AST nodes. Shared between
@@ -44,7 +49,7 @@ Types consumed by two or more phase crates:
 
 - `span.rs` — Span, FileId, ByteOffset.
 - `ids.rs` — NodeId, ScopeId + dense-interning helpers.
-- `diagnostic.rs` — Diagnostic, Severity, Label.
+- `diagnostic.rs` — Diagnostic, Severity, DiagPhase.
 - `tokens.rs` — TokenKind.
 - `nodes.rs` — AstNodeKind + shared node annotation slots.
 
