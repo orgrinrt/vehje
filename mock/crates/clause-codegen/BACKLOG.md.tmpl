@@ -1,0 +1,134 @@
+# clause-codegen — backlog
+
+## Deferred target implementations (each a follow-up round)
+
+### NativeTarget — real Rust/LLVM codegen
+
+Replace the skeleton empty-artifact `emit` body with a real Rust
+or LLVM-IR (via `inkwell` or `cranelift`) lowering path. Requires
+the target-agnostic IR + lowering passes (below).
+
+### JominiTarget — Clausewitz engine bytecode
+
+Move `JominiTarget` out of clause-codegen into a sibling
+`clause-jomini` repo with its own mockspace, implementing the
+real Clausewitz script emission for Paradox games. Bind targets:
+Country, Pop, Planet, etc. (per stellar-heritage Python prior
+art). Landing in its own `orgrinrt/clause-jomini` GitHub repo.
+
+### Possible future targets
+- WebAssembly backend.
+- Python bytecode (parity-oracle / transpile path).
+- Lua script emission (future `clause-lua`).
+
+## Deferred framework features
+
+### IR lowering
+
+Resolved → internal IR → target-specific lowering. The skeleton
+passes `Resolved` directly to the target; a future round
+introduces the target-agnostic IR layer so backends don't each
+re-walk the AST.
+
+### Optimisation passes
+
+Passes between IR and codegen: inlining, constant folding,
+dead-code elimination. Shared across all targets.
+
+### Target-specific diagnostics
+
+Per-target error recovery. Currently `CodegenError` is a flat
+enum; targets that need to surface multi-phase diagnostics will
+want a dedicated per-target error rendering path (R3's
+`render_diagnostic(err: &TargetError) -> Diagnostic`).
+
+### Per-target config
+
+`Clause.toml` `[codegen.target_name]` subsection read by the
+driver and passed through `CodegenCtx`.
+
+### Incremental codegen
+
+Cache artifacts by IR hash so unchanged units skip re-emission.
+Requires the artefact-cache reference in `CodegenCtx` (R3 shape).
+
+### R3-shape retrofit
+
+Associated `NAME` / `VERSION` consts, `accepts(kind)` routing,
+`stages()` pipeline entry, `CodegenOutput` with `manifest` +
+`references`, `render_diagnostic`. Lands once real backend
+bodies surface the need — the instance-method skeleton form is
+forward-compatible (retrofit requires no consumer changes).
+
+## Non-blocking follow-ups
+
+### Extension loading
+
+Dynamic targets via `dlopen` / DLL (so `clause-jomini` ships as
+a runtime plugin the Clause driver picks up). Requires a stable
+C-ABI wrapper around `CodegenTarget`.
+
+### Cross-compilation target triples
+
+`NativeTarget` grows a triple parameter (e.g. `x86_64-unknown-linux-gnu`
+vs `aarch64-apple-darwin`) driven by CLI `--target-triple`.
+
+### Debug info emission
+
+DWARF / CodeView generation per backend. Requires lowered IR to
+preserve source spans.
+
+### Stage reordering via topological sort
+
+Current R3 `Stage` enum fixes the five-stage order (PreTypecheck
+→ PostTypecheck → CodegenPre → Codegen → Link). If a target
+needs "my stage X must happen before target Y's stage Z", the
+schedule crate grows a target-stage dep resolver. Defer until a
+concrete multi-target workflow surfaces the need.
+
+### Target-provided lints
+
+Targets may want to emit target-specific warnings during codegen
+(e.g. Clausewitz-only "this pattern will OOM Stellaris at
+runtime"). Current Diagnostic flow handles this via severity
+tagging; a dedicated "lint scope" annotation could help IDEs
+filter target-specific noise. Defer until a target surfaces real
+need.
+
+### SymbolRef cross-target resolution
+
+R3 ships `SymbolRef` as the opaque type that targets use to
+reference symbols across boundaries (clause-jomini references
+clause-builtin symbols, etc.). The resolution ALGORITHM
+(link-stage walker that matches SymbolRef producers ↔ consumers)
+is deferred — first clause-jomini release will likely go without
+cross-target references, and the algorithm lands when a concrete
+need arrives.
+
+### Multi-target parallel codegen
+
+Current design is sequential: compile all units with target A,
+then target B, etc. Parallel-codegen across targets (for
+tooling-friendly UX) is a future optimisation — needs shared
+ArtefactCache locking story.
+
+## Post-review notes
+
+### Manual DiagPhase labelling on every Diagnostic
+
+`DiagPhase` is not enforced at the `CodegenTarget` trait level.
+Implementors must manually pass `DiagPhase::Codegen` on every
+`Diagnostic::new` / `Diagnostic::error` call site when they
+start producing real diagnostics in their `emit` body. The
+compiler cannot catch a codegen target that labels its
+diagnostics `DiagPhase::Typecheck` by mistake.
+
+When the `DiagnosticSink` retrofit lands (R3 trait-shape BACKLOG
+entry above, pointing at the `render_diagnostic(err: &TargetError)
+-> Diagnostic` surface), its constructor should accept a
+`DiagPhase` and stamp every pushed diagnostic automatically.
+That removes the manual-labelling obligation and the class of
+mis-label bugs with it.
+
+Until that retrofit lands, target authors must keep the phase
+tag consistent by convention.

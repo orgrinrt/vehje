@@ -1,0 +1,50 @@
+44c36f5 chore: lock src changelist for 202604264600_changelist.src.lock.md
+ffcb873 fix: clause mid+runtime polish — ABI/safety-gates/trait docs
+2396511 docs: add src CL for mid+runtime polish
+b1af1cb chore: lock doc changelist for 202604264500_changelist.doc.lock.md
+1c0a1a5 docs: BACKLOG + DESIGN notes for mid+runtime polish
+6dade3a docs: start clause mid+runtime polish post-review round
+3b7f5cd chore: close design round 202604264300
+19da937 chore: lock src changelist for 202604264400_changelist.src.lock.md
+46aa109 fix: clause front-end polish — DiagPhase, multi-error parse, TokenCursor
+4ef3e66 docs: add src CL for clause front-end polish
+2e3c254 chore: lock doc changelist for 202604264300_changelist.doc.lock.md
+edd16fd docs: expand BACKLOG + DESIGN for clause front-end polish
+6c53139 docs: start clause front-end polish post-review round
+8207e80 chore: close clause-runtime + Zig runtime round 202604264100
+8868329 chore: lock src CL 202604264200 for clause-runtime + Zig runtime skeleton
+8d5a771 feat: clause-runtime + Zig runtime skeleton
+fc575d3 docs: add src CL for clause-runtime + Zig runtime skeleton
+e555d1e chore: lock doc CL 202604264100 for clause-runtime + Zig runtime skeleton
+9da7533 docs: expand clause-runtime + Zig runtime DESIGN + BACKLOG
+003de9b docs: start clause-runtime + Zig runtime skeleton round
+fc29847 chore: close clause-codegen round 202604263900
+6d7ef54 chore: lock src CL 202604264000 for clause-codegen skeleton
+cd635d4 feat: clause-codegen skeleton
+55274ff docs: add src CL for clause-codegen skeleton
+e6b4ab5 chore: lock doc CL 202604263900 for clause-codegen skeleton
+098df97 docs: expand clause-codegen DESIGN + BACKLOG
+702d5a5 docs: start clause-codegen skeleton round
+4559489 chore: close clause-typecheck round 202604263700
+cc293af chore: lock src CL 202604263800 for clause-typecheck skeleton
+c2a6516 feat: clause-typecheck skeleton
+f47c368 docs: add src CL for clause-typecheck skeleton
+d8a7c94 chore: lock doc CL 202604263700 for clause-typecheck skeleton
+ba4717c docs: expand clause-typecheck DESIGN + BACKLOG
+d95e9cd docs: start clause-typecheck skeleton round
+f653d8b chore: close clause-resolve round 202604263500
+bf9e0e0 chore: lock src CL 202604263600 for clause-resolve skeleton
+a4b6f3a feat: clause-resolve skeleton
+c906b3b docs: add src CL for clause-resolve skeleton
+ca50864 chore: lock doc CL 202604263500 for clause-resolve skeleton
+5079110 docs: expand clause-resolve DESIGN + BACKLOG for skeleton round
+b5ac835 docs: start clause-resolve skeleton round
+0c4f76d chore: close clause-syntax round 202604263100
+29c726d chore: lock src CL 202604263300 for clause-syntax skeleton
+a7278b7 feat: clause-syntax skeleton
+180dcb7 chore: deprecate 263200 src CL, replace with 263300 for clause-syntax skeleton
+9834c66 chore: lock src CL 202604263200 for clause-syntax skeleton
+514118f docs: add src CL for clause-syntax skeleton
+9141172 chore: lock doc CL 202604263100 for clause-syntax skeleton
+5d7d051 docs: expand clause-syntax DESIGN + BACKLOG for skeleton round
+55ddfea docs: start clause-syntax skeleton round

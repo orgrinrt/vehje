@@ -1,0 +1,12 @@
+4a64a3d chore: lock src CL 202604261600 for clause R1
+0ace93b docs: add R1 src CL (design-only round, scaffolds only)
+8dcc813 chore: lock doc CL 202604261500 for clause R1
+ab22244 docs: clause R1 — add 7 compiler phase crate scaffolds
+ed8440f docs: start clause R1 — compiler crate split design round
+488f08a chore: add clause placeholder crate + bootstrap artifacts
+7126aa6 chore: clause bootstrap — pin arvo+hilavitkutin to dev, add rust-toolchain.toml, loimu-lint disables, placeholder clause crate for mockspace proxy build
+13d77ad refactor: compress PREAMBLE and POSTAMBLE to <=25 words each
+05f2f7f chore: gitignore mockspace-generated agent artifact paths
+ca2800a refactor: rewrite mock/agent for clause compiler+runtime domain
+92e5916 fix: rename changelist to conform to state-machine naming
+551c9e2 initial: mockspace seed — Clause language (extracted from stellar-heritage)

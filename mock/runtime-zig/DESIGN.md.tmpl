@@ -1,0 +1,90 @@
+# clause-runtime-zig — Design
+
+Zig implementation of the clause runtime. Consumes the C ABI
+(clause-runtime-abi); implements the entry points with a Clause-
+IR interpreter, scratch-var folding, and generative expansion.
+
+## Scope
+
+- Arena allocator — per-session state owning compile-time
+  buffers.
+- IR interpreter — evaluates macro bodies + generative subgraph
+  blueprints against the incoming ABI node buffers.
+- Scratch-var evaluator — folds compile-time expressions to byte
+  blobs the compiler re-inserts into the AST.
+- TokenStream emitter — macros return AbiToken arrays.
+- Error reporter — maps Zig-side failures to AbiDiagnostic.
+
+## Round-skeleton scope
+
+Phase 6 skeleton round (2026-04-20) ships:
+
+- `build.zig` declaring a `clause_runtime` shared-library
+  target. Output: `zig-out/lib/libclause_runtime.{so|dylib|dll}`.
+- `src/runtime.zig` exporting three `extern "C"` stubs matching
+  the Rust `clause-runtime-abi` exports:
+  - `clause_runtime_new() ?*anyopaque` → null.
+  - `clause_runtime_free(?*anyopaque) void` → no-op.
+  - `clause_runtime_execute(?*anyopaque, [*]const u8, usize) i32`
+    → `CLAUSE_RESULT_ERR` (`-1`).
+  - `pub const CLAUSE_RESULT_OK: i32 = 0;` (+ `_ERR`,
+    `_NULL_HANDLE`, `_INVALID_INPUT` matching the Rust
+    discriminants).
+- `README.md` describing the tree + build workflow.
+- `.gitignore` excluding `zig-out/`, `zig-cache/`.
+- `BACKLOG.md` listing deferred runtime features.
+
+### `ClauseResult` ABI layout — scalar i32
+
+The Rust side declares `#[repr(i32)] enum ClauseResult { Ok = 0,
+Err = -1, NullHandle = -2, InvalidInput = -3 }`. On System V
+x86-64 and Apple ARM64 this lowers to a scalar-in-register
+return. The Zig side returns plain `i32` directly, giving
+identical register-use on every target.
+
+Alternative considered and rejected: mirror the Rust enum via
+`pub const ClauseResult = extern struct { code: i32 }` (a
+one-field wrapper struct). Rejected because on MSVC Windows
+x64 a one-field extern struct returns via hidden-pointer
+(sret) while a `#[repr(i32)]` enum returns in `eax` — the two
+sides would disagree on the calling convention. Scalar `i32`
+return is the trivially portable form across every ABI.
+
+Named constants (`CLAUSE_RESULT_OK`, `CLAUSE_RESULT_ERR`,
+`CLAUSE_RESULT_NULL_HANDLE`, `CLAUSE_RESULT_INVALID_INPUT`)
+mirror the Rust discriminants exactly and give Zig-side call
+sites a readable form instead of bare integer literals.
+
+Real interpreter body, arena allocator, scratch-var evaluator,
+TokenStream emitter, and Zig test suite are all BACKLOG.
+
+## Non-scope
+
+- The ABI contract itself (`clause-runtime-abi`).
+- The compiler-side dispatch (`clause-runtime-driver`).
+- Runtime performance tuning (post-Phase 6).
+
+## Build integration
+
+- `build.zig` drives the Zig compilation.
+- Output: `zig-out/lib/libclause_runtime.{so|dylib|dll}`.
+- Target-triple-specific builds; a distribution bundle pairs the
+  Rust compiler binary with the matching dylib for each supported
+  platform.
+- Mockspace does not build this tree — it ships source but
+  cargo / mockspace lints ignore the `.zig` files. The Zig side
+  is validated only by running `zig build` manually or in CI.
+
+## Dependencies
+
+- Standard Zig library only. No third-party Zig packages. No
+  runtime allocator — arena-only.
+
+## Sources
+
+- 202604191301/202604191300_research.macros-slice3.md (macro interp
+  path)
+- 202604191301/202604191300_research.scratch-variables.md
+- 202604191301/202604191300_research.generative-pipeline.md
+- 202604262100_changelist.doc.md (R2 round)
+- 202604264100_changelist.doc.md (Phase 6 skeleton round)
