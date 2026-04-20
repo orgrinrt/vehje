@@ -111,3 +111,24 @@ Current design is sequential: compile all units with target A,
 then target B, etc. Parallel-codegen across targets (for
 tooling-friendly UX) is a future optimisation — needs shared
 ArtefactCache locking story.
+
+## Post-review notes
+
+### Manual DiagPhase labelling on every Diagnostic
+
+`DiagPhase` is not enforced at the `CodegenTarget` trait level.
+Implementors must manually pass `DiagPhase::Codegen` on every
+`Diagnostic::new` / `Diagnostic::error` call site when they
+start producing real diagnostics in their `emit` body. The
+compiler cannot catch a codegen target that labels its
+diagnostics `DiagPhase::Typecheck` by mistake.
+
+When the `DiagnosticSink` retrofit lands (R3 trait-shape BACKLOG
+entry above, pointing at the `render_diagnostic(err: &TargetError)
+-> Diagnostic` surface), its constructor should accept a
+`DiagPhase` and stamp every pushed diagnostic automatically.
+That removes the manual-labelling obligation and the class of
+mis-label bugs with it.
+
+Until that retrofit lands, target authors must keep the phase
+tag consistent by convention.

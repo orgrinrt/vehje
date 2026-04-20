@@ -77,3 +77,22 @@ Python-era convention: `#[allow(name, reason = "...")]` with a
 reason string above a threshold length. Port once the core
 suppression mechanism lands and consumers start generating
 suppression-noise pressure.
+
+## Post-review notes
+
+### Manual DiagPhase labelling on every Diagnostic
+
+`DiagPhase` is not enforced at the `Validator` trait level.
+Implementors must manually pass `DiagPhase::Typecheck` on every
+`Diagnostic::new` / `Diagnostic::error` call site in their
+`validate` body. The compiler cannot catch a typecheck validator
+that labels its diagnostics `DiagPhase::Resolve` by mistake.
+
+When the `DiagnosticSink` retrofit lands (R4 trait-shape BACKLOG
+entry above, `&mut DiagnosticSink` emission API), its
+constructor should accept a `DiagPhase` and stamp every pushed
+diagnostic automatically. That removes the manual-labelling
+obligation and the class of mis-label bugs with it.
+
+Until that retrofit lands, validator authors must keep the phase
+tag consistent by convention.
