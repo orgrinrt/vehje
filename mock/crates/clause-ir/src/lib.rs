@@ -18,7 +18,7 @@ pub mod nodes;
 pub mod span;
 pub mod tokens;
 
-pub use diagnostic::{Diagnostic, Severity};
+pub use diagnostic::{DiagPhase, Diagnostic, Severity};
 pub use ids::{NodeId, ScopeId};
 pub use nodes::AstNodeKind;
 pub use span::{ByteOffset, FileId, Span};

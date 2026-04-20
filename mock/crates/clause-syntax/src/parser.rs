@@ -1,9 +1,9 @@
 //! Parser driver loop.
 //!
-//! `Parser<'a>` holds a borrowed token slice, a cursor index, and
-//! an `Ast` under construction. It exposes peek / bump / matching
-//! helpers that follow-up rounds will use to implement each
-//! grammar production.
+//! `Parser<'a>` holds a borrowed token slice, a `TokenCursor`
+//! newtype, and an `Ast` under construction. It exposes peek / bump
+//! / matching helpers that follow-up rounds will use to implement
+//! each grammar production.
 //!
 //! This round ships the skeleton: `parse` handles the two trivial
 //! inputs (empty slice and single literal) and rejects everything
@@ -12,11 +12,40 @@
 //! struct, enum, module, pattern) lands as its own micro-round.
 
 use clause_ir::{AstNodeKind, ByteOffset, FileId, Span};
-use clause_lex::Token;
 use clause_ir::TokenKind;
+use clause_lex::Token;
 
 use crate::ast::{Ast, AstNode};
 use crate::error::SyntaxError;
+
+/// Typed index into the parser's token slice.
+///
+/// `#[repr(transparent)]` over `u32`: zero runtime cost, but distinct
+/// from any other `u32` the parser module might hold (byte offset,
+/// span index, AST node id). `Copy` + `Ord` so the parser can
+/// compare / advance freely.
+#[repr(transparent)]
+#[derive(
+    Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default,
+)]
+pub struct TokenCursor(pub u32);
+
+impl TokenCursor {
+    /// Construct a cursor pointing at the token at index `idx`.
+    pub const fn new(idx: u32) -> Self {
+        Self(idx)
+    }
+
+    /// The cursor index as a `usize` for slice indexing.
+    pub const fn as_usize(self) -> usize {
+        self.0 as usize
+    }
+
+    /// A cursor advanced by one position.
+    pub const fn advance(self) -> Self {
+        Self(self.0 + 1)
+    }
+}
 
 /// The parser.
 ///
@@ -24,7 +53,7 @@ use crate::error::SyntaxError;
 /// beyond the AST under construction.
 pub struct Parser<'a> {
     tokens: &'a [Token],
-    cursor: u32,
+    cursor: TokenCursor,
     ast: Ast,
 }
 
@@ -32,12 +61,12 @@ impl<'a> Parser<'a> {
     /// Build a parser over `tokens`, starting at offset 0 with an
     /// empty AST.
     pub fn new(tokens: &'a [Token]) -> Self {
-        Self { tokens, cursor: 0, ast: Ast::empty() }
+        Self { tokens, cursor: TokenCursor::new(0), ast: Ast::empty() }
     }
 
     /// Token at the current cursor, or `None` if at end.
     pub fn peek(&self) -> Option<&Token> {
-        self.tokens.get(self.cursor as usize)
+        self.tokens.get(self.cursor.as_usize())
     }
 
     /// Kind of the token at the current cursor.
@@ -48,15 +77,15 @@ impl<'a> Parser<'a> {
     /// Token `offset` positions past the cursor, or `None` if out
     /// of range.
     pub fn peek_at(&self, offset: usize) -> Option<&Token> {
-        self.tokens.get(self.cursor as usize + offset)
+        self.tokens.get(self.cursor.as_usize() + offset)
     }
 
     /// Advance the cursor by one, returning a reference to the
     /// consumed token or `None` at end of input.
     pub fn bump(&mut self) -> Option<&Token> {
-        let idx = self.cursor as usize;
+        let idx = self.cursor.as_usize();
         let tok = self.tokens.get(idx)?;
-        self.cursor += 1;
+        self.cursor = self.cursor.advance();
         Some(tok)
     }
 

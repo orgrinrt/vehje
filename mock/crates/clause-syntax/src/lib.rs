@@ -16,20 +16,26 @@
 //! of the stable harness. Error recovery and incremental reparse
 //! are also BACKLOG.
 //!
-//! `#![no_std]`, no alloc. The AST arena is a fixed-size array;
-//! larger programs arrive with a const-generic arena once the real
-//! parser exercises the need.
+//! `#![no_std]`; `alloc` is pulled in only so `parse()` can surface
+//! multi-error results as a `Vec<SyntaxError>`. The AST arena is a
+//! fixed-size array; larger programs arrive with a const-generic
+//! arena once the real parser exercises the need.
 
 #![no_std]
 #![deny(unused, unreachable_code, unused_must_use, unused_imports, dead_code)]
+
+extern crate alloc;
 
 pub mod ast;
 pub mod error;
 pub mod parser;
 
+use alloc::vec;
+use alloc::vec::Vec;
+
 pub use ast::{Ast, AstNode, MAX_CHILDREN, MAX_NODES};
 pub use error::{SyntaxError, SyntaxErrorKind};
-pub use parser::Parser;
+pub use parser::{Parser, TokenCursor};
 
 pub use clause_ir::{AstNodeKind, NodeId, Span};
 pub use clause_lex::Token;
@@ -43,10 +49,16 @@ pub use clause_ir::TokenKind;
 /// - A single `IntLit` followed by optional `Eof` → an `Ast`
 ///   containing one `AstNodeKind::Expr` node spanning the
 ///   literal.
-/// - Anything else → `SyntaxErrorKind::UnexpectedToken`.
+/// - Anything else → `Err(vec![SyntaxErrorKind::UnexpectedToken])`.
+///
+/// The error arm is `Vec<SyntaxError>` rather than a single
+/// `SyntaxError` so future multi-error recovery extends the vec
+/// without another signature churn. Today the vec carries one
+/// element in the error case.
 ///
 /// Every deferred production flips from `UnexpectedToken` to a
 /// real parse in its own follow-up round.
-pub fn parse(tokens: &[Token]) -> Result<Ast, SyntaxError> {
-    Parser::new(tokens).parse()
+// lint:allow(bare_collection) — the diagnostic return surface across every compiler phase crate matches what clause-typecheck and clause-resolve already ship; storage-crate collection types target mockspace domain graphs not host-side compiler syntax-error batches here
+pub fn parse(tokens: &[Token]) -> Result<Ast, Vec<SyntaxError>> {
+    Parser::new(tokens).parse().map_err(|e| vec![e])
 }
