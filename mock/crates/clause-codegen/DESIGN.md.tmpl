@@ -1,32 +1,37 @@
 # clause-codegen — Design
 
-Target-agnostic codegen. Consumes a scheduled IR from
-clause-schedule. Emits an intermediate representation consumed by
-extension targets. Defines the `CodegenTarget` extension-point
-contract; the full contract shape is R3 scope.
+Target-agnostic codegen. Consumes a `Resolved` bundle from
+clause-resolve (later: a scheduled / typed IR from clause-schedule
++ clause-typecheck). Defines the `CodegenTarget` extension-point
+contract; targets opt-in by implementing the trait and being
+registered in the const `TargetRegistry`.
 
 ## Scope
 
-- `Codegen` — top-level codegen driver.
-- `TargetIr` — target-agnostic IR consumed by extension codegens.
-- `CodegenTarget` trait — extension point. Concrete signature +
-  contract finalised in R3.
+- `CodegenTarget` — extension-point trait.
 - `TargetRegistry` — registered codegen targets (built-in + plugin).
-  Final shape post-R3.
-- `CodegenArtifact` — per-file output bundle.
-- Codegen diagnostics.
+- `CodegenCtx` — read-only carrier every target sees.
+- `CodegenArtifact` + `ArtifactKind` — per-file output bundle.
+- `CodegenError` — codegen error variants.
+- Two built-in target ZST stubs: `NativeTarget`, `JominiTarget`.
 
 ## Non-scope
 
-- Concrete targets (clause-jomini for Clausewitz, future
-  clause-w3, clause-lua). Each ships as its own repo / crate
-  implementing CodegenTarget.
+- Concrete target backends (real LLVM/cranelift lowering for
+  `NativeTarget`; Clausewitz script emission for `JominiTarget`
+  via the future `clause-jomini` sibling repo). Each ships in
+  its own follow-up round or its own repo.
 - Pass DAG scheduling (clause-schedule).
+- Target-specific IR lowering (BACKLOG).
+- Target-selection priority chain (CLI → package → workspace →
+  builtin) (deferred BACKLOG).
 
 ## Extension-point contract (R3, finalised 2026-04-26)
 
 `CodegenTarget` is a trait that game-specific target repos
 (`clause-jomini`, future `clause-w3`, etc.) implement.
+
+R3 finalised a richer shape:
 
 ```rust
 pub trait CodegenTarget: Send + Sync + 'static {
@@ -49,50 +54,74 @@ pub trait CodegenTarget: Send + Sync + 'static {
 Stages: PreTypecheck / PostTypecheck / CodegenPre / Codegen /
 Link. Targets opt in via `stages()`.
 
-`TargetRegistry` is const-sized `[Option<&'static dyn
-CodegenTarget>; MAX_TARGETS]`. The `dyn CodegenTarget` is the ONE
-exception to the no-dyn discipline; acceptable because (a) it's
-static-lifetime, (b) const-sized, (c) limited to the registry
-iteration surface while individual `compile` calls monomorphise
-via impl bound elsewhere.
+The skeleton round (202604263900) lands a narrower
+instance-method shape that is object-safe directly in the const
+`&'static dyn CodegenTarget` registry without `const-in-trait`
+gymnastics:
+
+```rust
+pub trait CodegenTarget: Sync {
+    fn name(&self) -> &'static str;
+    fn emit(&self, ctx: &CodegenCtx) -> Result<CodegenArtifact, CodegenError>;
+}
+```
+
+The R3 full shape (associated-const `NAME` / `VERSION`,
+`accepts(kind)`, `stages()`, `CodegenOutput` with `manifest` +
+`references`, `render_diagnostic`) is BACKLOG — lands when real
+target backends surface the need.
+
+`TargetRegistry` is const-sized
+`&'static [&'static dyn CodegenTarget]`. The `dyn CodegenTarget`
+is the ONE exception to the no-dyn discipline; acceptable because
+(a) it's static-lifetime, (b) const-sized, (c) limited to the
+registry iteration surface while individual `emit` calls
+monomorphise via impl bound elsewhere. This mirrors the
+`ValidatorRegistry` pattern in clause-typecheck.
 
 Target selection priority: CLI `--target <name>` wins; then
 package-level `[targets]` in Clause.toml; then `[workspace.targets]`;
-then the built-in fallback (`clause-builtin` — identity codegen
-emitting typed IR).
+then the built-in fallback. Implementation deferred BACKLOG —
+skeleton round exposes only `lookup(name)` + `emit_for(name, ctx)`.
 
-`CodegenCtx<'a>` bundles `&mut DiagnosticSink`, `&mut ArtefactCache`,
-and `&Workspace`.
+`CodegenCtx<'a>` this round bundles only `&'a Resolved`. R3's
+`&mut DiagnosticSink`, `&mut ArtefactCache`, `&Workspace` fields
+are BACKLOG.
 
-`CodegenOutput` is `{ bytes: Vec<u8>, manifest: ManifestFragment,
-references: &'static [SymbolRef] }` — opaque payload +
-distribution hints + cross-target reference symbols.
+`CodegenArtifact { kind, bytes, diagnostics }` is the skeleton
+payload. R3's fuller `CodegenOutput { bytes, manifest,
+references }` is BACKLOG.
 
-Built-in targets: `clause-builtin` identity codegen only.
-Clausewitz / W3 / Lua targets ship in sibling repos.
+Built-in targets: `NativeTarget` (future Rust/LLVM or cranelift
+backend) and `JominiTarget` (future Clausewitz engine bytecode,
+to be moved out to a `clause-jomini` sibling repo once it has a
+real body). Both are stubs this round — `emit` returns an empty
+`CodegenArtifact`.
 
 ## Dependencies
 
-- `clause-ir`, `clause-schedule`.
-- `#![no_std]`, no alloc.
+- `clause-ir` — `Diagnostic`.
+- `clause-resolve` — `Resolved`.
+- `std` allowed (host compiler crate).
 
-## Provisional module layout
+## Module layout
 
-- `codegen.rs` — top-level Codegen driver.
-- `target_ir.rs` — TargetIr types.
-- `target.rs` — CodegenTarget trait (R3 contract).
-- `registry.rs` — TargetRegistry const-sized `[Option<&'static dyn
-  CodegenTarget>; MAX_TARGETS]` + `register` / `get` / `iter`.
-- `ctx.rs` — CodegenCtx bundling DiagnosticSink + ArtefactCache +
-  Workspace refs.
-- `output.rs` — CodegenOutput + ManifestFragment + SymbolRef.
-- `selection.rs` — target-selection priority (CLI → package →
-  workspace → builtin).
-- `builtin.rs` — identity CodegenTarget impl (`clause-builtin`).
-- `stage.rs` — Stage enum (PreTypecheck / PostTypecheck /
-  CodegenPre / Codegen / Link).
-- `artifact.rs` — CodegenArtifact.
-- `diagnostics.rs` — codegen error construction.
+- `target.rs` — `CodegenTarget` trait (skeleton instance-method
+  form of the R3 contract).
+- `registry.rs` — `TargetRegistry` ZST with const `TARGETS`
+  slice + `lookup` + `emit_for` associated functions.
+- `ctx.rs` — `CodegenCtx<'a>` bundling `&Resolved`.
+- `artifact.rs` — `CodegenArtifact` + `ArtifactKind`.
+- `error.rs` — `CodegenError` enum.
+- `native.rs` — `NativeTarget` ZST stub.
+- `jomini.rs` — `JominiTarget` ZST stub.
+- `lib.rs` — re-exports + top-level `emit(&Resolved, &str)` entry.
+
+Deferred modules (BACKLOG, added when real backends / framework
+features land): `codegen.rs` (top-level driver), `target_ir.rs`
+(target-agnostic IR), `output.rs` (full `CodegenOutput`),
+`selection.rs` (priority chain), `stage.rs` (pipeline stages),
+`diagnostics.rs` (per-target rendering).
 
 ## Sources
 
@@ -100,6 +129,8 @@ Clausewitz / W3 / Lua targets ship in sibling repos.
 - 202604191300_topic.clause-compiler-prune-plan-seed.md (codegen
   + extension target prior art)
 - 202604191500_changelist.doc.md (R1 round)
-- 202604????????_changelist.doc.md (R3 round — extension-point
-  contract, to come)
-- stellar-heritage/tools/clause/grammar/clause/codegen.py + transpile.py (Python parity)
+- 202604262300_changelist.doc.lock.md (R3 — extension-point
+  contract, finalised 2026-04-26)
+- 202604263900_changelist.doc.md (skeleton round, this round)
+- stellar-heritage/tools/clause/grammar/clause/codegen.py +
+  transpile.py (Python parity)
