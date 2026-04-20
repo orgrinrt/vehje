@@ -68,12 +68,69 @@ commit = "off"
 build = "warn"
 push = "warn"
 
+# --- Drift-catching primitive-vocabulary lints (task #84) ------------------
+# Enabled at warn pending the sweep (#73) that will reshape the existing
+# shipped code. Upgrade to error once the sweep lands.
+#
+# Part of the primitive-vocabulary retrofit after fidelity audit 2026-04-20
+# surfaced 44 bare Option / Result uses and extern crate alloc drift.
+
+[lints.no-bare-result]
+commit = "off"
+build = "warn"
+push = "warn"
+
+[lints.no-bare-string]
+commit = "off"
+build = "warn"
+push = "warn"
+
+[lints.no-bare-vec]
+commit = "off"
+build = "warn"
+push = "warn"
+
+[lints.no-box]
+commit = "off"
+build = "warn"
+push = "warn"
+
+[lints.no-float]
+commit = "off"
+build = "warn"
+push = "warn"
+
+# --- Layer enforcement via forbidden-imports (task #78) --------------------
+#
+# Closes the gap where `extern crate alloc; use alloc::vec::Vec;` compiled
+# clean in the front-end no_std crates. clause-ir, clause-lex, and
+# clause-syntax are declared `#![no_std]` in their lib.rs but had no
+# enforcement against reintroducing alloc/std via `extern crate`.
+#
+# Severity is WARN across all gates for the first shipping cycle so the
+# clause-syntax drift (Vec<SyntaxError> return from parse()) surfaces as a
+# warning without blocking the pipeline. The clause sweep (#73) will
+# reshape the surface to trait-bound sinks, after which this lint upgrades
+# to `build = "error", push = "error"` to match arvo / hilavitkutin.
+
+[lints.forbidden-imports]
+commit = "warn"
+build = "warn"
+push = "warn"
+rules = [
+    { scope = "clause-ir", forbidden = "alloc::*, std::*", reason = "clause-ir is no_std + no_alloc" },
+    { scope = "clause-lex", forbidden = "alloc::*, std::*", reason = "clause-lex is no_std + no_alloc" },
+    { scope = "clause-syntax", forbidden = "alloc::*, std::*", reason = "clause-syntax is no_std + no_alloc — the front-end produces IR only, never runtime state" },
+
+    # Universal: runtime crates guard against hidden syscalls sneaking
+    # through the C ABI boundary.
+    { scope = "clause-runtime-abi", forbidden = "std::thread::*, std::fs::*, std::net::*, std::io::*, std::process::*", reason = "clause-runtime-abi is the C ABI surface; syscalls belong above/below it, not inside" },
+]
+
 # --- Built-in mockspace lints that don't apply to clause -------------------
 # Disables a family of lints carried over from loimu (the original home of
 # mockspace) that encode loimu's plugin / registrable / visibility-macro
-# conventions. clause has its own compiler-phase and no-unsafe / no-dyn
-# custom lints (deferred to post-R1–R4). The loimu-ancestry lints are
-# irrelevant here. Matches the disables in hilavitkutin and saalis
+# conventions. Matches the disables in hilavitkutin and saalis
 # mockspace.toml.
 
 [lints.no-bare-pub]
@@ -87,21 +144,6 @@ build = "off"
 push = "off"
 
 [lints.no-bare-macro-types]
-commit = "off"
-build = "off"
-push = "off"
-
-[lints.no-bare-result]
-commit = "off"
-build = "off"
-push = "off"
-
-[lints.no-bare-string]
-commit = "off"
-build = "off"
-push = "off"
-
-[lints.no-box]
 commit = "off"
 build = "off"
 push = "off"
@@ -142,11 +184,6 @@ build = "off"
 push = "off"
 
 [lints.no-entry-suffix]
-commit = "off"
-build = "off"
-push = "off"
-
-[lints.no-float]
 commit = "off"
 build = "off"
 push = "off"
