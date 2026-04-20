@@ -127,6 +127,7 @@ name = "clause-runtime-tests"
 version = "0.1.0"
 dependencies = [
  "clause-runtime-abi",
+ "clause-runtime-driver",
  "mockspace",
 ]
 

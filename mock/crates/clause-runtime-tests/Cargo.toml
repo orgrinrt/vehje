@@ -6,6 +6,7 @@ license.workspace = true
 
 [dependencies]
 clause-runtime-abi.workspace = true
+clause-runtime-driver.workspace = true
 
 [build-dependencies]
 mockspace.workspace = true
