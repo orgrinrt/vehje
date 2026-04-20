@@ -18,6 +18,12 @@ use crate::result::ClauseResult;
 /// Skeleton: returns `null_mut()`. The real body allocates a
 /// session struct and returns a pointer the caller later
 /// hands to `clause_runtime_free`.
+// SAFETY-GATE: no real body may land in this function before
+//   1. catch_unwind wraps any Rust code that can panic (UB across
+//      FFI otherwise).
+//   2. null+nonzero-len input guards are present where applicable.
+// Both are tracked in BACKLOG as hard gates before non-stub
+// implementation.
 #[unsafe(no_mangle)]
 pub extern "C" fn clause_runtime_new() -> *mut ClauseRuntime {
     core::ptr::null_mut()
@@ -27,6 +33,12 @@ pub extern "C" fn clause_runtime_new() -> *mut ClauseRuntime {
 ///
 /// Skeleton: no-op. Accepts null safely. The real body
 /// deallocates the session allocated by `clause_runtime_new`.
+// SAFETY-GATE: no real body may land in this function before
+//   1. catch_unwind wraps any Rust code that can panic (UB across
+//      FFI otherwise).
+//   2. null+nonzero-len input guards are present where applicable.
+// Both are tracked in BACKLOG as hard gates before non-stub
+// implementation.
 #[unsafe(no_mangle)]
 pub extern "C" fn clause_runtime_free(rt: *mut ClauseRuntime) {
     let _ = rt;
@@ -37,6 +49,15 @@ pub extern "C" fn clause_runtime_free(rt: *mut ClauseRuntime) {
 /// Skeleton: returns `ClauseResult::Err`. The real body hands
 /// off to the runtime backend, which walks the IR-encoded
 /// input and emits an output buffer (BACKLOG).
+// SAFETY-GATE: no real body may land in this function before
+//   1. catch_unwind wraps any Rust code that can panic (UB across
+//      FFI otherwise).
+//   2. null+nonzero-len input guards are present for the
+//      `(input, len)` pair — a null `input` with `len > 0` is a
+//      caller bug that must surface as `ClauseResult::InvalidInput`,
+//      not a segfault.
+// Both are tracked in BACKLOG as hard gates before non-stub
+// implementation.
 #[unsafe(no_mangle)]
 pub extern "C" fn clause_runtime_execute(
     rt: *mut ClauseRuntime,

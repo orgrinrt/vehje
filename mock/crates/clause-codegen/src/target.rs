@@ -41,5 +41,13 @@ pub trait CodegenTarget: Sync {
     /// Skeleton implementations return
     /// `Ok(CodegenArtifact::empty(kind))`; real bodies land in
     /// follow-up rounds (one per target).
+    ///
+    /// # Implementor note
+    ///
+    /// `Diagnostic.message` is `&'static str`. Targets that surface
+    /// diagnostics in produced artifacts must use string literals
+    /// or `const` slices — no `format!`-produced strings.
+    /// Span-enriched rendering is the responsibility of the
+    /// diagnostic renderer, not the target body.
     fn emit(&self, ctx: &CodegenCtx) -> Result<CodegenArtifact, CodegenError>;
 }
