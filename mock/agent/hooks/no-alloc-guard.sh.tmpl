@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# @matchers: Write, Edit
+# @timeout: 5
+# Agent hook: block alloc/Vec/Box/String + bare Option/Result in the no_std
+# clause crates.
+#
+# Scope: clause-ir / clause-lex / clause-syntax / clause-runtime-*. The
+# compiler phases (resolve, typecheck, schedule, codegen) and CLI binary
+# may use std — they're not caught here.
+#
+# Mirrors the mockspace `forbidden-imports` lint + the notko primitive
+# vocabulary. Tasks #77, #78.
+
+set -uo pipefail
+
+__INPUT=$(cat)
+
+{{HOOK_HELPERS}}
+
+FILE_PATH=$(_extract file_path)
+COMMAND=""
+_scope_or_allow
+
+TARGET="$FILE_PATH"
+CONTENT=$(_extract new_string)
+if [[ -z "$CONTENT" ]]; then
+    CONTENT=$(_extract content)
+fi
+
+# Only fire on no_std crates.
+if ! echo "$TARGET" | grep -qE "mock/crates/(clause-ir|clause-lex|clause-syntax|clause-runtime-[a-z]+)/src/"; then
+    allow
+fi
+
+if echo "$CONTENT" | grep -qE '^\s*(pub\s+)?use\s+alloc::'; then
+    deny "BLOCKED: \`use alloc::\` in a clause no_std crate. Reshape the API to take a caller-provided buffer or trait bound."
+fi
+
+if echo "$CONTENT" | grep -qE '^\s*extern\s+crate\s+alloc'; then
+    deny "BLOCKED: \`extern crate alloc\` in a clause no_std crate. Remove it — the no_std attribute is load-bearing."
+fi
+
+if echo "$CONTENT" | grep -qE '(^|[^a-zA-Z0-9_])Vec<'; then
+    deny "BLOCKED: \`Vec<T>\` in a clause no_std crate. Take \`&[T]\` / \`impl IntoIterator<Item = T>\` or a trait-bound sink (\`&mut impl Collector<T>\`)."
+fi
+
+if echo "$CONTENT" | grep -qE '(^|[^a-zA-Z0-9_])String([^a-zA-Z0-9_]|$)'; then
+    deny "BLOCKED: \`String\` in a clause no_std crate. Use \`&'static str\` or \`hilavitkutin_str::Str\`."
+fi
+
+if echo "$CONTENT" | grep -qE '(^|[^a-zA-Z0-9_])Box<'; then
+    deny "BLOCKED: \`Box<T>\` in a clause no_std crate. Store by value or take a reference."
+fi
+
+if echo "$CONTENT" | grep -qE '^\s*pub\s+fn\s+.*\sOption<' | grep -qvE 'allow-bare-option:'; then
+    deny "BLOCKED: bare \`Option<T>\` in a \`pub\` signature in a clause no_std crate. Use \`notko::Maybe<T>\`. If this is a std-trait-impl method, remove the \`pub\` qualifier or add \`// allow-bare-option: tracked: #<task-id>\`."
+fi
+
+if echo "$CONTENT" | grep -qE '^\s*pub\s+fn\s+.*\sResult<' | grep -qvE 'allow-bare-result:'; then
+    deny "BLOCKED: bare \`Result<T, E>\` in a \`pub\` signature in a clause no_std crate. Use \`notko::Outcome<T, E>\`. If this is a std-trait-impl method (fmt::Result, etc.), remove the \`pub\` qualifier or add \`// allow-bare-result: tracked: #<task-id>\`."
+fi
+
+allow
