@@ -1,10 +1,17 @@
 [workspace]
 resolver = "2"
 members = [
-    # Crates land after the first design-round session decides the
-    # compiler/runtime split. Keep the array empty until then — the
-    # mockspace tool accepts zero-member workspaces and validates
-    # only the root shape.
+    "crates/clause",
+    "crates/clause-ir",
+    "crates/clause-lex",
+    "crates/clause-syntax",
+    "crates/clause-resolve",
+    "crates/clause-typecheck",
+    "crates/clause-schedule",
+    "crates/clause-codegen",
+    "crates/clause-runtime-abi",
+    "crates/clause-runtime-driver",
+    "crates/clause-runtime-tests",
 ]
 
 [workspace.package]
@@ -17,14 +24,26 @@ mockspace = { git = "ssh://git@github.com/hiisi-digital/mockspace.git", branch =
 
 # Consumed substrate. Resolved to live git deps as the Clause workspace
 # grows into real crates.
-arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
-arvo-bits = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
-arvo-bitmask = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
-arvo-graph = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
-arvo-sparse = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
-arvo-spectral = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
-arvo-comb = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "main" }
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev" }
+arvo-bits = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev" }
+arvo-bitmask = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev" }
+arvo-graph = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev" }
+arvo-sparse = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev" }
+arvo-spectral = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev" }
+arvo-comb = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev" }
 
-hilavitkutin-api = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", branch = "main" }
-hilavitkutin = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", branch = "main" }
-hilavitkutin-build = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", branch = "main" }
+hilavitkutin-api = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", branch = "dev" }
+hilavitkutin = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", branch = "dev" }
+hilavitkutin-build = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", branch = "dev" }
+
+# In-workspace phase crates — path deps for inter-phase consumption.
+clause-ir = { path = "crates/clause-ir" }
+clause-lex = { path = "crates/clause-lex" }
+clause-syntax = { path = "crates/clause-syntax" }
+clause-resolve = { path = "crates/clause-resolve" }
+clause-typecheck = { path = "crates/clause-typecheck" }
+clause-schedule = { path = "crates/clause-schedule" }
+clause-codegen = { path = "crates/clause-codegen" }
+clause-runtime-abi = { path = "crates/clause-runtime-abi" }
+clause-runtime-driver = { path = "crates/clause-runtime-driver" }
+clause-runtime-tests = { path = "crates/clause-runtime-tests" }

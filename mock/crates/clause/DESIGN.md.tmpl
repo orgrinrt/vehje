@@ -1,0 +1,23 @@
+# clause — Design (top-level binary)
+
+Command-line binary tying together the compiler phase crates. Single
+shippable artifact. No algorithmic logic — orchestration, CLI
+parsing, phase scheduling hand-off only.
+
+## Provisional shape
+
+- `clause` command-line entry with subcommands: `check`, `build`,
+  `compile`, `new`.
+- Orchestrates the pass DAG via `clause-schedule` (arvo-graph).
+- Loads workspace manifest via `clause-manifest` (TBD by R1).
+- Emits diagnostics through the shared diagnostic framework.
+
+Finalised shape depends on the R1 compiler crate-split round (Task
+#27). Until then this DESIGN carries only the orchestration spine
+so the workspace bootstraps.
+
+## Sources
+
+- 202604191300_topic.clause-design-seed.md (authoritative spec — 3095 lines)
+- 202604191300_topic.clause-compiler-prune-plan-seed.md (port targets)
+- stellar-heritage/tools/clause/ (Python parity oracle)

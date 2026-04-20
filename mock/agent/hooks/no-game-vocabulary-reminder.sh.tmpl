@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# @matchers: Bash, Write, Edit
+# @timeout: 5
+# Agent hook: warn when game-specific vocabulary appears in Write/Edit
+# content. Clause is a game-agnostic language; game-specific surface
+# (Clausewitz / Witcher / Stellaris / Sims / city-builder grammars
+# etc.) belongs in extension repos (`clause-jomini`, future others),
+# not in this repo.
+#
+# This hook uses context() rather than deny(). Matches inside a path
+# that references the parity-oracle (`stellar-heritage`) are skipped
+# because those are legitimate references, not inlined game surface.
+#
+# Build-time lint `no-game-vocabulary` (planned post-R1–R4) will turn
+# this into a hard error once the crate split exists.
+
+set -uo pipefail
+
+__INPUT=$(cat)
+
+{{HOOK_HELPERS}}
+
+TARGET=$(_extract file_path)
+CONTENT=$(_extract new_string)
+if [[ -z "$CONTENT" ]]; then
+    CONTENT=$(_extract content)
+fi
+if [[ -z "$CONTENT" ]]; then
+    CONTENT=$(_extract command)
+fi
+
+# Skip empty payloads.
+if [[ -z "$CONTENT" ]]; then
+    allow
+fi
+
+# Skip writes targeting the parity-oracle path explicitly.
+if echo "$TARGET" | grep -qi "stellar-heritage"; then
+    allow
+fi
+
+# Case-insensitive search for game-specific vocabulary.
+HITS=$(printf '%s' "$CONTENT" \
+    | grep -oiE '(clausewitz|witcher|stellaris|paradox|ck3|hoi4|eu4|the_sims|cities_skylines)' \
+    | sort -u \
+    | tr '\n' ' ')
+
+if [[ -n "$HITS" ]]; then
+    # Strip matches that appear only in a reference to the parity
+    # oracle path. Conservative heuristic: if every hit line also
+    # contains `stellar-heritage`, treat as benign.
+    NON_ORACLE=$(printf '%s' "$CONTENT" \
+        | grep -iE '(clausewitz|witcher|stellaris|paradox|ck3|hoi4|eu4|the_sims|cities_skylines)' \
+        | grep -viE 'stellar-heritage' \
+        | head -c 200)
+    if [[ -n "$NON_ORACLE" ]]; then
+        context "clause is game-agnostic — found game-specific vocabulary: ${HITS}. If this is compiler or runtime code, move it to an extension repo (e.g. clause-jomini for Clausewitz). If it is a parity-oracle reference, cite the stellar-heritage path explicitly so this reminder can skip it."
+    fi
+fi
+
+allow
