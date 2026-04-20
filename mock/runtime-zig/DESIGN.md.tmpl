@@ -21,16 +21,39 @@ Phase 6 skeleton round (2026-04-20) ships:
 
 - `build.zig` declaring a `clause_runtime` shared-library
   target. Output: `zig-out/lib/libclause_runtime.{so|dylib|dll}`.
-- `src/main.zig` exporting three `extern "C"` stubs matching
+- `src/runtime.zig` exporting three `extern "C"` stubs matching
   the Rust `clause-runtime-abi` exports:
   - `clause_runtime_new() ?*anyopaque` → null.
   - `clause_runtime_free(?*anyopaque) void` → no-op.
-  - `clause_runtime_execute(?*anyopaque, [*]const u8, usize) ClauseResult`
-    → `{ .code = -1 }`.
-  - `pub const ClauseResult = extern struct { code: i32 };`.
+  - `clause_runtime_execute(?*anyopaque, [*]const u8, usize) i32`
+    → `CLAUSE_RESULT_ERR` (`-1`).
+  - `pub const CLAUSE_RESULT_OK: i32 = 0;` (+ `_ERR`,
+    `_NULL_HANDLE`, `_INVALID_INPUT` matching the Rust
+    discriminants).
 - `README.md` describing the tree + build workflow.
 - `.gitignore` excluding `zig-out/`, `zig-cache/`.
 - `BACKLOG.md` listing deferred runtime features.
+
+### `ClauseResult` ABI layout — scalar i32
+
+The Rust side declares `#[repr(i32)] enum ClauseResult { Ok = 0,
+Err = -1, NullHandle = -2, InvalidInput = -3 }`. On System V
+x86-64 and Apple ARM64 this lowers to a scalar-in-register
+return. The Zig side returns plain `i32` directly, giving
+identical register-use on every target.
+
+Alternative considered and rejected: mirror the Rust enum via
+`pub const ClauseResult = extern struct { code: i32 }` (a
+one-field wrapper struct). Rejected because on MSVC Windows
+x64 a one-field extern struct returns via hidden-pointer
+(sret) while a `#[repr(i32)]` enum returns in `eax` — the two
+sides would disagree on the calling convention. Scalar `i32`
+return is the trivially portable form across every ABI.
+
+Named constants (`CLAUSE_RESULT_OK`, `CLAUSE_RESULT_ERR`,
+`CLAUSE_RESULT_NULL_HANDLE`, `CLAUSE_RESULT_INVALID_INPUT`)
+mirror the Rust discriminants exactly and give Zig-side call
+sites a readable form instead of bare integer literals.
 
 Real interpreter body, arena allocator, scratch-var evaluator,
 TokenStream emitter, and Zig test suite are all BACKLOG.
