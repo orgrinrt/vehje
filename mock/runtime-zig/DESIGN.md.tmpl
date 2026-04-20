@@ -15,10 +15,30 @@ IR interpreter, scratch-var folding, and generative expansion.
 - TokenStream emitter — macros return AbiToken arrays.
 - Error reporter — maps Zig-side failures to AbiDiagnostic.
 
+## Round-skeleton scope
+
+Phase 6 skeleton round (2026-04-20) ships:
+
+- `build.zig` declaring a `clause_runtime` shared-library
+  target. Output: `zig-out/lib/libclause_runtime.{so|dylib|dll}`.
+- `src/main.zig` exporting three `extern "C"` stubs matching
+  the Rust `clause-runtime-abi` exports:
+  - `clause_runtime_new() ?*anyopaque` → null.
+  - `clause_runtime_free(?*anyopaque) void` → no-op.
+  - `clause_runtime_execute(?*anyopaque, [*]const u8, usize) ClauseResult`
+    → `{ .code = -1 }`.
+  - `pub const ClauseResult = extern struct { code: i32 };`.
+- `README.md` describing the tree + build workflow.
+- `.gitignore` excluding `zig-out/`, `zig-cache/`.
+- `BACKLOG.md` listing deferred runtime features.
+
+Real interpreter body, arena allocator, scratch-var evaluator,
+TokenStream emitter, and Zig test suite are all BACKLOG.
+
 ## Non-scope
 
-- The ABI contract itself (clause-runtime-abi).
-- The compiler-side dispatch (clause-runtime-driver).
+- The ABI contract itself (`clause-runtime-abi`).
+- The compiler-side dispatch (`clause-runtime-driver`).
 - Runtime performance tuning (post-Phase 6).
 
 ## Build integration
@@ -28,6 +48,9 @@ IR interpreter, scratch-var folding, and generative expansion.
 - Target-triple-specific builds; a distribution bundle pairs the
   Rust compiler binary with the matching dylib for each supported
   platform.
+- Mockspace does not build this tree — it ships source but
+  cargo / mockspace lints ignore the `.zig` files. The Zig side
+  is validated only by running `zig build` manually or in CI.
 
 ## Dependencies
 
@@ -41,3 +64,4 @@ IR interpreter, scratch-var folding, and generative expansion.
 - 202604191301/202604191300_research.scratch-variables.md
 - 202604191301/202604191300_research.generative-pipeline.md
 - 202604262100_changelist.doc.md (R2 round)
+- 202604264100_changelist.doc.md (Phase 6 skeleton round)

@@ -3,5 +3,48 @@
 Zig-authored dynamic library implementing macro interpretation,
 scratch lowering, and generative expansion against Clause IR
 buffers received through the C ABI defined by
-`clause-runtime-abi`. Delivered as libclause_runtime.{so|dylib|dll}
-bundled alongside the compiler binary.
+`clause-runtime-abi`. Delivered as
+`libclause_runtime.{so|dylib|dll}` bundled alongside the compiler
+binary.
+
+## Building
+
+```sh
+cd mock/runtime-zig
+zig build
+```
+
+Output lands at `zig-out/lib/libclause_runtime.{so|dylib|dll}`
+(extension depends on host OS).
+
+## How the Rust side locates the binary
+
+Phase 6 skeleton round does not yet locate the binary; the
+Rust-side `RuntimeLoader::load` returns
+`LoaderError::NotImplemented`. Follow-up rounds wire a locate
+path:
+
+- `CLAUSE_RUNTIME_PATH` environment variable — explicit path
+  to the dylib.
+- Fallback: next-to-Rust-binary convention.
+- Fallback: embedded runtime (statically linked lightweight
+  backend, for test / dev use).
+
+See `BACKLOG.md` for the full deferred-feature list.
+
+## Build status
+
+Mockspace does NOT build this tree. The Zig tree ships source
+only; `cargo mock check` ignores `.zig` files. Validate the
+Zig side by running `zig build` manually or via a CI job.
+
+## Skeleton-round scope
+
+Phase 6 skeleton (2026-04-20) ships three `extern "C"` stubs:
+
+- `clause_runtime_new() ?*anyopaque` → null.
+- `clause_runtime_free(?*anyopaque) void` → no-op.
+- `clause_runtime_execute(?*anyopaque, [*]const u8, usize) ClauseResult`
+  → `{ .code = -1 }`.
+
+Real interpreter body lands in follow-up rounds.
