@@ -20,7 +20,9 @@
 //! The sink interface keeps the lexer `no_std` and alloc-free; the
 //! most common case (no diagnostics) costs nothing.
 
-use clause_ir::{ByteOffset, Diagnostic, FileId, Severity, Span, TokenKind};
+use clause_ir::{
+    ByteOffset, DiagPhase, Diagnostic, FileId, Severity, Span, TokenKind,
+};
 
 use crate::cursor::Cursor;
 use crate::token::Token;
@@ -132,6 +134,7 @@ impl<'a> Lexer<'a> {
         }
         let end = self.cursor.pos_u32();
         (sink)(Diagnostic::new(
+            DiagPhase::Lex,
             Severity::Error,
             Span::new(self.file, ByteOffset(start), ByteOffset(end)),
             "unrecognised byte in source",
@@ -165,6 +168,7 @@ impl<'a> Lexer<'a> {
                 // are not `*/`, emit a diagnostic.
                 if !terminated_block(self.cursor.src(), s, e) {
                     (sink)(Diagnostic::new(
+                        DiagPhase::Lex,
                         Severity::Error,
                         Span::new(
                             self.file,
@@ -236,6 +240,7 @@ impl<'a> Lexer<'a> {
                 let (k, s, e) = read_block_comment(&mut self.cursor);
                 if !terminated_block(self.cursor.src(), s, e) {
                     (sink)(Diagnostic::new(
+                        DiagPhase::Lex,
                         Severity::Error,
                         Span::new(
                             self.file,

@@ -10,7 +10,7 @@
 //! produce today; follow-up rounds extend the enum as new grammar
 //! productions learn to fail in new ways.
 
-use clause_ir::{Diagnostic, Severity, Span};
+use clause_ir::{DiagPhase, Diagnostic, Severity, Span};
 
 /// Classification of a syntax error.
 ///
@@ -67,6 +67,11 @@ impl SyntaxError {
 
 impl From<SyntaxError> for Diagnostic {
     fn from(err: SyntaxError) -> Self {
-        Diagnostic::new(Severity::Error, err.span, err.message)
+        Diagnostic::new(
+            DiagPhase::Syntax,
+            Severity::Error,
+            err.span,
+            err.message,
+        )
     }
 }

@@ -5,6 +5,10 @@
 //! downstream renderer (in the `clause` binary) is responsible for
 //! pairing each diagnostic with the span's source text and producing
 //! the human-facing output.
+//!
+//! Every `Diagnostic` carries a `DiagPhase` discriminant naming the
+//! compiler phase that produced it. The renderer can filter / route
+//! by phase without having to parse the static `message` string.
 
 use crate::span::Span;
 
@@ -28,14 +32,34 @@ impl Default for Severity {
     }
 }
 
-/// Structured diagnostic carrying severity, primary span, and static
-/// message text plus a set of related spans (secondary labels).
+/// Compiler phase that produced a diagnostic.
+///
+/// Lets a diagnostic consumer (renderer, sink, filter) route by phase
+/// without parsing the static `message` string. The variants map 1:1
+/// onto the shipped phase crates: `clause-lex`, `clause-syntax`,
+/// `clause-resolve`, `clause-typecheck`, `clause-codegen`, and the
+/// runtime / ABI shim for diagnostics that surface from the Zig
+/// side through `clause-runtime-driver`.
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+#[repr(u8)]
+pub enum DiagPhase {
+    Lex = 0,
+    Syntax = 1,
+    Resolve = 2,
+    Typecheck = 3,
+    Codegen = 4,
+    Runtime = 5,
+}
+
+/// Structured diagnostic carrying phase, severity, primary span, and
+/// static message text plus a set of related spans (secondary labels).
 ///
 /// Both `message` and `related` are `'static`; diagnostics never own
 /// heap memory. Producers emit diagnostics into a caller-supplied
 /// sink; this type intentionally does not prescribe the sink shape.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub struct Diagnostic {
+    pub phase: DiagPhase,
     pub severity: Severity,
     pub span: Span,
     pub message: &'static str,
@@ -44,12 +68,21 @@ pub struct Diagnostic {
 
 impl Diagnostic {
     /// Construct a diagnostic with no related labels.
-    pub const fn new(severity: Severity, span: Span, message: &'static str) -> Self {
-        Self { severity, span, message, related: &[] }
+    pub const fn new(
+        phase: DiagPhase,
+        severity: Severity,
+        span: Span,
+        message: &'static str,
+    ) -> Self {
+        Self { phase, severity, span, message, related: &[] }
     }
 
     /// Construct an error-severity diagnostic with no related labels.
-    pub const fn error(span: Span, message: &'static str) -> Self {
-        Self::new(Severity::Error, span, message)
+    pub const fn error(
+        phase: DiagPhase,
+        span: Span,
+        message: &'static str,
+    ) -> Self {
+        Self::new(phase, Severity::Error, span, message)
     }
 }

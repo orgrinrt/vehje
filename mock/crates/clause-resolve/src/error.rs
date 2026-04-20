@@ -13,7 +13,7 @@
 //! per variant. Per-variant rendering lands alongside the rule
 //! that produces the error.
 
-use clause_ir::{Diagnostic, Severity, Span};
+use clause_ir::{DiagPhase, Diagnostic, Severity, Span};
 
 /// Name-resolution failure.
 ///
@@ -57,7 +57,7 @@ impl From<ResolveError> for Diagnostic {
             ResolveError::UnresolvedIdentifier { .. } => "unresolved identifier",
             ResolveError::DuplicateDefinition { .. } => "duplicate definition",
         };
-        Diagnostic::new(Severity::Error, span, message)
+        Diagnostic::new(DiagPhase::Resolve, Severity::Error, span, message)
     }
 }
 
