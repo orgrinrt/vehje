@@ -1,5 +1,13 @@
 # Clause research — imported context + lessons + port plan
 
+> **READ `substrate-principle.md` FIRST.** It is the first-principle
+> that binds every other doc here. Clause uses notko / arvo /
+> hilavitkutin for everything; nothing clause-invented when the
+> substrate covers the need, nothing external when the substrate
+> should cover the need. If you are about to open a design round
+> for clause, re-read that doc before the first line of the topic
+> file.
+
 This directory carries the research, design history, and lessons
 that inform the Rust rewrite of Clause. It has three layers:
 
@@ -36,18 +44,30 @@ inherit their framing or their decisions by default.
 
 ## 2. Author-side research written for the port
 
+- `substrate-principle.md` — **THE load-bearing doc.** Clause
+  uses notko / arvo / hilavitkutin for every need the substrate
+  covers or should cover. No external crates for
+  infrastructure. The runtime IS hilavitkutin. The pass engine
+  IS hilavitkutin. Persistence IS hilavitkutin-persistence.
+  Numerics ARE arvo. Fallibility IS notko. Read this first;
+  every other doc is subordinate to it.
 - `python-clause-survey.md` — deep survey of the Python
   implementation (2026-04-21): language surface, compiler
   architecture, pass framework, CLI, what's done vs deferred,
-  downfalls, features the Rust port must replicate.
+  downfalls, features the Rust port must replicate. Frame of
+  reference only; substrate-principle overrides any Python
+  decision.
 - `lessons-learned.md` — what we learned from Python Clause:
   decisions worth inheriting, decisions worth rejecting,
-  downfalls, features strictly better in Rust. Reads the survey
-  and the reviews together.
+  downfalls, and how the substrate lets Rust clause do strictly
+  better. Reads the survey and the reviews together through the
+  substrate lens.
 - `parity-plan.md` — the roadmap from today's Rust skeleton
   (clause-lex real, everything else stub) to feature parity with
   Python Clause and beyond. Per-crate scope, design-round
-  ordering, dependency graph, exit criteria.
+  ordering, dependency graph, exit criteria. Every milestone
+  goes through substrate primitives; cross-crate extensions are
+  called out.
 
 ## 3. How to use this directory
 
