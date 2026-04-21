@@ -8,31 +8,36 @@
 //! can produce (`Parse`, `NotImplemented`); real TOML parsing
 //! will extend it.
 //!
+//! Both variants carry interned `Str` names, so `ResolveError`
+//! itself is `Copy`, matching the front-end
+//! `E: Copy + Into<Diagnostic>` symmetry.
+//!
 //! `From<ResolveError> for Diagnostic` emits an
 //! `Severity::Error` diagnostic with a static placeholder message
 //! per variant. Per-variant rendering lands alongside the rule
 //! that produces the error.
 
 use clause_ir::{DiagPhase, Diagnostic, Severity, Span};
+use hilavitkutin_str::Str;
 
 /// Name-resolution failure.
 ///
 /// The skeleton produces no `ResolveError` directly; the variants
 /// exist so follow-up rounds can construct and propagate them as
 /// soon as their rule lands.
-#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum ResolveError {
     /// A reference could not be resolved to any in-scope symbol.
     UnresolvedIdentifier {
         /// The referenced name.
-        name: String,
+        name: Str,
         /// Span of the reference.
         span: Span,
     },
     /// The same name was declared twice in the same scope.
     DuplicateDefinition {
         /// The declared name.
-        name: String,
+        name: Str,
         /// Span of the duplicate declaration.
         span: Span,
         /// Span of the previous declaration.

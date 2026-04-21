@@ -39,9 +39,11 @@ rounds do not churn it.
 - **`ScopeId` in clause-ir** — already landed in R1; BACKLOG
   only notes that any future cross-crate tweak should stay
   reusable.
-- **String interning for `Symbol` names** — replace owned
-  `String` with an interned handle; halves memory on large
-  workspaces and makes `Symbol` `Copy`.
+- **Interned `Str` name expansion** — this round adopts
+  `hilavitkutin_str::Str`; follow-up work connects the
+  `StringInterner` instance to the compiler driver so the
+  runtime-origin bit of `Str` carries real IDs (not just the
+  compile-time `str_const!()` path).
 - **Incremental resolve for IDE** — delta walk that re-resolves
   only the changed subtree, keyed off AST node diff.
 
@@ -58,20 +60,14 @@ rounds do not churn it.
   emits static placeholder messages; follow-up rounds replace
   them with per-variant messages once the producer rules land.
 
-## Front-end review notes
+## Scheduler handoff for collection fields
 
-- **`ResolveError` is not `Copy`** because
-  `UnresolvedIdentifier.name` and `DuplicateDefinition.name` hold
-  owned `String`. This breaks the `E: Copy + Into<Diagnostic>`
-  symmetry that the rest of the front-end preserves
-  (`SyntaxError` is `Copy`; `Diagnostic` is `Copy`). The fix
-  lands naturally with the Symbol-interning round listed under
-  "Non-blocking follow-ups" above: once `Symbol::name` is an
-  `InternedSymbol` (or similar small `Copy` handle), the two
-  `ResolveError` variants become `Copy` at no extra cost and
-  `ResolveError` itself becomes `Copy`. Do not try to work
-  around the issue before the interning round lands — the
-  owned `String` is load-bearing while names are raw strings,
-  and short-term workarounds (e.g. splitting the enum into
-  `Copy` and non-`Copy` halves) create more surface than they
-  save.
+The four skeleton-backed collection fields (`Scope::symbols`,
+`ScopeTree::scopes`, `Resolved::resolution`,
+`Manifest::dependencies`) are tracked in SHAME.md against #131
+(clause-schedule as hilavitkutin WorkUnit home) and #134
+(persistence spine). Once the scheduler owns resolver state,
+each field moves to a scheduler-managed `Column<T>` or a
+`Map<K, V, N: Cap>` descriptor over an AccessSet-typed
+read/write pair. Do not rewrite the fields inline before
+#131 lands.

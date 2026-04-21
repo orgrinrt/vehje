@@ -59,7 +59,7 @@ impl Resolver {
     /// `ast.len()`. Each deferred resolution rule flips a subset
     /// of those slots in its own follow-up round.
     pub fn resolve(self, ast: &Ast) -> Outcome<Resolved, ResolveError> {
-        let resolution = vec![Maybe::Isnt; ast.len()];
+        let resolution = vec![Maybe::Isnt; ast.len()]; // lint:allow(bare_collection) reason: skeleton-resolver hand-off buffer; re-expressed as Column<Maybe<Symbol>> build once #131 lands; tracked: #131
         Outcome::Ok(Resolved::new(*ast, self.scopes, resolution))
     }
 }

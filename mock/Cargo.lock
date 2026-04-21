@@ -14,7 +14,7 @@ dependencies = [
 [[package]]
 name = "arvo"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#541e4c775c7dba31c5e905c316a95330c35d3461"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#24afda0a663fadf1f689b9ec37a4abafd7f6abcf"
 dependencies = [
  "mockspace",
  "notko",
@@ -23,17 +23,18 @@ dependencies = [
 [[package]]
 name = "arvo-bitmask"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#541e4c775c7dba31c5e905c316a95330c35d3461"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#24afda0a663fadf1f689b9ec37a4abafd7f6abcf"
 dependencies = [
  "arvo",
  "arvo-bits",
+ "arvo-tensor",
  "mockspace",
 ]
 
 [[package]]
 name = "arvo-bits"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#541e4c775c7dba31c5e905c316a95330c35d3461"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#24afda0a663fadf1f689b9ec37a4abafd7f6abcf"
 dependencies = [
  "arvo",
  "mockspace",
@@ -46,6 +47,15 @@ source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#541e4c775c7dba31
 dependencies = [
  "arvo",
  "arvo-bitmask",
+ "mockspace",
+]
+
+[[package]]
+name = "arvo-tensor"
+version = "0.1.0"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#24afda0a663fadf1f689b9ec37a4abafd7f6abcf"
+dependencies = [
+ "arvo",
  "mockspace",
 ]
 
@@ -110,8 +120,11 @@ dependencies = [
 name = "clause-resolve"
 version = "0.1.0"
 dependencies = [
+ "arvo",
+ "arvo-bits",
  "clause-ir",
  "clause-syntax",
+ "hilavitkutin-str",
  "mockspace",
  "notko",
 ]
@@ -217,6 +230,16 @@ dependencies = [
 name = "hilavitkutin-ctx"
 version = "0.1.0"
 source = "git+ssh://git@github.com/orgrinrt/hilavitkutin.git?branch=dev#56d325665b824b508ba4349e8ad9909d93962870"
+
+[[package]]
+name = "hilavitkutin-str"
+version = "0.1.0"
+source = "git+ssh://git@github.com/orgrinrt/hilavitkutin.git?branch=dev#56d325665b824b508ba4349e8ad9909d93962870"
+dependencies = [
+ "arvo",
+ "arvo-bits",
+ "notko",
+]
 
 [[package]]
 name = "indexmap"

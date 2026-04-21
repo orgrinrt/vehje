@@ -5,13 +5,16 @@
 //! scopes, keyed by `ScopeId` (from `clause-ir`). The root scope
 //! lives at index `0` and has no parent.
 //!
-//! Skeleton round: the map is a `HashMap<String, Symbol>` — owned
-//! strings, standard hashing. Interning + lookup-by-interned-id is
-//! BACKLOG.
+//! The map is keyed by interned `Str` handles; comparison is
+//! integer equality. Internal backing storage is a skeleton
+//! `HashMap<Str, Symbol>` / `Vec<Scope>` until the scheduler
+//! rehomes them as `Column`-backed state (#131).
 
 use std::collections::HashMap;
 
+use arvo::{newtype::Bool, USize};
 use clause_ir::ScopeId;
+use hilavitkutin_str::Str;
 use notko::Maybe;
 
 use crate::symbol::Symbol;
@@ -25,7 +28,7 @@ use crate::symbol::Symbol;
 #[derive(Clone, Debug, Default)]
 pub struct Scope {
     parent: Maybe<ScopeId>,
-    symbols: HashMap<String, Symbol>,
+    symbols: HashMap<Str, Symbol>, // lint:allow(bare_collection) reason: skeleton scope-symbol backing; re-expressed as scheduler-managed Column<Symbol> + Map<Str, SymbolSlot> once #131 lands (see SHAME.md `## Scope`); tracked: #131
 }
 
 impl Scope {
@@ -42,7 +45,7 @@ impl Scope {
     /// Insert a symbol under `name`. If a symbol already existed
     /// under that name in this scope, the previous occupant is
     /// returned.
-    pub fn insert(&mut self, name: String, symbol: Symbol) -> Maybe<Symbol> {
+    pub fn insert(&mut self, name: Str, symbol: Symbol) -> Maybe<Symbol> {
         match self.symbols.insert(name, symbol) {
             Some(prev) => Maybe::Is(prev),
             None => Maybe::Isnt,
@@ -51,8 +54,8 @@ impl Scope {
 
     /// Look up a symbol by name in this scope only (no parent
     /// walk). Parent walks are a follow-up round concern.
-    pub fn lookup(&self, name: &str) -> Maybe<&Symbol> {
-        match self.symbols.get(name) {
+    pub fn lookup(&self, name: Str) -> Maybe<&Symbol> {
+        match self.symbols.get(&name) {
             Some(sym) => Maybe::Is(sym),
             None => Maybe::Isnt,
         }
@@ -66,7 +69,7 @@ impl Scope {
 /// scope with the given parent and returns its id.
 #[derive(Clone, Debug)]
 pub struct ScopeTree {
-    scopes: Vec<Scope>,
+    scopes: Vec<Scope>, // lint:allow(bare_collection) reason: skeleton scope-tree storage; re-expressed as scheduler-managed Column<Scope> once #131 lands (see SHAME.md `## ScopeTree`); tracked: #131
 }
 
 impl Default for ScopeTree {
@@ -87,19 +90,19 @@ impl ScopeTree {
     }
 
     /// Number of scopes currently in the tree (at least 1).
-    pub fn len(&self) -> usize {
-        self.scopes.len()
+    pub fn len(&self) -> USize {
+        USize(self.scopes.len())
     }
 
     /// `true` if the tree has only the root scope.
-    pub fn is_trivial(&self) -> bool {
-        self.scopes.len() <= 1
+    pub fn is_trivial(&self) -> Bool {
+        Bool(self.scopes.len() <= 1)
     }
 
     /// Borrow a scope by id, or `Maybe::Isnt` if the id is out of
     /// range.
     pub fn get(&self, id: ScopeId) -> Maybe<&Scope> {
-        match self.scopes.get(id.0 as usize) {
+        match self.scopes.get(id.0 as usize) { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal u32-to-usize cast for std Vec indexing; Vec is carved out above; tracked: #131
             Some(s) => Maybe::Is(s),
             None => Maybe::Isnt,
         }
@@ -108,7 +111,7 @@ impl ScopeTree {
     /// Mutably borrow a scope by id, or `Maybe::Isnt` if out of
     /// range.
     pub fn get_mut(&mut self, id: ScopeId) -> Maybe<&mut Scope> {
-        match self.scopes.get_mut(id.0 as usize) {
+        match self.scopes.get_mut(id.0 as usize) { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal u32-to-usize cast for std Vec indexing; Vec is carved out above; tracked: #131
             Some(s) => Maybe::Is(s),
             None => Maybe::Isnt,
         }
@@ -116,7 +119,7 @@ impl ScopeTree {
 
     /// Allocate a new scope with the given parent, return its id.
     pub fn push(&mut self, parent: Maybe<ScopeId>) -> ScopeId {
-        let id = ScopeId(self.scopes.len() as u32);
+        let id = ScopeId(self.scopes.len() as u32); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal usize-to-u32 cast matching ScopeId's fixed width; Vec is carved out above; tracked: #131
         self.scopes.push(Scope::new(parent));
         id
     }

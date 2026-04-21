@@ -1,13 +1,16 @@
 //! Validator-registry tests.
 //!
 //! Assert the const `VALIDATORS` list has exactly ten entries,
-//! `run_all` returns empty on an empty `Resolved`, the documented
+//! `run_all` pushes nothing on an empty `Resolved`, the documented
 //! ordering is preserved, and no names collide.
 
 use std::collections::HashSet;
 
+use arvo::USize;
+use clause_ir::Diagnostic;
 use clause_resolve::Resolved;
 use clause_typecheck::{ValidatorCtx, ValidatorRegistry};
+use hilavitkutin_api::{sink::CountingSink, Len};
 
 #[test]
 fn registry_has_ten() {
@@ -18,7 +21,9 @@ fn registry_has_ten() {
 fn registry_run_all_empty_resolved() {
     let resolved = Resolved::empty();
     let ctx = ValidatorCtx::new(&resolved);
-    assert!(ValidatorRegistry::run_all(&ctx).is_empty());
+    let mut sink = CountingSink::<Diagnostic>::new();
+    ValidatorRegistry::run_all(&ctx, &mut sink);
+    assert_eq!(sink.len(), USize(0));
 }
 
 #[test]

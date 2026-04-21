@@ -10,6 +10,7 @@
 //! Skeleton round: every entry is `Maybe::Isnt`; the resolver does
 //! not walk the AST.
 
+use arvo::newtype::Bool;
 use clause_syntax::Ast;
 use notko::Maybe;
 
@@ -28,7 +29,7 @@ use crate::symbol::Symbol;
 pub struct Resolved {
     ast: Ast,
     scopes: ScopeTree,
-    resolution: Vec<Maybe<Symbol>>,
+    resolution: Vec<Maybe<Symbol>>, // lint:allow(bare_collection) reason: skeleton resolution-map storage; re-expressed as scheduler-managed Column<Maybe<Symbol>> + persistence sidecar once #131 / #134 land (see SHAME.md `## Resolved`); tracked: #131
 }
 
 impl Resolved {
@@ -38,12 +39,12 @@ impl Resolved {
         Self {
             ast: Ast::default(),
             scopes: ScopeTree::default(),
-            resolution: Vec::new(),
+            resolution: Vec::new(), // lint:allow(bare_collection) reason: skeleton empty-init; tracked: #131
         }
     }
 
     /// Construct a `Resolved` from its parts.
-    pub fn new(ast: Ast, scopes: ScopeTree, resolution: Vec<Maybe<Symbol>>) -> Self {
+    pub fn new(ast: Ast, scopes: ScopeTree, resolution: Vec<Maybe<Symbol>>) -> Self { // lint:allow(bare_collection) reason: skeleton resolver hand-off surface; re-expressed once #131 lands; tracked: #131
         Self { ast, scopes, resolution }
     }
 
@@ -65,9 +66,11 @@ impl Resolved {
     /// `true` if the bundle carries no resolved references, has
     /// an empty AST, and holds only the default (root-only)
     /// `ScopeTree`.
-    pub fn is_empty(&self) -> bool {
-        self.ast.is_empty()
-            && self.scopes.is_trivial()
-            && self.resolution.iter().all(|r| r.isnt())
+    pub fn is_empty(&self) -> Bool {
+        Bool(
+            self.ast.is_empty()
+                && self.scopes.is_trivial().0
+                && self.resolution.iter().all(|r| r.isnt()),
+        )
     }
 }

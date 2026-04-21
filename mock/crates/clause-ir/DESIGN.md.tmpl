@@ -16,6 +16,10 @@ Types consumed by two or more phase crates:
   parse time; stable across later phases for cross-phase
   annotations (resolution info, type info).
 - `ScopeId` — dense interned identifier for lexical scopes.
+  `clause-resolve` now holds interned `Str` handles
+  (`hilavitkutin_str::Str`) where it previously held owned
+  `String`; the shift is transparent to clause-ir since its
+  types do not touch the symbol name text.
 - `Diagnostic` — `{ phase, severity, span, message, related }`. The
   common error / warning / info structure. `Copy`; owns no heap;
   `message` is `&'static str` and `related` is `&'static [Span]`.

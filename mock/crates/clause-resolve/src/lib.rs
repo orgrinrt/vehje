@@ -37,4 +37,5 @@ pub use scope::{Scope, ScopeTree};
 pub use symbol::{Symbol, SymbolKind};
 
 pub use clause_ir::{Diagnostic, NodeId, ScopeId, Span};
+pub use hilavitkutin_str::Str;
 pub use clause_syntax::{Ast, AstNode};

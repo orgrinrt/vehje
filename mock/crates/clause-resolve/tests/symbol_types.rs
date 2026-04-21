@@ -3,6 +3,7 @@
 
 use clause_ir::{NodeId, ScopeId};
 use clause_resolve::{Symbol, SymbolKind};
+use hilavitkutin_str::str_const;
 
 #[test]
 fn symbol_kind_variants_distinct() {
@@ -27,8 +28,8 @@ fn symbol_kind_variants_distinct() {
 
 #[test]
 fn symbol_holds_fields() {
-    let sym = Symbol::new("x", ScopeId(3), NodeId(7), SymbolKind::Value);
-    assert_eq!(sym.name(), "x");
+    let sym = Symbol::new(str_const!("x"), ScopeId(3), NodeId(7), SymbolKind::Value);
+    assert_eq!(sym.name(), str_const!("x"));
     assert_eq!(sym.scope(), ScopeId(3));
     assert_eq!(sym.node(), NodeId(7));
     assert_eq!(sym.kind(), SymbolKind::Value);
