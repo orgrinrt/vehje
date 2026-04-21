@@ -40,9 +40,9 @@ it.
   `struct`, `enum`, `mod`, `use`, `impl`, `trait`, `type`).
   After emitting a `SyntaxError`, advance to the next sync point
   and continue parsing — multiple errors per invocation.
-- Parser switches from `Result<Ast, SyntaxError>` to a
+- Parser switches from `Outcome<Ast, SyntaxError>` to a
   `{ ast: Ast, errors: &[SyntaxError] }` return shape; the
-  skeleton's `Result` return stays as a convenience wrapper for
+  skeleton's `Outcome` return stays as a convenience wrapper for
   the no-error path.
 
 ## Incremental reparse

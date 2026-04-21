@@ -12,43 +12,50 @@
 use std::collections::HashMap;
 
 use clause_ir::ScopeId;
+use notko::Maybe;
 
 use crate::symbol::Symbol;
 
 /// A single lexical scope.
 ///
-/// `parent` is `None` for the root scope, `Some(id)` otherwise.
-/// `symbols` is a name → `Symbol` table for bindings introduced
-/// directly in this scope (shadowing replaces the previous entry;
-/// see `insert`).
+/// `parent` is `Maybe::Isnt` for the root scope, `Maybe::Is(id)`
+/// otherwise. `symbols` is a name → `Symbol` table for bindings
+/// introduced directly in this scope (shadowing replaces the
+/// previous entry; see `insert`).
 #[derive(Clone, Debug, Default)]
 pub struct Scope {
-    parent: Option<ScopeId>,
+    parent: Maybe<ScopeId>,
     symbols: HashMap<String, Symbol>,
 }
 
 impl Scope {
     /// Construct a scope with the given parent.
-    pub fn new(parent: Option<ScopeId>) -> Self {
+    pub fn new(parent: Maybe<ScopeId>) -> Self {
         Self { parent, symbols: HashMap::new() }
     }
 
-    /// Parent scope, or `None` for the root.
-    pub fn parent(&self) -> Option<ScopeId> {
+    /// Parent scope, or `Maybe::Isnt` for the root.
+    pub fn parent(&self) -> Maybe<ScopeId> {
         self.parent
     }
 
     /// Insert a symbol under `name`. If a symbol already existed
     /// under that name in this scope, the previous occupant is
     /// returned.
-    pub fn insert(&mut self, name: String, symbol: Symbol) -> Option<Symbol> {
-        self.symbols.insert(name, symbol)
+    pub fn insert(&mut self, name: String, symbol: Symbol) -> Maybe<Symbol> {
+        match self.symbols.insert(name, symbol) {
+            Some(prev) => Maybe::Is(prev),
+            None => Maybe::Isnt,
+        }
     }
 
     /// Look up a symbol by name in this scope only (no parent
     /// walk). Parent walks are a follow-up round concern.
-    pub fn lookup(&self, name: &str) -> Option<&Symbol> {
-        self.symbols.get(name)
+    pub fn lookup(&self, name: &str) -> Maybe<&Symbol> {
+        match self.symbols.get(name) {
+            Some(sym) => Maybe::Is(sym),
+            None => Maybe::Isnt,
+        }
     }
 }
 
@@ -71,7 +78,7 @@ impl Default for ScopeTree {
 impl ScopeTree {
     /// Construct a tree containing only the root scope.
     pub fn new() -> Self {
-        Self { scopes: vec![Scope::new(None)] }
+        Self { scopes: vec![Scope::new(Maybe::Isnt)] }
     }
 
     /// Root scope id. Always `ScopeId(0)`.
@@ -89,18 +96,26 @@ impl ScopeTree {
         self.scopes.len() <= 1
     }
 
-    /// Borrow a scope by id, or `None` if the id is out of range.
-    pub fn get(&self, id: ScopeId) -> Option<&Scope> {
-        self.scopes.get(id.0 as usize)
+    /// Borrow a scope by id, or `Maybe::Isnt` if the id is out of
+    /// range.
+    pub fn get(&self, id: ScopeId) -> Maybe<&Scope> {
+        match self.scopes.get(id.0 as usize) {
+            Some(s) => Maybe::Is(s),
+            None => Maybe::Isnt,
+        }
     }
 
-    /// Mutably borrow a scope by id, or `None` if out of range.
-    pub fn get_mut(&mut self, id: ScopeId) -> Option<&mut Scope> {
-        self.scopes.get_mut(id.0 as usize)
+    /// Mutably borrow a scope by id, or `Maybe::Isnt` if out of
+    /// range.
+    pub fn get_mut(&mut self, id: ScopeId) -> Maybe<&mut Scope> {
+        match self.scopes.get_mut(id.0 as usize) {
+            Some(s) => Maybe::Is(s),
+            None => Maybe::Isnt,
+        }
     }
 
     /// Allocate a new scope with the given parent, return its id.
-    pub fn push(&mut self, parent: Option<ScopeId>) -> ScopeId {
+    pub fn push(&mut self, parent: Maybe<ScopeId>) -> ScopeId {
         let id = ScopeId(self.scopes.len() as u32);
         self.scopes.push(Scope::new(parent));
         id

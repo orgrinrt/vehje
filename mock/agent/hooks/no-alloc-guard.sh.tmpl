@@ -52,12 +52,9 @@ if echo "$CONTENT" | grep -qE '(^|[^a-zA-Z0-9_])Box<'; then
     deny "BLOCKED: \`Box<T>\` in a clause no_std crate. Store by value or take a reference."
 fi
 
-if echo "$CONTENT" | grep -qE '^\s*pub\s+fn\s+.*\sOption<' | grep -qvE 'allow-bare-option:'; then
-    deny "BLOCKED: bare \`Option<T>\` in a \`pub\` signature in a clause no_std crate. Use \`notko::Maybe<T>\`. If this is a std-trait-impl method, remove the \`pub\` qualifier or add \`// allow-bare-option: tracked: #<task-id>\`."
-fi
-
-if echo "$CONTENT" | grep -qE '^\s*pub\s+fn\s+.*\sResult<' | grep -qvE 'allow-bare-result:'; then
-    deny "BLOCKED: bare \`Result<T, E>\` in a \`pub\` signature in a clause no_std crate. Use \`notko::Outcome<T, E>\`. If this is a std-trait-impl method (fmt::Result, etc.), remove the \`pub\` qualifier or add \`// allow-bare-result: tracked: #<task-id>\`."
-fi
+# Bare `Option` / `Result` / numerics are blocked by the dedicated
+# hook `no-bare-primitive-guard.sh` (full-line coverage across all
+# clause crates, not just pub fn sigs in no_std ones). This hook
+# stays focused on heap / alloc paths.
 
 allow

@@ -14,15 +14,16 @@ dependencies = [
 [[package]]
 name = "arvo"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#5e9f5a3a117c23cc91caec2d70ae90b8522b0c8d"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#541e4c775c7dba31c5e905c316a95330c35d3461"
 dependencies = [
  "mockspace",
+ "notko",
 ]
 
 [[package]]
 name = "arvo-bitmask"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#5e9f5a3a117c23cc91caec2d70ae90b8522b0c8d"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#541e4c775c7dba31c5e905c316a95330c35d3461"
 dependencies = [
  "arvo",
  "arvo-bits",
@@ -32,7 +33,7 @@ dependencies = [
 [[package]]
 name = "arvo-bits"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#5e9f5a3a117c23cc91caec2d70ae90b8522b0c8d"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#541e4c775c7dba31c5e905c316a95330c35d3461"
 dependencies = [
  "arvo",
  "mockspace",
@@ -41,7 +42,7 @@ dependencies = [
 [[package]]
 name = "arvo-graph"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#5e9f5a3a117c23cc91caec2d70ae90b8522b0c8d"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#541e4c775c7dba31c5e905c316a95330c35d3461"
 dependencies = [
  "arvo",
  "arvo-bitmask",
@@ -78,6 +79,7 @@ dependencies = [
  "clause-ir",
  "clause-resolve",
  "mockspace",
+ "notko",
 ]
 
 [[package]]
@@ -93,6 +95,7 @@ version = "0.1.0"
 dependencies = [
  "clause-ir",
  "mockspace",
+ "notko",
 ]
 
 [[package]]
@@ -102,6 +105,7 @@ dependencies = [
  "clause-ir",
  "clause-syntax",
  "mockspace",
+ "notko",
 ]
 
 [[package]]
@@ -120,6 +124,7 @@ dependencies = [
  "clause-runtime-abi",
  "clause-schedule",
  "mockspace",
+ "notko",
 ]
 
 [[package]]
@@ -129,6 +134,7 @@ dependencies = [
  "clause-runtime-abi",
  "clause-runtime-driver",
  "mockspace",
+ "notko",
 ]
 
 [[package]]
@@ -150,6 +156,7 @@ dependencies = [
  "clause-ir",
  "clause-lex",
  "mockspace",
+ "notko",
 ]
 
 [[package]]
@@ -211,7 +218,7 @@ checksum = "f8ca58f447f06ed17d5fc4043ce1b10dd205e060fb3ce5b979b8ed8e59ff3f79"
 [[package]]
 name = "mockspace"
 version = "0.1.0"
-source = "git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main#23ea4dca8680ddb3680179b0af7ca9fb1a1543bb"
+source = "git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main#e3f6f6dc30690a5f480ba2bce46b870ece2d17b7"
 dependencies = [
  "libloading",
  "mockspace-lint-rules",
@@ -224,11 +231,16 @@ dependencies = [
 [[package]]
 name = "mockspace-lint-rules"
 version = "0.1.0"
-source = "git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main#23ea4dca8680ddb3680179b0af7ca9fb1a1543bb"
+source = "git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main#e3f6f6dc30690a5f480ba2bce46b870ece2d17b7"
 dependencies = [
  "tree-sitter",
  "tree-sitter-rust",
 ]
+
+[[package]]
+name = "notko"
+version = "0.1.0"
+source = "git+ssh://git@github.com/orgrinrt/notko.git?branch=dev#d76b04a4aa0cd2c2ab0bb21ff80834d1e4290c67"
 
 [[package]]
 name = "proc-macro2"

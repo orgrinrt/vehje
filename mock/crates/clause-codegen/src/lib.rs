@@ -48,32 +48,8 @@ pub use ctx::CodegenCtx;
 pub use error::CodegenError;
 pub use jomini::JominiTarget;
 pub use native::NativeTarget;
-pub use registry::TargetRegistry;
+pub use registry::{emit, TargetRegistry};
 pub use target::CodegenTarget;
 
 pub use clause_ir::Diagnostic;
 pub use clause_resolve::Resolved;
-
-/// Emit a codegen artifact for `resolved` via the target
-/// registered under `target_name`.
-///
-/// Returns `Err(CodegenError::TargetNotFound { name: "" })` if
-/// no target matches (the caller retains the input-side name
-/// context).
-///
-/// Skeleton round: each built-in target returns an empty
-/// artifact, so the happy-path result is always an empty-byte
-/// `CodegenArtifact`. Each deferred backend flips its stub into
-/// a real lowering path in its own follow-up round.
-///
-/// # Caller obligation
-///
-/// `TargetNotFound`'s `name` field is a sentinel (`""`) for
-/// efficiency — `CodegenError` is `Copy` and can't own a runtime
-/// string. Callers who need to render `"target not found: {name}"`
-/// should hold the `target_name` they passed in and interpolate
-/// at render time.
-pub fn emit(resolved: &Resolved, target_name: &str) -> Result<CodegenArtifact, CodegenError> {
-    let ctx = CodegenCtx::new(resolved);
-    TargetRegistry::emit_for(target_name, &ctx)
-}

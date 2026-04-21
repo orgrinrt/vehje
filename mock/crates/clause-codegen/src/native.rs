@@ -8,6 +8,8 @@
 //! Real body is BACKLOG (one follow-up micro-round once the
 //! target-agnostic IR lowering layer lands).
 
+use notko::Outcome;
+
 use crate::artifact::{ArtifactKind, CodegenArtifact};
 use crate::ctx::CodegenCtx;
 use crate::error::CodegenError;
@@ -27,7 +29,7 @@ impl CodegenTarget for NativeTarget {
         "native"
     }
 
-    fn emit(&self, _ctx: &CodegenCtx) -> Result<CodegenArtifact, CodegenError> {
-        Ok(CodegenArtifact::empty(ArtifactKind::Binary))
+    fn emit(&self, _ctx: &CodegenCtx) -> Outcome<CodegenArtifact, CodegenError> {
+        Outcome::Ok(CodegenArtifact::empty(ArtifactKind::Binary))
     }
 }

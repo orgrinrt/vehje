@@ -25,7 +25,7 @@ follow-up micro-round on top of the stable harness — see
 - `SyntaxError { span, kind, message }` — `Copy`, alloc-free.
 - `SyntaxErrorKind { UnexpectedToken, UnexpectedEof,
   InvalidLiteral }`.
-- `parse(tokens: &[Token]) -> Result<Ast, Vec<SyntaxError>>` —
+- `parse(tokens: &[Token]) -> Outcome<Ast, Vec<SyntaxError>>` —
   top-level entry; empty input and single literal supported. The
   `Vec` carries one error today; future multi-error recovery
   populates it without another signature change.
