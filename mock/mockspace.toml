@@ -128,6 +128,15 @@ commit = "off"
 build = "warn"
 push = "warn"
 
+# Post-hilavitkutin-str crates (clause consumes Str interning) must
+# not introduce bare `const NAME: &str` / `static NAME: &str`. The
+# replacement is `hilavitkutin_str::Str::const!()`. Pre-sweep drift
+# ramps to warn; flip to error alongside #73 completion (task #125).
+[lints.no-bare-static-str]
+commit = "off"
+build = "warn"
+push = "warn"
+
 # --- Layer enforcement via forbidden-imports (task #78) --------------------
 #
 # Closes the gap where `extern crate alloc; use alloc::vec::Vec;` compiled
