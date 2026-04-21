@@ -35,6 +35,7 @@ arvo-comb = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev" }
 hilavitkutin-api = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", branch = "dev" }
 hilavitkutin = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", branch = "dev" }
 hilavitkutin-build = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", branch = "dev" }
+hilavitkutin-str = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", branch = "dev" }
 
 notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false }
 

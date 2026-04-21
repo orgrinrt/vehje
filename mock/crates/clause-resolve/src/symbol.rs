@@ -2,14 +2,16 @@
 //!
 //! A `Symbol` is the resolved target of a name reference: the
 //! producing declaration's node id, the lexical scope that owns
-//! it, a classification tag (`SymbolKind`), and the name as text.
+//! it, a classification tag (`SymbolKind`), and the name as an
+//! interned `Str` handle.
 //!
-//! Skeleton round: names are owned `String`. Interning is BACKLOG
-//! (string interning will also let `Symbol` become `Copy`, which
-//! the current owned-`String` design deliberately forgoes to keep
-//! the surface obvious).
+//! Names are `hilavitkutin_str::Str` — 4-byte Copy handles keyed
+//! by interned identity. This makes `Symbol` itself `Copy`, which
+//! in turn makes `ResolveError` `Copy` (the error variants carry
+//! a copied name).
 
 use clause_ir::{NodeId, ScopeId};
+use hilavitkutin_str::Str;
 
 /// Classification of a `Symbol`.
 ///
@@ -21,7 +23,7 @@ use clause_ir::{NodeId, ScopeId};
 /// `Default` is `Value`: that is the variant produced by an
 /// un-annotated binding, which is the most common case.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
-#[repr(u8)]
+#[repr(u8)] // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: C-ABI enum discriminator size; six variants pack to 3 bits in arvo terms but `#[repr]` attribute accepts only bare integer widths; tracked: #81
 pub enum SymbolKind {
     /// Type alias or type declaration.
     Type,
@@ -45,12 +47,12 @@ impl Default for SymbolKind {
 
 /// A resolved declaration bound to a name.
 ///
-/// Carries the name text, the owning scope, the producing AST
-/// node, and the `SymbolKind` classification. The skeleton keeps
-/// `name` as an owned `String`; interning is BACKLOG.
-#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+/// Carries the name handle, the owning scope, the producing AST
+/// node, and the `SymbolKind` classification. `Symbol` is `Copy`
+/// because `Str` is `Copy`.
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub struct Symbol {
-    name: String,
+    name: Str,
     scope: ScopeId,
     node: NodeId,
     kind: SymbolKind,
@@ -58,13 +60,13 @@ pub struct Symbol {
 
 impl Symbol {
     /// Construct a `Symbol` from its parts.
-    pub fn new(name: impl Into<String>, scope: ScopeId, node: NodeId, kind: SymbolKind) -> Self {
-        Self { name: name.into(), scope, node, kind }
+    pub fn new(name: Str, scope: ScopeId, node: NodeId, kind: SymbolKind) -> Self {
+        Self { name, scope, node, kind }
     }
 
-    /// Name text of this symbol.
-    pub fn name(&self) -> &str {
-        &self.name
+    /// Name handle of this symbol.
+    pub fn name(&self) -> Str {
+        self.name
     }
 
     /// Scope that owns this symbol.

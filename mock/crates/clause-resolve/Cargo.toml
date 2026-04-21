@@ -5,8 +5,11 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
+arvo.workspace = true
+arvo-bits.workspace = true
 clause-ir.workspace = true
 clause-syntax.workspace = true
+hilavitkutin-str.workspace = true
 notko.workspace = true
 
 [build-dependencies]
