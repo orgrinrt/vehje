@@ -5,12 +5,13 @@
 //! the next production's walk.
 //!
 //! Skeleton round: `resolve` does NOT walk the AST. It returns a
-//! `Resolved` whose `resolution` vec is `None`-filled to
+//! `Resolved` whose `resolution` vec is `Maybe::Isnt`-filled to
 //! `ast.len()`, preserving the downstream shape ("one resolution
 //! slot per AST node") that typecheck and codegen will key off.
 
 use clause_ir::ScopeId;
 use clause_syntax::Ast;
+use notko::{Maybe, Outcome};
 
 use crate::error::ResolveError;
 use crate::resolved::Resolved;
@@ -54,11 +55,21 @@ impl Resolver {
     /// Drive resolution over `ast`.
     ///
     /// Skeleton behaviour: no AST walk. Returns a `Resolved`
-    /// bundle whose `resolution` vec is `None`-filled to
+    /// bundle whose `resolution` vec is `Maybe::Isnt`-filled to
     /// `ast.len()`. Each deferred resolution rule flips a subset
     /// of those slots in its own follow-up round.
-    pub fn resolve(self, ast: &Ast) -> Result<Resolved, ResolveError> {
-        let resolution = vec![None; ast.len()];
-        Ok(Resolved::new(*ast, self.scopes, resolution))
+    pub fn resolve(self, ast: &Ast) -> Outcome<Resolved, ResolveError> {
+        let resolution = vec![Maybe::Isnt; ast.len()];
+        Outcome::Ok(Resolved::new(*ast, self.scopes, resolution))
     }
+}
+
+/// Resolve an AST into a `Resolved` bundle.
+///
+/// The skeleton does not walk the AST — it returns a `Resolved`
+/// whose `resolution` vec is `Maybe::Isnt`-filled to `ast.len()`.
+/// Each deferred resolution rule flips a subset of those slots as
+/// it lands.
+pub fn resolve(ast: &Ast) -> Outcome<Resolved, ResolveError> {
+    Resolver::new().resolve(ast)
 }

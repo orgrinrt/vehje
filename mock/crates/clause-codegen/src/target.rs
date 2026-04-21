@@ -17,6 +17,8 @@
 //! That retrofit is BACKLOG; it lands once the first real
 //! target backend surfaces the need.
 
+use notko::Outcome;
+
 use crate::artifact::CodegenArtifact;
 use crate::ctx::CodegenCtx;
 use crate::error::CodegenError;
@@ -39,8 +41,8 @@ pub trait CodegenTarget: Sync {
     /// Walk `ctx.resolved()` and produce a codegen artifact.
     ///
     /// Skeleton implementations return
-    /// `Ok(CodegenArtifact::empty(kind))`; real bodies land in
-    /// follow-up rounds (one per target).
+    /// `Outcome::Ok(CodegenArtifact::empty(kind))`; real bodies
+    /// land in follow-up rounds (one per target).
     ///
     /// # Implementor note
     ///
@@ -49,5 +51,5 @@ pub trait CodegenTarget: Sync {
     /// or `const` slices — no `format!`-produced strings.
     /// Span-enriched rendering is the responsibility of the
     /// diagnostic renderer, not the target body.
-    fn emit(&self, ctx: &CodegenCtx) -> Result<CodegenArtifact, CodegenError>;
+    fn emit(&self, ctx: &CodegenCtx) -> Outcome<CodegenArtifact, CodegenError>;
 }

@@ -11,6 +11,8 @@
 //! body moves out to `github.com/orgrinrt/clause-jomini` once it
 //! has a meaningful implementation.
 
+use notko::Outcome;
+
 use crate::artifact::{ArtifactKind, CodegenArtifact};
 use crate::ctx::CodegenCtx;
 use crate::error::CodegenError;
@@ -29,7 +31,7 @@ impl CodegenTarget for JominiTarget {
         "jomini"
     }
 
-    fn emit(&self, _ctx: &CodegenCtx) -> Result<CodegenArtifact, CodegenError> {
-        Ok(CodegenArtifact::empty(ArtifactKind::SourceFile))
+    fn emit(&self, _ctx: &CodegenCtx) -> Outcome<CodegenArtifact, CodegenError> {
+        Outcome::Ok(CodegenArtifact::empty(ArtifactKind::SourceFile))
     }
 }

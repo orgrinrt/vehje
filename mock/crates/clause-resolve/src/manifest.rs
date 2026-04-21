@@ -9,6 +9,8 @@
 //! construction, feature flags, and workspace manifests are all
 //! BACKLOG.
 
+use notko::Outcome;
+
 use crate::error::ManifestError;
 
 /// Parsed `Clause.toml` contents.
@@ -46,14 +48,14 @@ impl Manifest {
 ///
 /// Skeleton rules:
 ///
-/// - Empty input → `Ok(Manifest::default())`.
-/// - Non-empty input → `Err(ManifestError::NotImplemented)`.
+/// - Empty input → `Outcome::Ok(Manifest::default())`.
+/// - Non-empty input → `Outcome::Err(ManifestError::NotImplemented)`.
 ///
 /// Real TOML parsing lands in a follow-up round.
-pub fn parse_manifest(bytes: &[u8]) -> Result<Manifest, ManifestError> {
+pub fn parse_manifest(bytes: &[u8]) -> Outcome<Manifest, ManifestError> {
     if bytes.is_empty() {
-        Ok(Manifest::default())
+        Outcome::Ok(Manifest::default())
     } else {
-        Err(ManifestError::NotImplemented)
+        Outcome::Err(ManifestError::NotImplemented)
     }
 }
