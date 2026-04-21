@@ -65,7 +65,7 @@ confined to the registry iteration surface, static-lifetime.
 ```rust
 pub trait Validator: Sync {
     fn name(&self) -> &'static str;
-    fn validate(&self, ctx: &ValidatorCtx) -> Vec<Diagnostic>;
+    fn validate(&self, ctx: &ValidatorCtx, sink: &mut impl DiagnosticSink<Diagnostic>);
 }
 
 pub struct ValidatorCtx<'a> {
@@ -85,7 +85,7 @@ impl ValidatorRegistry {
         &Coherence, &OrphanRule, &BindTargetShape,
     ];
 
-    pub fn run_all(ctx: &ValidatorCtx) -> Vec<Diagnostic> { /* ... */ }
+    pub fn run_all(ctx: &ValidatorCtx, sink: &mut impl DiagnosticSink<Diagnostic>) { /* ... */ }
 }
 ```
 

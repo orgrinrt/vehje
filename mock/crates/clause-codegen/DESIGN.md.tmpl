@@ -62,7 +62,12 @@ gymnastics:
 ```rust
 pub trait CodegenTarget: Sync {
     fn name(&self) -> &'static str;
-    fn emit(&self, ctx: &CodegenCtx) -> Outcome<CodegenArtifact, CodegenError>;
+    fn emit(
+        &self,
+        ctx: &CodegenCtx,
+        bytes: &mut impl ByteEmitter,
+        diagnostics: &mut impl DiagnosticSink<Diagnostic>,
+    ) -> Outcome<CodegenArtifact, CodegenError>;
 }
 ```
 
@@ -88,9 +93,10 @@ skeleton round exposes only `lookup(name)` + `emit_for(name, ctx)`.
 `&mut DiagnosticSink`, `&mut ArtefactCache`, `&Workspace` fields
 are BACKLOG.
 
-`CodegenArtifact { kind, bytes, diagnostics }` is the skeleton
-payload. R3's fuller `CodegenOutput { bytes, manifest,
-references }` is BACKLOG.
+`CodegenArtifact { kind }` carries only the artifact tag this
+round; bytes and diagnostics flow through caller-provided sinks
+(`ByteEmitter` / `DiagnosticSink`). R3's fuller
+`CodegenOutput { bytes, manifest, references }` is BACKLOG.
 
 Built-in targets: `NativeTarget` (future Rust/LLVM or cranelift
 backend) and `JominiTarget` (future Clausewitz engine bytecode,
