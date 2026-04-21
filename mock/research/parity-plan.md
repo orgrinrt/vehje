@@ -1,10 +1,22 @@
 # Rust Clause — parity + extension plan
 
+> **Substrate principle is load-bearing for every milestone
+> below.** Read `substrate-principle.md` first. Every "new
+> crate" named here is a clause-owned *application* of the
+> substrate; no milestone adds external-crate infrastructure.
+> Every scheduling, caching, persistence, numeric, bit,
+> hashing, parallelism, fallibility, and collection story
+> routes through notko / arvo / hilavitkutin. Needs the
+> substrate does not yet cover become extend-the-substrate
+> rounds in the arvo or hilavitkutin repo, landing before the
+> dependent clause round opens.
+
 **Date:** 2026-04-21
-**Reads:** `python-clause-survey.md`, `lessons-learned.md`.
+**Reads:** `substrate-principle.md`, `python-clause-survey.md`,
+`lessons-learned.md`.
 **Purpose:** the ordered task / design-round set that takes
 the Rust Clause skeleton to feature parity with Python Clause
-and beyond.
+and beyond, via the substrate.
 
 This plan is the set of **design-round topics** (not code
 tasks). Each topic maps to one design round which produces
@@ -39,25 +51,39 @@ bounds). Primitives sweep (#73.3) remains.
 
 ## Milestone structure
 
-Six milestones. Each milestone is several design rounds.
+Seven milestones. Each milestone is several design rounds.
 The order is dependency-driven; reordering within a
 milestone is OK where cross-cuts allow.
 
 ```
-M0: type-surface + schedule spine   [polish, foundation]
-M1: parse the language               [real front-end]
-M2: resolve + typecheck              [real mid-end]
-M3: storage + transpile + codegen    [real back-end]
-M4: macros                           [first-class feature]
-M5: passes + validators + spec       [ecosystem frame]
-M6: cli + manifest + tooling         [productisation]
+M0: substrate wiring               [polish + engine + persistence + hash]
+M1: parse the language             [real front-end]
+M2: resolve + typecheck            [real mid-end]
+M3: storage + transpile + codegen  [real back-end]
+M4: macros                         [first-class feature]
+M5: passes + validators + spec     [ecosystem frame]
+M6: cli + manifest + tooling       [productisation]
+M7: beyond-parity extensions       [interpreter, LSP, more targets]
 ```
 
-At end of M3 the compiler can emit a working Clausewitz
-artifact from a Clause source file. That is the point where
-"clause actually works" in the user's sense. M4-M6 turn the
-compiler into the authoring tool the Python version aspired
-to be.
+M0 is four rounds, not three — persistence wiring is
+explicit so the substrate dependencies are audited before
+any real phase body runs. At end of M3 the compiler emits a
+working Clausewitz artifact from a Clause source file.
+That is "clause actually works". M4–M6 turn the compiler
+into the authoring tool the Python version aspired to be.
+M7 extends beyond Python.
+
+### Substrate extension rounds are called out explicitly
+
+Where a milestone notes "possibly a hilavitkutin extension
+round", that means: if the substrate is missing the
+capability, a design round in the hilavitkutin repo (or
+arvo, or notko) lands first, *before* the clause round
+that consumes. These extension rounds are separate PRs in
+a separate repo. They are not silent substrate-side
+development — every one is a task, visible in the
+workspace task list.
 
 ## M0 — type-surface + schedule spine
 
@@ -78,31 +104,52 @@ Size: medium. One PR. Dependency: none. Outcome: zero bare
 primitives anywhere; type surface matches arvo / hilavitkutin
 sibling repos.
 
-### M0.2 — clause-schedule pass DAG skeleton
+### M0.2 — clause-schedule as hilavitkutin WorkUnit home
 
-Populate the empty `clause-schedule` crate. Defines the
-`Pass` trait, `Artifact` typed-enum, pass registry via
-`linkme` / `inventory`-style compile-time inventory, topo
-sort over declared reads / writes. No real passes yet — that
-is M5. This round is the spine.
+Populate the empty `clause-schedule` crate as the registry
+of clause-specific hilavitkutin WorkUnit types. **Not** a
+new pass framework — hilavitkutin already *is* the pass
+framework. This round defines the WorkUnit type skeletons
+clause needs (one per compile phase), their AccessSets, and
+their Column descriptors. Composition via hilavitkutin's
+static registration surface. No `linkme`, no `inventory`.
 
-Size: small-medium. One PR. Dependency: M0.1 (clean type
-surface first). Outcome: `clause-schedule` non-empty; the
-binary's hard-coded phase chain is ready to be replaced by
-graph walks in later rounds.
+If hilavitkutin's current registration API does not fit
+clause's needs, open a hilavitkutin round first and land
+the engine-side extension before this clause round runs.
 
-### M0.3 — unify the pipeline from day one
+Size: small-medium. One PR. Dependency: M0.1 + possibly a
+hilavitkutin extension round. Outcome: `clause-schedule`
+ships the WorkUnit shape that every later compile-phase
+round fills in.
 
-Rewire the `clause` binary to run through `clause-schedule`
-for every subcommand, even with the current stubs. Passes are
-named (`LexPass`, `ParsePass`, `ResolvePass`,
-`TypecheckPass`, `CodegenPass`). Subcommands stop at
-different points in the DAG.
+### M0.3 — unify the pipeline through hilavitkutin
 
-Size: small. One PR. Dependency: M0.2. Outcome: no more
+Rewire the `clause` binary's `lex` / `parse` / `check` /
+`build` / `run` subcommands to run through hilavitkutin's
+scheduler — not through hard-coded phase chains in the
+binary. Each subcommand requests a WorkUnit set and a
+stopping point; the engine runs the resolved schedule.
+
+Size: small-medium. One PR. Dependency: M0.2. Outcome: no
 hard-coded phase chains in `clause/src/*.rs`. The "two
-parallel pipelines" architectural mistake from Python is
-avoided from the start.
+parallel pipelines" mistake Python Clause ships with is
+avoided from the first body that runs on the engine.
+
+### M0.4 — persistence spine wired to hilavitkutin-persistence
+
+Before any pass body lands in M1+, clause declares its
+artifact Columns against `hilavitkutin-persistence`'s cold
+store for cross-run caching. Fingerprint keys are
+`arvo_hash::ContentHash`. No custom on-disk format in clause
+— if hilavitkutin-persistence does not yet expose a needed
+read / write shape, extend hilavitkutin-persistence first,
+then consume.
+
+Size: small-medium. One PR. Dependency: M0.3 + possibly a
+hilavitkutin-persistence extension round. Outcome: clause
+artifacts persist through the substrate. Incremental builds
+work from day one.
 
 ## M1 — parse the language
 
@@ -460,14 +507,20 @@ Size: large. Two PRs. Dependency: M2.4 (extern consumes
 spec). Outcome: `clause spec harvest` + `clause spec search`
 / `show` / `scope` / `list` work.
 
-### M5.4 — analyzer passes
+### M5.4 — analyzer WorkUnits
 
-`ITEM_INDEX`, `CALL_GRAPH_ANALYZER`, `DEPTH_ANALYZER`,
-`LEAF_ANALYZER`, `GLOBAL_VAR_LOADER` — the five core analyzers
-that downstream linters and optimizers consume.
+Port Python's five analyzers (`ITEM_INDEX`,
+`CALL_GRAPH_ANALYZER`, `DEPTH_ANALYZER`, `LEAF_ANALYZER`,
+`GLOBAL_VAR_LOADER`) as hilavitkutin WorkUnits. Call graph
+uses `arvo_graph`. Depth / leaf analysis piggybacks on the
+engine's own scheduling traversals where possible — if
+hilavitkutin already emits the data analyzer WorkUnits
+would recompute, consume it instead of recomputing.
 
 Size: medium. One PR. Dependency: M0.2 + M3.5. Outcome:
-artifact graph covers the Python analyzer surface.
+analyzer Columns (call graph, depth map, leaf set, item
+index, global var map) are all hilavitkutin-persistence
+entries.
 
 ### M5.5 — optimizers
 
@@ -570,14 +623,24 @@ goes further. No ordering; pick as priorities shift.
 
 ### M7.1 — interpreter (`clause run`)
 
-Python Clause has no `run` subcommand. Rust Clause can run
-Clause bytecode in a dedicated interpreter for testing,
-scripting, and agent-driven workflows. Bytecode format gets
-its own design round; likely a simple stack VM with typed
-values per the notko fallibility ladder.
+Python Clause has no `run` subcommand. Rust Clause adds it
+**by running Clause bytecode as hilavitkutin WorkUnits**.
+There is no separate VM. Bytecode is a Column. Each
+bytecode instruction kind is a WorkUnit family. Scope /
+bindings / call stack live in additional Columns.
+Interpretation is the engine scheduling those WorkUnits. If
+hilavitkutin does not yet expose primitives the interpreter
+needs (e.g. dynamic WorkUnit composition based on bytecode
+opcode), extend hilavitkutin first.
 
-Size: large. Two-three PRs. Outcome: `clause run foo.cse`
-executes; `clause test` runs real tests, not just compiles.
+Tests (`#[test]` functions) run the same way: each test is
+a WorkUnit instance; assertions are downstream WorkUnits
+that read the test's result Column and emit diagnostics.
+
+Size: large. Two-three PRs (plus any hilavitkutin extension
+rounds). Outcome: `clause run foo.cse` executes; `clause
+test` runs real tests, not just compiles. Zero clause-side
+code that spells "thread" / "pool" / "scheduler" / "VM".
 
 ### M7.2 — LSP server
 
@@ -664,8 +727,17 @@ months.
 ---
 
 When M6 lands, Rust Clause is a complete reimplementation of
-Python Clause, plus: type inference, hygienic+procedural
-macros, structured diagnostics, zero-copy cross-crate
-artifacts, unified pipeline, declarative pass registration,
+Python Clause, plus: type inference, hygienic + procedural
+macros sharing the typecheck walker, structured diagnostics
+rendered through substrate sinks, substrate-backed cross-crate
+artifacts via hilavitkutin-persistence, unified pipeline on
+the hilavitkutin engine, static WorkUnit composition,
 formatter + doc-gen + fix-apply tooling. M7 extends it
-beyond any modding-language existing today.
+beyond any modding-language existing today — interpreter on
+the same hilavitkutin engine, LSP, DAP, additional emission
+targets.
+
+Every capability above is the substrate applied. Clause
+contributes language semantics, grammar, target lowering,
+and CLI surface. Everything else is notko / arvo /
+hilavitkutin.
