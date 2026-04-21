@@ -14,6 +14,7 @@
 //! real validator body surfaces the need.
 
 use clause_ir::Diagnostic;
+use hilavitkutin_api::DiagnosticSink;
 
 use crate::ctx::ValidatorCtx;
 
@@ -31,10 +32,10 @@ pub trait Validator: Sync {
     /// names (`no-shadow`, `unused`, `assign-to-immut`, …).
     fn name(&self) -> &'static str;
 
-    /// Walk `ctx.resolved()` and produce diagnostics.
+    /// Walk `ctx.resolved()` and push diagnostics into `sink`.
     ///
-    /// Skeleton implementations return `Vec::new()`; real bodies
-    /// land in follow-up rounds (one per validator).
+    /// Skeleton implementations push nothing; real bodies land in
+    /// follow-up rounds (one per validator).
     ///
     /// # Implementor note
     ///
@@ -42,5 +43,14 @@ pub trait Validator: Sync {
     /// string literals or `const` slices — no `format!`-produced
     /// strings. Span-enriched rendering is the responsibility of
     /// the diagnostic renderer, not the validator body.
-    fn validate(&self, ctx: &ValidatorCtx) -> Vec<Diagnostic>;
+    ///
+    /// `sink` is `&mut dyn DiagnosticSink<Diagnostic>` rather than
+    /// `&mut impl` because the trait is stored in the const registry
+    /// as `&'static dyn Validator`; dyn methods are object-safe and
+    /// must not carry `impl Trait` parameters.
+    fn validate(
+        &self,
+        ctx: &ValidatorCtx,
+        sink: &mut dyn DiagnosticSink<Diagnostic>,
+    );
 }

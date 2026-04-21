@@ -17,6 +17,8 @@
 //! That retrofit is BACKLOG; it lands once the first real
 //! target backend surfaces the need.
 
+use clause_ir::Diagnostic;
+use hilavitkutin_api::{ByteEmitter, DiagnosticSink};
 use notko::Outcome;
 
 use crate::artifact::CodegenArtifact;
@@ -38,18 +40,33 @@ pub trait CodegenTarget: Sync {
     /// releases. Examples: `"native"`, `"jomini"`.
     fn name(&self) -> &'static str;
 
-    /// Walk `ctx.resolved()` and produce a codegen artifact.
+    /// Walk `ctx.resolved()` and emit a codegen artifact.
+    ///
+    /// Emitted bytes push into `bytes`; any diagnostics surfaced
+    /// during emission push into `diagnostics`. The return value
+    /// carries only the artifact kind discriminator.
     ///
     /// Skeleton implementations return
-    /// `Outcome::Ok(CodegenArtifact::empty(kind))`; real bodies
-    /// land in follow-up rounds (one per target).
+    /// `Outcome::Ok(CodegenArtifact::empty(kind))` without pushing
+    /// anything; real bodies land in follow-up rounds (one per
+    /// target).
+    ///
+    /// `bytes` and `diagnostics` are `&mut dyn` rather than `&mut
+    /// impl` because the trait is stored in the const registry as
+    /// `&'static dyn CodegenTarget`; dyn methods are object-safe
+    /// and must not carry `impl Trait` parameters.
     ///
     /// # Implementor note
     ///
     /// `Diagnostic.message` is `&'static str`. Targets that surface
-    /// diagnostics in produced artifacts must use string literals
-    /// or `const` slices — no `format!`-produced strings.
-    /// Span-enriched rendering is the responsibility of the
-    /// diagnostic renderer, not the target body.
-    fn emit(&self, ctx: &CodegenCtx) -> Outcome<CodegenArtifact, CodegenError>;
+    /// diagnostics must use string literals or `const` slices — no
+    /// `format!`-produced strings. Span-enriched rendering is the
+    /// responsibility of the diagnostic renderer, not the target
+    /// body.
+    fn emit(
+        &self,
+        ctx: &CodegenCtx,
+        bytes: &mut dyn ByteEmitter,
+        diagnostics: &mut dyn DiagnosticSink<Diagnostic>,
+    ) -> Outcome<CodegenArtifact, CodegenError>;
 }

@@ -78,6 +78,7 @@ version = "0.1.0"
 dependencies = [
  "clause-ir",
  "clause-resolve",
+ "hilavitkutin-api",
  "mockspace",
  "notko",
 ]
@@ -123,6 +124,7 @@ dependencies = [
  "clause-ir",
  "clause-runtime-abi",
  "clause-schedule",
+ "hilavitkutin-api",
  "mockspace",
  "notko",
 ]
@@ -133,6 +135,7 @@ version = "0.1.0"
 dependencies = [
  "clause-runtime-abi",
  "clause-runtime-driver",
+ "hilavitkutin-api",
  "mockspace",
  "notko",
 ]
@@ -155,6 +158,7 @@ version = "0.1.0"
 dependencies = [
  "clause-ir",
  "clause-lex",
+ "hilavitkutin-api",
  "mockspace",
  "notko",
 ]
@@ -168,6 +172,7 @@ dependencies = [
  "clause-ir",
  "clause-resolve",
  "clause-syntax",
+ "hilavitkutin-api",
  "mockspace",
 ]
 
@@ -188,6 +193,23 @@ name = "hashbrown"
 version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4f467dd6dccf739c208452f8014c75c18bb8301b050ad1cfb27153803edb0f51"
+
+[[package]]
+name = "hilavitkutin-api"
+version = "0.1.0"
+source = "git+ssh://git@github.com/orgrinrt/hilavitkutin.git?branch=dev#56d325665b824b508ba4349e8ad9909d93962870"
+dependencies = [
+ "arvo",
+ "arvo-bitmask",
+ "hilavitkutin-ctx",
+ "mockspace",
+ "notko",
+]
+
+[[package]]
+name = "hilavitkutin-ctx"
+version = "0.1.0"
+source = "git+ssh://git@github.com/orgrinrt/hilavitkutin.git?branch=dev#56d325665b824b508ba4349e8ad9909d93962870"
 
 [[package]]
 name = "indexmap"
