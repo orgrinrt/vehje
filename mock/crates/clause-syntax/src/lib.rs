@@ -16,15 +16,14 @@
 //! of the stable harness. Error recovery and incremental reparse
 //! are also BACKLOG.
 //!
-//! `#![no_std]`; `alloc` is pulled in only so `parse()` can surface
-//! multi-error results as a `Vec<SyntaxError>`. The AST arena is a
-//! fixed-size array; larger programs arrive with a const-generic
-//! arena once the real parser exercises the need.
+//! `#![no_std]`, no `alloc`. Multi-error surfacing flows through a
+//! caller-provided `DiagnosticSink<SyntaxError>`; the parser never
+//! allocates. The AST arena is a fixed-size array; larger programs
+//! arrive with a const-generic arena once the real parser
+//! exercises the need.
 
 #![no_std]
 #![deny(unused, unreachable_code, unused_must_use, unused_imports, dead_code)]
-
-extern crate alloc;
 
 pub mod ast;
 pub mod error;

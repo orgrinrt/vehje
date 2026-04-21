@@ -13,6 +13,8 @@
 //! e.g. for `clause-jomini` loaded via `dlopen`) is BACKLOG —
 //! the skeleton round ships only the two built-in targets.
 
+use clause_ir::Diagnostic;
+use hilavitkutin_api::{ByteEmitter, DiagnosticSink};
 use notko::{Maybe, Outcome};
 
 use crate::artifact::CodegenArtifact;
@@ -56,7 +58,9 @@ impl TargetRegistry {
         Maybe::Isnt
     }
 
-    /// Emit an artifact via the target registered under `name`.
+    /// Emit an artifact via the target registered under `name`,
+    /// pushing bytes into `bytes` and diagnostics into
+    /// `diagnostics`.
     ///
     /// Returns `Outcome::Err(CodegenError::TargetNotFound { name:
     /// "" })` if no target matches. The empty-name sentinel lets
@@ -64,25 +68,31 @@ impl TargetRegistry {
     /// input-side string context and re-reports if needed. A
     /// follow-up round retrofits a richer error carrier if the
     /// sentinel surfaces as painful in practice.
-    pub fn emit_for(name: &str, ctx: &CodegenCtx) -> Outcome<CodegenArtifact, CodegenError> {
+    pub fn emit_for(
+        name: &str,
+        ctx: &CodegenCtx,
+        bytes: &mut dyn ByteEmitter,
+        diagnostics: &mut dyn DiagnosticSink<Diagnostic>,
+    ) -> Outcome<CodegenArtifact, CodegenError> {
         match Self::lookup(name) {
-            Maybe::Is(target) => target.emit(ctx),
+            Maybe::Is(target) => target.emit(ctx, bytes, diagnostics),
             Maybe::Isnt => Outcome::Err(CodegenError::TargetNotFound { name: "" }),
         }
     }
 }
 
 /// Emit a codegen artifact for `resolved` via the target
-/// registered under `target_name`.
+/// registered under `target_name`, pushing emitted bytes into
+/// `bytes` and diagnostics into `diagnostics`.
 ///
 /// Returns `Outcome::Err(CodegenError::TargetNotFound { name: ""
 /// })` if no target matches (the caller retains the input-side
 /// name context).
 ///
-/// Skeleton round: each built-in target returns an empty
-/// artifact, so the happy-path result is always an empty-byte
-/// `CodegenArtifact`. Each deferred backend flips its stub into
-/// a real lowering path in its own follow-up round.
+/// Skeleton round: each built-in target returns an artifact
+/// descriptor without pushing anything. Each deferred backend
+/// flips its stub into a real lowering path in its own follow-up
+/// round.
 ///
 /// # Caller obligation
 ///
@@ -91,7 +101,12 @@ impl TargetRegistry {
 /// string. Callers who need to render `"target not found: {name}"`
 /// should hold the `target_name` they passed in and interpolate
 /// at render time.
-pub fn emit(resolved: &Resolved, target_name: &str) -> Outcome<CodegenArtifact, CodegenError> {
+pub fn emit(
+    resolved: &Resolved,
+    target_name: &str,
+    bytes: &mut dyn ByteEmitter,
+    diagnostics: &mut dyn DiagnosticSink<Diagnostic>,
+) -> Outcome<CodegenArtifact, CodegenError> {
     let ctx = CodegenCtx::new(resolved);
-    TargetRegistry::emit_for(target_name, &ctx)
+    TargetRegistry::emit_for(target_name, &ctx, bytes, diagnostics)
 }
