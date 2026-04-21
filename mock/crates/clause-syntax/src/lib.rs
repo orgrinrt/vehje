@@ -30,35 +30,10 @@ pub mod ast;
 pub mod error;
 pub mod parser;
 
-use alloc::vec;
-use alloc::vec::Vec;
-
 pub use ast::{Ast, AstNode, MAX_CHILDREN, MAX_NODES};
 pub use error::{SyntaxError, SyntaxErrorKind};
-pub use parser::{Parser, TokenCursor};
+pub use parser::{parse, Parser, TokenCursor};
 
+pub use clause_ir::TokenKind;
 pub use clause_ir::{AstNodeKind, NodeId, Span};
 pub use clause_lex::Token;
-pub use clause_ir::TokenKind;
-
-/// Parse a token slice into an `Ast`.
-///
-/// The skeleton handles:
-///
-/// - Empty slice (or a slice of just `Eof`) → empty `Ast`.
-/// - A single `IntLit` followed by optional `Eof` → an `Ast`
-///   containing one `AstNodeKind::Expr` node spanning the
-///   literal.
-/// - Anything else → `Err(vec![SyntaxErrorKind::UnexpectedToken])`.
-///
-/// The error arm is `Vec<SyntaxError>` rather than a single
-/// `SyntaxError` so future multi-error recovery extends the vec
-/// without another signature churn. Today the vec carries one
-/// element in the error case.
-///
-/// Every deferred production flips from `UnexpectedToken` to a
-/// real parse in its own follow-up round.
-// lint:allow(bare_collection) — the diagnostic return surface across every compiler phase crate matches what clause-typecheck and clause-resolve already ship; storage-crate collection types target mockspace domain graphs not host-side compiler syntax-error batches here
-pub fn parse(tokens: &[Token]) -> Result<Ast, Vec<SyntaxError>> {
-    Parser::new(tokens).parse().map_err(|e| vec![e])
-}

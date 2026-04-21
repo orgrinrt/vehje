@@ -17,6 +17,7 @@
 //! for the full grammar.
 
 use clause_ir::{AstNodeKind, NodeId, Span};
+use notko::Maybe;
 
 /// Maximum direct children any `AstNode` can hold in this round.
 ///
@@ -109,7 +110,7 @@ impl AstNode {
 pub struct Ast {
     nodes: [AstNode; MAX_NODES],
     len: u32,
-    root: Option<NodeId>,
+    root: Maybe<NodeId>,
 }
 
 impl Default for Ast {
@@ -128,7 +129,7 @@ impl Ast {
                 clause_ir::ByteOffset(0),
             )); MAX_NODES],
             len: 0,
-            root: None,
+            root: Maybe::Isnt,
         }
     }
 
@@ -142,45 +143,46 @@ impl Ast {
         self.len as usize
     }
 
-    /// Root node id, or `None` if the AST is empty / unset.
-    pub const fn root(&self) -> Option<NodeId> {
+    /// Root node id, or `Maybe::Isnt` if the AST is empty / unset.
+    pub const fn root(&self) -> Maybe<NodeId> {
         self.root
     }
 
     /// Set the root node id. Callers must have pushed the node
     /// before calling this; no bounds check is performed.
     pub fn set_root(&mut self, id: NodeId) {
-        self.root = Some(id);
+        self.root = Maybe::Is(id);
     }
 
     /// Push a node into the arena, returning its id. Returns
-    /// `None` if the arena is full (`len == MAX_NODES`).
-    pub fn push(&mut self, node: AstNode) -> Option<NodeId> {
+    /// `Maybe::Isnt` if the arena is full (`len == MAX_NODES`).
+    pub fn push(&mut self, node: AstNode) -> Maybe<NodeId> {
         let idx = self.len as usize;
         if idx >= MAX_NODES {
-            return None;
+            return Maybe::Isnt;
         }
         self.nodes[idx] = node;
         self.len += 1;
-        Some(NodeId(idx as u32))
+        Maybe::Is(NodeId(idx as u32))
     }
 
-    /// Borrow a node by id, or `None` if the id is out of bounds.
-    pub fn get(&self, id: NodeId) -> Option<&AstNode> {
-        let idx = id.0 as usize;
-        if idx >= self.len as usize {
-            return None;
-        }
-        Some(&self.nodes[idx])
-    }
-
-    /// Mutably borrow a node by id, or `None` if the id is out of
+    /// Borrow a node by id, or `Maybe::Isnt` if the id is out of
     /// bounds.
-    pub fn get_mut(&mut self, id: NodeId) -> Option<&mut AstNode> {
+    pub fn get(&self, id: NodeId) -> Maybe<&AstNode> {
         let idx = id.0 as usize;
         if idx >= self.len as usize {
-            return None;
+            return Maybe::Isnt;
         }
-        Some(&mut self.nodes[idx])
+        Maybe::Is(&self.nodes[idx])
+    }
+
+    /// Mutably borrow a node by id, or `Maybe::Isnt` if the id is
+    /// out of bounds.
+    pub fn get_mut(&mut self, id: NodeId) -> Maybe<&mut AstNode> {
+        let idx = id.0 as usize;
+        if idx >= self.len as usize {
+            return Maybe::Isnt;
+        }
+        Maybe::Is(&mut self.nodes[idx])
     }
 }

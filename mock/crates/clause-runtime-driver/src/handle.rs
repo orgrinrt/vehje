@@ -12,6 +12,8 @@
 //! needed) — future rayon-backed execution surfaces the
 //! constraint.
 
+use notko::Outcome;
+
 use crate::error::DriverError;
 
 /// Runtime-handle interface.
@@ -23,5 +25,5 @@ use crate::error::DriverError;
 pub trait RuntimeHandle: Send + Sync {
     /// Hand `input` to the runtime and collect the output.
     // lint:allow(bare_collection) — the diagnostic return surface across every compiler phase crate matches what clause-resolve already ships; storage-crate collection types target mockspace domain graphs not host-side compiler runtime buffers here
-    fn execute(&self, input: &[u8]) -> Result<Vec<u8>, DriverError>;
+    fn execute(&self, input: &[u8]) -> Outcome<Vec<u8>, DriverError>;
 }

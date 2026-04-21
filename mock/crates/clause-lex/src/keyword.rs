@@ -7,6 +7,7 @@
 //! `Fn` is an ident.
 
 use clause_ir::TokenKind;
+use notko::Maybe;
 
 /// The authoritative keyword list.
 ///
@@ -62,18 +63,18 @@ pub const KEYWORDS: &[(&str, TokenKind)] = &[
 
 /// Look up `ident` in the keyword table. Case-sensitive.
 ///
-/// Returns `None` if the identifier is not a keyword; the caller
-/// should then emit `TokenKind::Ident`.
-pub fn lookup_keyword(ident: &str) -> Option<TokenKind> {
+/// Returns `Maybe::Isnt` if the identifier is not a keyword; the
+/// caller should then emit `TokenKind::Ident`.
+pub fn lookup_keyword(ident: &str) -> Maybe<TokenKind> {
     let mut i = 0;
     while i < KEYWORDS.len() {
         let (s, k) = KEYWORDS[i];
         if str_eq(s.as_bytes(), ident.as_bytes()) {
-            return Some(k);
+            return Maybe::Is(k);
         }
         i += 1;
     }
-    None
+    Maybe::Isnt
 }
 
 /// Byte-wise string equality. Avoids pulling in `str::eq`'s machinery

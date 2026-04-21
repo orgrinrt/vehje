@@ -14,6 +14,7 @@
 //! ten core validators.
 
 use clause_ir::Diagnostic;
+use clause_resolve::Resolved;
 
 use crate::bind_target_shape::BindTargetShape;
 use crate::coherence::Coherence;
@@ -71,4 +72,17 @@ impl ValidatorRegistry {
         }
         out
     }
+}
+
+/// Type-check `resolved` by running every core validator against
+/// it. Returns the flattened diagnostic vec.
+///
+/// Skeleton round: each validator returns an empty diagnostic
+/// vec, so the result is always empty. Each deferred validator
+/// body flips its stub into a real check in its own follow-up
+/// round.
+// lint:allow(bare_collection) — the diagnostic return surface across every compiler phase crate matches what clause-resolve already ships; storage-crate collection types target mockspace domain graphs not host-side compiler diagnostics here
+pub fn typecheck(resolved: &Resolved) -> Vec<Diagnostic> {
+    let ctx = ValidatorCtx::new(resolved);
+    ValidatorRegistry::run_all(&ctx)
 }

@@ -2,8 +2,8 @@
 //! runtime dylib.
 //!
 //! Skeleton round: `load` always returns
-//! `Err(LoaderError::NotImplemented)`. The follow-up round
-//! wires the real path:
+//! `Outcome::Err(LoaderError::NotImplemented)`. The follow-up
+//! round wires the real path:
 //!
 //! 1. Check `CLAUSE_RUNTIME_PATH` env var.
 //! 2. Fall back to a next-to-compiler-binary convention.
@@ -13,6 +13,8 @@
 //! surface signature only.
 
 use std::path::Path;
+
+use notko::Outcome;
 
 use crate::error::LoaderError;
 use crate::handle::RuntimeHandle;
@@ -24,13 +26,13 @@ pub struct RuntimeLoader;
 impl RuntimeLoader {
     /// Locate + load the runtime dylib at `path`.
     ///
-    /// Skeleton: returns `Err(LoaderError::NotImplemented)`
+    /// Skeleton: returns `Outcome::Err(LoaderError::NotImplemented)`
     /// regardless of the path contents (including the empty
     /// string, a nonexistent file, or a real file). Follow-up
     /// round wires `libloading::Library::new(path)` + `dlsym`
     /// symbol resolution.
-    pub fn load(path: &Path) -> Result<Box<dyn RuntimeHandle>, LoaderError> {
+    pub fn load(path: &Path) -> Outcome<Box<dyn RuntimeHandle>, LoaderError> {
         let _ = path;
-        Err(LoaderError::NotImplemented)
+        Outcome::Err(LoaderError::NotImplemented)
     }
 }

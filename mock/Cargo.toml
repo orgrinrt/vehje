@@ -36,6 +36,8 @@ hilavitkutin-api = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", bra
 hilavitkutin = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", branch = "dev" }
 hilavitkutin-build = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", branch = "dev" }
 
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false }
+
 # In-workspace phase crates — path deps for inter-phase consumption.
 clause-ir = { path = "crates/clause-ir" }
 clause-lex = { path = "crates/clause-lex" }
