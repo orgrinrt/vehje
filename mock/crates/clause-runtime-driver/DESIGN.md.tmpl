@@ -18,11 +18,11 @@ Phase 6 skeleton round (2026-04-20) ships:
 
 - `RuntimeDriver` placeholder struct (`{ _private: () }`)
   with a `new()` constructor. Real state body is BACKLOG.
-- `RuntimeLoader` ZST with a `load(path) -> Result<Box<dyn
+- `RuntimeLoader` ZST with a `load(path) -> Outcome<Box<dyn
   RuntimeHandle>, LoaderError>` entry. Stubbed: returns
   `Err(LoaderError::NotImplemented)` regardless of path.
 - `RuntimeHandle: Send + Sync` trait with a single
-  `execute(&self, &[u8]) -> Result<Vec<u8>, DriverError>`
+  `execute(&self, &[u8]) -> Outcome<Vec<u8>, DriverError>`
   method. No concrete impls this round — `DlopenHandle` is
   BACKLOG.
 - `DriverError` + `LoaderError` enums.

@@ -45,7 +45,7 @@ pub trait CodegenTarget: Send + Sync + 'static {
         &self,
         unit: &TypedUnit,
         ctx: &mut CodegenCtx<'_>,
-    ) -> Result<CodegenOutput, Diagnostic>;
+    ) -> Outcome<CodegenOutput, Diagnostic>;
 
     fn render_diagnostic(&self, err: &TargetError) -> Diagnostic;
 }
@@ -62,7 +62,7 @@ gymnastics:
 ```rust
 pub trait CodegenTarget: Sync {
     fn name(&self) -> &'static str;
-    fn emit(&self, ctx: &CodegenCtx) -> Result<CodegenArtifact, CodegenError>;
+    fn emit(&self, ctx: &CodegenCtx) -> Outcome<CodegenArtifact, CodegenError>;
 }
 ```
 
