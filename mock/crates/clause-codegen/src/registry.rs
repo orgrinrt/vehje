@@ -13,12 +13,15 @@
 //! e.g. for `clause-jomini` loaded via `dlopen`) is BACKLOG —
 //! the skeleton round ships only the two built-in targets.
 
+use notko::{Maybe, Outcome};
+
 use crate::artifact::CodegenArtifact;
 use crate::ctx::CodegenCtx;
 use crate::error::CodegenError;
 use crate::jomini::JominiTarget;
 use crate::native::NativeTarget;
 use crate::target::CodegenTarget;
+use clause_resolve::Resolved;
 
 /// Target registry — const iteration surface over every
 /// codegen target shipped in clause-codegen.
@@ -40,31 +43,55 @@ impl TargetRegistry {
 
     /// Look up a target by name. Linear scan over `TARGETS`.
     ///
-    /// Returns `None` if no target matches. The scan is linear
-    /// but the list is tiny (two entries this round; at most a
-    /// handful even after plugin loading); a hashmap is not
+    /// Returns `Maybe::Isnt` if no target matches. The scan is
+    /// linear but the list is tiny (two entries this round; at
+    /// most a handful even after plugin loading); a hashmap is not
     /// justified.
-    pub fn lookup(name: &str) -> Option<&'static dyn CodegenTarget> {
+    pub fn lookup(name: &str) -> Maybe<&'static dyn CodegenTarget> {
         for target in Self::TARGETS {
             if target.name() == name {
-                return Some(*target);
+                return Maybe::Is(*target);
             }
         }
-        None
+        Maybe::Isnt
     }
 
     /// Emit an artifact via the target registered under `name`.
     ///
-    /// Returns `Err(CodegenError::TargetNotFound { name: "" })`
-    /// if no target matches. The empty-name sentinel lets
+    /// Returns `Outcome::Err(CodegenError::TargetNotFound { name:
+    /// "" })` if no target matches. The empty-name sentinel lets
     /// `CodegenError` remain `Copy`; the caller retains the
     /// input-side string context and re-reports if needed. A
     /// follow-up round retrofits a richer error carrier if the
     /// sentinel surfaces as painful in practice.
-    pub fn emit_for(name: &str, ctx: &CodegenCtx) -> Result<CodegenArtifact, CodegenError> {
+    pub fn emit_for(name: &str, ctx: &CodegenCtx) -> Outcome<CodegenArtifact, CodegenError> {
         match Self::lookup(name) {
-            Some(target) => target.emit(ctx),
-            None => Err(CodegenError::TargetNotFound { name: "" }),
+            Maybe::Is(target) => target.emit(ctx),
+            Maybe::Isnt => Outcome::Err(CodegenError::TargetNotFound { name: "" }),
         }
     }
+}
+
+/// Emit a codegen artifact for `resolved` via the target
+/// registered under `target_name`.
+///
+/// Returns `Outcome::Err(CodegenError::TargetNotFound { name: ""
+/// })` if no target matches (the caller retains the input-side
+/// name context).
+///
+/// Skeleton round: each built-in target returns an empty
+/// artifact, so the happy-path result is always an empty-byte
+/// `CodegenArtifact`. Each deferred backend flips its stub into
+/// a real lowering path in its own follow-up round.
+///
+/// # Caller obligation
+///
+/// `TargetNotFound`'s `name` field is a sentinel (`""`) for
+/// efficiency — `CodegenError` is `Copy` and can't own a runtime
+/// string. Callers who need to render `"target not found: {name}"`
+/// should hold the `target_name` they passed in and interpolate
+/// at render time.
+pub fn emit(resolved: &Resolved, target_name: &str) -> Outcome<CodegenArtifact, CodegenError> {
+    let ctx = CodegenCtx::new(resolved);
+    TargetRegistry::emit_for(target_name, &ctx)
 }

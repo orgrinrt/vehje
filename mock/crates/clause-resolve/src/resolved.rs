@@ -2,15 +2,16 @@
 //!
 //! `Resolved` carries the original AST plus the resolver's output:
 //! a `ScopeTree` and a per-`NodeId` resolution map. The map is a
-//! flat `Vec<Option<Symbol>>` indexed by the raw `NodeId.0` value.
-//! `None` entries mean "not a name reference" or "not yet
+//! flat `Vec<Maybe<Symbol>>` indexed by the raw `NodeId.0` value.
+//! `Maybe::Isnt` entries mean "not a name reference" or "not yet
 //! resolved"; follow-up rounds populate them as each resolution
 //! rule lands.
 //!
-//! Skeleton round: every entry is `None`; the resolver does not
-//! walk the AST.
+//! Skeleton round: every entry is `Maybe::Isnt`; the resolver does
+//! not walk the AST.
 
 use clause_syntax::Ast;
+use notko::Maybe;
 
 use crate::scope::ScopeTree;
 use crate::symbol::Symbol;
@@ -22,12 +23,12 @@ use crate::symbol::Symbol;
 /// - `ast` — a copy of the input AST (so downstream phases can key
 ///   off a single value; the AST is `Copy` via fixed-size arenas).
 /// - `scopes` — the `ScopeTree` the resolver constructed.
-/// - `resolution` — a flat map from `NodeId.0` to `Option<Symbol>`.
+/// - `resolution` — a flat map from `NodeId.0` to `Maybe<Symbol>`.
 #[derive(Clone, Debug, Default)]
 pub struct Resolved {
     ast: Ast,
     scopes: ScopeTree,
-    resolution: Vec<Option<Symbol>>,
+    resolution: Vec<Maybe<Symbol>>,
 }
 
 impl Resolved {
@@ -42,7 +43,7 @@ impl Resolved {
     }
 
     /// Construct a `Resolved` from its parts.
-    pub fn new(ast: Ast, scopes: ScopeTree, resolution: Vec<Option<Symbol>>) -> Self {
+    pub fn new(ast: Ast, scopes: ScopeTree, resolution: Vec<Maybe<Symbol>>) -> Self {
         Self { ast, scopes, resolution }
     }
 
@@ -57,7 +58,7 @@ impl Resolved {
     }
 
     /// Borrow the resolution map.
-    pub fn resolution(&self) -> &[Option<Symbol>] {
+    pub fn resolution(&self) -> &[Maybe<Symbol>] {
         &self.resolution
     }
 
@@ -67,6 +68,6 @@ impl Resolved {
     pub fn is_empty(&self) -> bool {
         self.ast.is_empty()
             && self.scopes.is_trivial()
-            && self.resolution.iter().all(Option::is_none)
+            && self.resolution.iter().all(|r| r.isnt())
     }
 }

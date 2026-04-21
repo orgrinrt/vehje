@@ -10,11 +10,11 @@
 //! Round-one scope is deliberately minimal: the harness (types
 //! + driver + manifest stub + error carriers) plus a top-level
 //! `resolve` entry point that walks nothing and returns a
-//! `None`-filled resolution map sized to `ast.len()`. Every
-//! resolution rule (top-level items, local bindings, paths, use
-//! statements, globs, generics, self-type, trait methods, macro
-//! hygiene) lands as its own follow-up micro-round on top of
-//! this stable harness.
+//! `Maybe::Isnt`-filled resolution map sized to `ast.len()`.
+//! Every resolution rule (top-level items, local bindings,
+//! paths, use statements, globs, generics, self-type, trait
+//! methods, macro hygiene) lands as its own follow-up
+//! micro-round on top of this stable harness.
 //!
 //! This crate uses `std`; it is host-side (compiler phase), not
 //! runtime. The `no_std` / fixed-arena discipline on `clause-ir`,
@@ -32,19 +32,9 @@ pub mod symbol;
 pub use error::{ManifestError, ResolveError};
 pub use manifest::{Manifest, parse_manifest};
 pub use resolved::Resolved;
-pub use resolver::Resolver;
+pub use resolver::{resolve, Resolver};
 pub use scope::{Scope, ScopeTree};
 pub use symbol::{Symbol, SymbolKind};
 
 pub use clause_ir::{Diagnostic, NodeId, ScopeId, Span};
 pub use clause_syntax::{Ast, AstNode};
-
-/// Resolve an AST into a `Resolved` bundle.
-///
-/// The skeleton does not walk the AST — it returns a `Resolved`
-/// whose `resolution` vec is `None`-filled to `ast.len()`. Each
-/// deferred resolution rule flips a subset of those slots as it
-/// lands.
-pub fn resolve(ast: &Ast) -> Result<Resolved, ResolveError> {
-    Resolver::new().resolve(ast)
-}

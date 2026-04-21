@@ -79,6 +79,7 @@ dependencies = [
  "clause-ir",
  "clause-resolve",
  "mockspace",
+ "notko",
 ]
 
 [[package]]
@@ -94,6 +95,7 @@ version = "0.1.0"
 dependencies = [
  "clause-ir",
  "mockspace",
+ "notko",
 ]
 
 [[package]]
@@ -103,6 +105,7 @@ dependencies = [
  "clause-ir",
  "clause-syntax",
  "mockspace",
+ "notko",
 ]
 
 [[package]]
@@ -121,6 +124,7 @@ dependencies = [
  "clause-runtime-abi",
  "clause-schedule",
  "mockspace",
+ "notko",
 ]
 
 [[package]]
@@ -130,6 +134,7 @@ dependencies = [
  "clause-runtime-abi",
  "clause-runtime-driver",
  "mockspace",
+ "notko",
 ]
 
 [[package]]
@@ -151,6 +156,7 @@ dependencies = [
  "clause-ir",
  "clause-lex",
  "mockspace",
+ "notko",
 ]
 
 [[package]]

@@ -11,6 +11,7 @@
 //! char classes. Non-ASCII identifier support is a deferred concern.
 
 use clause_ir::TokenKind;
+use notko::Maybe;
 
 use crate::cursor::Cursor;
 use crate::keyword::lookup_keyword;
@@ -47,7 +48,7 @@ pub const fn is_whitespace(b: u8) -> bool {
 pub fn read_ident_or_keyword(c: &mut Cursor<'_>) -> (TokenKind, u32, u32) {
     let start = c.pos_u32();
     c.bump_byte();
-    while let Some(b) = c.peek_byte() {
+    while let Maybe::Is(b) = c.peek_byte() {
         if is_ident_cont(b) {
             c.bump_byte();
         } else {
@@ -61,8 +62,8 @@ pub fn read_ident_or_keyword(c: &mut Cursor<'_>) -> (TokenKind, u32, u32) {
         Err(_) => "",
     };
     let kind = match lookup_keyword(text) {
-        Some(k) => k,
-        None => TokenKind::Ident,
+        Maybe::Is(k) => k,
+        Maybe::Isnt => TokenKind::Ident,
     };
     (kind, start, end)
 }
@@ -74,7 +75,7 @@ pub fn read_ident_or_keyword(c: &mut Cursor<'_>) -> (TokenKind, u32, u32) {
 /// scheduled for a later round.
 pub fn read_int_literal(c: &mut Cursor<'_>) -> (TokenKind, u32, u32) {
     let start = c.pos_u32();
-    while let Some(b) = c.peek_byte() {
+    while let Maybe::Is(b) = c.peek_byte() {
         if is_digit(b) {
             c.bump_byte();
         } else {
@@ -93,7 +94,7 @@ pub fn read_line_comment(c: &mut Cursor<'_>) -> (TriviaKind, u32, u32) {
     let start = c.pos_u32();
     c.bump_byte();
     c.bump_byte();
-    while let Some(b) = c.peek_byte() {
+    while let Maybe::Is(b) = c.peek_byte() {
         if b == b'\n' {
             break;
         }
@@ -112,8 +113,8 @@ pub fn read_block_comment(c: &mut Cursor<'_>) -> (TriviaKind, u32, u32) {
     let start = c.pos_u32();
     c.bump_byte();
     c.bump_byte();
-    while let Some(b) = c.peek_byte() {
-        if b == b'*' && c.peek_byte_at(1) == Some(b'/') {
+    while let Maybe::Is(b) = c.peek_byte() {
+        if b == b'*' && c.peek_byte_at(1) == Maybe::Is(b'/') {
             c.bump_byte();
             c.bump_byte();
             break;
@@ -128,7 +129,7 @@ pub fn read_block_comment(c: &mut Cursor<'_>) -> (TriviaKind, u32, u32) {
 /// `is_whitespace` byte. Returns `(kind, start, end)`.
 pub fn read_whitespace(c: &mut Cursor<'_>) -> (TriviaKind, u32, u32) {
     let start = c.pos_u32();
-    while let Some(b) = c.peek_byte() {
+    while let Maybe::Is(b) = c.peek_byte() {
         if is_whitespace(b) {
             c.bump_byte();
         } else {
@@ -142,44 +143,56 @@ pub fn read_whitespace(c: &mut Cursor<'_>) -> (TriviaKind, u32, u32) {
 /// Attempt to scan a single operator or punctuation token. Uses
 /// longest-match semantics: three-byte candidates (`..=`, `<<=`,
 /// `>>=`, `...`) are tried before two-byte candidates, two-byte
-/// before one-byte. Returns `None` if the cursor is not on an
+/// before one-byte. Returns `Maybe::Isnt` if the cursor is not on an
 /// operator byte (caller should fall through to `Unknown`).
-pub fn read_operator_or_punct(c: &mut Cursor<'_>) -> Option<(TokenKind, u32, u32)> {
+pub fn read_operator_or_punct(c: &mut Cursor<'_>) -> Maybe<(TokenKind, u32, u32)> {
     let start = c.pos_u32();
-    let b0 = c.peek_byte()?;
+    let b0 = match c.peek_byte() {
+        Maybe::Is(b) => b,
+        Maybe::Isnt => return Maybe::Isnt,
+    };
     let b1 = c.peek_byte_at(1);
     let b2 = c.peek_byte_at(2);
 
-    if let Some(k) = three_byte_op(b0, b1, b2) {
+    if let Maybe::Is(k) = three_byte_op(b0, b1, b2) {
         c.bump_n(3);
-        return Some((k, start, c.pos_u32()));
+        return Maybe::Is((k, start, c.pos_u32()));
     }
-    if let Some(k) = two_byte_op(b0, b1) {
+    if let Maybe::Is(k) = two_byte_op(b0, b1) {
         c.bump_n(2);
-        return Some((k, start, c.pos_u32()));
+        return Maybe::Is((k, start, c.pos_u32()));
     }
-    if let Some(k) = one_byte_op(b0) {
+    if let Maybe::Is(k) = one_byte_op(b0) {
         c.bump_n(1);
-        return Some((k, start, c.pos_u32()));
+        return Maybe::Is((k, start, c.pos_u32()));
     }
-    None
+    Maybe::Isnt
 }
 
-fn three_byte_op(b0: u8, b1: Option<u8>, b2: Option<u8>) -> Option<TokenKind> {
-    let b1 = b1?;
-    let b2 = b2?;
-    Some(match (b0, b1, b2) {
+fn three_byte_op(b0: u8, b1: Maybe<u8>, b2: Maybe<u8>) -> Maybe<TokenKind> {
+    let b1 = match b1 {
+        Maybe::Is(b) => b,
+        Maybe::Isnt => return Maybe::Isnt,
+    };
+    let b2 = match b2 {
+        Maybe::Is(b) => b,
+        Maybe::Isnt => return Maybe::Isnt,
+    };
+    Maybe::Is(match (b0, b1, b2) {
         (b'.', b'.', b'=') => TokenKind::DotDotEq,
         (b'.', b'.', b'.') => TokenKind::DotDotDot,
         (b'<', b'<', b'=') => TokenKind::ShlEq,
         (b'>', b'>', b'=') => TokenKind::ShrEq,
-        _ => return None,
+        _ => return Maybe::Isnt,
     })
 }
 
-fn two_byte_op(b0: u8, b1: Option<u8>) -> Option<TokenKind> {
-    let b1 = b1?;
-    Some(match (b0, b1) {
+fn two_byte_op(b0: u8, b1: Maybe<u8>) -> Maybe<TokenKind> {
+    let b1 = match b1 {
+        Maybe::Is(b) => b,
+        Maybe::Isnt => return Maybe::Isnt,
+    };
+    Maybe::Is(match (b0, b1) {
         (b':', b':') => TokenKind::ColonColon,
         (b'-', b'>') => TokenKind::Arrow,
         (b'=', b'>') => TokenKind::FatArrow,
@@ -200,12 +213,12 @@ fn two_byte_op(b0: u8, b1: Option<u8>) -> Option<TokenKind> {
         (b'&', b'=') => TokenKind::AndEq,
         (b'|', b'=') => TokenKind::OrEq,
         (b'^', b'=') => TokenKind::CaretEq,
-        _ => return None,
+        _ => return Maybe::Isnt,
     })
 }
 
-fn one_byte_op(b0: u8) -> Option<TokenKind> {
-    Some(match b0 {
+fn one_byte_op(b0: u8) -> Maybe<TokenKind> {
+    Maybe::Is(match b0 {
         b'+' => TokenKind::Plus,
         b'-' => TokenKind::Minus,
         b'*' => TokenKind::Star,
@@ -233,6 +246,6 @@ fn one_byte_op(b0: u8) -> Option<TokenKind> {
         b')' => TokenKind::RParen,
         b'[' => TokenKind::LBracket,
         b']' => TokenKind::RBracket,
-        _ => return None,
+        _ => return Maybe::Isnt,
     })
 }

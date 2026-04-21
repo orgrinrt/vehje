@@ -8,6 +8,7 @@ license.workspace = true
 clause-ir.workspace = true
 clause-runtime-abi.workspace = true
 clause-schedule.workspace = true
+notko.workspace = true
 # libloading = "0.8"  # BACKLOG: dlopen integration for dynamic Zig runtime loading
 
 [build-dependencies]

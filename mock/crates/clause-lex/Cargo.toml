@@ -6,6 +6,7 @@ license.workspace = true
 
 [dependencies]
 clause-ir.workspace = true
+notko.workspace = true
 
 [build-dependencies]
 mockspace.workspace = true
