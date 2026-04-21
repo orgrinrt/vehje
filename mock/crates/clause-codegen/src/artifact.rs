@@ -1,21 +1,19 @@
-//! Codegen artifact payload.
+//! Codegen artifact descriptor.
 //!
-//! `CodegenArtifact` is the per-target output bundle: a
-//! discriminator (`ArtifactKind`) identifying what the bytes
-//! represent, the raw byte payload, and any diagnostics
-//! surfaced during emission.
+//! `CodegenArtifact` is a post-emission descriptor: a kind
+//! discriminator identifying what the emitted output represents.
+//! Bytes and diagnostics flow through caller-provided sinks
+//! (`ByteEmitter` and `DiagnosticSink<Diagnostic>`) during the
+//! `CodegenTarget::emit` call rather than bundled into the
+//! artifact itself.
 //!
-//! Skeleton round: the payload is flat. The R3 design finalised
-//! a richer `CodegenOutput { bytes, manifest, references }`
-//! shape with a `ManifestFragment` for distribution hints and
-//! `&[SymbolRef]` for cross-target symbol references. That
-//! retrofit is BACKLOG; lands when the first real target
-//! backend surfaces the need.
+//! The R3 design finalised a richer `CodegenOutput { bytes,
+//! manifest, references }` shape with a `ManifestFragment` for
+//! distribution hints and `&[SymbolRef]` for cross-target symbol
+//! references. That retrofit is BACKLOG; lands when the first
+//! real target backend surfaces the need.
 
-use clause_ir::Diagnostic;
-
-/// Artifact kind — what the `CodegenArtifact.bytes` payload
-/// represents.
+/// Artifact kind — what the emitted payload represents.
 ///
 /// Covers the common codegen output shapes: raw binaries,
 /// relocatable object files, assembly text, generic source
@@ -38,34 +36,24 @@ pub enum ArtifactKind {
     Config = 4,
 }
 
-/// Codegen artifact — bytes + diagnostics + kind discriminator.
+/// Codegen artifact descriptor — kind discriminator only.
 ///
-/// The skeleton round's `empty` constructor gives zero-byte
-/// payload + zero diagnostics; real target backends populate
-/// `bytes` with the emitted code and `diagnostics` with any
-/// warnings / errors surfaced during emission.
+/// Bytes and diagnostics flow through caller-provided sinks
+/// during `CodegenTarget::emit`; the artifact reports only what
+/// kind of output was emitted.
 #[derive(Debug)]
 pub struct CodegenArtifact {
-    /// What the `bytes` payload represents.
+    /// What the emitted payload represents.
     pub kind: ArtifactKind,
-    /// Emitted artifact payload bytes.
-    // lint:allow(bare_collection) — the artifact payload byte surface across every codegen target matches what the R3 CodegenOutput shape uses directly; storage-crate collection types target mockspace domain graphs not host-side compiler artifact payloads here
-    pub bytes: Vec<u8>,
-    /// Diagnostics produced during emission. Empty on the
-    /// happy path; populated when a target wants to surface
-    /// warnings or non-fatal info alongside a successful
-    /// emission.
-    // lint:allow(bare_collection) — the diagnostic return surface across every compiler phase crate matches what clause-resolve and clause-typecheck already ship; storage-crate collection types target mockspace domain graphs not host-side compiler diagnostics here
-    pub diagnostics: Vec<Diagnostic>,
 }
 
 impl CodegenArtifact {
-    /// Build an empty artifact of the given `kind`.
+    /// Build an empty artifact descriptor of the given `kind`.
     ///
-    /// Zero-byte payload, no diagnostics. Used by skeleton
-    /// target stubs and by real target backends as an initial
-    /// value they then populate.
+    /// Used by skeleton target stubs and by real target backends
+    /// as the canonical return value after pushing bytes /
+    /// diagnostics into the sinks their caller provided.
     pub fn empty(kind: ArtifactKind) -> Self {
-        Self { kind, bytes: Vec::new(), diagnostics: Vec::new() }
+        Self { kind }
     }
 }

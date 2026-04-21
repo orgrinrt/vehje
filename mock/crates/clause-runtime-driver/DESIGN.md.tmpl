@@ -22,7 +22,7 @@ Phase 6 skeleton round (2026-04-20) ships:
   RuntimeHandle>, LoaderError>` entry. Stubbed: returns
   `Err(LoaderError::NotImplemented)` regardless of path.
 - `RuntimeHandle: Send + Sync` trait with a single
-  `execute(&self, &[u8]) -> Outcome<Vec<u8>, DriverError>`
+  `execute(&self, input: &[u8], output: &mut impl ByteEmitter) -> Outcome<(), DriverError>`
   method. No concrete impls this round — `DlopenHandle` is
   BACKLOG.
 - `DriverError` + `LoaderError` enums.
