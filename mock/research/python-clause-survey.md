@@ -1,5 +1,11 @@
 # Python Clause — survey for the Rust port
 
+> **Substrate principle applies to every section below.**
+> Read `substrate-principle.md` first. When this doc
+> describes a Python mechanism, the Rust equivalent is the
+> substrate (notko / arvo / hilavitkutin) — never an external
+> crate.
+
 **Date:** 2026-04-21
 **Corpus:** `/Users/orgrinrt/Dev/stellar-heritage/tools/clause/` —
 ~41k LOC Python compiler, 25k LOC tests, plus playset/deploy/artgen
@@ -455,13 +461,21 @@ Deep guidance lives in `lessons-learned.md` and
   retry; SQLite-as-primary-cache for the pass scheduler;
   asset decorators designed-but-unwired.
 
-- **Strictly better in Rust** (≥5): parser error recovery
-  via `logos` + hand-rolled recursive descent with typed
-  `Span`; pass fingerprinting with `bincode` + `blake3`;
-  arena-allocated immutable AST; shared
-  MIR / macro-interpreter; typed storage-catalog traits;
-  `rkyv` zero-copy for cross-crate artifacts; diagnostics
-  via `ariadne` or `annotate-snippets`.
+- **Strictly better in Rust via the substrate**: hand-rolled
+  recursive-descent parser with arena-allocated AST indexed
+  by `arvo::USize`; pass fingerprinting with `arvo_hash::
+  ContentHash`; cross-crate artifacts through
+  `hilavitkutin_persistence` cold store (no `rkyv`, no
+  `bincode`, no `serde`); shared IR walker for typecheck +
+  macro interpretation; const-generic storage-catalog
+  backends dispatched at monomorphisation; diagnostics
+  rendered through substrate sinks (`DiagnosticSink` +
+  `ByteEmitter` from hilavitkutin-api), no external
+  renderer; thread pool + morsel scheduling from
+  hilavitkutin (no `rayon`, no `tokio`); the compile
+  pipeline and the interpreter (if ever added) both run on
+  the same hilavitkutin engine — there is no separate
+  runtime.
 
 ## 9. Natural port ordering
 
