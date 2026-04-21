@@ -1,0 +1,50 @@
+b051584 chore: lock src changelist for 202604211746_changelist.src.lock.md
+542fc92 feat: replace Option/Result with Maybe/Outcome in clause phase crates
+a4a1ec0 docs: write fallibility-sweep src CL (#73.1)
+e19a845 chore: lock doc changelist for 202604211741_changelist.doc.lock.md
+5d59de1 docs: rename Result/Option to Outcome/Maybe in clause DESIGN templates
+aabfbc8 docs: write fallibility-sweep doc CL (#73.1)
+d0e79e8 docs: open clause fallibility-sweep round (#73.1)
+839246c chore: bump mockspace pin to e3f6f6d for no-empty-crate fix
+cb7b239 Merge pull request #9 from orgrinrt/feat/exact-widths-rule
+7c198f1 docs: teach exact-widths principle in type-surface rule
+d9c3c63 Merge pull request #8 from orgrinrt/feat/no-bare-static-str-cascade
+2a3f7a4 feat: enable no-bare-static-str lint
+1037c99 Merge pull request #7 from orgrinrt/feat/cascade-tightened-lints
+e733c44 chore: cascade tightened bare-primitive lints with graceful ramp
+e4236e4 Merge pull request #6 from orgrinrt/feat/tighten-bare-primitive-enforcement
+e296d90 feat: tighten bare-primitive enforcement — anywhere in source
+15feb79 chore: sync writing-style fragment + advisory override (#4)
+5057547 docs: tighten writing-style + wire shared fragment injection markers
+29d3826 docs: sync refined writing-style rules from arvo
+8d1c40f docs: port expanded writing-style rules from arvo
+9b08c8c feat: add type-surface-review skill (#91)
+d7059dc feat: add no-alloc-guard pre-tool hook for clause no_std crates (#77)
+0c268b1 docs: add type-surface + cookbook agent rules (#89, #90)
+d35df38 docs: enable forbidden-imports + drift lints + no-heap rule (#78, #84, #97)
+e6dfeee docs: port shared principles + initial mockspace doc render
+cc11438 chore: close design round 202604264500
+44c36f5 chore: lock src changelist for 202604264600_changelist.src.lock.md
+ffcb873 fix: clause mid+runtime polish — ABI/safety-gates/trait docs
+2396511 docs: add src CL for mid+runtime polish
+b1af1cb chore: lock doc changelist for 202604264500_changelist.doc.lock.md
+1c0a1a5 docs: BACKLOG + DESIGN notes for mid+runtime polish
+6dade3a docs: start clause mid+runtime polish post-review round
+3b7f5cd chore: close design round 202604264300
+19da937 chore: lock src changelist for 202604264400_changelist.src.lock.md
+46aa109 fix: clause front-end polish — DiagPhase, multi-error parse, TokenCursor
+4ef3e66 docs: add src CL for clause front-end polish
+2e3c254 chore: lock doc changelist for 202604264300_changelist.doc.lock.md
+edd16fd docs: expand BACKLOG + DESIGN for clause front-end polish
+6c53139 docs: start clause front-end polish post-review round
+8207e80 chore: close clause-runtime + Zig runtime round 202604264100
+8868329 chore: lock src CL 202604264200 for clause-runtime + Zig runtime skeleton
+8d5a771 feat: clause-runtime + Zig runtime skeleton
+fc575d3 docs: add src CL for clause-runtime + Zig runtime skeleton
+e555d1e chore: lock doc CL 202604264100 for clause-runtime + Zig runtime skeleton
+9da7533 docs: expand clause-runtime + Zig runtime DESIGN + BACKLOG
+003de9b docs: start clause-runtime + Zig runtime skeleton round
+fc29847 chore: close clause-codegen round 202604263900
+6d7ef54 chore: lock src CL 202604264000 for clause-codegen skeleton
+cd635d4 feat: clause-codegen skeleton
+55274ff docs: add src CL for clause-codegen skeleton
