@@ -8,6 +8,8 @@
 //! Real body is BACKLOG (one follow-up micro-round once the
 //! target-agnostic IR lowering layer lands).
 
+use clause_ir::Diagnostic;
+use hilavitkutin_api::{ByteEmitter, DiagnosticSink};
 use notko::Outcome;
 
 use crate::artifact::{ArtifactKind, CodegenArtifact};
@@ -29,7 +31,12 @@ impl CodegenTarget for NativeTarget {
         "native"
     }
 
-    fn emit(&self, _ctx: &CodegenCtx) -> Outcome<CodegenArtifact, CodegenError> {
+    fn emit(
+        &self,
+        _ctx: &CodegenCtx,
+        _bytes: &mut dyn ByteEmitter,
+        _diagnostics: &mut dyn DiagnosticSink<Diagnostic>,
+    ) -> Outcome<CodegenArtifact, CodegenError> {
         Outcome::Ok(CodegenArtifact::empty(ArtifactKind::Binary))
     }
 }

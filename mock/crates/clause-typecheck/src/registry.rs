@@ -15,6 +15,7 @@
 
 use clause_ir::Diagnostic;
 use clause_resolve::Resolved;
+use hilavitkutin_api::DiagnosticSink;
 
 use crate::bind_target_shape::BindTargetShape;
 use crate::coherence::Coherence;
@@ -59,30 +60,31 @@ impl ValidatorRegistry {
         &BindTargetShape,
     ];
 
-    /// Run every validator in `VALIDATORS` against `ctx` and
-    /// return the flattened diagnostic vec.
+    /// Run every validator in `VALIDATORS` against `ctx`, forwarding
+    /// `sink` to each for diagnostic emission.
     ///
     /// Execution is sequential this round. Parallel (rayon)
     /// fan-out is BACKLOG.
-    // lint:allow(bare_collection) — the diagnostic return surface across every compiler phase crate matches what clause-resolve already ships; storage-crate collection types target mockspace domain graphs not host-side compiler diagnostics here
-    pub fn run_all(ctx: &ValidatorCtx) -> Vec<Diagnostic> {
-        let mut out = Vec::new();
+    pub fn run_all(
+        ctx: &ValidatorCtx,
+        sink: &mut dyn DiagnosticSink<Diagnostic>,
+    ) {
         for validator in Self::VALIDATORS {
-            out.extend(validator.validate(ctx));
+            validator.validate(ctx, sink);
         }
-        out
     }
 }
 
 /// Type-check `resolved` by running every core validator against
-/// it. Returns the flattened diagnostic vec.
+/// it, pushing diagnostics into `sink`.
 ///
-/// Skeleton round: each validator returns an empty diagnostic
-/// vec, so the result is always empty. Each deferred validator
-/// body flips its stub into a real check in its own follow-up
-/// round.
-// lint:allow(bare_collection) — the diagnostic return surface across every compiler phase crate matches what clause-resolve already ships; storage-crate collection types target mockspace domain graphs not host-side compiler diagnostics here
-pub fn typecheck(resolved: &Resolved) -> Vec<Diagnostic> {
+/// Skeleton round: each validator pushes nothing, so `sink` stays
+/// empty. Each deferred validator body flips its stub into a real
+/// check in its own follow-up round.
+pub fn typecheck(
+    resolved: &Resolved,
+    sink: &mut dyn DiagnosticSink<Diagnostic>,
+) {
     let ctx = ValidatorCtx::new(resolved);
-    ValidatorRegistry::run_all(&ctx)
+    ValidatorRegistry::run_all(&ctx, sink);
 }

@@ -11,6 +11,8 @@
 //! body moves out to `github.com/orgrinrt/clause-jomini` once it
 //! has a meaningful implementation.
 
+use clause_ir::Diagnostic;
+use hilavitkutin_api::{ByteEmitter, DiagnosticSink};
 use notko::Outcome;
 
 use crate::artifact::{ArtifactKind, CodegenArtifact};
@@ -31,7 +33,12 @@ impl CodegenTarget for JominiTarget {
         "jomini"
     }
 
-    fn emit(&self, _ctx: &CodegenCtx) -> Outcome<CodegenArtifact, CodegenError> {
+    fn emit(
+        &self,
+        _ctx: &CodegenCtx,
+        _bytes: &mut dyn ByteEmitter,
+        _diagnostics: &mut dyn DiagnosticSink<Diagnostic>,
+    ) -> Outcome<CodegenArtifact, CodegenError> {
         Outcome::Ok(CodegenArtifact::empty(ArtifactKind::SourceFile))
     }
 }

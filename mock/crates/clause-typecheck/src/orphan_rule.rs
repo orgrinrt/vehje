@@ -8,6 +8,7 @@
 //! BACKLOG (one follow-up micro-round).
 
 use clause_ir::Diagnostic;
+use hilavitkutin_api::DiagnosticSink;
 
 use crate::ctx::ValidatorCtx;
 use crate::validator::Validator;
@@ -26,7 +27,10 @@ impl Validator for OrphanRule {
         "orphan-rule"
     }
 
-    fn validate(&self, _ctx: &ValidatorCtx) -> Vec<Diagnostic> {
-        Vec::new()
+    fn validate(
+        &self,
+        _ctx: &ValidatorCtx,
+        _sink: &mut dyn DiagnosticSink<Diagnostic>,
+    ) {
     }
 }

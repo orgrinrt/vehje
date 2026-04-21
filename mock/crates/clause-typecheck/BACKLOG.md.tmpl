@@ -37,11 +37,10 @@ skeleton stub into a real check.
 - **Diagnostic localisation** — message-code table with catalogue
   IDs; translations in `.po`-style files. Per R4 BACKLOG.
 - **R4 trait-shape retrofit** — associated `NAME` / `CATEGORY`
-  consts, `accepts(kind)` AST routing, `&mut DiagnosticSink`
-  emission API. Skeleton round ships a narrower instance-method
-  trait (`name(&self)`, `validate(&self, ctx) -> Vec<Diagnostic>`)
-  for trait-object compatibility; retrofit lands once real
-  validator bodies surface the need.
+  consts, `accepts(kind)` AST routing. Skeleton trait now carries
+  the `&mut impl DiagnosticSink<Diagnostic>` sink shape; the R4
+  richer trait shape with the associated-const surface and AST
+  routing lands once real validator bodies surface the need.
 
 ## Per-node parallel validator execution
 

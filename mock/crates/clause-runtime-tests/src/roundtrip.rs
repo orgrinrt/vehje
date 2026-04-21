@@ -12,7 +12,7 @@ use notko::Outcome;
 use clause_runtime_driver::{LoaderError, RuntimeLoader};
 
 /// Attempt a full round-trip against a runtime and return
-/// either the emitted bytes or a loader error.
+/// `Outcome::Ok(())` on success or a loader error on failure.
 ///
 /// Skeleton: the `RuntimeLoader::load` call always returns
 /// `Outcome::Err(LoaderError::NotImplemented)`, so this fn
@@ -21,13 +21,13 @@ use clause_runtime_driver::{LoaderError, RuntimeLoader};
 ///
 /// Once the follow-up round wires real dlopen integration,
 /// this harness will attempt a real load + execute + result
-/// check against the Zig stub dylib.
-// lint:allow(bare_collection) tracked: #73 — the diagnostic return surface across every compiler phase crate matches what clause-resolve already ships; storage-crate collection types target mockspace domain graphs not host-side compiler runtime buffers here
-pub fn test_runtime_roundtrip() -> Outcome<Vec<u8>, LoaderError> {
+/// check against the Zig stub dylib. The harness is ABI smoke;
+/// the emitted bytes are not returned to the caller.
+pub fn test_runtime_roundtrip() -> Outcome<(), LoaderError> {
     let path = std::path::Path::new("nonexistent-runtime");
     let _handle = match RuntimeLoader::load(path) {
         Outcome::Ok(h) => h,
         Outcome::Err(e) => return Outcome::Err(e),
     };
-    Outcome::Ok(Vec::new())
+    Outcome::Ok(())
 }

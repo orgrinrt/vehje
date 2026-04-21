@@ -11,11 +11,10 @@
 //! path, binary, unary, call, block, let, if, match, fn, type,
 //! struct, enum, module, pattern) lands as its own micro-round.
 
-use alloc::vec;
-use alloc::vec::Vec;
 use clause_ir::TokenKind;
 use clause_ir::{AstNodeKind, ByteOffset, FileId, Span};
 use clause_lex::Token;
+use hilavitkutin_api::DiagnosticSink;
 use notko::{Maybe, Outcome};
 
 use crate::ast::{Ast, AstNode};
@@ -129,7 +128,8 @@ impl<'a> Parser<'a> {
         Span::new(FileId(0), ByteOffset(0), ByteOffset(0))
     }
 
-    /// Drive the parse to completion.
+    /// Drive the parse to completion, pushing any errors into
+    /// `errors`.
     ///
     /// Skeleton grammar:
     ///
@@ -137,8 +137,16 @@ impl<'a> Parser<'a> {
     /// 2. `IntLit` (then optional `Eof` or end of slice) → an
     ///    `Ast` with one `AstNodeKind::Expr` root node spanning
     ///    the literal.
-    /// 3. Anything else → `SyntaxErrorKind::UnexpectedToken`.
-    pub fn parse(mut self) -> Outcome<Ast, SyntaxError> {
+    /// 3. Anything else → a `SyntaxErrorKind::UnexpectedToken`
+    ///    pushed into `errors`, return `Outcome::Err(())`.
+    ///
+    /// `errors` is `&mut dyn DiagnosticSink<SyntaxError>` so the
+    /// parser can flow through the free `parse` fn (which also
+    /// takes a dyn sink) without monomorphisation mismatches.
+    pub fn parse(
+        mut self,
+        errors: &mut dyn DiagnosticSink<SyntaxError>,
+    ) -> Outcome<Ast, ()> {
         if self.is_eof() {
             return Outcome::Ok(self.ast);
         }
@@ -150,32 +158,36 @@ impl<'a> Parser<'a> {
             let id = match self.ast.push(node) {
                 Maybe::Is(id) => id,
                 Maybe::Isnt => {
-                    return Outcome::Err(SyntaxError::unexpected_token(
+                    errors.push(SyntaxError::unexpected_token(
                         span,
                         "AST arena full",
                     ));
+                    return Outcome::Err(());
                 },
             };
             self.ast.set_root(id);
             self.bump();
 
             if !self.is_eof() {
-                return Outcome::Err(SyntaxError::unexpected_token(
+                errors.push(SyntaxError::unexpected_token(
                     self.current_span(),
                     "expected end of input after literal",
                 ));
+                return Outcome::Err(());
             }
             return Outcome::Ok(self.ast);
         }
 
-        Outcome::Err(SyntaxError::unexpected_token(
+        errors.push(SyntaxError::unexpected_token(
             self.current_span(),
             "unexpected token at start of input",
-        ))
+        ));
+        Outcome::Err(())
     }
 }
 
-/// Parse a token slice into an `Ast`.
+/// Parse a token slice into an `Ast`, pushing soft errors into
+/// `errors`.
 ///
 /// The skeleton handles:
 ///
@@ -183,16 +195,21 @@ impl<'a> Parser<'a> {
 /// - A single `IntLit` followed by optional `Eof` → an `Ast`
 ///   containing one `AstNodeKind::Expr` node spanning the
 ///   literal.
-/// - Anything else → `Outcome::Err(vec![SyntaxErrorKind::UnexpectedToken])`.
+/// - Anything else → at least one `SyntaxError` pushed into
+///   `errors`, return `Outcome::Err(())`.
 ///
-/// The error arm is `Vec<SyntaxError>` rather than a single
-/// `SyntaxError` so future multi-error recovery extends the vec
-/// without another signature churn. Today the vec carries one
-/// element in the error case.
+/// `errors` is `&mut dyn DiagnosticSink<SyntaxError>` so any
+/// caller that implements `Push<SyntaxError> + Len` (including
+/// future multi-error recovery accumulators) can receive emitted
+/// errors without a signature churn. The `Outcome::Err(())`
+/// return carries the hard-failure shape; the detail lives in the
+/// sink.
 ///
 /// Every deferred production flips from `UnexpectedToken` to a
 /// real parse in its own follow-up round.
-// lint:allow(bare_collection) tracked: #73 — the diagnostic return surface across every compiler phase crate matches what clause-typecheck and clause-resolve already ship; storage-crate collection types target mockspace domain graphs not host-side compiler syntax-error batches here
-pub fn parse(tokens: &[Token]) -> Outcome<Ast, Vec<SyntaxError>> {
-    Parser::new(tokens).parse().map_err(|e| vec![e])
+pub fn parse(
+    tokens: &[Token],
+    errors: &mut dyn DiagnosticSink<SyntaxError>,
+) -> Outcome<Ast, ()> {
+    Parser::new(tokens).parse(errors)
 }

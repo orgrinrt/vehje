@@ -12,18 +12,29 @@
 //! needed) — future rayon-backed execution surfaces the
 //! constraint.
 
+use hilavitkutin_api::ByteEmitter;
 use notko::Outcome;
 
 use crate::error::DriverError;
 
 /// Runtime-handle interface.
 ///
-/// `execute` accepts an input buffer and returns either an
-/// output buffer or a `DriverError`. Skeleton round has no
-/// concrete impls; the first real impl (`DlopenHandle`) is
-/// BACKLOG.
+/// `execute` accepts an input buffer and pushes the runtime's
+/// output into `output`; returns `Outcome::Ok(())` on success or
+/// `DriverError` on failure. Skeleton round has no concrete
+/// impls; the first real impl (`DlopenHandle`) is BACKLOG.
 pub trait RuntimeHandle: Send + Sync {
-    /// Hand `input` to the runtime and collect the output.
-    // lint:allow(bare_collection) — the diagnostic return surface across every compiler phase crate matches what clause-resolve already ships; storage-crate collection types target mockspace domain graphs not host-side compiler runtime buffers here
-    fn execute(&self, input: &[u8]) -> Outcome<Vec<u8>, DriverError>;
+    /// Hand `input` to the runtime and push output bytes into
+    /// `output`.
+    ///
+    /// `output` is `&mut dyn ByteEmitter` rather than `&mut impl`
+    /// because `RuntimeHandle` is loaded via `dlopen` and crosses
+    /// the `Box<dyn RuntimeHandle>` boundary in `loader.rs`; dyn
+    /// methods are object-safe and must not carry `impl Trait`
+    /// parameters.
+    fn execute(
+        &self,
+        input: &[u8],
+        output: &mut dyn ByteEmitter,
+    ) -> Outcome<(), DriverError>;
 }

@@ -7,6 +7,7 @@ license.workspace = true
 [dependencies]
 clause-ir.workspace = true
 clause-resolve.workspace = true
+hilavitkutin-api.workspace = true
 notko.workspace = true
 
 [build-dependencies]
