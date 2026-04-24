@@ -3,7 +3,7 @@
 //!
 //! The diagnostic carries a flat `AbiSpan` (file / start / end
 //! as bare `u32`s — the richer `FileId` / `ByteOffset` wrapper
-//! from `clause-ir` is deferred to the R2-retrofit round), a
+//! from `vehje-ir` is deferred to the R2-retrofit round), a
 //! pointer-plus-length message, and a kind discriminant. The
 //! pointer is borrowed: the caller owns the backing string,
 //! and the pointer stays valid only as long as the caller's

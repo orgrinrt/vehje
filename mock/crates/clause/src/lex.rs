@@ -1,4 +1,4 @@
-//! `clause lex` — tokenise a file and print its token stream.
+//! `vehje lex` — tokenise a file and print its token stream.
 
 use vehje_ir::{Diagnostic, FileId, TokenKind};
 use vehje_lex::{Lexer, Token};
@@ -8,14 +8,14 @@ pub fn run(args: &[String]) -> i32 { // lint:allow(bare_string) lint:allow(bare_
     let path = match crate::args::single_file_arg(args) {
         Maybe::Is(p) => p,
         Maybe::Isnt => {
-            eprintln!("clause lex: missing <file>");
+            eprintln!("vehje lex: missing <file>");
             return 2;
         }
     };
     let src = match std::fs::read_to_string(path) {
         Ok(s) => s,
         Err(e) => {
-            eprintln!("clause lex: {path}: {e}");
+            eprintln!("vehje lex: {path}: {e}");
             return 2;
         }
     };

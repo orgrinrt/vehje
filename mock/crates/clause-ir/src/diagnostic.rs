@@ -36,10 +36,10 @@ impl Default for Severity {
 ///
 /// Lets a diagnostic consumer (renderer, sink, filter) route by phase
 /// without parsing the static `message` string. The variants map 1:1
-/// onto the shipped phase crates: `clause-lex`, `clause-syntax`,
-/// `clause-resolve`, `clause-typecheck`, `clause-codegen`, and the
+/// onto the shipped phase crates: `vehje-lex`, `vehje-syntax`,
+/// `vehje-resolve`, `vehje-typecheck`, `vehje-codegen`, and the
 /// runtime / ABI shim for diagnostics that surface from the Zig
-/// side through `clause-runtime-driver`.
+/// side through `vehje-runtime-driver`.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 #[repr(u8)]
 pub enum DiagPhase {

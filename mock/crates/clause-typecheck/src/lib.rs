@@ -3,7 +3,7 @@
 //! vehje-typecheck — skeleton type checker + validator framework
 //! for the Vehje authoring language.
 //!
-//! Consumes the `Resolved` bundle produced by clause-resolve;
+//! Consumes the `Resolved` bundle produced by vehje-resolve;
 //! runs a fixed list of core validators (STRICT1-7 plus
 //! `coherence` / `orphan-rule` / `bind-target-shape`) and returns
 //! a flat `Vec<Diagnostic>`.
@@ -18,7 +18,7 @@
 //!
 //! This crate uses `std`; it is host-side (compiler phase), not
 //! runtime. The `no_std` / fixed-arena discipline on
-//! `clause-ir`, `clause-lex`, `clause-syntax` does not propagate
+//! `vehje-ir`, `vehje-lex`, `vehje-syntax` does not propagate
 //! here.
 //!
 //! R4 (2026-04-26) finalised a richer trait shape with

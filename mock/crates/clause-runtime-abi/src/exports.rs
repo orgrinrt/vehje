@@ -1,8 +1,8 @@
 //! `extern "C"` entry points exposed by the `cdylib` build
-//! of `clause-runtime-abi`.
+//! of `vehje-runtime-abi`.
 //!
 //! These are the symbols the Zig runtime (or any other backend)
-//! implements on its side; the driver (`clause-runtime-driver`)
+//! implements on its side; the driver (`vehje-runtime-driver`)
 //! resolves them at load time via `dlsym`. The Rust-side bodies
 //! here are fall-backs / reference implementations, and every
 //! body in the skeleton round is a stub.
