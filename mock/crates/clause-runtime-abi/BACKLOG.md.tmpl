@@ -11,6 +11,13 @@
   Abi → vehje-ir for incoming diagnostics).
 - `abi_version: u32` prefix on every public struct — carries
   the ABI-version invariant R2 mandates.
+- Flip bare-primitive FFI-wire sites to `UWire<N>`. Current
+  policy keeps `i32` / `u32` scalars on the C-ABI boundary
+  bare with `lint:allow(arvo-types-only) tracked: #207` where
+  no arvo newtype provides wire-identical layout. A future
+  `arvo::UWire<N>` (see arvo BACKLOG) is a fixed-width wire-
+  stable newtype without the `S: Strategy` axis. When it
+  lands, every bare-primitive FFI site in this crate flips.
 
 ## Deferred entry points
 

@@ -56,6 +56,41 @@ expand_generative / last_error entry points are BACKLOG.
   skeleton types omit the version prefix until the first
   real-backend round surfaces the bump-compatibility need).
 
+## FFI-wire primitive policy
+
+`clause-runtime-abi` defines the C-ABI surface for the Zig runtime.
+Every type that crosses the `extern "C"` boundary has a wire-stable
+layout requirement that bare Rust primitives satisfy by construction
+but arvo types satisfy only where a `#[repr(transparent)]` newtype
+preserves the underlying primitive's width byte-for-byte.
+
+Two-tier policy (mirrors the policy established for
+`hilavitkutin-extensions` in round 202604510000):
+
+1. **arvo newtype where wire-identical.** `USize` is
+   `#[repr(transparent)]` over `usize` and can stand in for a wire
+   `usize`. A `CapabilityId`-shaped type over `u64` likewise stands
+   in for wire `u64`. Use the arvo newtype wherever the FFI wire
+   type matches exactly and the arvo type carries semantic weight.
+
+2. **Bare primitive with single-token allow where not.**
+   `ClauseResult` is `#[repr(i32)]` and returns via the scalar
+   register on every ABI target. Wrapping it changes MSVC Windows
+   x64 layout. `i32` / `u32` scalars that transit `extern "C"` fn
+   signatures without a wire-stable arvo newtype available stay
+   bare with a `// lint:allow(arvo-types-only) tracked: #207`
+   inline annotation.
+
+Only the single-token allow form is supported. Multi-token variants
+(`lint:allow(a, b, c)`) are not parsed reliably and should not be
+introduced. If multiple lints need acknowledgement on a single line,
+repeat the annotation once per lint, or reshape the code to remove
+the need.
+
+A future `arvo::UWire<N>` primitive (see arvo BACKLOG) provides
+fixed-width wire-stable newtypes without a `S: Strategy` axis and
+flips the bare sites. Until then, bare-with-allow is the policy.
+
 ## Provisional module layout
 
 Shipped this round:
