@@ -1,4 +1,4 @@
-# clause — Design (top-level binary)
+# vehje — Design (top-level binary)
 
 Command-line binary tying together the compiler phase crates
 into a single shippable artifact. No algorithmic logic lives
@@ -20,11 +20,11 @@ reserve their exit-code semantics so scripts against them do
 not break as bodies land.
 
 ```
-clause lex <file>      # tokenise + print tokens
-clause parse <file>    # lex + parse + print AST
-clause check <file>    # through typecheck + report diagnostics
-clause build <file>    # through codegen + emit target
-clause run <file>      # compile + invoke interpreter
+vehje lex <file>      # tokenise + print tokens
+vehje parse <file>    # lex + parse + print AST
+vehje check <file>    # through typecheck + report diagnostics
+vehje build <file>    # through codegen + emit target
+vehje run <file>      # compile + invoke interpreter
 ```
 
 ### lex
@@ -108,6 +108,6 @@ swapping the hard-coded chain for a graph walk.
 
 - 202604211916_topic.binary-cli-skeleton.md
 - 202604191300_topic.vehje-design-seed.md (authoritative spec)
-- stellar-heritage/tools/clause/ (Python parity oracle — CLI
+- stellar-heritage/tools/vehje/ (Python parity oracle — CLI
   surface diverges from the oracle; parity is semantic, not
   flag-for-flag)

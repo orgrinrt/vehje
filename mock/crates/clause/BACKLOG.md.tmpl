@@ -1,4 +1,4 @@
-# clause — backlog
+# vehje — backlog
 
 > **Type-surface reminder**: new entries use `arvo::USize` /
 > `arvo::UFixed<N, 0, S>` instead of `usize` / `u*`,
@@ -15,7 +15,7 @@ The round-one stub prints a phase placeholder. The real
 implementation pretty-prints the AST via a
 `vehje-syntax`-owned printer once the parser productions
 ship. Output format echoes the shape of the stellar-heritage
-Python oracle's `clause parse --json` but stays human-readable
+Python oracle's `vehje parse --json` but stays human-readable
 by default.
 
 ## check subcommand — real typecheck
@@ -65,8 +65,8 @@ subcommand family.
 
 ## Script-mode entry
 
-`clause <file>` as a shorthand for `clause run <file>` so the
-binary works as a `#!`-invoked interpreter for `.clause`
+`vehje <file>` as a shorthand for `vehje run <file>` so the
+binary works as a `#!`-invoked interpreter for `.vehje`
 scripts. Depends on `run` landing first.
 
 ## Exit code table freeze
