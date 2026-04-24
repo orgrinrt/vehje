@@ -5,13 +5,19 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
+arvo.workspace = true
 vehje-ir.workspace = true
 
 [build-dependencies]
 mockspace.workspace = true
 
 [features]
-default = []
+default = ["std"]
+# `std` is the baseline feature for cdylib builds on stable Rust:
+# the panic runtime lives in `std`. Turning it off means
+# `#![no_std]` + custom panic handler, suitable for embedded /
+# cross-compilation targets that bring their own unwind story.
+std = []
 
 [lib]
 # cdylib: the Rust-side exports `extern "C"` entry points the Zig

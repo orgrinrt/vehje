@@ -30,9 +30,9 @@ use core::marker::{PhantomData, PhantomPinned};
 /// `PhantomPinned` component denies `Unpin`.
 #[repr(C)]
 pub struct ClauseRuntime {
-    _opaque: [u8; 0],
+    _opaque: [u8; 0], // lint:allow(arvo-types-only) tracked: #207
     // PhantomData here makes the handle !Send, !Sync, !Unpin.
     // The handle points to foreign-owned memory; only the Zig
     // runtime may dereference it.
-    _marker: PhantomData<(*mut u8, PhantomPinned)>,
+    _marker: PhantomData<(*mut u8, PhantomPinned)>, // lint:allow(arvo-types-only) tracked: #207
 }
