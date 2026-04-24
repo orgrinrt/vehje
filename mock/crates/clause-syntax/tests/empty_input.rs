@@ -1,8 +1,8 @@
 //! Parsing trivial inputs: empty slice and a slice of only Eof.
 
-use clause_ir::{ByteOffset, FileId, Span, TokenKind};
-use clause_lex::Token;
-use clause_syntax::parse;
+use vehje_ir::{ByteOffset, FileId, Span, TokenKind};
+use vehje_lex::Token;
+use vehje_syntax::parse;
 
 fn span(start: u32, end: u32) -> Span {
     Span::new(FileId(0), ByteOffset(start), ByteOffset(end))

@@ -11,7 +11,7 @@
 //! slots covers every realistic case — more than a couple of blank
 //! lines of comments before a token is already unusual.
 
-use clause_ir::Span;
+use vehje_ir::Span;
 
 /// What a piece of trivia is.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
@@ -69,17 +69,17 @@ impl TriviaSet {
             leading: [Trivia {
                 kind: TriviaKind::Whitespace,
                 span: Span::new(
-                    clause_ir::FileId(0),
-                    clause_ir::ByteOffset(0),
-                    clause_ir::ByteOffset(0),
+                    vehje_ir::FileId(0),
+                    vehje_ir::ByteOffset(0),
+                    vehje_ir::ByteOffset(0),
                 ),
             }; TRIVIA_SLOTS],
             trailing: [Trivia {
                 kind: TriviaKind::Whitespace,
                 span: Span::new(
-                    clause_ir::FileId(0),
-                    clause_ir::ByteOffset(0),
-                    clause_ir::ByteOffset(0),
+                    vehje_ir::FileId(0),
+                    vehje_ir::ByteOffset(0),
+                    vehje_ir::ByteOffset(0),
                 ),
             }; TRIVIA_SLOTS],
             leading_len: 0,

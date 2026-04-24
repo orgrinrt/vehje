@@ -4,9 +4,9 @@
 //! nothing into a `CountingSink` when run over an empty `Resolved`.
 
 use arvo::USize;
-use clause_ir::Diagnostic;
-use clause_resolve::Resolved;
-use clause_typecheck::{BindTargetShape, Coherence, OrphanRule, Validator, ValidatorCtx};
+use vehje_ir::Diagnostic;
+use vehje_resolve::Resolved;
+use vehje_typecheck::{BindTargetShape, Coherence, OrphanRule, Validator, ValidatorCtx};
 use hilavitkutin_api::{sink::CountingSink, Len};
 
 #[test]

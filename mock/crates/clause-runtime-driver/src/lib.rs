@@ -1,8 +1,8 @@
-//! clause-runtime-driver — compiler-side dispatcher.
+//! vehje-runtime-driver — compiler-side dispatcher.
 //!
 //! Owns the dylib handle; routes calls through the ABI
 //! defined by `clause-runtime-abi`. Driver-side wrappers
-//! convert `AbiDiagnostic` to `clause_ir::Diagnostic` and
+//! convert `AbiDiagnostic` to `vehje_ir::Diagnostic` and
 //! integrate with `clause-schedule`'s pass DAG (both
 //! BACKLOG).
 //!

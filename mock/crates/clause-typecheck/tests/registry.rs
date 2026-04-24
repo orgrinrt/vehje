@@ -7,9 +7,9 @@
 use std::collections::HashSet;
 
 use arvo::USize;
-use clause_ir::Diagnostic;
-use clause_resolve::Resolved;
-use clause_typecheck::{ValidatorCtx, ValidatorRegistry};
+use vehje_ir::Diagnostic;
+use vehje_resolve::Resolved;
+use vehje_typecheck::{ValidatorCtx, ValidatorRegistry};
 use hilavitkutin_api::{sink::CountingSink, Len};
 
 #[test]

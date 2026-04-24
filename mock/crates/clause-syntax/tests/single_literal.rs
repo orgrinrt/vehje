@@ -1,9 +1,9 @@
 //! Parsing a single integer literal, with and without a trailing
 //! Eof token. Both shapes produce the same one-node Ast.
 
-use clause_ir::{AstNodeKind, ByteOffset, FileId, NodeId, Span, TokenKind};
-use clause_lex::Token;
-use clause_syntax::parse;
+use vehje_ir::{AstNodeKind, ByteOffset, FileId, NodeId, Span, TokenKind};
+use vehje_lex::Token;
+use vehje_syntax::parse;
 
 fn span(start: u32, end: u32) -> Span {
     Span::new(FileId(0), ByteOffset(start), ByteOffset(end))

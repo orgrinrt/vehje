@@ -2,9 +2,9 @@
 //! the top level triggers the error, including kinds that will
 //! become valid starts in follow-up rounds (Ident, Plus, …).
 
-use clause_ir::{ByteOffset, FileId, Span, TokenKind};
-use clause_lex::Token;
-use clause_syntax::{parse, SyntaxErrorKind};
+use vehje_ir::{ByteOffset, FileId, Span, TokenKind};
+use vehje_lex::Token;
+use vehje_syntax::{parse, SyntaxErrorKind};
 
 fn span(start: u32, end: u32) -> Span {
     Span::new(FileId(0), ByteOffset(start), ByteOffset(end))

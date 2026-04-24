@@ -1,8 +1,8 @@
 //! ScopeTree: root construction, push, parent chain, bounds.
 
 use arvo::USize;
-use clause_ir::ScopeId;
-use clause_resolve::ScopeTree;
+use vehje_ir::ScopeId;
+use vehje_resolve::ScopeTree;
 use notko::Maybe;
 
 #[test]

@@ -1,7 +1,7 @@
 //! Longest-match operator and punctuation recognition.
 
-use clause_ir::{FileId, TokenKind};
-use clause_lex::Lexer;
+use vehje_ir::{FileId, TokenKind};
+use vehje_lex::Lexer;
 
 fn kinds(src: &str) -> Vec<TokenKind> {
     let mut lx = Lexer::from_str(src, FileId(0));

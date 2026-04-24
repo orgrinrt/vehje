@@ -6,7 +6,7 @@
 //! Skeleton round: `validate` returns `Vec::new()`. Real body is
 //! BACKLOG (one follow-up micro-round).
 
-use clause_ir::Diagnostic;
+use vehje_ir::Diagnostic;
 use hilavitkutin_api::DiagnosticSink;
 
 use crate::ctx::ValidatorCtx;

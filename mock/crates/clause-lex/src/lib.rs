@@ -1,4 +1,4 @@
-//! clause-lex — skeleton lexer for the Clause authoring language.
+//! vehje-lex — skeleton lexer for the Vehje authoring language.
 //!
 //! Consumes a source buffer, produces a token stream with trivia
 //! attached. Round-one scope covers:

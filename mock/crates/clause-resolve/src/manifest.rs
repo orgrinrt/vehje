@@ -1,6 +1,6 @@
 //! Manifest parser stub.
 //!
-//! `Manifest` models a `Clause.toml`: crate name, version, and a
+//! `Manifest` models a `Vehje.toml`: crate name, version, and a
 //! flat list of dependency names. Skeleton round: no real TOML
 //! parsing. `parse_manifest(b"")` returns a default `Manifest`;
 //! anything non-empty returns `ManifestError::NotImplemented`.
@@ -14,7 +14,7 @@ use notko::Outcome;
 
 use crate::error::ManifestError;
 
-/// Parsed `Clause.toml` contents.
+/// Parsed `Vehje.toml` contents.
 ///
 /// Carries the crate name, version handle, and a flat list of
 /// dependency crate names. Real parsing (reading

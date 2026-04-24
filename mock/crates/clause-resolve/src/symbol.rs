@@ -10,7 +10,7 @@
 //! in turn makes `ResolveError` `Copy` (the error variants carry
 //! a copied name).
 
-use clause_ir::{NodeId, ScopeId};
+use vehje_ir::{NodeId, ScopeId};
 use hilavitkutin_str::Str;
 
 /// Classification of a `Symbol`.

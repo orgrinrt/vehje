@@ -1,6 +1,6 @@
 //! Span construction + equality.
 
-use clause_ir::{ByteOffset, FileId, Span};
+use vehje_ir::{ByteOffset, FileId, Span};
 
 #[test]
 fn span_new_preserves_components() {

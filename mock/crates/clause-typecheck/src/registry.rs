@@ -13,8 +13,8 @@
 //! validators) is BACKLOG — the skeleton round ships only the
 //! ten core validators.
 
-use clause_ir::Diagnostic;
-use clause_resolve::Resolved;
+use vehje_ir::Diagnostic;
+use vehje_resolve::Resolved;
 use hilavitkutin_api::DiagnosticSink;
 
 use crate::bind_target_shape::BindTargetShape;

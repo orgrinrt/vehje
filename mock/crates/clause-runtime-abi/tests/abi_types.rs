@@ -3,20 +3,20 @@
 //! Assert the discriminants of `ClauseResult`, construct a
 //! `ClauseDiagnostic`, and verify variants compare unequal.
 
-use clause_runtime_abi::{AbiSpan, ClauseDiagnostic, ClauseDiagnosticKind, ClauseResult};
+use vehje_runtime_abi::{AbiSpan, ClauseDiagnostic, ClauseDiagnosticKind, ClauseResult};
 
 #[test]
-fn clause_result_ok_is_zero() {
+fn vehje_result_ok_is_zero() {
     assert_eq!(ClauseResult::Ok as i32, 0);
 }
 
 #[test]
-fn clause_result_err_is_negative() {
+fn vehje_result_err_is_negative() {
     assert_eq!(ClauseResult::Err as i32, -1);
 }
 
 #[test]
-fn clause_result_variants_distinct() {
+fn vehje_result_variants_distinct() {
     assert!(ClauseResult::Ok != ClauseResult::Err);
     assert!(ClauseResult::Ok != ClauseResult::NullHandle);
     assert!(ClauseResult::Ok != ClauseResult::InvalidInput);
@@ -26,7 +26,7 @@ fn clause_result_variants_distinct() {
 }
 
 #[test]
-fn clause_diagnostic_construction() {
+fn vehje_diagnostic_construction() {
     let message: &[u8] = b"stub message";
     let diag = ClauseDiagnostic {
         span: AbiSpan { file: 1, start: 2, end: 7 },

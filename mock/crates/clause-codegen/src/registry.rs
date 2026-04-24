@@ -13,7 +13,7 @@
 //! e.g. for `clause-jomini` loaded via `dlopen`) is BACKLOG —
 //! the skeleton round ships only the two built-in targets.
 
-use clause_ir::Diagnostic;
+use vehje_ir::Diagnostic;
 use hilavitkutin_api::{ByteEmitter, DiagnosticSink};
 use notko::{Maybe, Outcome};
 
@@ -23,7 +23,7 @@ use crate::error::CodegenError;
 use crate::jomini::JominiTarget;
 use crate::native::NativeTarget;
 use crate::target::CodegenTarget;
-use clause_resolve::Resolved;
+use vehje_resolve::Resolved;
 
 /// Target registry — const iteration surface over every
 /// codegen target shipped in clause-codegen.

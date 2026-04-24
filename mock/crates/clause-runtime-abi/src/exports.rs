@@ -17,7 +17,7 @@ use crate::result::ClauseResult;
 ///
 /// Skeleton: returns `null_mut()`. The real body allocates a
 /// session struct and returns a pointer the caller later
-/// hands to `clause_runtime_free`.
+/// hands to `vehje_runtime_free`.
 // SAFETY-GATE: no real body may land in this function before
 //   1. catch_unwind wraps any Rust code that can panic (UB across
 //      FFI otherwise).
@@ -25,14 +25,14 @@ use crate::result::ClauseResult;
 // Both are tracked in BACKLOG as hard gates before non-stub
 // implementation.
 #[unsafe(no_mangle)]
-pub extern "C" fn clause_runtime_new() -> *mut ClauseRuntime {
+pub extern "C" fn vehje_runtime_new() -> *mut ClauseRuntime {
     core::ptr::null_mut()
 }
 
 /// Destroy a runtime session.
 ///
 /// Skeleton: no-op. Accepts null safely. The real body
-/// deallocates the session allocated by `clause_runtime_new`.
+/// deallocates the session allocated by `vehje_runtime_new`.
 // SAFETY-GATE: no real body may land in this function before
 //   1. catch_unwind wraps any Rust code that can panic (UB across
 //      FFI otherwise).
@@ -40,7 +40,7 @@ pub extern "C" fn clause_runtime_new() -> *mut ClauseRuntime {
 // Both are tracked in BACKLOG as hard gates before non-stub
 // implementation.
 #[unsafe(no_mangle)]
-pub extern "C" fn clause_runtime_free(rt: *mut ClauseRuntime) {
+pub extern "C" fn vehje_runtime_free(rt: *mut ClauseRuntime) {
     let _ = rt;
 }
 
@@ -59,7 +59,7 @@ pub extern "C" fn clause_runtime_free(rt: *mut ClauseRuntime) {
 // Both are tracked in BACKLOG as hard gates before non-stub
 // implementation.
 #[unsafe(no_mangle)]
-pub extern "C" fn clause_runtime_execute(
+pub extern "C" fn vehje_runtime_execute(
     rt: *mut ClauseRuntime,
     input: *const u8,
     len: usize,

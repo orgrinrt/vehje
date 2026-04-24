@@ -1,5 +1,5 @@
 [package]
-name = "clause-ir"
+name = "vehje-ir"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

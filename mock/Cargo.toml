@@ -22,7 +22,7 @@ license = "MPL-2.0"
 [workspace.dependencies]
 mockspace = { git = "ssh://git@github.com/hiisi-digital/mockspace.git", branch = "main" }
 
-# Consumed substrate. Resolved to live git deps as the Clause workspace
+# Consumed substrate. Resolved to live git deps as the Vehje workspace
 # grows into real crates.
 arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev" }
 arvo-bits = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev" }
@@ -40,13 +40,13 @@ hilavitkutin-str = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", bra
 notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false }
 
 # In-workspace phase crates — path deps for inter-phase consumption.
-clause-ir = { path = "crates/clause-ir" }
-clause-lex = { path = "crates/clause-lex" }
-clause-syntax = { path = "crates/clause-syntax" }
-clause-resolve = { path = "crates/clause-resolve" }
-clause-typecheck = { path = "crates/clause-typecheck" }
-clause-schedule = { path = "crates/clause-schedule" }
-clause-codegen = { path = "crates/clause-codegen" }
-clause-runtime-abi = { path = "crates/clause-runtime-abi" }
-clause-runtime-driver = { path = "crates/clause-runtime-driver" }
-clause-runtime-tests = { path = "crates/clause-runtime-tests" }
+vehje-ir = { path = "crates/clause-ir" }
+vehje-lex = { path = "crates/clause-lex" }
+vehje-syntax = { path = "crates/clause-syntax" }
+vehje-resolve = { path = "crates/clause-resolve" }
+vehje-typecheck = { path = "crates/clause-typecheck" }
+vehje-schedule = { path = "crates/clause-schedule" }
+vehje-codegen = { path = "crates/clause-codegen" }
+vehje-runtime-abi = { path = "crates/clause-runtime-abi" }
+vehje-runtime-driver = { path = "crates/clause-runtime-driver" }
+vehje-runtime-tests = { path = "crates/clause-runtime-tests" }

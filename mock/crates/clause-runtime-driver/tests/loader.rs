@@ -6,11 +6,11 @@
 
 use std::path::Path;
 
-use clause_runtime_driver::{LoaderError, RuntimeLoader};
+use vehje_runtime_driver::{LoaderError, RuntimeLoader};
 
 #[test]
 fn load_nonexistent_returns_not_implemented() {
-    let result = RuntimeLoader::load(Path::new("/nonexistent/libclause_runtime.dylib"));
+    let result = RuntimeLoader::load(Path::new("/nonexistent/libvehje_runtime.dylib"));
     assert!(matches!(result, Err(LoaderError::NotImplemented)));
 }
 

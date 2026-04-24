@@ -8,7 +8,7 @@
 //! Real body is BACKLOG (one follow-up micro-round once the
 //! target-agnostic IR lowering layer lands).
 
-use clause_ir::Diagnostic;
+use vehje_ir::Diagnostic;
 use hilavitkutin_api::{ByteEmitter, DiagnosticSink};
 use notko::Outcome;
 

@@ -1,11 +1,11 @@
 [package]
-name = "clause-lex"
+name = "vehje-lex"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [dependencies]
-clause-ir.workspace = true
+vehje-ir.workspace = true
 notko.workspace = true
 
 [build-dependencies]
