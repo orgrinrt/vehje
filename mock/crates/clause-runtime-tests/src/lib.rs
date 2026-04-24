@@ -9,6 +9,7 @@
 //! assertions, enum-discriminant stability checks, and
 //! ABI-version monotonicity guards are all BACKLOG.
 
+#![cfg_attr(not(feature = "std"), no_std)]
 #![deny(unused, unreachable_code, unused_must_use, unused_imports, dead_code)]
 
 pub mod roundtrip;
