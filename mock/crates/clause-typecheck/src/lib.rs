@@ -1,3 +1,5 @@
+#![no_std]
+
 //! vehje-typecheck — skeleton type checker + validator framework
 //! for the Vehje authoring language.
 //!

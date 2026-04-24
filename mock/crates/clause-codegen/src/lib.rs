@@ -1,3 +1,5 @@
+#![no_std]
+
 //! vehje-codegen — skeleton codegen framework + extension-point
 //! contract for the Vehje authoring language.
 //!
