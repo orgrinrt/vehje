@@ -1,7 +1,7 @@
 //! vehje-resolve — skeleton name resolver for the Vehje
 //! authoring language.
 //!
-//! Consumes the `Ast` produced by clause-syntax; produces a
+//! Consumes the `Ast` produced by vehje-syntax; produces a
 //! `Resolved` bundle carrying the AST plus a `ScopeTree` and a
 //! per-`NodeId` resolution map. Also hosts the `Vehje.toml`
 //! manifest parser (stubbed this round; real TOML handling is
@@ -22,7 +22,7 @@
 //! uses `std::collections::HashMap` + `Vec` inside the scope
 //! implementation as tracked escapes (see `SHAME.md` `## Scope`);
 //! these flip to scheduler-managed `Column<Symbol>` +
-//! `Map<Str, SymbolSlot>` when #131 (M0.2: clause-schedule as
+//! `Map<Str, SymbolSlot>` when #131 (M0.2: vehje-schedule as
 //! hilavitkutin WorkUnit home) lands. After that, `#![no_std]`
 //! goes at the crate root and any remaining `std`-requiring
 //! surface lands behind `#[cfg(feature = "std")]` as a feature-

@@ -5,7 +5,7 @@
 //! This crate holds the pure type surface + `extern "C"` entry
 //! points. No runtime logic ships here — the Zig sibling tree
 //! at `mock/runtime-zig/` owns the execution body; the
-//! `clause-runtime-driver` crate owns the compiler-side
+//! `vehje-runtime-driver` crate owns the compiler-side
 //! dispatch / dlopen integration.
 //!
 //! Skeleton round (2026-04-20): ships `ClauseResult`,

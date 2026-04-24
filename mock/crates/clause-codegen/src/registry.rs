@@ -4,13 +4,13 @@
 //! The registry is a ZST with an associated `TARGETS` slice and
 //! associated `lookup` / `emit_for` functions. The slice holds
 //! `&'static dyn CodegenTarget` entries — this is the single
-//! sanctioned `dyn` exception in clause-codegen per R3 DESIGN,
-//! mirroring the `ValidatorRegistry` pattern in clause-typecheck.
+//! sanctioned `dyn` exception in vehje-codegen per R3 DESIGN,
+//! mirroring the `ValidatorRegistry` pattern in vehje-typecheck.
 //! It's confined to the registry iteration surface and uses
 //! `'static` lifetimes only.
 //!
 //! Dynamic registration (a `register` method for plugin targets,
-//! e.g. for `clause-jomini` loaded via `dlopen`) is BACKLOG —
+//! e.g. for `vehje-jomini` loaded via `dlopen`) is BACKLOG —
 //! the skeleton round ships only the two built-in targets.
 
 use vehje_ir::Diagnostic;
@@ -26,7 +26,7 @@ use crate::target::CodegenTarget;
 use vehje_resolve::Resolved;
 
 /// Target registry — const iteration surface over every
-/// codegen target shipped in clause-codegen.
+/// codegen target shipped in vehje-codegen.
 ///
 /// Carries no state; all functionality is associated. Plugin
 /// targets will gain a dynamic registration path in a future

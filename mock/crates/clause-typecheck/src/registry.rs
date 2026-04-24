@@ -4,8 +4,8 @@
 //! The registry is a ZST with an associated `VALIDATORS` slice
 //! and an associated `run_all` function. The slice holds
 //! `&'static dyn Validator` entries — this is the single
-//! sanctioned `dyn` exception in clause-typecheck, mirroring the
-//! `TargetRegistry` pattern in clause-codegen (see R3 DESIGN).
+//! sanctioned `dyn` exception in vehje-typecheck, mirroring the
+//! `TargetRegistry` pattern in vehje-codegen (see R3 DESIGN).
 //! It's confined to the registry iteration surface and uses
 //! `'static` lifetimes only.
 //!
@@ -31,7 +31,7 @@ use crate::strict7::Strict7;
 use crate::validator::Validator;
 
 /// Validator registry — const iteration surface over every core
-/// validator shipped in clause-typecheck.
+/// validator shipped in vehje-typecheck.
 ///
 /// Carries no state; all functionality is associated. Plugin
 /// validators will gain a dynamic registration path in a future
