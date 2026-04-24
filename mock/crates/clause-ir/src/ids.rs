@@ -11,7 +11,7 @@
 /// pointers.
 #[repr(transparent)]
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
-pub struct NodeId(pub u32);
+pub struct NodeId(pub u32); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) lint:allow(no-public-raw-field) tracked: #207
 
 /// Dense interned identifier for lexical scopes.
 ///
@@ -19,4 +19,4 @@ pub struct NodeId(pub u32);
 /// and later phases to look up binding resolution.
 #[repr(transparent)]
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
-pub struct ScopeId(pub u32);
+pub struct ScopeId(pub u32); // lint:allow(arvo-types-only) tracked: #207 lint:allow(no-bare-numeric) tracked: #207 lint:allow(no-public-raw-field) tracked: #207

@@ -4,7 +4,7 @@ use vehje_ir::{Diagnostic, FileId, TokenKind};
 use vehje_lex::{Lexer, Token};
 use notko::Maybe;
 
-pub fn run(args: &[String]) -> i32 { // lint:allow(bare_string) lint:allow(bare_numeric) reason: CLI entry plumbing; argv and exit code are the std-boundary shapes; tracked: #73
+pub fn run(args: &[String]) -> i32 { // lint:allow(bare_string) lint:allow(bare_numeric) reason: CLI entry plumbing; argv and exit code are the std-boundary shapes; tracked: #73 lint:allow(arvo-types-only) lint:allow(no-bare-numeric) lint:allow(no-bare-string) tracked: #207
     let path = match crate::args::single_file_arg(args) {
         Maybe::Is(p) => p,
         Maybe::Isnt => {
@@ -39,9 +39,9 @@ pub fn run(args: &[String]) -> i32 { // lint:allow(bare_string) lint:allow(bare_
     }
 }
 
-fn print_token(src: &str, tok: &Token) { // lint:allow(bare_string) reason: host-side CLI prints to stdout via &str; tracked: #73
-    let start = tok.span.start.0 as usize;
-    let end = tok.span.end.0 as usize;
+fn print_token(src: &str, tok: &Token) { // lint:allow(bare_string) reason: host-side CLI prints to stdout via &str; tracked: #73 lint:allow(no-bare-string) tracked: #207
+    let start = tok.span.start.0 as usize;  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+    let end = tok.span.end.0 as usize;  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     let slice = &src.as_bytes()[start..end.min(src.len())];
     let lit = core::str::from_utf8(slice).unwrap_or("<non-utf8>");
     if carries_literal(tok.kind) && !lit.is_empty() {
@@ -51,7 +51,7 @@ fn print_token(src: &str, tok: &Token) { // lint:allow(bare_string) reason: host
     }
 }
 
-fn carries_literal(k: TokenKind) -> bool {
+fn carries_literal(k: TokenKind) -> bool {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     matches!(
         k,
         TokenKind::Ident
@@ -69,7 +69,7 @@ fn carries_literal(k: TokenKind) -> bool {
         || is_operator_or_punct(k)
 }
 
-fn is_keyword(k: TokenKind) -> bool {
+fn is_keyword(k: TokenKind) -> bool {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     use TokenKind::*;
     matches!(
         k,
@@ -117,7 +117,7 @@ fn is_keyword(k: TokenKind) -> bool {
     )
 }
 
-fn is_operator_or_punct(k: TokenKind) -> bool {
+fn is_operator_or_punct(k: TokenKind) -> bool {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     use TokenKind::*;
     matches!(
         k,

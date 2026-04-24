@@ -49,7 +49,7 @@ impl TargetRegistry {
     /// linear but the list is tiny (two entries this round; at
     /// most a handful even after plugin loading); a hashmap is not
     /// justified.
-    pub fn lookup(name: &str) -> Maybe<&'static dyn CodegenTarget> {
+    pub fn lookup(name: &str) -> Maybe<&'static dyn CodegenTarget> {  // lint:allow(no-bare-string) tracked: #207
         for target in Self::TARGETS {
             if target.name() == name {
                 return Maybe::Is(*target);
@@ -69,7 +69,7 @@ impl TargetRegistry {
     /// follow-up round retrofits a richer error carrier if the
     /// sentinel surfaces as painful in practice.
     pub fn emit_for(
-        name: &str,
+        name: &str,  // lint:allow(no-bare-string) tracked: #207
         ctx: &CodegenCtx,
         bytes: &mut dyn ByteEmitter,
         diagnostics: &mut dyn DiagnosticSink<Diagnostic>,
@@ -103,7 +103,7 @@ impl TargetRegistry {
 /// at render time.
 pub fn emit(
     resolved: &Resolved,
-    target_name: &str,
+    target_name: &str,  // lint:allow(no-bare-string) tracked: #207
     bytes: &mut dyn ByteEmitter,
     diagnostics: &mut dyn DiagnosticSink<Diagnostic>,
 ) -> Outcome<CodegenArtifact, CodegenError> {

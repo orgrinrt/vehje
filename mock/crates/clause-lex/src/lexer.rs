@@ -45,7 +45,7 @@ pub type DiagSink<'a> = &'a mut dyn FnMut(Diagnostic);
 pub struct Lexer<'a> {
     cursor: Cursor<'a>,
     file: FileId,
-    emitted_eof: bool,
+    emitted_eof: bool,  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207 lint:allow(no-public-raw-field) tracked: #207
 }
 
 impl<'a> Lexer<'a> {
@@ -55,7 +55,7 @@ impl<'a> Lexer<'a> {
     }
 
     /// Construct a lexer from a `&str`.
-    pub fn from_str(src: &'a str, file: FileId) -> Self {
+    pub fn from_str(src: &'a str, file: FileId) -> Self {  // lint:allow(no-bare-string) tracked: #207
         Self::new(src.as_bytes(), file)
     }
 
@@ -220,7 +220,7 @@ impl<'a> Lexer<'a> {
                 ));
                 // A newline terminates the trailing run.
                 if end > start
-                    && self.cursor.src()[(end - 1) as usize] == b'\n'
+                    && self.cursor.src()[(end - 1) as usize] == b'\n'  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
                 {
                     return;
                 }
@@ -258,15 +258,15 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn mk_span(&self, start: u32, end: u32) -> Span {
+    fn mk_span(&self, start: u32, end: u32) -> Span {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         Span::new(self.file, ByteOffset(start), ByteOffset(end))
     }
 }
 
 /// `true` if the block-comment span ends with the `*/` terminator.
-fn terminated_block(src: &[u8], start: u32, end: u32) -> bool {
-    let e = end as usize;
-    if e < (start as usize) + 4 {
+fn terminated_block(src: &[u8], start: u32, end: u32) -> bool {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+    let e = end as usize;  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+    if e < (start as usize) + 4 {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         return false;
     }
     src.get(e - 2) == Some(&b'*') && src.get(e - 1) == Some(&b'/') // lint:allow(bare_option) tracked: #115

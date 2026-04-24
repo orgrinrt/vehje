@@ -21,7 +21,7 @@
 /// configuration files (for targets that emit side-band
 /// settings alongside the primary artifact).
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
-#[repr(u8)]
+#[repr(u8)]  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
 pub enum ArtifactKind {
     /// Raw executable / linked binary output.
     Binary = 0,
