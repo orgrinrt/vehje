@@ -13,6 +13,7 @@
 //! per-session handle lifecycle, and vehje-schedule
 //! integration are BACKLOG.
 
+#![cfg_attr(not(feature = "std"), no_std)]
 #![deny(unused, unreachable_code, unused_must_use, unused_imports, dead_code)]
 
 pub mod driver;
