@@ -1,4 +1,4 @@
-# clause-syntax — backlog
+# vehje-syntax — backlog
 
 ## Deferred productions (skeleton round — one per follow-up)
 
@@ -56,7 +56,7 @@ it.
 
 - Per-kind variants of `AstNodeKind` (`BinaryExpr`, `CallExpr`,
   `BlockExpr`, `LetStmt`, `FnItem`, …) land alongside the
-  production that first emits them. `clause-ir::AstNodeKind`
+  production that first emits them. `vehje-ir::AstNodeKind`
   currently carries the coarse categories from R1; the
   follow-up rounds extend the enum by appending variants so
   existing discriminants stay stable.
@@ -67,6 +67,6 @@ it.
 ## Doc comment / attribute syntax
 
 - Attributes (`#[…]`, `#![…]`) and doc comments are tracked as
-  trivia by clause-lex today. Round-tripping them into the AST
+  trivia by vehje-lex today. Round-tripping them into the AST
   (for proc-macro-style extensions and docgen) lands alongside
   the production that first hosts them (function / item rounds).

@@ -3,10 +3,10 @@
 //! The type body is intentionally `[u8; 0]`: a zero-sized
 //! private field that is never constructed in Rust and never
 //! inspected in C. Consumers only see `*mut ClauseRuntime`,
-//! which the runtime allocates on `clause_runtime_new` and
-//! frees on `clause_runtime_free`.
+//! which the runtime allocates on `vehje_runtime_new` and
+//! frees on `vehje_runtime_free`.
 //!
-//! Skeleton round: `clause_runtime_new` always returns
+//! Skeleton round: `vehje_runtime_new` always returns
 //! `null_mut()`, so no real instance of this type ever exists
 //! at runtime. The body becomes real once the runtime backend
 //! (`mock/runtime-zig/`) ships a real allocator + state struct.

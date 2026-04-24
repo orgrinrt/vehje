@@ -5,10 +5,10 @@
 //! and nothing else. Future rounds grow this into a richer
 //! context (diagnostic sink for incremental emission, artefact
 //! cache for incremental codegen, workspace info for cross-crate
-//! lookups, per-target config read from `Clause.toml`, …); all
+//! lookups, per-target config read from `Vehje.toml`, …); all
 //! of those are BACKLOG.
 
-use clause_resolve::Resolved;
+use vehje_resolve::Resolved;
 
 /// Read-only context passed to every `CodegenTarget::emit` call.
 ///

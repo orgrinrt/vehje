@@ -1,9 +1,9 @@
-//! clause-resolve — skeleton name resolver for the Clause
+//! vehje-resolve — skeleton name resolver for the Vehje
 //! authoring language.
 //!
 //! Consumes the `Ast` produced by clause-syntax; produces a
 //! `Resolved` bundle carrying the AST plus a `ScopeTree` and a
-//! per-`NodeId` resolution map. Also hosts the `Clause.toml`
+//! per-`NodeId` resolution map. Also hosts the `Vehje.toml`
 //! manifest parser (stubbed this round; real TOML handling is
 //! BACKLOG).
 //!
@@ -36,6 +36,6 @@ pub use resolver::{resolve, Resolver};
 pub use scope::{Scope, ScopeTree};
 pub use symbol::{Symbol, SymbolKind};
 
-pub use clause_ir::{Diagnostic, NodeId, ScopeId, Span};
+pub use vehje_ir::{Diagnostic, NodeId, ScopeId, Span};
 pub use hilavitkutin_str::Str;
-pub use clause_syntax::{Ast, AstNode};
+pub use vehje_syntax::{Ast, AstNode};

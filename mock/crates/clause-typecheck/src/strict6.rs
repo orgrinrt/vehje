@@ -2,13 +2,13 @@
 //!
 //! Detects use-tree ambiguity (the same name resolving to two
 //! different paths at the same scope). Coordinates with
-//! clause-resolve, which surfaces the candidate set. Ported from
+//! vehje-resolve, which surfaces the candidate set. Ported from
 //! the Python-era `strict6` lint.
 //!
 //! Skeleton round: `validate` returns `Vec::new()`. Real body is
 //! BACKLOG (one follow-up micro-round).
 
-use clause_ir::Diagnostic;
+use vehje_ir::Diagnostic;
 use hilavitkutin_api::DiagnosticSink;
 
 use crate::ctx::ValidatorCtx;

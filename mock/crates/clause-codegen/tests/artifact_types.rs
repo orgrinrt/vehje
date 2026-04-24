@@ -4,7 +4,7 @@
 //! `CodegenArtifact::empty` constructor, and smoke-test each
 //! `CodegenError` variant's construction + pattern match.
 
-use clause_codegen::{ArtifactKind, CodegenArtifact, CodegenError};
+use vehje_codegen::{ArtifactKind, CodegenArtifact, CodegenError};
 
 #[test]
 fn artifact_kind_variants_distinct() {

@@ -1,6 +1,6 @@
 # clause — Architecture Principles
 
-<!-- BEGIN: shared cross-ecosystem principles (synced from clause-dev/.shared/principles-fragment.md — do not edit in place) -->
+<!-- BEGIN: shared cross-ecosystem principles (synced from vehje-dev/.shared/principles-fragment.md — do not edit in place) -->
 
 ## No heap. Ever.
 
@@ -175,10 +175,10 @@ specific follow-up, the design is wrong, not the rule.
 
 ## Game-agnostic core
 
-The Clause language knows nothing about Clausewitz, Witcher, Sims,
+The Vehje language knows nothing about Clausewitz, Witcher, Sims,
 Lua, or any specific target. All game-specific surface — bind
 targets, content types, codegen, vocabulary — ships as separate
-extension repos (`clause-jomini`, future others).
+extension repos (`vehje-jomini`, future others).
 
 If a feature can't be articulated without naming a specific game,
 it doesn't belong in this repo.
@@ -186,7 +186,7 @@ it doesn't belong in this repo.
 ## Single-binary distribution
 
 End users should not need to install Python, Deno, .NET, or any
-runtime alongside Clause. `cargo build --release` produces one
+runtime alongside Vehje. `cargo build --release` produces one
 static binary per target platform. Cross-compilation is a
 first-class concern.
 
@@ -198,30 +198,30 @@ an immutable binding is an error. Integer literals out of range are
 errors.
 
 Strict mode is not opt-in. The assumption is that authors writing
-Clause code want their mistakes surfaced immediately, and the macro
+Vehje code want their mistakes surfaced immediately, and the macro
 hygiene story depends on the strict posture being reliable.
 
 ## Reuse the substrate
 
 - `arvo` owns numeric primitives + graph / sparse / bitmask / spectral
-  / comb algorithms. Clause consumes.
-- `hilavitkutin` owns pipeline execution. Clause runtime consumes.
+  / comb algorithms. Vehje consumes.
+- `hilavitkutin` owns pipeline execution. Vehje runtime consumes.
 - Don't reimplement DAG topology, bitmask ops, or pipeline scheduling
-  in Clause. Use the crates.
+  in Vehje. Use the crates.
 
-## Dogfood in Clause
+## Dogfood in Vehje
 
-The Clause compiler is written in Rust because it has to exist
-before any Clause code can run. Everything else (deploy tooling,
+The Vehje compiler is written in Rust because it has to exist
+before any Vehje code can run. Everything else (deploy tooling,
 content pipelines, orchestration, LSP server eventually) gets
-written IN Clause. The language earns its design critique by being
+written IN Vehje. The language earns its design critique by being
 forced to express real tooling.
 
 ## Macros are procedural, run at compile time
 
-Clause macros are proc-only — no `macro_rules!`. They execute as a
+Vehje macros are proc-only — no `macro_rules!`. They execute as a
 scheduler pass at compile time, using the same grammar primitives
-the parser uses. Macro bodies are Clause code — typechecked by the
+the parser uses. Macro bodies are Vehje code — typechecked by the
 same typecheck the rest of the code sees.
 
 ## Generalise, don't exception
@@ -233,9 +233,9 @@ attributes, every item kind accepts attributes the same way.
 
 ## Compiler crate = do one thing
 
-The `clause` compiler binary produces Clause IR / codegen output.
+The `vehje` compiler binary produces Vehje IR / codegen output.
 It does not orchestrate builds, manage playsets, fetch art, or
-deploy to games. Those live in Clause-authored programs (dogfood
+deploy to games. Those live in Vehje-authored programs (dogfood
 endgame) or target-specific extension repos.
 
 ## Runtime is embeddable

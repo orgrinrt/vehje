@@ -3,10 +3,10 @@
 //! `KEYWORDS` is a flat `&[(&str, TokenKind)]` scanned linearly; the
 //! round-one list is small enough that a linear scan beats a hashmap
 //! (no alloc, better branch predictability). Keyword matching is
-//! case-sensitive per the Clause language spec — `fn` is a keyword,
+//! case-sensitive per the Vehje language spec — `fn` is a keyword,
 //! `Fn` is an ident.
 
-use clause_ir::TokenKind;
+use vehje_ir::TokenKind;
 use notko::Maybe;
 
 /// The authoritative keyword list.

@@ -1,4 +1,4 @@
-//! clause-runtime-abi — the C-ABI shim between the Rust
+//! vehje-runtime-abi — the C-ABI shim between the Rust
 //! compiler and any runtime backend (Zig today; possibly
 //! others tomorrow).
 //!

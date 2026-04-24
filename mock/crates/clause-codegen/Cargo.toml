@@ -1,12 +1,12 @@
 [package]
-name = "clause-codegen"
+name = "vehje-codegen"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [dependencies]
-clause-ir.workspace = true
-clause-resolve.workspace = true
+vehje-ir.workspace = true
+vehje-resolve.workspace = true
 hilavitkutin-api.workspace = true
 notko.workspace = true
 

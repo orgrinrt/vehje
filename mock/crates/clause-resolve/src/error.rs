@@ -17,7 +17,7 @@
 //! per variant. Per-variant rendering lands alongside the rule
 //! that produces the error.
 
-use clause_ir::{DiagPhase, Diagnostic, Severity, Span};
+use vehje_ir::{DiagPhase, Diagnostic, Severity, Span};
 use hilavitkutin_str::Str;
 
 /// Name-resolution failure.

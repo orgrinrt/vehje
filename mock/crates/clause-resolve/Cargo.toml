@@ -1,5 +1,5 @@
 [package]
-name = "clause-resolve"
+name = "vehje-resolve"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -7,8 +7,8 @@ license.workspace = true
 [dependencies]
 arvo.workspace = true
 arvo-bits.workspace = true
-clause-ir.workspace = true
-clause-syntax.workspace = true
+vehje-ir.workspace = true
+vehje-syntax.workspace = true
 hilavitkutin-str.workspace = true
 notko.workspace = true
 

@@ -1,4 +1,4 @@
-# clause-lex — Design
+# vehje-lex — Design
 
 Tokenisation phase. Consumes source text, produces a token stream
 with trivia attached. Emits lex-level diagnostics (malformed
@@ -13,17 +13,17 @@ numeric literals, unclosed strings, invalid characters).
 - `Trivia` — leading/trailing whitespace + comments attached to each
   token. Required for round-trip source preservation (needed by
   refactoring tooling and formatter later).
-- Lex diagnostics via `clause-ir::Diagnostic`.
+- Lex diagnostics via `vehje-ir::Diagnostic`.
 
 ## Non-scope
 
-- AST construction (clause-syntax).
-- Grammar framework (clause-syntax or clause-ir — R1 TBD).
+- AST construction (vehje-syntax).
+- Grammar framework (vehje-syntax or vehje-ir — R1 TBD).
 - Incremental relex across edits (future round; day-one is full relex).
 
 ## Dependencies
 
-- `clause-ir` for Span / TokenKind / Diagnostic.
+- `vehje-ir` for Span / TokenKind / Diagnostic.
 - arvo for USize / Cap / newtype discipline.
 - `#![no_std]`, no alloc. Lexer state uses const-generic token
   buffer; consumer sizes it.
@@ -32,15 +32,15 @@ numeric literals, unclosed strings, invalid characters).
 
 - `lexer.rs` — top-level Lexer struct + drive loop.
 - `cursor.rs` — byte cursor with Unicode-aware peek.
-- `tokens.rs` — Token struct (composes clause-ir::TokenKind).
+- `tokens.rs` — Token struct (composes vehje-ir::TokenKind).
 - `trivia.rs` — whitespace + comment handling.
 - `stream.rs` — TokenStream iterator adapter.
 - `diagnostics.rs` — lex error construction helpers.
 
 ## Sources
 
-- 202604191300_topic.clause-design-seed.md (authoritative)
-- 202604191300_topic.clause-grammar-seed.md (grammar normative, 967 lines)
-- 202604191300_topic.clause-ebnf-seed.md (EBNF reference, 483 lines)
+- 202604191300_topic.vehje-design-seed.md (authoritative)
+- 202604191300_topic.vehje-grammar-seed.md (grammar normative, 967 lines)
+- 202604191300_topic.vehje-ebnf-seed.md (EBNF reference, 483 lines)
 - 202604191500_changelist.doc.md (R1 round)
 - stellar-heritage/tools/clause/grammar/clause/lexer.py (Python parity oracle)

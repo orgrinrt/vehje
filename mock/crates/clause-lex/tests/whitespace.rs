@@ -1,7 +1,7 @@
 //! Whitespace (spaces, tabs, newlines) coalesces into trivia.
 
-use clause_ir::{FileId, TokenKind};
-use clause_lex::{Lexer, TriviaKind};
+use vehje_ir::{FileId, TokenKind};
+use vehje_lex::{Lexer, TriviaKind};
 
 #[test]
 fn leading_whitespace_is_trivia_on_first_token() {

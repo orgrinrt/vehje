@@ -1,7 +1,7 @@
 //! Lex a small program and verify the TokenKind sequence.
 
-use clause_ir::{FileId, TokenKind};
-use clause_lex::{Lexer, TokenStream};
+use vehje_ir::{FileId, TokenKind};
+use vehje_lex::{Lexer, TokenStream};
 
 fn collect(src: &str) -> Vec<TokenKind> {
     let mut lx = Lexer::from_str(src, FileId(0));

@@ -13,7 +13,7 @@
 //! emission). That retrofit is BACKLOG; it lands once the first
 //! real validator body surfaces the need.
 
-use clause_ir::Diagnostic;
+use vehje_ir::Diagnostic;
 use hilavitkutin_api::DiagnosticSink;
 
 use crate::ctx::ValidatorCtx;

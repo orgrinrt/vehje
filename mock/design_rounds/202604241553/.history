@@ -1,0 +1,50 @@
+0f89669 chore: lock src changelist for 202604241553_changelist.src.lock.md
+d038fe9 refactor!: rename clause -> vehje (src side, round 202604241553)
+1757e4b chore: further lower lints to get the renames to pass
+52bc56c chore: temporarily lower lints to get renames past
+367ed4b docs: open src changelist for 202604241553 rename round
+efa68ac chore: lock doc changelist for 202604241553_changelist.doc.lock.md
+632b37f docs: rename clause -> vehje (doc side, round 202604241553)
+a0b8626 docs: audit hilavitkutin workunit surface for clause fit (#132) (#16)
+07b1bbe feat: clause-resolve primitives sweep + lint flip (m0.1, #130) (#15)
+9a09e7d Merge pull request #14 from orgrinrt/docs/substrate-principle
+d1fe7af docs: drill substrate principle through all research docs
+cd0a1e0 Merge pull request #13 from orgrinrt/docs/clause-research-import
+111ca8f docs: import Python clause research and write port plan
+37afa9a Merge pull request #12 from orgrinrt/feat/clause-binary-cli
+be8ea87 chore: close design round 202604211916
+b73ff5a chore: lock src changelist for 202604211919_changelist.src.lock.md
+46237f0 feat: populate clause binary CLI with real lex subcommand + stubs
+90f9000 docs: write clause binary CLI src CL
+5ea873c chore: lock doc changelist for 202604211916_changelist.doc.lock.md
+e9d6ff8 docs: rewrite clause DESIGN + open BACKLOG for CLI skeleton
+9970a49 docs: write clause binary CLI doc CL
+27d3cbc docs: open clause binary CLI skeleton round
+e3acdc1 Merge pull request #11 from orgrinrt/feat/clause-collections-sweep
+df704c8 chore: close design round 202604211855
+d0d28df chore: lock src changelist for 202604211902_changelist.src.lock.md
+9b4a16a feat: retrofit collection return types to DiagnosticSink/ByteEmitter bounds
+d4d5633 docs: write collections-sweep src CL (#73.2)
+fb2b754 chore: lock doc changelist for 202604211855_changelist.doc.lock.md
+d81cf18 docs: retrofit collection return types to sink bounds in clause DESIGN
+26b2ae2 docs: write collections-sweep doc CL (#73.2)
+0083e26 docs: open clause collections-sweep round (#73.2)
+f49f35f Merge pull request #10 from orgrinrt/feat/clause-fallibility-sweep
+2ce0ee4 chore: close design round 202604211741
+b051584 chore: lock src changelist for 202604211746_changelist.src.lock.md
+542fc92 feat: replace Option/Result with Maybe/Outcome in clause phase crates
+a4a1ec0 docs: write fallibility-sweep src CL (#73.1)
+e19a845 chore: lock doc changelist for 202604211741_changelist.doc.lock.md
+5d59de1 docs: rename Result/Option to Outcome/Maybe in clause DESIGN templates
+aabfbc8 docs: write fallibility-sweep doc CL (#73.1)
+d0e79e8 docs: open clause fallibility-sweep round (#73.1)
+839246c chore: bump mockspace pin to e3f6f6d for no-empty-crate fix
+cb7b239 Merge pull request #9 from orgrinrt/feat/exact-widths-rule
+7c198f1 docs: teach exact-widths principle in type-surface rule
+d9c3c63 Merge pull request #8 from orgrinrt/feat/no-bare-static-str-cascade
+2a3f7a4 feat: enable no-bare-static-str lint
+1037c99 Merge pull request #7 from orgrinrt/feat/cascade-tightened-lints
+e733c44 chore: cascade tightened bare-primitive lints with graceful ramp
+e4236e4 Merge pull request #6 from orgrinrt/feat/tighten-bare-primitive-enforcement
+e296d90 feat: tighten bare-primitive enforcement — anywhere in source
+33d9940 chore: sync dev into main — catch up divergent history

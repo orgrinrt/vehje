@@ -1,9 +1,9 @@
-# clause-syntax — Design
+# vehje-syntax — Design
 
 Parser + AST construction phase. Consumes a token slice from
-clause-lex, produces an `Ast` — a flat arena of `AstNode`s keyed
+vehje-lex, produces an `Ast` — a flat arena of `AstNode`s keyed
 by `NodeId`. Emits syntax-level diagnostics via `SyntaxError`
-which converts to `clause-ir::Diagnostic`.
+which converts to `vehje-ir::Diagnostic`.
 
 The crate ships as a skeleton first: type surface + driver loop +
 a minimal `parse` that handles the two trivial programs (empty
@@ -40,17 +40,17 @@ method + a test file; the skeleton harness does not change.
 
 ## Non-scope
 
-- Name binding / scope resolution (clause-resolve).
-- Type checking (clause-typecheck).
+- Name binding / scope resolution (vehje-resolve).
+- Type checking (vehje-typecheck).
 - AST rewriting / macros (separate round post-core).
 - Concrete lossless syntax tree for formatter round-trip —
   deferred until the formatter drives the requirement.
 
 ## Dependencies
 
-- `clause-ir` for `Span`, `NodeId`, `AstNodeKind`, `Diagnostic`,
+- `vehje-ir` for `Span`, `NodeId`, `AstNodeKind`, `Diagnostic`,
   `Severity`.
-- `clause-lex` for `Token` and `TokenKind` (re-exported).
+- `vehje-lex` for `Token` and `TokenKind` (re-exported).
 - `#![no_std]`, no alloc. AST arena is const-generic (size
   chosen by caller); skeleton tests use a small default.
 
@@ -66,12 +66,12 @@ Follow-up rounds add `grammar/` with one file per production.
 
 ## Sources
 
-- 202604191300_topic.clause-design-seed.md (authoritative)
-- 202604191300_topic.clause-grammar-seed.md (grammar normative)
-- 202604191300_topic.clause-ebnf-seed.md (EBNF reference)
-- 202604191300_topic.clause-grammar-framework-seed.md (G0
+- 202604191300_topic.vehje-design-seed.md (authoritative)
+- 202604191300_topic.vehje-grammar-seed.md (grammar normative)
+- 202604191300_topic.vehje-ebnf-seed.md (EBNF reference)
+- 202604191300_topic.vehje-grammar-framework-seed.md (G0
   primitives)
 - 202604191500_changelist.doc.md (R1 round)
-- 202604262900_changelist.doc.lock.md (clause-lex skeleton —
+- 202604262900_changelist.doc.lock.md (vehje-lex skeleton —
   produces the tokens this round consumes)
 - stellar-heritage/tools/clause/grammar/ (Python parity oracle)

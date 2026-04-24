@@ -5,7 +5,7 @@
 //! from `clause-runtime-abi` + `clause-runtime-driver` can
 //! be named + constructed from this crate.
 
-use clause_runtime_tests::{
+use vehje_runtime_tests::{
     AbiSpan, ClauseDiagnostic, ClauseDiagnosticKind, ClauseResult, DriverError, LoaderError,
     RuntimeDriver, RuntimeLoader, test_runtime_roundtrip,
 };

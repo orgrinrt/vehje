@@ -4,8 +4,8 @@
 //! `lookup` finds the built-ins and rejects unknown names, and
 //! `emit_for` surfaces `TargetNotFound` on miss.
 
-use clause_codegen::{CodegenCtx, CodegenError, TargetRegistry};
-use clause_resolve::Resolved;
+use vehje_codegen::{CodegenCtx, CodegenError, TargetRegistry};
+use vehje_resolve::Resolved;
 
 #[test]
 fn registry_has_two() {

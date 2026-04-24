@@ -1,13 +1,13 @@
 [package]
-name = "clause-typecheck"
+name = "vehje-typecheck"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [dependencies]
-clause-ir.workspace = true
-clause-syntax.workspace = true
-clause-resolve.workspace = true
+vehje-ir.workspace = true
+vehje-syntax.workspace = true
+vehje-resolve.workspace = true
 arvo.workspace = true
 arvo-bitmask.workspace = true
 hilavitkutin-api.workspace = true

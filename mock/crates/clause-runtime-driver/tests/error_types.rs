@@ -4,7 +4,7 @@
 //! `DriverError`; verify variants compare unequal and
 //! `ExecuteFailed` round-trips its code payload.
 
-use clause_runtime_driver::{DriverError, LoaderError};
+use vehje_runtime_driver::{DriverError, LoaderError};
 
 #[test]
 fn loader_error_variants_distinct() {

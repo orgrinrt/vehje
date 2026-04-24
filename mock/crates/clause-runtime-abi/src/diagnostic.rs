@@ -17,22 +17,22 @@
 /// Flat ABI span — `(file, start, end)` as bare `u32`s.
 ///
 /// The richer `FileId` / `ByteOffset` wrappers live in
-/// `clause_ir::Span`. This round carries the triple directly
+/// `vehje_ir::Span`. This round carries the triple directly
 /// to keep the ABI surface minimal; the driver-side
-/// `AbiSpan` → `clause_ir::Span` conversion is BACKLOG.
+/// `AbiSpan` → `vehje_ir::Span` conversion is BACKLOG.
 #[repr(C)]
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct AbiSpan {
-    /// File identifier (matches `clause_ir::FileId::0`).
+    /// File identifier (matches `vehje_ir::FileId::0`).
     pub file: u32,
     /// Start byte offset (matches
-    /// `clause_ir::ByteOffset::0`).
+    /// `vehje_ir::ByteOffset::0`).
     pub start: u32,
     /// End byte offset (exclusive).
     pub end: u32,
 }
 
-/// Diagnostic kind — mirrors `clause_ir::Severity` but carries
+/// Diagnostic kind — mirrors `vehje_ir::Severity` but carries
 /// only the three kinds the runtime emits (Help / Warning-vs-
 /// info-splits are a compiler-side concern).
 #[repr(i32)]

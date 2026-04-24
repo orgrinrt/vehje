@@ -5,8 +5,8 @@
 //! `Resolved`. Skeleton round: `native` always returns an empty
 //! `Binary` artifact, missing targets surface `TargetNotFound`.
 
-use clause_codegen::{ArtifactKind, CodegenError, emit};
-use clause_resolve::Resolved;
+use vehje_codegen::{ArtifactKind, CodegenError, emit};
+use vehje_resolve::Resolved;
 
 #[test]
 fn emit_native_empty_resolved() {

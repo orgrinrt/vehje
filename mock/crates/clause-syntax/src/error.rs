@@ -2,7 +2,7 @@
 //!
 //! `SyntaxError` is `Copy` and alloc-free: it carries a static
 //! message, a source span, and a kind discriminator. A `From`
-//! conversion produces a `clause_ir::Diagnostic` so the compiler
+//! conversion produces a `vehje_ir::Diagnostic` so the compiler
 //! driver can merge syntax errors into its diagnostic pipeline
 //! without re-keying the payload.
 //!
@@ -10,7 +10,7 @@
 //! produce today; follow-up rounds extend the enum as new grammar
 //! productions learn to fail in new ways.
 
-use clause_ir::{DiagPhase, Diagnostic, Severity, Span};
+use vehje_ir::{DiagPhase, Diagnostic, Severity, Span};
 
 /// Classification of a syntax error.
 ///

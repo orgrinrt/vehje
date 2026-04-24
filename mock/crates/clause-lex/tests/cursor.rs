@@ -1,6 +1,6 @@
 //! Cursor peek / bump round-trips.
 
-use clause_lex::Cursor;
+use vehje_lex::Cursor;
 
 #[test]
 fn empty_source_is_eof() {

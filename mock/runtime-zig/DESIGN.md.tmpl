@@ -1,7 +1,7 @@
 # clause-runtime-zig — Design
 
 Zig implementation of the clause runtime. Consumes the C ABI
-(clause-runtime-abi); implements the entry points with a Clause-
+(vehje-runtime-abi); implements the entry points with a Vehje-
 IR interpreter, scratch-var folding, and generative expansion.
 
 ## Scope
@@ -22,7 +22,7 @@ Phase 6 skeleton round (2026-04-20) ships:
 - `build.zig` declaring a `clause_runtime` shared-library
   target. Output: `zig-out/lib/libclause_runtime.{so|dylib|dll}`.
 - `src/runtime.zig` exporting three `extern "C"` stubs matching
-  the Rust `clause-runtime-abi` exports:
+  the Rust `vehje-runtime-abi` exports:
   - `clause_runtime_new() ?*anyopaque` → null.
   - `clause_runtime_free(?*anyopaque) void` → no-op.
   - `clause_runtime_execute(?*anyopaque, [*]const u8, usize) i32`
@@ -60,7 +60,7 @@ TokenStream emitter, and Zig test suite are all BACKLOG.
 
 ## Non-scope
 
-- The ABI contract itself (`clause-runtime-abi`).
+- The ABI contract itself (`vehje-runtime-abi`).
 - The compiler-side dispatch (`clause-runtime-driver`).
 - Runtime performance tuning (post-Phase 6).
 

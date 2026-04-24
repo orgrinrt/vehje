@@ -1,9 +1,9 @@
-# clause-schedule — Design
+# vehje-schedule — Design
 
 Compiler pass DAG construction + scheduling. Consumes a typed
-program graph from clause-typecheck. Uses arvo-graph for
+program graph from vehje-typecheck. Uses arvo-graph for
 topological analysis + critical-path discovery. Produces a
-codegen-ready IR hand-off for clause-codegen.
+codegen-ready IR hand-off for vehje-codegen.
 
 ## Scope
 
@@ -19,12 +19,12 @@ codegen-ready IR hand-off for clause-codegen.
 ## Non-scope
 
 - Concrete pass implementations (each phase owns its own).
-- Codegen (clause-codegen).
-- Runtime execution of Clause programs (Zig runtime, R2).
+- Codegen (vehje-codegen).
+- Runtime execution of Vehje programs (Zig runtime, R2).
 
 ## Dependencies
 
-- `clause-ir`, `clause-typecheck`.
+- `vehje-ir`, `vehje-typecheck`.
 - arvo (numeric + newtype).
 - arvo-bitmask (Mask64 for pass read / write sets).
 - arvo-graph (topological sort, critical path, rank).
@@ -40,7 +40,7 @@ codegen-ready IR hand-off for clause-codegen.
 
 ## Sources
 
-- 202604191300_topic.clause-design-seed.md
+- 202604191300_topic.vehje-design-seed.md
 - arvo-graph DESIGN.md.tmpl (substrate contract)
 - arvo-bitmask DESIGN.md.tmpl (AccessMask contract)
 - 202604191500_changelist.doc.md (R1 round)

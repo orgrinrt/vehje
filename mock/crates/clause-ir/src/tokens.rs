@@ -2,7 +2,7 @@
 //!
 //! `TokenKind` is the shared vocabulary between the lexer (the
 //! producer) and the parser (the consumer). The enum is exhaustive
-//! over every token the Clause grammar defines, even for tokenisers
+//! over every token the Vehje grammar defines, even for tokenisers
 //! that are not yet implemented; deferred literal variants (string,
 //! char, float, raw string, byte literal) are listed here as
 //! placeholders so downstream consumers never need to be re-keyed
@@ -12,7 +12,7 @@
 //! tests elsewhere pin individual variant values so adding a new
 //! variant in the middle of the list is caught mechanically.
 
-/// Discriminator for every token shape the Clause grammar emits.
+/// Discriminator for every token shape the Vehje grammar emits.
 ///
 /// See `docs/tokens.md` (forthcoming) for the canonical mapping of
 /// source characters to variants. Keyword variants are spelled in

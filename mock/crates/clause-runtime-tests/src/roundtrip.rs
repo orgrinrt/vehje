@@ -9,7 +9,7 @@
 
 use notko::Outcome;
 
-use clause_runtime_driver::{LoaderError, RuntimeLoader};
+use vehje_runtime_driver::{LoaderError, RuntimeLoader};
 
 /// Attempt a full round-trip against a runtime and return
 /// `Outcome::Ok(())` on success or a loader error on failure.

@@ -10,7 +10,7 @@
 //! Every helper uses only `Cursor` for source access and ASCII-only
 //! char classes. Non-ASCII identifier support is a deferred concern.
 
-use clause_ir::TokenKind;
+use vehje_ir::TokenKind;
 use notko::Maybe;
 
 use crate::cursor::Cursor;

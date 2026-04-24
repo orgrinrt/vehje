@@ -1,6 +1,6 @@
 //! Manifest stub: empty input → default, non-empty → NotImplemented.
 
-use clause_resolve::{ManifestError, parse_manifest};
+use vehje_resolve::{ManifestError, parse_manifest};
 use hilavitkutin_str::Str;
 use notko::Outcome;
 

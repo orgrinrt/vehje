@@ -4,7 +4,7 @@
 //! This test file constructs one of each variant and confirms they
 //! compare as expected and that their `u8` discriminants are unique.
 
-use clause_ir::TokenKind;
+use vehje_ir::TokenKind;
 
 /// Exhaustive list of every `TokenKind` variant.
 ///

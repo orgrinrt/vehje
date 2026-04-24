@@ -20,7 +20,7 @@
 //! The sink interface keeps the lexer `no_std` and alloc-free; the
 //! most common case (no diagnostics) costs nothing.
 
-use clause_ir::{
+use vehje_ir::{
     ByteOffset, DiagPhase, Diagnostic, FileId, Severity, Span, TokenKind,
 };
 use notko::Maybe;

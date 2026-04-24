@@ -1,92 +1,66 @@
-# `clause`
+# `vehje`
 
 <div align="center" style="text-align: center;">
 
-[![GitHub Stars](https://img.shields.io/github/stars/orgrinrt/clause.svg)](https://github.com/orgrinrt/clause/stargazers)
-[![Crates.io](https://img.shields.io/crates/v/clause)](https://crates.io/crates/clause)
-[![docs.rs](https://img.shields.io/docsrs/clause)](https://docs.rs/clause)
-[![GitHub Issues](https://img.shields.io/github/issues/orgrinrt/clause.svg)](https://github.com/orgrinrt/clause/issues)
-![License](https://img.shields.io/github/license/orgrinrt/clause?color=%23009689)
+[![GitHub Stars](https://img.shields.io/github/stars/orgrinrt/vehje.svg)](https://github.com/orgrinrt/vehje/stargazers)
+[![Crates.io](https://img.shields.io/crates/v/vehje)](https://crates.io/crates/vehje)
+[![docs.rs](https://img.shields.io/docsrs/vehje)](https://docs.rs/vehje)
+[![GitHub Issues](https://img.shields.io/github/issues/orgrinrt/vehje.svg)](https://github.com/orgrinrt/vehje/issues)
+![License](https://img.shields.io/github/license/orgrinrt/vehje?color=%23009689)
 
-> General-purpose scripting language for game modding and embeddable runtimes. Rust compiler, Zig runtime, C ABI between them. Game-agnostic core; targets ship as separate extension repos.
+> A general-purpose scripting language. Rust compiler, Zig runtime, C ABI between them. Compiles to an IL that the runtime interprets, with room to lower further as the language matures.
 
 </div>
 
 ## What it is
 
-Clause is a scripting language with a two-language implementation. The compiler is Rust: lex, parse, resolve, typecheck, transpile, codegen, pass scheduler. It runs at development time and ships as a single static binary per target platform. The runtime is Zig: small, fast, embeddable, speaks C ABI, pulls no `std` and no Rust runtime. The two are joined by a C ABI that is defined and validated in Rust.
+Vehje is a scripting language with a two-language implementation. The compiler is written in Rust: it lexes, parses, resolves names, type-checks, schedules passes, and emits an intermediate representation. The runtime is written in Zig: small, embeddable, speaks C ABI, interprets the IL the compiler emits. The two halves are joined by a C ABI defined and validated on the Rust side.
 
-The core is strictly game-agnostic. Anything that names a specific game (Clausewitz, Witcher 3, Sims 4, Lua) lives in a sibling extension repo, not in this one. The extension-point contract is one of the early design rounds; until it lands, inlining game-specific vocabulary, types, or codegen into the core is forbidden because it makes later extraction harder.
+The IL is the shipping contract between compiler and runtime. Programs compile ahead of time; the runtime reads the resulting artefact and executes it. Later versions can lower the IL further (denser bytecode, ahead-of-time native emission for selected targets) without changing the source language or the runtime's published ABI. Nothing in the language design assumes interpretation in the traditional "source-at-the-ready" sense.
 
-Compiler posture is strict. Deny-warnings at crate roots, no `.unwrap()` / `.expect()` outside tests and documented infallible paths, tagged enums plus trait dispatch over `dyn Trait` / `TypeId` / `std::any`. Errors carry span, phase, expected, and actual context rather than a bare string. Procedural macros exist only for Clause language semantics; `macro_rules!` is acceptable internally in the Rust compiler implementation for boilerplate reduction, but never for Clause itself, where macros are proc-only, scheduler-pass-driven, and typechecked.
+Posture is strict. Deny-warnings at crate roots. No `.unwrap()` or `.expect()` outside tests and documented infallible paths. Tagged enums plus trait dispatch instead of `dyn Trait` or `TypeId` in framework code. Errors carry span, phase, expected, and actual context. Procedural macros exist only for language-level semantics; they are typechecked and scheduler-driven, not ad hoc token shuffling.
 
 ## Status
 
-**Seed.** Extracted from a Python prototype in `stellar-heritage` on 2026-04-19. Design seeds live in `mock/design_rounds/`; see the initial changelist for what is imported and what still needs fresh consolidation. The first substantive design rounds (R1-R4) decide compiler crate split, Zig runtime C ABI split, extension-point contract, and the validator framework. `mock/crates/` is intentionally empty at seed; crate-level rules and lints arrive once R1-R4 settles the split.
-
-First real session begins with: compiler crate split, runtime split, extension-point contract.
+**Seed.** The compiler is scaffolded as a split of small crates (lex, syntax, resolve, typecheck, schedule, codegen, runtime ABI, plus a binary); the runtime is scaffolded as a Zig side that speaks the C ABI. The surface is in place; the substantive bodies land crate by crate as the work progresses.
 
 ## Contents
 
-Crate layout is provisional (pending R1-R4) and currently resides under `mock/crates/`:
+The shipping layout, compiler side:
 
 | Crate | Role |
 |---|---|
-| `clause-lex` | Tokenisation. |
-| `clause-syntax` | Parser + AST. |
-| `clause-resolve` | Module resolution, use-tree, visibility. |
-| `clause-typecheck` | Coherence, bind targets, generics, validator framework. |
-| `clause-schedule` | Pass DAG. Consumes `arvo-graph`. |
-| `clause-codegen` | Target-agnostic code generation. |
-| `clause` | Top-level binary and orchestration. |
+| `vehje-lex` | Tokenisation. |
+| `vehje-syntax` | Parser, AST. |
+| `vehje-resolve` | Module resolution, use-tree, visibility, manifest. |
+| `vehje-typecheck` | Coherence, generics, validator framework. |
+| `vehje-schedule` | Pass DAG. |
+| `vehje-codegen` | Target-agnostic code generation into the IL. |
+| `vehje-ir` | Intermediate representation shared across compiler crates. |
+| `vehje-runtime-abi` | C ABI surface the runtime speaks. |
+| `vehje` | Top-level binary. |
 
-Game-specific targets ship as separate repos that extend Clause:
+The runtime side lives alongside as a Zig project, linked by the C ABI declared in `vehje-runtime-abi`.
 
-| Extension (future) | Target |
-|---|---|
-| `clause-jomini` | Clausewitz grammar and codegen (Stellaris / CK3 / HOI4 / Vic3 / EU4). |
-| `clause-w3` | Witcher 3 script target. |
-| `clause-ts4` | Sims 4 script target. |
-| `clause-lua` | Generic Lua target. |
+## Two halves, one ABI
 
-## Two-language strategy
+Splitting the compiler and runtime by language keeps each side honest about its own dependencies and deployment shape. The compiler runs at development time and ships as one static binary per host. The runtime embeds into the program that uses Vehje scripts and has no Rust runtime dependency. Cross-compilation is first-class on the compiler side; linkage on the runtime side is whatever the host program chooses (static, shared library, wasm module).
 
-The compiler runs at development time; the runtime embeds in the host program. Splitting them by language keeps each side honest about its dependencies.
+Build tooling, deployment, and orchestration are written in Vehje itself once the language is usable. The compiler does one thing; tooling runs on top of what the compiler emits.
 
-**Compiler (Rust).** Everything the user invokes via `clause` on the command line. Cross-compilation is first-class: one static binary per host platform emits artefacts for any supported target. No dynamic runtime dependencies, no plugin shared-object loading at the compiler layer.
+## Substrate
 
-**Runtime (Zig).** Everything that executes inside a hosted program: macros, scratch variables, generative pipelines. Built on `hilavitkutin` for morsel-driven execution. The runtime may embed differently per host (static link, shared library, wasm module).
+Vehje depends on three small crates that the language's shape relies on:
 
-**Build tooling / deployment / orchestration.** Written in Clause itself once the language is usable. Same split as the rustc/cargo separation: the compiler does one thing, tooling runs on top of what the compiler emits.
+- [`notko`](https://github.com/orgrinrt/notko) — foundation primitives: `Just<T>`, `Maybe<T>`, `Outcome<T, E>`, `MaybeNull<T>`. Replaces `Option<T>` and `Result<T, E>` at API boundaries.
+- [`arvo`](https://github.com/orgrinrt/arvo) — numeric substrate: fixed-point primitives with strategy markers. Replaces bare integer and float types at API boundaries.
+- [`hilavitkutin`](https://github.com/orgrinrt/hilavitkutin) — pipeline execution engine. The runtime uses it for scheduling and dispatch; the compiler uses the same machinery for its internal pass graph.
 
-## Python parity oracle
-
-A Python prototype lives at `stellar-heritage/tools/clause/` (roughly 15k lines, 1500+ tests). It is the parity oracle during the Rust port: the Python test corpus runs against the Rust implementation to verify semantic equivalence. It is not a line-by-line translation source. The Rust shape differs: tagged enums over Protocol duck-typing, monomorphised trait dispatch over `isinstance` checks, `Outcome<T, E>` over exceptions, static composition over runtime registry lookups. Read the Python for semantics; author the Rust from the design docs.
-
-## Single-binary distribution
-
-End users should not need Python, Deno, .NET, JVM, or any runtime alongside Clause. `cargo build --release` produces one static binary per target. The runtime embeds in the host program with whatever linkage the host chooses; the compiler itself has no dynamic runtime dependencies.
+Public APIs in Vehje use the substrate vocabulary (`Maybe` / `Outcome` / `UFixed` / `IFixed` / interned strings) rather than bare `core` primitives. Bare primitives appear only where a language-level trait signature fixes the choice.
 
 ## Installation
 
-Clause is not yet published to crates.io. Until the seed round lands crates at version `0.1`, consumers path-dep into `mock/crates/*`:
-
-```toml
-[dependencies]
-clause = { path = "../clause/mock/crates/clause" }
-```
-
-Once R1-R4 graduates the crate split to root-level `crates/`, `cargo add clause` and the usual crates.io flow will apply.
-
-## Positioning
-
-`clause` sits on top of three substrate repos:
-
-- [`notko`](https://github.com/orgrinrt/notko) — foundation primitives: `Just` / `Maybe` / `Outcome` / `MaybeNull`.
-- [`arvo`](https://github.com/orgrinrt/arvo) — numeric primitives plus analysis algorithms. The compiler uses `arvo-graph` for the pass DAG and `arvo-bitmask` for artifact read/write sets.
-- [`hilavitkutin`](https://github.com/orgrinrt/hilavitkutin) — pipeline execution engine. The Clause runtime uses it for morsel-driven macro and scratch execution.
-
-Reuse across the substrate is strict: the Clause repo does not reimplement DAG topology, bitmask ops, sparse storage, or pipeline scheduling. Those live in `arvo` and `hilavitkutin`. Public APIs in Clause use `Maybe` / `Outcome` in place of `Option` / `Result` and `arvo` primitives in place of bare numerics. Bare `core` primitives appear only in trait method signatures fixed by the language.
+Vehje is pre-release. Follow the repository for tagged releases; `cargo add vehje` will become available once the compiler crate publishes.
 
 ## Support
 
@@ -100,4 +74,4 @@ Whether you use this project, have learned something from it, or just like it, p
 
 `SPDX-License-Identifier: MPL-2.0`
 
-> You can check out the full license [here](https://github.com/orgrinrt/clause/blob/dev/LICENSE)
+> You can check out the full license [here](https://github.com/orgrinrt/vehje/blob/dev/LICENSE)

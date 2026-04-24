@@ -5,9 +5,9 @@
 //! and nothing else. Future rounds grow this into a richer
 //! context (diagnostic sink for incremental emission, workspace
 //! info for cross-crate lookups, per-validator config read from
-//! `Clause.toml`, …); all of those are BACKLOG.
+//! `Vehje.toml`, …); all of those are BACKLOG.
 
-use clause_resolve::Resolved;
+use vehje_resolve::Resolved;
 
 /// Read-only context passed to every `Validator::validate` call.
 ///

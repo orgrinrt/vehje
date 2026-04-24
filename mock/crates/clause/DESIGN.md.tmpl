@@ -2,13 +2,13 @@
 
 Command-line binary tying together the compiler phase crates
 into a single shippable artifact. No algorithmic logic lives
-here — `clause` only parses arguments, reads source files, and
+here — `vehje` only parses arguments, reads source files, and
 hands inputs to phase crates in order. Every phase owns its
 own logic.
 
 The binary is host-side (compiler side), not runtime. It uses
 `std` freely. The `no_std` / fixed-arena discipline applied to
-`clause-ir`, `clause-lex`, `clause-syntax` does not propagate
+`vehje-ir`, `vehje-lex`, `vehje-syntax` does not propagate
 upward to this crate.
 
 ## Subcommands
@@ -30,7 +30,7 @@ clause run <file>      # compile + invoke interpreter
 ### lex
 
 Reads `<file>` from disk, tokenises it through
-`clause_lex::Lexer::from_str`, and prints one line per token.
+`vehje_lex::Lexer::from_str`, and prints one line per token.
 
 Output format:
 
@@ -40,7 +40,7 @@ Output format:
 
 - `offset_start..offset_end` is the half-open byte range in the
   source file.
-- `TokenKind` is the `clause_ir::TokenKind` discriminant.
+- `TokenKind` is the `vehje_ir::TokenKind` discriminant.
 - `byte_literal?` is the raw source slice for tokens that carry
   user text; empty for structural / trivia-only tokens.
 
@@ -82,13 +82,13 @@ the phase crates, not here.
 
 ## Dependencies
 
-- `clause-ir` — shared types (`Diagnostic`, `Span`, `FileId`,
+- `vehje-ir` — shared types (`Diagnostic`, `Span`, `FileId`,
   `TokenKind`).
-- `clause-lex` — the lexer.
-- `clause-syntax` — parse entry.
-- `clause-resolve` — resolve entry.
-- `clause-typecheck` — typecheck entry.
-- `clause-codegen` — emit entry.
+- `vehje-lex` — the lexer.
+- `vehje-syntax` — parse entry.
+- `vehje-resolve` — resolve entry.
+- `vehje-typecheck` — typecheck entry.
+- `vehje-codegen` — emit entry.
 - `notko` — `Maybe<T>`, `Outcome<T, E>`.
 
 No `clap` / `argh` dependency. CLI is small enough that a
@@ -98,16 +98,16 @@ per-subcommand flag count exceeds three.
 
 ## Pass-DAG interaction
 
-`clause-schedule` is not consumed this round. Round-one
+`vehje-schedule` is not consumed this round. Round-one
 subcommands each correspond to one hard-coded phase chain
 (`lex` → just the lexer; `parse` → lex + parse; and so on). A
-future round threads the pass-DAG via `clause-schedule`,
+future round threads the pass-DAG via `vehje-schedule`,
 swapping the hard-coded chain for a graph walk.
 
 ## Sources
 
 - 202604211916_topic.binary-cli-skeleton.md
-- 202604191300_topic.clause-design-seed.md (authoritative spec)
+- 202604191300_topic.vehje-design-seed.md (authoritative spec)
 - stellar-heritage/tools/clause/ (Python parity oracle — CLI
   surface diverges from the oracle; parity is semantic, not
   flag-for-flag)

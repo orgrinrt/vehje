@@ -2,7 +2,7 @@
 //!
 //! `Diagnostic` is `Copy` and references only `'static` strings. This
 //! keeps the lexer / parser / type-checker `no_std` and alloc-free; a
-//! downstream renderer (in the `clause` binary) is responsible for
+//! downstream renderer (in the `vehje` binary) is responsible for
 //! pairing each diagnostic with the span's source text and producing
 //! the human-facing output.
 //!
