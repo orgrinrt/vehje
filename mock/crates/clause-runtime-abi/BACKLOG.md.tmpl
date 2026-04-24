@@ -1,29 +1,29 @@
-# clause-runtime-abi — backlog
+# vehje-runtime-abi — backlog
 
 ## Deferred ABI type surface
 
-- Full `AbiSpan` wrapping `clause_ir::FileId` + `ByteOffset`
+- Full `AbiSpan` wrapping `vehje_ir::FileId` + `ByteOffset`
   (skeleton ships a flat `{ file, start, end }` triple).
-- `AbiToken` mirror for `clause_ir::Token`.
-- `AbiNode` mirror for `clause_ir::Node`.
-- `From` impls between clause-ir types and their `Abi*`
-  mirrors (one direction: clause-ir → Abi for outgoing data;
-  Abi → clause-ir for incoming diagnostics).
+- `AbiToken` mirror for `vehje_ir::Token`.
+- `AbiNode` mirror for `vehje_ir::Node`.
+- `From` impls between vehje-ir types and their `Abi*`
+  mirrors (one direction: vehje-ir → Abi for outgoing data;
+  Abi → vehje-ir for incoming diagnostics).
 - `abi_version: u32` prefix on every public struct — carries
   the ABI-version invariant R2 mandates.
 
 ## Deferred entry points
 
-- `clause_runtime_init(arena_bytes: u32)` — per-session arena
+- `vehje_runtime_init(arena_bytes: u32)` — per-session arena
   allocation.
-- `clause_runtime_shutdown(handle)` — teardown entry.
-- `clause_runtime_invoke_macro(handle, nodes, len)` — macro
+- `vehje_runtime_shutdown(handle)` — teardown entry.
+- `vehje_runtime_invoke_macro(handle, nodes, len)` — macro
   dispatch surface.
-- `clause_runtime_eval_scratch(handle, expr_nodes, len)` —
+- `vehje_runtime_eval_scratch(handle, expr_nodes, len)` —
   compile-time scratch evaluation.
-- `clause_runtime_expand_generative(handle, blueprint, len)` —
+- `vehje_runtime_expand_generative(handle, blueprint, len)` —
   generative subgraph expansion.
-- `clause_runtime_last_error(handle) -> *const AbiDiagnostic`
+- `vehje_runtime_last_error(handle) -> *const AbiDiagnostic`
   — retrieve the last-recorded error diagnostic.
 
 ## Deferred framework features
@@ -31,12 +31,12 @@
 - **Full `ClauseRuntime` state struct.** Currently opaque
   `[u8; 0]`; future round fills in the real state body when
   the runtime backend lands.
-- **Real `clause_runtime_execute` wiring.** Currently returns
+- **Real `vehje_runtime_execute` wiring.** Currently returns
   `Err`. Future round hands off to a loaded runtime dylib via
   the driver-side dispatch.
 - **Error code → `ClauseDiagnostic` translation layer.** When
   execute returns an error, surface the associated diagnostic
-  via `clause_runtime_last_error`.
+  via `vehje_runtime_last_error`.
 - **Panic handling at FFI boundary.** Wrap every `extern "C"`
   body in `std::panic::catch_unwind` (once std is acceptable
   here; currently `no_std`) or via an explicit abort guard

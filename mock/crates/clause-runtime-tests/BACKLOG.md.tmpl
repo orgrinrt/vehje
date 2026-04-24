@@ -1,9 +1,9 @@
-# clause-runtime-tests — backlog
+# vehje-runtime-tests — backlog
 
 ## Deferred soundness tests
 
 - **Struct-shape assertions.** For every `#[repr(C)]` type in
-  `clause-runtime-abi` (`ClauseResult`, `ClauseRuntime`,
+  `vehje-runtime-abi` (`ClauseResult`, `ClauseRuntime`,
   `ClauseDiagnostic`, `AbiSpan`, `AbiToken`, `AbiNode`, …):
   `size_of`, `align_of`, and `offset_of` each public field.
 - **Enum discriminant stability.** For every `#[repr(...)]`
@@ -21,11 +21,11 @@
   against the stub dylib returns `Ok(handle)`; `handle.execute`
   returns non-empty bytes.
 - `tests/diagnostics.rs` — stub dylib records an error;
-  driver surfaces it as `clause_ir::Diagnostic`.
+  driver surfaces it as `vehje_ir::Diagnostic`.
 
 ## Deferred fuzz / regression
 
-- Fuzz harness over `clause_runtime_execute` (random input
+- Fuzz harness over `vehje_runtime_execute` (random input
   buffers; asserts no crash, returns valid `ClauseResult`).
 - Regression tests — known-bad inputs (NUL bytes,
   zero-length, huge length) each gets a test.
@@ -36,4 +36,4 @@
 
 - `cargo bench` harness against the stub dylib.
 - Property-based tests via `proptest` for the ABI
-  conversions (`clause_ir` types ↔ `Abi*` mirrors).
+  conversions (`vehje_ir` types ↔ `Abi*` mirrors).

@@ -1,4 +1,4 @@
-# clause-runtime-driver — backlog
+# vehje-runtime-driver — backlog
 
 ## Deferred loader implementation
 
@@ -9,7 +9,7 @@
   dylib. When unset, a conventional next-to-binary path is
   tried; when that fails, an embedded-fallback path is tried.
 - Windows / Linux / macOS dylib naming conventions
-  (`libclause_runtime.{so,dylib,dll}`) — the loader inspects
+  (`libvehje_runtime.{so,dylib,dll}`) — the loader inspects
   the target triple and prepends / appends accordingly.
 - Symbol resolution — `dlsym` each `extern "C"` entry by name;
   error with `LoaderError::SymbolNotFound { name }` on miss.
@@ -26,17 +26,17 @@
 - Multi-runtime management — load multiple runtime handles,
   route per-session.
 - Per-session arena management — driver allocates / frees
-  arenas through `clause_runtime_init` /
-  `clause_runtime_shutdown`.
+  arenas through `vehje_runtime_init` /
+  `vehje_runtime_shutdown`.
 
 ## Deferred driver features
 
 - Real `RuntimeDriver` state — holds an `Arc<dyn RuntimeHandle>`
   + per-session cache of diagnostic translations.
-- `AbiDiagnostic` → `clause_ir::Diagnostic` conversion —
+- `AbiDiagnostic` → `vehje_ir::Diagnostic` conversion —
   maps pointer-plus-length messages to `&'static str` or
   interned string ids.
-- `AbiSpan` → `clause_ir::Span` conversion — reconstructs
+- `AbiSpan` → `vehje_ir::Span` conversion — reconstructs
   `FileId` + `ByteOffset` from the flat triple.
 - Fallback to embedded runtime when dylib not found —
   statically-linked lightweight backend for test / dev use.
@@ -44,7 +44,7 @@
   driver wrappers so a Zig-side abort surfaces as a
   `DriverError` instead of tearing down the process.
 
-## Deferred clause-schedule integration
+## Deferred vehje-schedule integration
 
 - Macro-expansion pass — driver-backed pass in the schedule
   DAG that receives unit metadata and returns expanded nodes.

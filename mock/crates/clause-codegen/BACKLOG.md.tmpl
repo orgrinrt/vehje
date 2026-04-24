@@ -1,4 +1,4 @@
-# clause-codegen — backlog
+# vehje-codegen — backlog
 
 ## Deferred target implementations (each a follow-up round)
 
@@ -10,16 +10,16 @@ the target-agnostic IR + lowering passes (below).
 
 ### JominiTarget — Clausewitz engine bytecode
 
-Move `JominiTarget` out of clause-codegen into a sibling
-`clause-jomini` repo with its own mockspace, implementing the
+Move `JominiTarget` out of vehje-codegen into a sibling
+`vehje-jomini` repo with its own mockspace, implementing the
 real Clausewitz script emission for Paradox games. Bind targets:
 Country, Pop, Planet, etc. (per stellar-heritage Python prior
-art). Landing in its own `orgrinrt/clause-jomini` GitHub repo.
+art). Landing in its own `orgrinrt/vehje-jomini` GitHub repo.
 
 ### Possible future targets
 - WebAssembly backend.
 - Python bytecode (parity-oracle / transpile path).
-- Lua script emission (future `clause-lua`).
+- Lua script emission (future `vehje-lua`).
 
 ## Deferred framework features
 
@@ -44,7 +44,7 @@ want a dedicated per-target error rendering path (R3's
 
 ### Per-target config
 
-`Clause.toml` `[codegen.target_name]` subsection read by the
+`Vehje.toml` `[codegen.target_name]` subsection read by the
 driver and passed through `CodegenCtx`.
 
 ### Incremental codegen
@@ -64,8 +64,8 @@ forward-compatible (retrofit requires no consumer changes).
 
 ### Extension loading
 
-Dynamic targets via `dlopen` / DLL (so `clause-jomini` ships as
-a runtime plugin the Clause driver picks up). Requires a stable
+Dynamic targets via `dlopen` / DLL (so `vehje-jomini` ships as
+a runtime plugin the Vehje driver picks up). Requires a stable
 C-ABI wrapper around `CodegenTarget`.
 
 ### Cross-compilation target triples
@@ -98,10 +98,10 @@ need.
 ### SymbolRef cross-target resolution
 
 R3 ships `SymbolRef` as the opaque type that targets use to
-reference symbols across boundaries (clause-jomini references
-clause-builtin symbols, etc.). The resolution ALGORITHM
+reference symbols across boundaries (vehje-jomini references
+vehje-builtin symbols, etc.). The resolution ALGORITHM
 (link-stage walker that matches SymbolRef producers ↔ consumers)
-is deferred — first clause-jomini release will likely go without
+is deferred — first vehje-jomini release will likely go without
 cross-target references, and the algorithm lands when a concrete
 need arrives.
 

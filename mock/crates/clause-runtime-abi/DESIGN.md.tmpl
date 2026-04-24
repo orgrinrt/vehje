@@ -1,4 +1,4 @@
-# clause-runtime-abi — Design
+# vehje-runtime-abi — Design
 
 C ABI contract between the Rust compiler and any runtime
 backend (Zig today; possibly others tomorrow). Pure type
@@ -6,12 +6,12 @@ surface + `extern "C"` entry points. No runtime logic.
 
 ## Scope
 
-- `#[repr(C)]` struct mirrors of clause-ir types: `AbiSpan`,
+- `#[repr(C)]` struct mirrors of vehje-ir types: `AbiSpan`,
   `AbiToken`, `AbiNode`, `AbiDiagnostic`.
 - `extern "C"` entry points: init / shutdown / invoke_macro /
   eval_scratch / expand_generative / last_error.
 - `abi_version: u32` as the first field on every public struct.
-- `From` impls between `clause-ir` types and their Abi mirrors.
+- `From` impls between `vehje-ir` types and their Abi mirrors.
 
 ## Round-skeleton scope
 
@@ -26,8 +26,8 @@ of the above:
   enum.
 - `ClauseDiagnosticKind` `#[repr(i32)]` — `Error`, `Warning`,
   `Info`.
-- Three `extern "C"` entries: `clause_runtime_new`,
-  `clause_runtime_free`, `clause_runtime_execute`.
+- Three `extern "C"` entries: `vehje_runtime_new`,
+  `vehje_runtime_free`, `vehje_runtime_execute`.
   All stubbed: `new` returns null, `free` is a no-op, `execute`
   returns `ClauseResult::Err`.
 
@@ -39,12 +39,12 @@ expand_generative / last_error entry points are BACKLOG.
 ## Non-scope
 
 - Actual runtime logic (`mock/runtime-zig/`).
-- Driver dispatch + dylib loading (`clause-runtime-driver`).
-- Soundness tests (`clause-runtime-tests`).
+- Driver dispatch + dylib loading (`vehje-runtime-driver`).
+- Soundness tests (`vehje-runtime-tests`).
 
 ## Dependencies
 
-- `clause-ir` for the mirrored types.
+- `vehje-ir` for the mirrored types.
 - `#![no_std]`, no alloc. FFI stays bare-types.
 
 ## Rules
@@ -69,11 +69,11 @@ Deferred (BACKLOG):
 - `span.rs` — richer `AbiSpan` wrapping `FileId` / `ByteOffset`.
 - `token.rs` — `AbiToken`.
 - `node.rs` — `AbiNode`.
-- `convert.rs` — `From` impls between `clause-ir` types and
+- `convert.rs` — `From` impls between `vehje-ir` types and
   their `Abi*` mirrors.
 
 ## Sources
 
-- 202604191301/202604191300_topic.clause-design-seed.md
+- 202604191301/202604191300_topic.vehje-design-seed.md
 - 202604262100_changelist.doc.md (R2 round)
 - 202604264100_changelist.doc.md (Phase 6 skeleton round)

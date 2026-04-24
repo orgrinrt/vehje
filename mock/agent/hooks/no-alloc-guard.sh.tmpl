@@ -4,7 +4,7 @@
 # Agent hook: block alloc/Vec/Box/String + bare Option/Result in the no_std
 # clause crates.
 #
-# Scope: clause-ir / clause-lex / clause-syntax / clause-runtime-*. The
+# Scope: vehje-ir / vehje-lex / vehje-syntax / vehje-runtime-*. The
 # compiler phases (resolve, typecheck, schedule, codegen) and CLI binary
 # may use std — they're not caught here.
 #
@@ -28,7 +28,7 @@ if [[ -z "$CONTENT" ]]; then
 fi
 
 # Only fire on no_std crates.
-if ! echo "$TARGET" | grep -qE "mock/crates/(clause-ir|clause-lex|clause-syntax|clause-runtime-[a-z]+)/src/"; then
+if ! echo "$TARGET" | grep -qE "mock/crates/(vehje-ir|vehje-lex|vehje-syntax|vehje-runtime-[a-z]+)/src/"; then
     allow
 fi
 

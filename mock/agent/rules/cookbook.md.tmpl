@@ -8,8 +8,8 @@ A pattern book for "I need to X" questions. Pick the matching intent,
 use the suggested trait / type. When none fits, the correct answer is
 usually "add a trait to the ecosystem", not "use a std primitive".
 
-Clause's compiler phases (resolve, typecheck, schedule, codegen) may
-use std; clause-ir / clause-lex / clause-syntax and the runtime crates
+Vehje's compiler phases (resolve, typecheck, schedule, codegen) may
+use std; vehje-ir / vehje-lex / vehje-syntax and the runtime crates
 are `#![no_std]` and follow the stricter discipline.
 
 ## "I need to return an optional value"
@@ -25,7 +25,7 @@ interfacing with a std-permitting API (e.g., CLI argument parsing).
 
 ## "I need to emit diagnostics from a compiler phase"
 
-Take `&mut impl DiagnosticSink<Diagnostic>` — consumes `clause-ir::Diagnostic`.
+Take `&mut impl DiagnosticSink<Diagnostic>` — consumes `vehje-ir::Diagnostic`.
 Return `Outcome<PhaseOutput, PhaseAborted>`. DO NOT return
 `Vec<Diagnostic>` in public APIs. (Pending: #73 sweep + #83 sink
 traits.)
@@ -43,12 +43,12 @@ reference or a `NodeId`.
 
 ## "I need to represent a span / source location"
 
-`clause_ir::Span` — (`FileId`, `ByteOffset`, `ByteOffset`). Pass by
+`vehje_ir::Span` — (`FileId`, `ByteOffset`, `ByteOffset`). Pass by
 value; it's small.
 
 ## "I need an interned string / symbol"
 
-`clause_ir::Symbol` (when it ships) or `hilavitkutin_str::Str`. Never
+`vehje_ir::Symbol` (when it ships) or `hilavitkutin_str::Str`. Never
 `String` in shipped code.
 
 ## "I need artifact read/write sets for a pass"
@@ -68,14 +68,14 @@ no_std if the architecture shifts.
 
 ## "I need a pass scheduler"
 
-Consume `hilavitkutin` (the engine). Clause runtime's macro
+Consume `hilavitkutin` (the engine). Vehje runtime's macro
 expansion / generative pipelines run on the engine. Compiler's own
 single-shot DAG walks use `arvo-graph` directly.
 
 ## "I genuinely need std in a no_std crate"
 
-The correct answer is always "reshape". If clause-ir / clause-lex /
-clause-syntax seem to need std, the API is leaking runtime concerns
+The correct answer is always "reshape". If vehje-ir / vehje-lex /
+vehje-syntax seem to need std, the API is leaking runtime concerns
 into the front end. File a design round; don't reach for
 `extern crate alloc`.
 

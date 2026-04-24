@@ -1,6 +1,6 @@
 ---
 skill_name: lint-rules
-skill_description: Guide for Clause custom lint rules. Use this when adding new lints, fixing lint violations, or when `cargo mock` reports lint errors.
+skill_description: Guide for Vehje custom lint rules. Use this when adding new lints, fixing lint violations, or when `cargo mock` reports lint errors.
 ---
 
 # Lint rules — clause
@@ -8,7 +8,7 @@ skill_description: Guide for Clause custom lint rules. Use this when adding new 
 ## Status
 
 `mock/crates/` is empty at seed. Custom per-crate lints for the
-Clause compiler and runtime are **deferred to post-R1–R4** (the first
+Vehje compiler and runtime are **deferred to post-R1–R4** (the first
 four design rounds that decide the crate split). Once crates exist,
 this skill grows a full lint table. Until then, only built-in lints
 run.
@@ -56,9 +56,9 @@ non-negotiable — they enforce the design-round state machine.
 
 ## Post-R1–R4 lint roadmap
 
-Once the compiler crate split lands (expected crates: `clause-lex`,
-`clause-syntax`, `clause-resolve`, `clause-typecheck`, `clause-schedule`,
-`clause-codegen`, `clause` orchestrator), the following categories of
+Once the compiler crate split lands (expected crates: `vehje-lex`,
+`vehje-syntax`, `vehje-resolve`, `vehje-typecheck`, `vehje-schedule`,
+`vehje-codegen`, `vehje` orchestrator), the following categories of
 lint will be authored:
 
 | Lint (planned) | Preset | What it catches | Fix |

@@ -1,4 +1,4 @@
-# clause-resolve — backlog
+# vehje-resolve — backlog
 
 ## Deferred name-resolution rules (skeleton round — one per follow-up)
 
@@ -36,7 +36,7 @@ rounds do not churn it.
 
 ## Non-blocking follow-ups
 
-- **`ScopeId` in clause-ir** — already landed in R1; BACKLOG
+- **`ScopeId` in vehje-ir** — already landed in R1; BACKLOG
   only notes that any future cross-crate tweak should stay
   reusable.
 - **Interned `Str` name expansion** — this round adopts
@@ -65,7 +65,7 @@ rounds do not churn it.
 The four skeleton-backed collection fields (`Scope::symbols`,
 `ScopeTree::scopes`, `Resolved::resolution`,
 `Manifest::dependencies`) are tracked in SHAME.md against #131
-(clause-schedule as hilavitkutin WorkUnit home) and #134
+(vehje-schedule as hilavitkutin WorkUnit home) and #134
 (persistence spine). Once the scheduler owns resolver state,
 each field moves to a scheduler-managed `Column<T>` or a
 `Map<K, V, N: Cap>` descriptor over an AccessSet-typed
