@@ -4,8 +4,8 @@ apply_to: ["crates/**/*.rs", "src/**/*.rs"]
 
 ## No heap. Ever.
 
-No ad-hoc allocations in the no_std front-end crates (clause-ir,
-clause-lex, clause-syntax) and the runtime crates (clause-runtime-*).
+No ad-hoc allocations in the no_std front-end crates (vehje-ir,
+vehje-lex, vehje-syntax) and the runtime crates (vehje-runtime-*).
 The compiler's higher phases (resolve, typecheck, schedule, codegen)
 may use std because they're dev-time compile-only processes, but the
 published/runtime-shipped code universe has no heap.

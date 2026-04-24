@@ -1,7 +1,7 @@
-//! Every Clause keyword tokenises to its expected `TokenKind`.
+//! Every Vehje keyword tokenises to its expected `TokenKind`.
 
-use clause_ir::{FileId, TokenKind};
-use clause_lex::Lexer;
+use vehje_ir::{FileId, TokenKind};
+use vehje_lex::Lexer;
 
 fn first_kind(src: &str) -> TokenKind {
     let mut lx = Lexer::from_str(src, FileId(0));

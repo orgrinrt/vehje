@@ -1,6 +1,6 @@
 //! Diagnostic printer.
 
-use clause_ir::Diagnostic;
+use vehje_ir::Diagnostic;
 
 /// Print `diag` to stderr with a `<file>:<line>:<col>: <phase>: <message>` prefix.
 pub fn print(file_label: &str, src: &str, diag: &Diagnostic) { // lint:allow(bare_string) reason: host-side CLI uses &str for file path and source body; tracked: #73

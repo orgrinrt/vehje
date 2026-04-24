@@ -1,7 +1,7 @@
 //! `clause lex` — tokenise a file and print its token stream.
 
-use clause_ir::{Diagnostic, FileId, TokenKind};
-use clause_lex::{Lexer, Token};
+use vehje_ir::{Diagnostic, FileId, TokenKind};
+use vehje_lex::{Lexer, Token};
 use notko::Maybe;
 
 pub fn run(args: &[String]) -> i32 { // lint:allow(bare_string) lint:allow(bare_numeric) reason: CLI entry plumbing; argv and exit code are the std-boundary shapes; tracked: #73

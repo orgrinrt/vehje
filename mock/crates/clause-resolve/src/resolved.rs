@@ -11,7 +11,7 @@
 //! not walk the AST.
 
 use arvo::newtype::Bool;
-use clause_syntax::Ast;
+use vehje_syntax::Ast;
 use notko::Maybe;
 
 use crate::scope::ScopeTree;

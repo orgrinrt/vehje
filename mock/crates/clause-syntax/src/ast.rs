@@ -3,8 +3,8 @@
 //! The AST is a flat arena of `AstNode`s addressed by `NodeId`. No
 //! tree pointers, no boxing, no allocation: the whole tree is a
 //! fixed-size array with a length, `Copy` all the way through. Each
-//! node carries a kind discriminator (`clause_ir::AstNodeKind`), a
-//! source span (`clause_ir::Span`), and up to `MAX_CHILDREN`
+//! node carries a kind discriminator (`vehje_ir::AstNodeKind`), a
+//! source span (`vehje_ir::Span`), and up to `MAX_CHILDREN`
 //! references to other nodes by `NodeId`.
 //!
 //! This round ships the skeleton: `MAX_CHILDREN` is small (8) and
@@ -16,7 +16,7 @@
 //! typecheck, codegen) can key off `NodeId` today without waiting
 //! for the full grammar.
 
-use clause_ir::{AstNodeKind, NodeId, Span};
+use vehje_ir::{AstNodeKind, NodeId, Span};
 use notko::Maybe;
 
 /// Maximum direct children any `AstNode` can hold in this round.
@@ -124,9 +124,9 @@ impl Ast {
     pub const fn empty() -> Self {
         Self {
             nodes: [AstNode::new(AstNodeKind::Unknown, Span::new(
-                clause_ir::FileId(0),
-                clause_ir::ByteOffset(0),
-                clause_ir::ByteOffset(0),
+                vehje_ir::FileId(0),
+                vehje_ir::ByteOffset(0),
+                vehje_ir::ByteOffset(0),
             )); MAX_NODES],
             len: 0,
             root: Maybe::Isnt,

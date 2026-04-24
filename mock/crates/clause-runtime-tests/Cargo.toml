@@ -1,12 +1,12 @@
 [package]
-name = "clause-runtime-tests"
+name = "vehje-runtime-tests"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [dependencies]
-clause-runtime-abi.workspace = true
-clause-runtime-driver.workspace = true
+vehje-runtime-abi.workspace = true
+vehje-runtime-driver.workspace = true
 hilavitkutin-api.workspace = true
 notko.workspace = true
 

@@ -1,5 +1,5 @@
-//! clause-codegen — skeleton codegen framework + extension-point
-//! contract for the Clause authoring language.
+//! vehje-codegen — skeleton codegen framework + extension-point
+//! contract for the Vehje authoring language.
 //!
 //! Consumes the `Resolved` bundle produced by clause-resolve;
 //! routes emission through a fixed list of built-in
@@ -51,5 +51,5 @@ pub use native::NativeTarget;
 pub use registry::{emit, TargetRegistry};
 pub use target::CodegenTarget;
 
-pub use clause_ir::Diagnostic;
-pub use clause_resolve::Resolved;
+pub use vehje_ir::Diagnostic;
+pub use vehje_resolve::Resolved;

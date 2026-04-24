@@ -1,7 +1,7 @@
 //! Decimal integer literals.
 
-use clause_ir::{FileId, TokenKind};
-use clause_lex::Lexer;
+use vehje_ir::{FileId, TokenKind};
+use vehje_lex::Lexer;
 
 fn first(src: &str) -> (TokenKind, u32, u32) {
     let mut lx = Lexer::from_str(src, FileId(0));

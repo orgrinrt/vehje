@@ -11,9 +11,9 @@
 //! path, binary, unary, call, block, let, if, match, fn, type,
 //! struct, enum, module, pattern) lands as its own micro-round.
 
-use clause_ir::TokenKind;
-use clause_ir::{AstNodeKind, ByteOffset, FileId, Span};
-use clause_lex::Token;
+use vehje_ir::TokenKind;
+use vehje_ir::{AstNodeKind, ByteOffset, FileId, Span};
+use vehje_lex::Token;
 use hilavitkutin_api::DiagnosticSink;
 use notko::{Maybe, Outcome};
 

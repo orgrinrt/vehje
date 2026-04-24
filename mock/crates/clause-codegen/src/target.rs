@@ -17,7 +17,7 @@
 //! That retrofit is BACKLOG; it lands once the first real
 //! target backend surfaces the need.
 
-use clause_ir::Diagnostic;
+use vehje_ir::Diagnostic;
 use hilavitkutin_api::{ByteEmitter, DiagnosticSink};
 use notko::Outcome;
 

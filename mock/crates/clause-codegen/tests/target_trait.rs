@@ -3,8 +3,8 @@
 //! Asserts each built-in target exposes the documented name and
 //! returns an empty artifact from its skeleton `emit`.
 
-use clause_codegen::{CodegenCtx, CodegenTarget, JominiTarget, NativeTarget};
-use clause_resolve::Resolved;
+use vehje_codegen::{CodegenCtx, CodegenTarget, JominiTarget, NativeTarget};
+use vehje_resolve::Resolved;
 
 #[test]
 fn native_name_matches() {

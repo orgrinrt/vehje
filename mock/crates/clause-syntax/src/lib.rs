@@ -1,10 +1,10 @@
-//! clause-syntax — skeleton parser for the Clause authoring
+//! vehje-syntax — skeleton parser for the Vehje authoring
 //! language.
 //!
 //! Consumes a token slice from clause-lex, produces an `Ast`: a
 //! flat arena of `AstNode`s keyed by `NodeId`. Syntax-level
 //! diagnostics are carried as `SyntaxError`, which converts to
-//! `clause_ir::Diagnostic` for merging into the compiler driver's
+//! `vehje_ir::Diagnostic` for merging into the compiler driver's
 //! diagnostic pipeline.
 //!
 //! Round-one scope is deliberately minimal: the skeleton harness
@@ -33,6 +33,6 @@ pub use ast::{Ast, AstNode, MAX_CHILDREN, MAX_NODES};
 pub use error::{SyntaxError, SyntaxErrorKind};
 pub use parser::{parse, Parser, TokenCursor};
 
-pub use clause_ir::TokenKind;
-pub use clause_ir::{AstNodeKind, NodeId, Span};
-pub use clause_lex::Token;
+pub use vehje_ir::TokenKind;
+pub use vehje_ir::{AstNodeKind, NodeId, Span};
+pub use vehje_lex::Token;

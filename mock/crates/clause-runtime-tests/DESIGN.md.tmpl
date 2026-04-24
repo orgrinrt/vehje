@@ -1,4 +1,4 @@
-# clause-runtime-tests — Design
+# vehje-runtime-tests — Design
 
 Soundness tests for the C ABI. Runs under `cargo test`; does NOT
 depend on the real Zig runtime.
@@ -6,7 +6,7 @@ depend on the real Zig runtime.
 ## Scope
 
 - Struct shape assertions — `size_of`, `align_of`, `offset_of` on
-  every `#[repr(C)]` type in clause-runtime-abi.
+  every `#[repr(C)]` type in vehje-runtime-abi.
 - Enum discriminant stability — every public enum has asserted
   discriminant values.
 - ABI version checks — the abi_version constants stay
@@ -18,8 +18,8 @@ depend on the real Zig runtime.
 
 Phase 6 skeleton round (2026-04-20) ships:
 
-- Crate scaffold consuming `clause-runtime-abi` +
-  `clause-runtime-driver`.
+- Crate scaffold consuming `vehje-runtime-abi` +
+  `vehje-runtime-driver`.
 - One `pub fn test_runtime_roundtrip()` harness that attempts
   to load a runtime via `RuntimeLoader::load` and verifies the
   return is `Err(LoaderError::NotImplemented)`.
@@ -40,8 +40,8 @@ shape this round ships.
 
 ## Dependencies
 
-- `clause-runtime-abi`.
-- `clause-runtime-driver` (skeleton round needs driver types).
+- `vehje-runtime-abi`.
+- `vehje-runtime-driver` (skeleton round needs driver types).
 - libloading (via dev-dep) for the stub-dylib dlopen (BACKLOG).
 
 ## Sources

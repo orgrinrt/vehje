@@ -1,8 +1,8 @@
 //! Symbol + SymbolKind: variant distinctness, field round-trip,
 //! default.
 
-use clause_ir::{NodeId, ScopeId};
-use clause_resolve::{Symbol, SymbolKind};
+use vehje_ir::{NodeId, ScopeId};
+use vehje_resolve::{Symbol, SymbolKind};
 use hilavitkutin_str::str_const;
 
 #[test]

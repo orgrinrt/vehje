@@ -1,6 +1,6 @@
 //! resolve() over an empty AST returns an empty Resolved.
 
-use clause_resolve::{Ast, resolve};
+use vehje_resolve::{Ast, resolve};
 use notko::Outcome;
 
 #[test]

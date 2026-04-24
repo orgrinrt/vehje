@@ -1,4 +1,4 @@
-# clause-runtime-driver — Design
+# vehje-runtime-driver — Design
 
 Compiler-side dispatcher. Owns the dylib handle; routes calls
 through the ABI.
@@ -8,8 +8,8 @@ through the ABI.
 - `RuntimeDriver` struct wrapping the dylib handle.
 - Dylib loading via libloading with version validation.
 - Per-entry-point safe wrappers over the `extern "C"` declarations.
-- Error mapping from `AbiDiagnostic` to clause-ir::Diagnostic.
-- Integration with clause-schedule's pass DAG (macro-expansion
+- Error mapping from `AbiDiagnostic` to vehje-ir::Diagnostic.
+- Integration with vehje-schedule's pass DAG (macro-expansion
   pass + generative-expansion pass).
 
 ## Round-skeleton scope
@@ -29,17 +29,17 @@ Phase 6 skeleton round (2026-04-20) ships:
 
 Real `dlopen` / `libloading` integration, env-var convention,
 per-session handle lifecycle, `AbiDiagnostic` conversion, and
-clause-schedule integration are BACKLOG.
+vehje-schedule integration are BACKLOG.
 
 ## Non-scope
 
-- ABI contract (`clause-runtime-abi`).
+- ABI contract (`vehje-runtime-abi`).
 - Runtime logic (`mock/runtime-zig/`).
 - Dylib bundling / distribution (separate round).
 
 ## Dependencies
 
-- `clause-ir`, `clause-runtime-abi`, `clause-schedule`.
+- `vehje-ir`, `vehje-runtime-abi`, `vehje-schedule`.
 - libloading for dlopen/dlsym (BACKLOG — currently not
   depended on since the loader stub does not perform real
   loads).
@@ -56,13 +56,13 @@ Deferred (BACKLOG):
 - `invoke.rs` — macro invocation wrapper.
 - `scratch.rs` — scratch-eval wrapper.
 - `generative.rs` — generative-expansion wrapper.
-- `convert.rs` — `AbiDiagnostic` → clause-ir `Diagnostic`
+- `convert.rs` — `AbiDiagnostic` → vehje-ir `Diagnostic`
   conversion.
 - `dlopen_handle.rs` — concrete `RuntimeHandle` impl backed
   by `libloading`.
 
 ## Sources
 
-- 202604191301/202604191300_topic.clause-design-seed.md
+- 202604191301/202604191300_topic.vehje-design-seed.md
 - 202604262100_changelist.doc.md (R2 round)
 - 202604264100_changelist.doc.md (Phase 6 skeleton round)

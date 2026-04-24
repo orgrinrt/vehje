@@ -6,7 +6,7 @@
 //! final `Eof` token carries any trailing trivia after the last real
 //! token.
 
-use clause_ir::{Span, TokenKind};
+use vehje_ir::{Span, TokenKind};
 
 use crate::trivia::TriviaSet;
 

@@ -10,7 +10,7 @@
 //! offending bytes and the lexer's error path can classify them as
 //! `Unknown`.
 
-use clause_ir::ByteOffset;
+use vehje_ir::ByteOffset;
 use notko::Maybe;
 
 /// Forward-only byte cursor into the source slice.

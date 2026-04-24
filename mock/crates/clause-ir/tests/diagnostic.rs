@@ -1,6 +1,6 @@
 //! Diagnostic construction + severity ordering.
 
-use clause_ir::{ByteOffset, DiagPhase, Diagnostic, FileId, Severity, Span};
+use vehje_ir::{ByteOffset, DiagPhase, Diagnostic, FileId, Severity, Span};
 
 const DUMMY_SPAN: Span =
     Span::new(FileId(0), ByteOffset(0), ByteOffset(0));

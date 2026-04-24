@@ -1,7 +1,7 @@
 //! Line + block comments attach as trivia, not as real tokens.
 
-use clause_ir::{FileId, TokenKind};
-use clause_lex::{Lexer, TriviaKind};
+use vehje_ir::{FileId, TokenKind};
+use vehje_lex::{Lexer, TriviaKind};
 
 #[test]
 fn line_comment_before_token_is_leading() {

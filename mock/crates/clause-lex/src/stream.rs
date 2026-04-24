@@ -7,7 +7,7 @@
 //! `kind == TokenKind::Eof`; subsequent calls after EOF return
 //! `Maybe::Isnt`.
 
-use clause_ir::TokenKind;
+use vehje_ir::TokenKind;
 use notko::Maybe;
 
 use crate::lexer::Lexer;

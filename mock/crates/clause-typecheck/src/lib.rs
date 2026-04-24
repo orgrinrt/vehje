@@ -1,5 +1,5 @@
-//! clause-typecheck — skeleton type checker + validator framework
-//! for the Clause authoring language.
+//! vehje-typecheck — skeleton type checker + validator framework
+//! for the Vehje authoring language.
 //!
 //! Consumes the `Resolved` bundle produced by clause-resolve;
 //! runs a fixed list of core validators (STRICT1-7 plus
@@ -57,5 +57,5 @@ pub use strict6::Strict6;
 pub use strict7::Strict7;
 pub use validator::Validator;
 
-pub use clause_ir::{Diagnostic, NodeId, Span};
-pub use clause_resolve::Resolved;
+pub use vehje_ir::{Diagnostic, NodeId, Span};
+pub use vehje_resolve::Resolved;

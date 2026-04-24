@@ -4,9 +4,9 @@
 //! default `Resolved`. Skeleton round: always pushes nothing.
 
 use arvo::USize;
-use clause_ir::Diagnostic;
-use clause_resolve::Resolved;
-use clause_typecheck::typecheck;
+use vehje_ir::Diagnostic;
+use vehje_resolve::Resolved;
+use vehje_typecheck::typecheck;
 use hilavitkutin_api::{sink::CountingSink, Len};
 
 #[test]

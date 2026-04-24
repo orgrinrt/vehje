@@ -1,9 +1,9 @@
-//! clause-ir — data contracts shared across compiler phases.
+//! vehje-ir — data contracts shared across compiler phases.
 //!
 //! This crate hosts the types that two or more phase crates consume:
 //! `Span`, `FileId`, `ByteOffset`, `NodeId`, `ScopeId`, `Diagnostic`,
 //! `TokenKind`, `AstNodeKind`. No algorithmic content lives here; the
-//! crate is intentionally a leaf dependency on the Clause dependency
+//! crate is intentionally a leaf dependency on the Vehje dependency
 //! DAG so every phase can pull in its type vocabulary without pulling
 //! in any other phase's implementation.
 //!

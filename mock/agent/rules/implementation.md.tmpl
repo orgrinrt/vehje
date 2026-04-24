@@ -62,16 +62,16 @@ Error::Other("unexpected token".into())
 ParseError::UnexpectedToken { span, found: Token::Arrow, expected: &[Token::Ident, Token::LParen] }
 ```
 
-### No `macro_rules!` for Clause language semantics
+### No `macro_rules!` for Vehje language semantics
 
-Clause language macros are procedural, compile-time, and execute as a
+Vehje language macros are procedural, compile-time, and execute as a
 scheduler pass using the same grammar primitives the parser uses. They
 are typechecked like normal code.
 
 `macro_rules!` inside the Rust implementation is acceptable for Rust
 boilerplate (span forwarding, diagnostic code enums, test matrices).
-It is never acceptable for expressing Clause semantics — every bit of
-Clause's macro story lands in the proc-macro compiler pass.
+It is never acceptable for expressing Vehje semantics — every bit of
+Vehje's macro story lands in the proc-macro compiler pass.
 
 ### Reuse the substrate
 
@@ -93,7 +93,7 @@ behaviour locally.
 No dynamic runtime deps. No `dlopen` plugin loading from the compiler
 layer. No reliance on an ambient Python / Deno / JVM / .NET runtime.
 Extension points are added at compile time via trait impls in
-extension repos (`clause-jomini`, future), not at runtime.
+extension repos (`vehje-jomini`, future), not at runtime.
 
 ### Game-agnostic core
 

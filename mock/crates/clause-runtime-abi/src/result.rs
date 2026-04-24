@@ -1,5 +1,5 @@
 //! `ClauseResult` — integer result code returned by every
-//! `extern "C"` entry point in the Clause runtime ABI.
+//! `extern "C"` entry point in the Vehje runtime ABI.
 //!
 //! The discriminants follow a POSIX-ish convention: `Ok = 0`,
 //! errors are negative. The Zig side mirrors the same layout
@@ -21,7 +21,7 @@
 pub enum ClauseResult {
     /// Success. Any accompanying out-buffer is valid.
     Ok = 0,
-    /// Generic failure. Use `clause_runtime_last_error` (BACKLOG)
+    /// Generic failure. Use `vehje_runtime_last_error` (BACKLOG)
     /// to fetch the associated diagnostic.
     Err = -1,
     /// Caller passed a null `*mut ClauseRuntime` handle to an

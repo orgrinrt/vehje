@@ -1,4 +1,4 @@
-# clause-ir — Design
+# vehje-ir — Design
 
 Leaf-dep crate carrying data contracts shared across every compiler
 phase. No algorithmic content.
@@ -16,9 +16,9 @@ Types consumed by two or more phase crates:
   parse time; stable across later phases for cross-phase
   annotations (resolution info, type info).
 - `ScopeId` — dense interned identifier for lexical scopes.
-  `clause-resolve` now holds interned `Str` handles
+  `vehje-resolve` now holds interned `Str` handles
   (`hilavitkutin_str::Str`) where it previously held owned
-  `String`; the shift is transparent to clause-ir since its
+  `String`; the shift is transparent to vehje-ir since its
   types do not touch the symbol name text.
 - `Diagnostic` — `{ phase, severity, span, message, related }`. The
   common error / warning / info structure. `Copy`; owns no heap;
@@ -29,19 +29,19 @@ Types consumed by two or more phase crates:
   `Runtime`. Lets a diagnostic renderer / filter route by phase
   without parsing the static message.
 - `TokenKind` — enum discriminating lex tokens. Shared between
-  `clause-lex` (producer) and `clause-syntax` (consumer).
+  `vehje-lex` (producer) and `vehje-syntax` (consumer).
 - `AstNodeKind` — enum discriminating AST nodes. Shared between
-  `clause-syntax` (producer) and downstream phases.
+  `vehje-syntax` (producer) and downstream phases.
 
 ## Non-scope
 
 - Parsers, resolvers, typecheckers — each phase owns its own
   algorithms.
 - Token + AST concrete representations (the node types themselves)
-  live in their producing crate; `clause-ir` only hosts the
+  live in their producing crate; `vehje-ir` only hosts the
   discriminator enums and the common annotation slots.
 - Rendering of diagnostics (color, unicode art) — that's the
-  `clause` binary's renderer.
+  `vehje` binary's renderer.
 
 ## Dependencies
 
@@ -59,6 +59,6 @@ Types consumed by two or more phase crates:
 
 ## Sources
 
-- 202604191300_topic.clause-design-seed.md (authoritative)
-- 202604191300_topic.clause-grammar-framework-seed.md (G0 primitives)
+- 202604191300_topic.vehje-design-seed.md (authoritative)
+- 202604191300_topic.vehje-grammar-framework-seed.md (G0 primitives)
 - 202604191500_changelist.doc.md (R1 round, defines this crate's boundaries)

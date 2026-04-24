@@ -1,12 +1,12 @@
 [package]
-name = "clause-syntax"
+name = "vehje-syntax"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [dependencies]
-clause-ir.workspace = true
-clause-lex.workspace = true
+vehje-ir.workspace = true
+vehje-lex.workspace = true
 hilavitkutin-api.workspace = true
 notko.workspace = true
 

@@ -9,8 +9,8 @@
 //! `ast.len()`, preserving the downstream shape ("one resolution
 //! slot per AST node") that typecheck and codegen will key off.
 
-use clause_ir::ScopeId;
-use clause_syntax::Ast;
+use vehje_ir::ScopeId;
+use vehje_syntax::Ast;
 use notko::{Maybe, Outcome};
 
 use crate::error::ResolveError;

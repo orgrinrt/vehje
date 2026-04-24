@@ -1,8 +1,8 @@
 //! AST type surface: arena push/get, NodeId monotonicity, leaf
 //! construction.
 
-use clause_ir::{AstNodeKind, ByteOffset, FileId, NodeId, Span};
-use clause_syntax::{Ast, AstNode};
+use vehje_ir::{AstNodeKind, ByteOffset, FileId, NodeId, Span};
+use vehje_syntax::{Ast, AstNode};
 
 fn span(start: u32, end: u32) -> Span {
     Span::new(FileId(0), ByteOffset(start), ByteOffset(end))

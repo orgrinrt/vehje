@@ -1,7 +1,7 @@
 //! ResolveError variant construction + field readback.
 
-use clause_ir::{ByteOffset, FileId, Span};
-use clause_resolve::ResolveError;
+use vehje_ir::{ByteOffset, FileId, Span};
+use vehje_resolve::ResolveError;
 use hilavitkutin_str::str_const;
 
 fn span(start: u32, end: u32) -> Span { // lint:allow(no-bare-numeric) reason: test-helper boundary — Span constructors take bare u32s until the substrate offers a typed-width span builder; tracked: #81

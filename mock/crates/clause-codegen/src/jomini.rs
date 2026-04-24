@@ -11,7 +11,7 @@
 //! body moves out to `github.com/orgrinrt/clause-jomini` once it
 //! has a meaningful implementation.
 
-use clause_ir::Diagnostic;
+use vehje_ir::Diagnostic;
 use hilavitkutin_api::{ByteEmitter, DiagnosticSink};
 use notko::Outcome;
 
