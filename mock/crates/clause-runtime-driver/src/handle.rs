@@ -34,7 +34,7 @@ pub trait RuntimeHandle: Send + Sync {
     /// parameters.
     fn execute(
         &self,
-        input: &[u8],
+        input: &[u8],  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         output: &mut dyn ByteEmitter,
     ) -> Outcome<(), DriverError>;
 }

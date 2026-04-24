@@ -48,7 +48,7 @@ impl<'a> TokenStream<'a> {
     }
 
     /// `true` if the next token is `Eof` or the stream is drained.
-    pub fn is_at_end(&mut self) -> bool {
+    pub fn is_at_end(&mut self) -> bool {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         match self.peek() {
             Maybe::Is(t) => t.kind == TokenKind::Eof,
             Maybe::Isnt => true,

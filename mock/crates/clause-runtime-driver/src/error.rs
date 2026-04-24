@@ -47,6 +47,6 @@ pub enum DriverError {
     /// received over the FFI.
     ExecuteFailed {
         /// The raw integer result code from the FFI.
-        code: i32,
+        code: i32,  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     },
 }

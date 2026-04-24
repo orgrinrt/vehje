@@ -24,18 +24,18 @@
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct AbiSpan {
     /// File identifier (matches `vehje_ir::FileId::0`).
-    pub file: u32, // lint:allow(arvo-types-only) tracked: #207
+    pub file: u32, // lint:allow(arvo-types-only) tracked: #207 lint:allow(no-bare-numeric) tracked: #207 lint:allow(no-public-raw-field) tracked: #207
     /// Start byte offset (matches
     /// `vehje_ir::ByteOffset::0`).
-    pub start: u32, // lint:allow(arvo-types-only) tracked: #207
+    pub start: u32, // lint:allow(arvo-types-only) tracked: #207 lint:allow(no-bare-numeric) tracked: #207 lint:allow(no-public-raw-field) tracked: #207
     /// End byte offset (exclusive).
-    pub end: u32, // lint:allow(arvo-types-only) tracked: #207
+    pub end: u32, // lint:allow(arvo-types-only) tracked: #207 lint:allow(no-bare-numeric) tracked: #207 lint:allow(no-public-raw-field) tracked: #207
 }
 
 /// Diagnostic kind — mirrors `vehje_ir::Severity` but carries
 /// only the three kinds the runtime emits (Help / Warning-vs-
 /// info-splits are a compiler-side concern).
-#[repr(i32)] // lint:allow(arvo-types-only) tracked: #207
+#[repr(i32)] // lint:allow(arvo-types-only) tracked: #207 lint:allow(no-bare-numeric) tracked: #207
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum ClauseDiagnosticKind {
     /// Error — execution fails, result code is non-`Ok`.
@@ -63,7 +63,7 @@ pub struct ClauseDiagnostic {
     /// Span the diagnostic refers to.
     pub span: AbiSpan,
     /// Pointer to the message bytes (UTF-8, borrowed).
-    pub message: *const u8, // lint:allow(arvo-types-only) tracked: #207
+    pub message: *const u8, // lint:allow(arvo-types-only) tracked: #207 lint:allow(no-bare-numeric) tracked: #207
     /// Length of the message in bytes.
     pub message_len: arvo::USize,
     /// Severity-ish classification.
