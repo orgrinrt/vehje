@@ -404,6 +404,7 @@ dependencies = [
 name = "vehje-runtime-abi"
 version = "0.1.0"
 dependencies = [
+ "arvo",
  "mockspace",
  "vehje-ir",
 ]

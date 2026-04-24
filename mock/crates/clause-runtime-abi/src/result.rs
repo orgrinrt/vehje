@@ -16,7 +16,7 @@
 /// Skeleton round: `NullHandle` and `InvalidInput` are declared
 /// but never returned. They exist for the deferred real-body
 /// round that surfaces those paths.
-#[repr(i32)]
+#[repr(i32)] // lint:allow(arvo-types-only) tracked: #207
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum ClauseResult {
     /// Success. Any accompanying out-buffer is valid.

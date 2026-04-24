@@ -61,8 +61,8 @@ pub extern "C" fn vehje_runtime_free(rt: *mut ClauseRuntime) {
 #[unsafe(no_mangle)]
 pub extern "C" fn vehje_runtime_execute(
     rt: *mut ClauseRuntime,
-    input: *const u8,
-    len: usize,
+    input: *const u8, // lint:allow(arvo-types-only) tracked: #207
+    len: arvo::USize,
 ) -> ClauseResult {
     let _ = (rt, input, len);
     ClauseResult::Err
