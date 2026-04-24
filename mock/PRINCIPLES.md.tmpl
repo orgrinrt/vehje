@@ -6,13 +6,37 @@
 
 No ad-hoc allocations. Allocation is scheduler-managed, declared at
 compile time, never runtime-fabricated. `#![no_std]` + `#![no_alloc]`
-aren't crate attributes first — they're the universe. `Vec`, `Box`,
+aren't crate attributes first. They are the universe. `Vec`, `Box`,
 `Rc`, `Arc`, `HashMap`, `String`, `format!` don't exist here.
 
 If an API feels like it wants a runtime-growable container, the shape
-is wrong: reshape toward a trait-bound emitter / iterator / bounded
-store. The heap is not temporarily available; there is no "just for
+is wrong. Reshape toward a trait-bound emitter, iterator, or bounded
+store. The heap is not temporarily available. There is no "just for
 this moment".
+
+## `no_std` first. `std` is feature-gated opt-in, added later.
+
+Vehje is written `no_std` + `no_alloc` first. Every crate in the
+stack declares `#![no_std]` at its `lib.rs` root. Runtime, compiler
+phases, build-dep crates, and the bin entry point all operate inside
+this discipline. If only one build variant ever ships Vehje, it is
+the `no_std` + `no_alloc` one. `std` support is a feature-gated
+opt-in added later for third-party ecosystem fit, never the baseline.
+
+A crate MAY gate `std`-requiring code behind a `std` cargo feature
+when a genuine ecosystem-fit reason surfaces (for instance, a
+platform-sensitive manifest lookup that wants `std::fs` ergonomics),
+but the core crate surface compiles and runs without that feature,
+with `#![no_std]` at the root. The `alloc` crate is likewise a
+feature-gated opt-in, not a baseline. Heap allocation remains
+excluded by default.
+
+This applies uniformly. Host-side compiler crates do not inherit
+a separate dispensation. Framing a compiler crate as "host-side, so
+`std` is fine" reverses the doctrine. The correct framing is "this
+crate is `no_std` first; if a concrete ecosystem-fit case later
+requires `std`, it lands behind `#[cfg(feature = "std")]` with
+opt-in scope documented".
 
 ## No bare primitives. Anywhere.
 
