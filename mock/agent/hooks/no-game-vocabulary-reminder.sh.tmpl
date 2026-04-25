@@ -54,7 +54,7 @@ if [[ -n "$HITS" ]]; then
         | grep -viE 'stellar-heritage' \
         | head -c 200)
     if [[ -n "$NON_ORACLE" ]]; then
-        context "clause is game-agnostic — found game-specific vocabulary: ${HITS}. If this is compiler or runtime code, move it to an extension repo (e.g. vehje-jomini for Clausewitz). If it is a parity-oracle reference, cite the stellar-heritage path explicitly so this reminder can skip it."
+        context "vehje is game-agnostic — found game-specific vocabulary: ${HITS}. If this is compiler or runtime code, move it to an extension repo (e.g. vehje-jomini for Clausewitz). If it is a parity-oracle reference, cite the stellar-heritage path explicitly so this reminder can skip it."
     fi
 fi
 
