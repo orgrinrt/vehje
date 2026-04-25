@@ -45,12 +45,12 @@ Phase 6 skeleton (2026-04-20) ships three `extern "C"` stubs:
 - `vehje_runtime_new() ?*anyopaque` → null.
 - `vehje_runtime_free(?*anyopaque) void` → no-op.
 - `vehje_runtime_execute(?*anyopaque, [*]const u8, usize) i32`
-  → `CLAUSE_RESULT_ERR` (`-1`).
+  → `VEHJE_RESULT_ERR` (`-1`).
 
-`ClauseResult` is returned as a plain `i32` on both sides. Named
-constants (`CLAUSE_RESULT_OK` = `0`, `CLAUSE_RESULT_ERR` = `-1`,
-`CLAUSE_RESULT_NULL_HANDLE` = `-2`, `CLAUSE_RESULT_INVALID_INPUT`
-= `-3`) mirror the Rust `#[repr(i32)] enum ClauseResult`
+`VehjeResult` is returned as a plain `i32` on both sides. Named
+constants (`VEHJE_RESULT_OK` = `0`, `VEHJE_RESULT_ERR` = `-1`,
+`VEHJE_RESULT_NULL_HANDLE` = `-2`, `VEHJE_RESULT_INVALID_INPUT`
+= `-3`) mirror the Rust `#[repr(i32)] enum VehjeResult`
 discriminants. A one-field `extern struct { code: i32 }` wrapper
 was considered and rejected. it breaks the scalar-return calling
 convention on MSVC Windows x64 (hidden-pointer sret vs. `eax`).
