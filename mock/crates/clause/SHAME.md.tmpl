@@ -1,0 +1,13 @@
+# vehje, known gaps
+
+## no-std
+
+The top-level vehje bin crate currently runs on std. The bin entry
+point uses `std::env::args` and `std::process::exit`, both of which
+have no stable no_std equivalent on stable Rust without target-
+specific entry-point work (a custom `#[start]` shim or a libc-backed
+main wrapper). This is the canonical ecosystem-fit case for std per
+the no_std-first doctrine in `PRINCIPLES.md`. A future round
+explores whether a `core::ffi::CStr`-based argv reader and a
+libc-backed exit wrapper can replace the std entry, at which point
+this gap closes and `#![no_std]` lands. Tracked under follow-up.

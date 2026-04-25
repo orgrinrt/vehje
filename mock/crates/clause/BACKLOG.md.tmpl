@@ -1,4 +1,4 @@
-# vehje — backlog
+# vehje. backlog
 
 > **Type-surface reminder**: new entries use `arvo::USize` /
 > `arvo::UFixed<N, 0, S>` instead of `usize` / `u*`,
@@ -9,7 +9,7 @@
 Items decided but deliberately out of the round-one shipping
 scope. Each lands as its own follow-up design round.
 
-## parse subcommand — real AST printer
+## parse subcommand. real AST printer
 
 The round-one stub prints a phase placeholder. The real
 implementation pretty-prints the AST via a
@@ -18,20 +18,20 @@ ship. Output format echoes the shape of the stellar-heritage
 Python oracle's `vehje parse --json` but stays human-readable
 by default.
 
-## check subcommand — real typecheck
+## check subcommand. real typecheck
 
 Depends on `vehje-typecheck` validator bodies. Prints every
 diagnostic the registry emits for the input program, sorted
 by file + offset. Exit code `1` on any emitted diagnostic.
 
-## build subcommand — target dispatch
+## build subcommand. target dispatch
 
 Takes a `--target <name>` flag, dispatches to a
 `CodegenTarget` implementation, writes emitted bytes to
 stdout or a `--out <file>` path. Depends on real `vehje-
 codegen` target bodies.
 
-## run subcommand — compile + interpret
+## run subcommand. compile + interpret
 
 Compiles through the front end, passes the emitted bytecode
 to an embedded interpreter. Depends on an interpreter design
@@ -73,10 +73,10 @@ scripts. Depends on `run` landing first.
 
 Round-one freezes:
 
-- `0` — success.
-- `1` — phase-level failure (lex diagnostic, parse error,
+- `0`. success.
+- `1`. phase-level failure (lex diagnostic, parse error,
   typecheck diagnostic, codegen error).
-- `2` — stub / not-yet-implemented or I/O failure.
+- `2`. stub / not-yet-implemented or I/O failure.
 
 Script authors against the binary may rely on these codes.
 Future rounds that widen the surface add new codes from `3`

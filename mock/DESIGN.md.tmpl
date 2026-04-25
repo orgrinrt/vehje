@@ -1,4 +1,4 @@
-# vehje — Architecture Design
+# vehje. Architecture Design
 
 > General-purpose scripting language for game modding and embeddable
 > runtimes. Game-agnostic core; game-specific surface ships as
@@ -20,12 +20,12 @@ The authoritative design spec is the seeded `mock/design_rounds/202604191300_top
 
 - **Compiler** (Rust): lex, parse, resolve, typecheck, transpile, codegen, scheduler. Runs at dev time. Distribution: single static binary. `#![no_std]` where practical, custom allocations.
 - **Runtime** (Zig): executes macros, scratch variables, generative pipeline. Small, fast, embeddable. Talks to the compiler via C ABIs the Rust side defines + tests for soundness.
-- **Build tooling / deploy / playset orchestration**: dogfood in Vehje itself (via the runtime), consuming the Rust compiler binary. rustc/cargo pattern — the compiler does one thing, the tooling runs on top of what we shipped.
+- **Build tooling / deploy / playset orchestration**: dogfood in Vehje itself (via the runtime), consuming the Rust compiler binary. rustc/cargo pattern. the compiler does one thing, the tooling runs on top of what we shipped.
 
 ## Substrate
 
-- `arvo` (sibling repo) — numeric primitives + analysis (arvo-graph for pass DAG, arvo-bitmask for artifact read/write sets).
-- `hilavitkutin` (sibling repo) — pipeline execution engine. Used by the Vehje *runtime* (morsel-driven execution of macros / scratch / generative), less so by the compiler itself (one-shot DAG walks don't need the frame runtime).
+- `arvo` (sibling repo). numeric primitives + analysis (arvo-graph for pass DAG, arvo-bitmask for artifact read/write sets).
+- `hilavitkutin` (sibling repo). pipeline execution engine. Used by the Vehje *runtime* (morsel-driven execution of macros / scratch / generative), less so by the compiler itself (one-shot DAG walks don't need the frame runtime).
 
 ## Layers (finalised in first session)
 
@@ -47,24 +47,24 @@ Runtime crate split (Zig side, TBD).
 
 Game-specific targets land as separate repos that extend Vehje:
 
-- `vehje-jomini` — Clausewitz (Stellaris / CK3 / HOI4 / Vic3 / EU4) grammar, bind targets (Country, Pop, Planet, …), codegen to Clausewitz script.
-- `vehje-w3` (future) — Witcher 3 script target.
-- `vehje-ts4` (future) — Sims 4 script target.
-- `vehje-lua` (future) — generic Lua target.
+- `vehje-jomini`. Clausewitz (Stellaris / CK3 / HOI4 / Vic3 / EU4) grammar, bind targets (Country, Pop, Planet, …), codegen to Clausewitz script.
+- `vehje-w3` (future). Witcher 3 script target.
+- `vehje-ts4` (future). Sims 4 script target.
+- `vehje-lua` (future). generic Lua target.
 
 The extension point contract is TBD (one of the first session's design rounds).
 
 ## Not in this repo
 
-- Clausewitz-specific code, bind targets, content — stays in stellar-heritage until `vehje-jomini` repo exists.
-- Python reference implementation — stays in stellar-heritage as parity oracle.
-- Stellaris mod crates (std, stellaris, heritage, DLC-specific) — they're *programs written in Vehje*, not the language itself.
-- Deploy / playset / artgen orchestration — belongs in stellar-heritage; eventually rewritten in Vehje as dogfood.
+- Clausewitz-specific code, bind targets, content. stays in stellar-heritage until `vehje-jomini` repo exists.
+- Python reference implementation. stays in stellar-heritage as parity oracle.
+- Stellaris mod crates (std, stellaris, heritage, DLC-specific). they're *programs written in Vehje*, not the language itself.
+- Deploy / playset / artgen orchestration. belongs in stellar-heritage; eventually rewritten in Vehje as dogfood.
 
 ## See also
 
-- `mock/design_rounds/` — 11 seed topics + 1 changelist. Fresh session starts here.
-- `mock/PRINCIPLES.md.tmpl` — language principles.
-- `mock/WORKFLOW.md.tmpl` — design → validate → implement discipline.
-- [`arvo`](https://github.com/orgrinrt/arvo) — numeric substrate.
-- [`hilavitkutin`](https://github.com/orgrinrt/hilavitkutin) — runtime engine.
+- `mock/design_rounds/`. 11 seed topics + 1 changelist. Fresh session starts here.
+- `mock/PRINCIPLES.md.tmpl`. language principles.
+- `mock/WORKFLOW.md.tmpl`. design → validate → implement discipline.
+- [`arvo`](https://github.com/orgrinrt/arvo). numeric substrate.
+- [`hilavitkutin`](https://github.com/orgrinrt/hilavitkutin). runtime engine.

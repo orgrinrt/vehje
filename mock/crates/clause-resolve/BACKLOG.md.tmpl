@@ -1,50 +1,50 @@
-# vehje-resolve — backlog
+# vehje-resolve. backlog
 
-## Deferred name-resolution rules (skeleton round — one per follow-up)
+## Deferred name-resolution rules (skeleton round. one per follow-up)
 
 Each bullet lands as its own micro-round: extend the `Resolver`
 walk to handle the production, populate `ScopeTree` and
 `Resolved::resolution` accordingly, add a test file. The
 skeleton harness (`Resolver`, `ScopeTree`, `Scope`, `Symbol`,
-`Resolved`, top-level `resolve`) is already stable — these
+`Resolved`, top-level `resolve`) is already stable. these
 rounds do not churn it.
 
-- **Top-level item resolution** — `fn`, `type`, `const`, `use`
+- **Top-level item resolution**. `fn`, `type`, `const`, `use`
   declarations register symbols in the module scope.
-- **Local binding resolution + shadowing** — `let` bindings
+- **Local binding resolution + shadowing**. `let` bindings
   inside blocks, shadowing rules.
-- **Path resolution** — `a::b::c` lookups through nested scopes.
-- **Use / import statements + re-exports** — `use path::…;`,
+- **Path resolution**. `a::b::c` lookups through nested scopes.
+- **Use / import statements + re-exports**. `use path::…;`,
   `pub use path::…;`.
-- **Glob imports** — `use foo::*;`.
-- **Generic parameter scopes** — type and const generics as
+- **Glob imports**. `use foo::*;`.
+- **Generic parameter scopes**. type and const generics as
   scoped bindings.
-- **Self-type in impl blocks** — `Self` alias inside `impl`
+- **Self-type in impl blocks**. `Self` alias inside `impl`
   items.
-- **Trait method resolution** — resolving method calls through
+- **Trait method resolution**. resolving method calls through
   trait impls.
-- **Macro hygiene** — once macros land.
+- **Macro hygiene**. once macros land.
 
 ## Deferred manifest features
 
-- **TOML parsing** — replace stub with `toml_edit` reader.
-- **Dependency graph construction** — build a DAG of crates +
+- **TOML parsing**. replace stub with `toml_edit` reader.
+- **Dependency graph construction**. build a DAG of crates +
   topological sort.
-- **Feature flag resolution** — `[features]` table + conditional
+- **Feature flag resolution**. `[features]` table + conditional
   compilation.
-- **Workspace manifests** — `[workspace]` + members.
+- **Workspace manifests**. `[workspace]` + members.
 
 ## Non-blocking follow-ups
 
-- **`ScopeId` in vehje-ir** — already landed in R1; BACKLOG
+- **`ScopeId` in vehje-ir**. already landed in R1; BACKLOG
   only notes that any future cross-crate tweak should stay
   reusable.
-- **Interned `Str` name expansion** — this round adopts
+- **Interned `Str` name expansion**. this round adopts
   `hilavitkutin_str::Str`; follow-up work connects the
   `StringInterner` instance to the compiler driver so the
   runtime-origin bit of `Str` carries real IDs (not just the
   compile-time `str_const!()` path).
-- **Incremental resolve for IDE** — delta walk that re-resolves
+- **Incremental resolve for IDE**. delta walk that re-resolves
   only the changed subtree, keyed off AST node diff.
 
 ## Diagnostic surface

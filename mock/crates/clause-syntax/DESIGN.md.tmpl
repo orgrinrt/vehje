@@ -1,36 +1,36 @@
-# vehje-syntax — Design
+# vehje-syntax. Design
 
 Parser + AST construction phase. Consumes a token slice from
-vehje-lex, produces an `Ast` — a flat arena of `AstNode`s keyed
+vehje-lex, produces an `Ast`. a flat arena of `AstNode`s keyed
 by `NodeId`. Emits syntax-level diagnostics via `SyntaxError`
 which converts to `vehje-ir::Diagnostic`.
 
 The crate ships as a skeleton first: type surface + driver loop +
 a minimal `parse` that handles the two trivial programs (empty
 input, single literal). Each grammar production lands as its own
-follow-up micro-round on top of the stable harness — see
+follow-up micro-round on top of the stable harness. see
 `BACKLOG.md` for the per-production queue.
 
-## Scope (this round — skeleton)
+## Scope (this round. skeleton)
 
-- `Ast` — root container, flat arena of `AstNode`s, root `NodeId`.
+- `Ast`. root container, flat arena of `AstNode`s, root `NodeId`.
 - `AstNode { kind: AstNodeKind, span: Span, children: [NodeId; N] }`
-  — const-sized child array, arvo-style, no alloc.
-- `Parser<'a>` — holds `&'a [Token]` + a `TokenCursor(u32)` newtype
+ . const-sized child array, arvo-style, no alloc.
+- `Parser<'a>`. holds `&'a [Token]` + a `TokenCursor(u32)` newtype
   + an `Ast` under construction. Peek / bump / expect helpers. The
   `TokenCursor` newtype is `#[repr(transparent)]` and costs nothing
   at runtime, but prevents future bugs that would confuse a token
   cursor with any other `u32` counter (byte offset, span index,
   AST node id).
-- `SyntaxError { span, kind, message }` — `Copy`, alloc-free.
+- `SyntaxError { span, kind, message }`. `Copy`, alloc-free.
 - `SyntaxErrorKind { UnexpectedToken, UnexpectedEof,
   InvalidLiteral }`.
-- `parse(tokens: &[Token], errors: &mut impl DiagnosticSink<SyntaxError>) -> Outcome<Ast, ()>` —
+- `parse(tokens: &[Token], errors: &mut impl DiagnosticSink<SyntaxError>) -> Outcome<Ast, ()>` , 
   top-level entry; empty input and single literal supported. The
   `Vec` carries one error today; future multi-error recovery
   populates it without another signature change.
 
-## Scope (follow-up rounds — see BACKLOG)
+## Scope (follow-up rounds. see BACKLOG)
 
 Per-production micro-rounds land each grammar form (primary,
 binary, unary, call, block, let, if, match, fn, type, struct,
@@ -43,7 +43,7 @@ method + a test file; the skeleton harness does not change.
 - Name binding / scope resolution (vehje-resolve).
 - Type checking (vehje-typecheck).
 - AST rewriting / macros (separate round post-core).
-- Concrete lossless syntax tree for formatter round-trip —
+- Concrete lossless syntax tree for formatter round-trip , 
   deferred until the formatter drives the requirement.
 
 ## Dependencies
@@ -56,10 +56,10 @@ method + a test file; the skeleton harness does not change.
 
 ## Module layout (this round)
 
-- `lib.rs` — module decls, re-exports, top-level `parse` fn.
-- `ast.rs` — `Ast`, `AstNode`, arena push/get.
-- `parser.rs` — `Parser<'a>` + driver loop + peek/bump helpers.
-- `error.rs` — `SyntaxError`, `SyntaxErrorKind`,
+- `lib.rs`. module decls, re-exports, top-level `parse` fn.
+- `ast.rs`. `Ast`, `AstNode`, arena push/get.
+- `parser.rs`. `Parser<'a>` + driver loop + peek/bump helpers.
+- `error.rs`. `SyntaxError`, `SyntaxErrorKind`,
   `From<SyntaxError> for Diagnostic`.
 
 Follow-up rounds add `grammar/` with one file per production.
@@ -72,6 +72,6 @@ Follow-up rounds add `grammar/` with one file per production.
 - 202604191300_topic.vehje-grammar-framework-seed.md (G0
   primitives)
 - 202604191500_changelist.doc.md (R1 round)
-- 202604262900_changelist.doc.lock.md (vehje-lex skeleton —
+- 202604262900_changelist.doc.lock.md (vehje-lex skeleton , 
   produces the tokens this round consumes)
 - stellar-heritage/tools/vehje/grammar/ (Python parity oracle)

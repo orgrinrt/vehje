@@ -1,0 +1,22 @@
+# vehje-schedule, known gaps
+
+## CompilerSchedule
+
+Skeleton placeholder. Documented inline in `src/lib.rs` as the
+target shape for the M0.2 round (#131) that wires every compiler
+phase as a hilavitkutin WorkUnit. A dedicated DESIGN.md.tmpl entry
+lands as part of #131 when the real DAG topology, access-set
+declaration, and dispatch surface are designed. Currently the type
+is a unit-struct harness that returns `ScheduleError::Unimplemented`
+on any execution attempt. The harness is shipped now to clear
+no-empty-crate so consumer crates can take a workspace path dep.
+
+## ScheduleError
+
+Skeleton placeholder. Skeleton variant set is the single
+`Unimplemented` flagging the not-yet-wired state. The full enum
+covering DAG cycle detection, access-set conflicts, and missing-pass
+diagnostics lands in M0.2 (#131) when the WU-home wiring becomes
+concrete. Documented inline in `src/lib.rs` rather than in a
+dedicated DESIGN section because the final shape will differ from
+the skeleton and a premature design entry risks drift.
