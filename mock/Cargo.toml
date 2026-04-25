@@ -1,17 +1,17 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/clause",
-    "crates/clause-ir",
-    "crates/clause-lex",
-    "crates/clause-syntax",
-    "crates/clause-resolve",
-    "crates/clause-typecheck",
-    "crates/clause-schedule",
-    "crates/clause-codegen",
-    "crates/clause-runtime-abi",
-    "crates/clause-runtime-driver",
-    "crates/clause-runtime-tests",
+    "crates/vehje",
+    "crates/vehje-ir",
+    "crates/vehje-lex",
+    "crates/vehje-syntax",
+    "crates/vehje-resolve",
+    "crates/vehje-typecheck",
+    "crates/vehje-schedule",
+    "crates/vehje-codegen",
+    "crates/vehje-runtime-abi",
+    "crates/vehje-runtime-driver",
+    "crates/vehje-runtime-tests",
 ]
 
 [workspace.package]
@@ -40,13 +40,13 @@ hilavitkutin-str = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", bra
 notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false }
 
 # In-workspace phase crates — path deps for inter-phase consumption.
-vehje-ir = { path = "crates/clause-ir" }
-vehje-lex = { path = "crates/clause-lex" }
-vehje-syntax = { path = "crates/clause-syntax" }
-vehje-resolve = { path = "crates/clause-resolve" }
-vehje-typecheck = { path = "crates/clause-typecheck" }
-vehje-schedule = { path = "crates/clause-schedule" }
-vehje-codegen = { path = "crates/clause-codegen" }
-vehje-runtime-abi = { path = "crates/clause-runtime-abi" }
-vehje-runtime-driver = { path = "crates/clause-runtime-driver" }
-vehje-runtime-tests = { path = "crates/clause-runtime-tests" }
+vehje-ir = { path = "crates/vehje-ir" }
+vehje-lex = { path = "crates/vehje-lex" }
+vehje-syntax = { path = "crates/vehje-syntax" }
+vehje-resolve = { path = "crates/vehje-resolve" }
+vehje-typecheck = { path = "crates/vehje-typecheck" }
+vehje-schedule = { path = "crates/vehje-schedule" }
+vehje-codegen = { path = "crates/vehje-codegen" }
+vehje-runtime-abi = { path = "crates/vehje-runtime-abi" }
+vehje-runtime-driver = { path = "crates/vehje-runtime-driver" }
+vehje-runtime-tests = { path = "crates/vehje-runtime-tests" }

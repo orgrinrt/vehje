@@ -26,32 +26,32 @@ Phase 6 skeleton round (2026-04-20) ships:
   - `vehje_runtime_new() ?*anyopaque` → null.
   - `vehje_runtime_free(?*anyopaque) void` → no-op.
   - `vehje_runtime_execute(?*anyopaque, [*]const u8, usize) i32`
-    → `CLAUSE_RESULT_ERR` (`-1`).
-  - `pub const CLAUSE_RESULT_OK: i32 = 0;` (+ `_ERR`,
+    → `VEHJE_RESULT_ERR` (`-1`).
+  - `pub const VEHJE_RESULT_OK: i32 = 0;` (+ `_ERR`,
     `_NULL_HANDLE`, `_INVALID_INPUT` matching the Rust
     discriminants).
 - `README.md` describing the tree + build workflow.
 - `.gitignore` excluding `zig-out/`, `zig-cache/`.
 - `BACKLOG.md` listing deferred runtime features.
 
-### `ClauseResult` ABI layout. scalar i32
+### `VehjeResult` ABI layout. scalar i32
 
-The Rust side declares `#[repr(i32)] enum ClauseResult { Ok = 0,
+The Rust side declares `#[repr(i32)] enum VehjeResult { Ok = 0,
 Err = -1, NullHandle = -2, InvalidInput = -3 }`. On System V
 x86-64 and Apple ARM64 this lowers to a scalar-in-register
 return. The Zig side returns plain `i32` directly, giving
 identical register-use on every target.
 
 Alternative considered and rejected: mirror the Rust enum via
-`pub const ClauseResult = extern struct { code: i32 }` (a
+`pub const VehjeResult = extern struct { code: i32 }` (a
 one-field wrapper struct). Rejected because on MSVC Windows
 x64 a one-field extern struct returns via hidden-pointer
 (sret) while a `#[repr(i32)]` enum returns in `eax`. the two
 sides would disagree on the calling convention. Scalar `i32`
 return is the trivially portable form across every ABI.
 
-Named constants (`CLAUSE_RESULT_OK`, `CLAUSE_RESULT_ERR`,
-`CLAUSE_RESULT_NULL_HANDLE`, `CLAUSE_RESULT_INVALID_INPUT`)
+Named constants (`VEHJE_RESULT_OK`, `VEHJE_RESULT_ERR`,
+`VEHJE_RESULT_NULL_HANDLE`, `VEHJE_RESULT_INVALID_INPUT`)
 mirror the Rust discriminants exactly and give Zig-side call
 sites a readable form instead of bare integer literals.
 

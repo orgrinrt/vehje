@@ -142,13 +142,13 @@ commit = "error"
 build = "warn"
 push = "error"
 rules = [
-  { scope = "clause-ir", forbidden = "alloc::*, std::*", reason = "clause-ir is no_std + no_alloc" },
-  { scope = "clause-lex", forbidden = "alloc::*, std::*", reason = "clause-lex is no_std + no_alloc" },
-  { scope = "clause-syntax", forbidden = "alloc::*, std::*", reason = "clause-syntax is no_std + no_alloc — the front-end produces IR only, never runtime state" },
+  { scope = "vehje-ir", forbidden = "alloc::*, std::*", reason = "vehje-ir is no_std + no_alloc" },
+  { scope = "vehje-lex", forbidden = "alloc::*, std::*", reason = "vehje-lex is no_std + no_alloc" },
+  { scope = "vehje-syntax", forbidden = "alloc::*, std::*", reason = "vehje-syntax is no_std + no_alloc. the front-end produces IR only, never runtime state" },
 
   # Universal: runtime crates guard against hidden syscalls sneaking
   # through the C ABI boundary.
-  { scope = "clause-runtime-abi", forbidden = "std::thread::*, std::fs::*, std::net::*, std::io::*, std::process::*", reason = "clause-runtime-abi is the C ABI surface; syscalls belong above/below it, not inside" },
+  { scope = "vehje-runtime-abi", forbidden = "std::thread::*, std::fs::*, std::net::*, std::io::*, std::process::*", reason = "vehje-runtime-abi is the C ABI surface; syscalls belong above/below it, not inside" },
 ]
 
 # --- Built-in mockspace lints that don't apply to clause -------------------
