@@ -4,7 +4,7 @@
 
 - **Arena allocator** — per-session state owning compile-time
   buffers. No global allocator; arenas are cleared on
-  `clause_runtime_shutdown` (BACKLOG entry point).
+  `vehje_runtime_shutdown` (BACKLOG entry point).
 - **IR interpreter** — evaluates macro bodies + generative
   subgraph blueprints against the incoming `AbiNode` buffers.
 - **Scratch-var evaluator** — folds compile-time expressions
@@ -16,16 +16,16 @@
 
 ## Deferred entry points
 
-- `clause_runtime_init(arena_bytes: u32)` — matches the Rust
-  `clause_runtime_init` BACKLOG entry.
-- `clause_runtime_shutdown(handle)` — teardown.
-- `clause_runtime_invoke_macro(handle, nodes, len)` — macro
+- `vehje_runtime_init(arena_bytes: u32)` — matches the Rust
+  `vehje_runtime_init` BACKLOG entry.
+- `vehje_runtime_shutdown(handle)` — teardown.
+- `vehje_runtime_invoke_macro(handle, nodes, len)` — macro
   dispatch.
-- `clause_runtime_eval_scratch(handle, expr_nodes, len)` —
+- `vehje_runtime_eval_scratch(handle, expr_nodes, len)` —
   scratch evaluation.
-- `clause_runtime_expand_generative(handle, blueprint, len)` —
+- `vehje_runtime_expand_generative(handle, blueprint, len)` —
   generative subgraph expansion.
-- `clause_runtime_last_error(handle) -> *const AbiDiagnostic`
+- `vehje_runtime_last_error(handle) -> *const AbiDiagnostic`
   — error retrieval.
 
 ## Deferred framework features
