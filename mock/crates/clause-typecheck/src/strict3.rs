@@ -1,4 +1,4 @@
-//! STRICT3 — `assign-to-immut`.
+//! STRICT3, `assign-to-immut`.
 //!
 //! Detects assignment to bindings declared immutable. Ported from
 //! the Python-era `strict3` lint.
@@ -12,7 +12,7 @@ use hilavitkutin_api::DiagnosticSink;
 use crate::ctx::ValidatorCtx;
 use crate::validator::Validator;
 
-/// STRICT3 validator — immutable-binding reassignment.
+/// STRICT3 validator, immutable-binding reassignment.
 ///
 /// ZST; carries no state. The implementation is a stub that
 /// returns an empty diagnostic vec; the real walk lands in a

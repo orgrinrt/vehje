@@ -1,8 +1,8 @@
-//! `ClauseDiagnostic` — `#[repr(C)]` carrier for a single
+//! `ClauseDiagnostic`, `#[repr(C)]` carrier for a single
 //! runtime-emitted diagnostic.
 //!
 //! The diagnostic carries a flat `AbiSpan` (file / start / end
-//! as bare `u32`s — the richer `FileId` / `ByteOffset` wrapper
+//! as bare `u32`s, the richer `FileId` / `ByteOffset` wrapper
 //! from `vehje-ir` is deferred to the R2-retrofit round), a
 //! pointer-plus-length message, and a kind discriminant. The
 //! pointer is borrowed: the caller owns the backing string,
@@ -14,7 +14,7 @@
 //! declared so downstream code can compile against the ABI
 //! surface that future rounds will populate.
 
-/// Flat ABI span — `(file, start, end)` as bare `u32`s.
+/// Flat ABI span, `(file, start, end)` as bare `u32`s.
 ///
 /// The richer `FileId` / `ByteOffset` wrappers live in
 /// `vehje_ir::Span`. This round carries the triple directly
@@ -29,20 +29,20 @@ pub struct AbiSpan {
     /// `vehje_ir::ByteOffset::0`).
     pub start: u32, // lint:allow(arvo-types-only) tracked: #207 lint:allow(no-bare-numeric) tracked: #207 lint:allow(no-public-raw-field) tracked: #207
     /// End byte offset (exclusive).
-    pub end: u32, // lint:allow(arvo-types-only) tracked: #207 lint:allow(no-bare-numeric) tracked: #207 lint:allow(no-public-raw-field) tracked: #207
+    pub end: u32, // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) lint:allow(no-public-raw-field) reason: FFI-wire u32 boundary; tracked: #207
 }
 
-/// Diagnostic kind — mirrors `vehje_ir::Severity` but carries
+/// Diagnostic kind, mirrors `vehje_ir::Severity` but carries
 /// only the three kinds the runtime emits (Help / Warning-vs-
 /// info-splits are a compiler-side concern).
 #[repr(i32)] // lint:allow(arvo-types-only) tracked: #207 lint:allow(no-bare-numeric) tracked: #207
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum ClauseDiagnosticKind {
-    /// Error — execution fails, result code is non-`Ok`.
+    /// Error, execution fails, result code is non-`Ok`.
     Error = 0,
-    /// Warning — execution succeeds but emits a notice.
+    /// Warning, execution succeeds but emits a notice.
     Warning = 1,
-    /// Info — diagnostic has no severity consequence.
+    /// Info, diagnostic has no severity consequence.
     Info = 2,
 }
 

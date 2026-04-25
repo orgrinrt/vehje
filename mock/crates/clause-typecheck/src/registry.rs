@@ -1,16 +1,16 @@
-//! `ValidatorRegistry` — const-sized list of all shipped
+//! `ValidatorRegistry`, const-sized list of all shipped
 //! validators plus a `run_all` collector.
 //!
 //! The registry is a ZST with an associated `VALIDATORS` slice
 //! and an associated `run_all` function. The slice holds
-//! `&'static dyn Validator` entries — this is the single
+//! `&'static dyn Validator` entries, this is the single
 //! sanctioned `dyn` exception in vehje-typecheck, mirroring the
 //! `TargetRegistry` pattern in vehje-codegen (see R3 DESIGN).
 //! It's confined to the registry iteration surface and uses
 //! `'static` lifetimes only.
 //!
 //! Dynamic registration (a `register` method for plugin
-//! validators) is BACKLOG — the skeleton round ships only the
+//! validators) is BACKLOG, the skeleton round ships only the
 //! ten core validators.
 
 use vehje_ir::Diagnostic;
@@ -30,7 +30,7 @@ use crate::strict6::Strict6;
 use crate::strict7::Strict7;
 use crate::validator::Validator;
 
-/// Validator registry — const iteration surface over every core
+/// Validator registry, const iteration surface over every core
 /// validator shipped in vehje-typecheck.
 ///
 /// Carries no state; all functionality is associated. Plugin

@@ -1,6 +1,6 @@
-//! STRICT2 — `unused`.
+//! STRICT2, `unused`.
 //!
-//! Detects dead bindings — declared but never read / referenced.
+//! Detects dead bindings, declared but never read / referenced.
 //! Ported from the Python-era `strict2` lint.
 //!
 //! Skeleton round: `validate` returns `Vec::new()`. Real body is
@@ -12,7 +12,7 @@ use hilavitkutin_api::DiagnosticSink;
 use crate::ctx::ValidatorCtx;
 use crate::validator::Validator;
 
-/// STRICT2 validator — dead-binding detection.
+/// STRICT2 validator, dead-binding detection.
 ///
 /// ZST; carries no state. The implementation is a stub that
 /// returns an empty diagnostic vec; the real walk lands in a

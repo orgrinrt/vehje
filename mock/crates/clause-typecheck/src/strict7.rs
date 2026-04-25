@@ -1,4 +1,4 @@
-//! STRICT7 — `clippy-batch`.
+//! STRICT7, `clippy-batch`.
 //!
 //! A curated batch of style / bug-prone patterns (named after
 //! Python's clippy inspiration). Ported from the Python-era
@@ -13,7 +13,7 @@ use hilavitkutin_api::DiagnosticSink;
 use crate::ctx::ValidatorCtx;
 use crate::validator::Validator;
 
-/// STRICT7 validator — curated style / bug-prone pattern batch.
+/// STRICT7 validator, curated style / bug-prone pattern batch.
 ///
 /// ZST; carries no state. The implementation is a stub that
 /// returns an empty diagnostic vec; the real walk lands in a

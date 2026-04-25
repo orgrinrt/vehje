@@ -1,4 +1,4 @@
-//! vehje-runtime-tests — integration-test harness for the
+//! vehje-runtime-tests, integration-test harness for the
 //! vehje runtime C ABI and the driver-side dispatcher.
 //!
 //! Skeleton round (2026-04-20): ships a single

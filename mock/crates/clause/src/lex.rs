@@ -1,4 +1,4 @@
-//! `vehje lex` — tokenise a file and print its token stream.
+//! `vehje lex`, tokenise a file and print its token stream.
 
 use vehje_ir::{Diagnostic, FileId, TokenKind};
 use vehje_lex::{Lexer, Token};

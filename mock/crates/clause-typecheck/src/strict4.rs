@@ -1,4 +1,4 @@
-//! STRICT4 — `int-overflow`.
+//! STRICT4, `int-overflow`.
 //!
 //! Detects compile-time-detectable integer overflow in const-eval
 //! + literal contexts. Ported from the Python-era `strict4` lint.
@@ -12,7 +12,7 @@ use hilavitkutin_api::DiagnosticSink;
 use crate::ctx::ValidatorCtx;
 use crate::validator::Validator;
 
-/// STRICT4 validator — compile-time integer-overflow audit.
+/// STRICT4 validator, compile-time integer-overflow audit.
 ///
 /// ZST; carries no state. The implementation is a stub that
 /// returns an empty diagnostic vec; the real walk lands in a

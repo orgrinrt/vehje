@@ -1,6 +1,6 @@
 #![no_std]
 
-//! vehje-codegen — skeleton codegen framework + extension-point
+//! vehje-codegen, skeleton codegen framework + extension-point
 //! contract for the Vehje authoring language.
 //!
 //! Consumes the `Resolved` bundle produced by vehje-resolve;

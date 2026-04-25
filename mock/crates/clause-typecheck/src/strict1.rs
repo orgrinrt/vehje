@@ -1,4 +1,4 @@
-//! STRICT1 — `no-shadow`.
+//! STRICT1, `no-shadow`.
 //!
 //! Detects variable shadowing across scopes. Ported from the
 //! Python-era `strict1` lint.
@@ -12,7 +12,7 @@ use hilavitkutin_api::DiagnosticSink;
 use crate::ctx::ValidatorCtx;
 use crate::validator::Validator;
 
-/// STRICT1 validator — variable-shadow detection.
+/// STRICT1 validator, variable-shadow detection.
 ///
 /// ZST; carries no state. The implementation is a stub that
 /// returns an empty diagnostic vec; the real walk lands in a

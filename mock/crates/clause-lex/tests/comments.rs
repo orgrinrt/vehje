@@ -67,7 +67,7 @@ fn block_comment_between_two_tokens_on_same_line() {
 
 #[test]
 fn block_comment_is_not_nested() {
-    // `/* /* */ */` — the non-nesting lexer closes on the first `*/`,
+    // `/* /* */ */`, the non-nesting lexer closes on the first `*/`,
     // leaving ` */` as unrecognised trailing punctuation.
     let mut lx = Lexer::from_str("/* /* */ x", FileId(0));
     let t = lx.next().unwrap();

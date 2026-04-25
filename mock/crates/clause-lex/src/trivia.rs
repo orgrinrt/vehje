@@ -8,7 +8,7 @@
 //! `TriviaKind::Whitespace` if a mix of kinds collides).
 //!
 //! The const-sized representation keeps the lexer alloc-free. Eight
-//! slots covers every realistic case — more than a couple of blank
+//! slots covers every realistic case, more than a couple of blank
 //! lines of comments before a token is already unusual.
 
 use vehje_ir::Span;
@@ -50,8 +50,8 @@ pub const TRIVIA_SLOTS: usize = 8;  // lint:allow(arvo-types-only) lint:allow(no
 /// Slots are filled in insertion order. `leading_len` and
 /// `trailing_len` are always `<= TRIVIA_SLOTS`. When a push would
 /// exceed the slot count the incoming trivia's span is merged into
-/// the tail slot — its span's `end` advances to the new trivia's
-/// `end` — and the tail slot's kind is preserved unless the new
+/// the tail slot, its span's `end` advances to the new trivia's
+/// `end`, and the tail slot's kind is preserved unless the new
 /// kind differs, in which case the tail slot becomes `Whitespace`
 /// (the generic fallback).
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]

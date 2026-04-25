@@ -66,7 +66,7 @@ impl Resolver {
 
 /// Resolve an AST into a `Resolved` bundle.
 ///
-/// The skeleton does not walk the AST — it returns a `Resolved`
+/// The skeleton does not walk the AST, it returns a `Resolved`
 /// whose `resolution` vec is `Maybe::Isnt`-filled to `ast.len()`.
 /// Each deferred resolution rule flips a subset of those slots as
 /// it lands.

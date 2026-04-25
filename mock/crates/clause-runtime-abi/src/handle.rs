@@ -1,4 +1,4 @@
-//! `ClauseRuntime` — opaque handle to a live runtime session.
+//! `ClauseRuntime`, opaque handle to a live runtime session.
 //!
 //! The type body is intentionally `[u8; 0]`: a zero-sized
 //! private field that is never constructed in Rust and never
@@ -17,7 +17,7 @@ use core::marker::{PhantomData, PhantomPinned};
 ///
 /// The handle points to foreign-owned memory (the Zig runtime's
 /// session struct); only the Zig runtime may dereference it.
-/// Rust treats it as an opaque token — never inspected, never
+/// Rust treats it as an opaque token, never inspected, never
 /// moved, never pinned on this side. Never construct this type
 /// directly in Rust: it exists only as a type-level marker for
 /// `*mut ClauseRuntime` pointers crossing the FFI boundary.

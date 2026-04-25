@@ -1,4 +1,4 @@
-//! vehje-ir — data contracts shared across compiler phases.
+//! vehje-ir, data contracts shared across compiler phases.
 //!
 //! This crate hosts the types that two or more phase crates consume:
 //! `Span`, `FileId`, `ByteOffset`, `NodeId`, `ScopeId`, `Diagnostic`,

@@ -53,7 +53,7 @@ pub extern "C" fn vehje_runtime_free(rt: *mut ClauseRuntime) {
 //   1. catch_unwind wraps any Rust code that can panic (UB across
 //      FFI otherwise).
 //   2. null+nonzero-len input guards are present for the
-//      `(input, len)` pair — a null `input` with `len > 0` is a
+//      `(input, len)` pair, a null `input` with `len > 0` is a
 //      caller bug that must surface as `ClauseResult::InvalidInput`,
 //      not a segfault.
 // Both are tracked in BACKLOG as hard gates before non-stub

@@ -13,7 +13,7 @@
 //! references. That retrofit is BACKLOG; lands when the first
 //! real target backend surfaces the need.
 
-/// Artifact kind — what the emitted payload represents.
+/// Artifact kind, what the emitted payload represents.
 ///
 /// Covers the common codegen output shapes: raw binaries,
 /// relocatable object files, assembly text, generic source
@@ -36,7 +36,7 @@ pub enum ArtifactKind {
     Config = 4,
 }
 
-/// Codegen artifact descriptor — kind discriminator only.
+/// Codegen artifact descriptor, kind discriminator only.
 ///
 /// Bytes and diagnostics flow through caller-provided sinks
 /// during `CodegenTarget::emit`; the artifact reports only what

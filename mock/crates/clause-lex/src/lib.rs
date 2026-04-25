@@ -1,4 +1,4 @@
-//! vehje-lex — skeleton lexer for the Vehje authoring language.
+//! vehje-lex, skeleton lexer for the Vehje authoring language.
 //!
 //! Consumes a source buffer, produces a token stream with trivia
 //! attached. Round-one scope covers:
@@ -6,10 +6,10 @@
 //! - ASCII identifiers and the full keyword list from the grammar
 //!   seed.
 //! - Decimal integer literals (no suffixes, no underscores, no float
-//!   fractions, no alternate bases — those are deferred).
+//!   fractions, no alternate bases, those are deferred).
 //! - ASCII operators and punctuation with longest-match resolution.
 //! - Line comments (`// …`) and block comments (`/* … */`,
-//!   non-nested — nested block comments are in BACKLOG).
+//!   non-nested, nested block comments are in BACKLOG).
 //! - Whitespace as trivia, attached to the next real token.
 //! - Explicit `Eof` token at end-of-input.
 //! - `Unknown` token plus diagnostic for any unclassifiable byte.

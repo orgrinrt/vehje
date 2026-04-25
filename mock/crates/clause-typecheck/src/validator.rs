@@ -20,7 +20,7 @@ use crate::ctx::ValidatorCtx;
 
 /// Validator interface.
 ///
-/// Implementors should be ZSTs (zero-sized types) — validator
+/// Implementors should be ZSTs (zero-sized types), validator
 /// state belongs in `ValidatorCtx`, not the trait object. `Sync`
 /// is required so the registry's `&'static dyn Validator`
 /// entries are thread-safe for future rayon-backed execution
@@ -40,7 +40,7 @@ pub trait Validator: Sync {
     /// # Implementor note
     ///
     /// `Diagnostic.message` is `&'static str`. Validators must use
-    /// string literals or `const` slices — no `format!`-produced
+    /// string literals or `const` slices, no `format!`-produced
     /// strings. Span-enriched rendering is the responsibility of
     /// the diagnostic renderer, not the validator body.
     ///
