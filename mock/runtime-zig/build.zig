@@ -1,6 +1,6 @@
-// clause runtime build script.
+// vehje runtime build script.
 //
-// Produces libclause_runtime.{so|dylib|dll} as a dynamic library
+// Produces libvehje_runtime.{so|dylib|dll} as a dynamic library
 // that the Rust compiler loads via dlopen at distribution time.
 // Stub for R2 — full build logic lands with Phase 6 impl.
 
@@ -11,7 +11,7 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
 
     const lib = b.addSharedLibrary(.{
-        .name = "clause_runtime",
+        .name = "vehje_runtime",
         .root_source_file = b.path("src/runtime.zig"),
         .target = target,
         .optimize = optimize,
