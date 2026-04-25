@@ -79,9 +79,9 @@ build = "warn"
 push = "warn"
 
 [lints.no-bare-string]
-commit = "warn"
-build = "warn"
-push = "warn"
+commit = "error"
+build = "error"
+push = "error"
 
 [lints.no-bare-vec]
 commit = "warn"
@@ -93,31 +93,24 @@ push = "warn"
 # for the clause-resolve collection-field skeleton storages).
 
 [lints.no-bare-numeric]
-commit = "warn"
-build = "warn"
-push = "warn"
+commit = "error"
+build = "error"
+push = "error"
 
 [lints.no-bare-option]
 commit = "warn"
 build = "warn"
 push = "warn"
 
-# TEMPORARY for feat/rename-to-vehje (round 202604241553):
-# commit + push lowered to "warn" so the mechanical identifier rename
-# can land without first fixing the 260 pre-existing bare-numeric
-# violations in the skeleton source. Restore to "error" at commit +
-# push in a dedicated follow-up commit on dev post-merge, paired
-# with task #214 (clause severity ramp-up) to actually fix the
-# skeleton.
 [lints.arvo-types-only]
-commit = "warn"
-build = "warn"
-push = "warn"
+commit = "error"
+build = "error"
+push = "error"
 
 [lints.no-public-raw-field]
-commit = "warn"
-build = "warn"
-push = "warn"
+commit = "error"
+build = "error"
+push = "error"
 
 [lints.no-box]
 commit = "warn"
