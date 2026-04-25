@@ -2,7 +2,7 @@
 apply_to: ["crates/**/*.rs", "src/**/*.rs"]
 ---
 
-# Cookbook — intent → trait / type
+# Cookbook. intent → trait / type
 
 A pattern book for "I need to X" questions. Pick the matching intent,
 use the suggested trait / type. When none fits, the correct answer is
@@ -25,7 +25,7 @@ interfacing with a std-permitting API (e.g., CLI argument parsing).
 
 ## "I need to emit diagnostics from a compiler phase"
 
-Take `&mut impl DiagnosticSink<Diagnostic>` — consumes `vehje-ir::Diagnostic`.
+Take `&mut impl DiagnosticSink<Diagnostic>`. consumes `vehje-ir::Diagnostic`.
 Return `Outcome<PhaseOutput, PhaseAborted>`. DO NOT return
 `Vec<Diagnostic>` in public APIs. (Pending: #73 sweep + #83 sink
 traits.)
@@ -33,17 +33,17 @@ traits.)
 ## "I need to walk the AST"
 
 Take `&Ast` (read-only) or `&mut Ast` (mutation). `Ast` is an arena;
-node access goes through `NodeId`. Never clone node subtrees — take a
+node access goes through `NodeId`. Never clone node subtrees. take a
 reference or a `NodeId`.
 
 ## "I need a pass DAG"
 
 `arvo_graph::Dag<PassId>`. Use arvo-graph's `topo_sort`,
-`rank_levels`, `spanning_tree` — do not reimplement.
+`rank_levels`, `spanning_tree`. do not reimplement.
 
 ## "I need to represent a span / source location"
 
-`vehje_ir::Span` — (`FileId`, `ByteOffset`, `ByteOffset`). Pass by
+`vehje_ir::Span`. (`FileId`, `ByteOffset`, `ByteOffset`). Pass by
 value; it's small.
 
 ## "I need an interned string / symbol"
@@ -59,7 +59,7 @@ value; it's small.
 
 Take `&mut impl ByteEmitter` (pending #83). Return
 `Outcome<ArtifactMeta, _>`. DO NOT return `Vec<u8>` even in
-std-permitting crates — the codegen contract must survive moving to
+std-permitting crates. the codegen contract must survive moving to
 no_std if the architecture shifts.
 
 ## "I need to iterate tokens from the lexer"
@@ -82,14 +82,14 @@ into the front end. File a design round; don't reach for
 ## "I need to parity-test against the Python prototype"
 
 Run the prototype's test corpus. Do NOT translate the Python
-line-by-line — the Rust shape differs (tagged enums over Protocol,
+line-by-line. the Rust shape differs (tagged enums over Protocol,
 monomorphisation over isinstance, Result over exceptions).
 
 ## See also
 
-- `.claude/rules/type-surface.md` — the decision test, DO/DON'T table
-- `.claude/rules/no-heap.md` — dedicated no-heap rule (scoped to
+- `.claude/rules/type-surface.md`. the decision test, DO/DON'T table
+- `.claude/rules/no-heap.md`. dedicated no-heap rule (scoped to
   no_std crates)
-- `PRINCIPLES.md` — first principles
-- Python prototype at `~/Dev/stellar-heritage/tools/vehje/` — parity
+- `PRINCIPLES.md`. first principles
+- Python prototype at `~/Dev/stellar-heritage/tools/vehje/`. parity
   oracle, not a template

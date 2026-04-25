@@ -1,14 +1,14 @@
-# vehje-codegen — backlog
+# vehje-codegen. backlog
 
 ## Deferred target implementations (each a follow-up round)
 
-### NativeTarget — real Rust/LLVM codegen
+### NativeTarget. real Rust/LLVM codegen
 
 Replace the skeleton empty-artifact `emit` body with a real Rust
 or LLVM-IR (via `inkwell` or `cranelift`) lowering path. Requires
 the target-agnostic IR + lowering passes (below).
 
-### JominiTarget — Clausewitz engine bytecode
+### JominiTarget. Clausewitz engine bytecode
 
 Move `JominiTarget` out of vehje-codegen into a sibling
 `vehje-jomini` repo with its own mockspace, implementing the
@@ -57,7 +57,7 @@ Requires the artefact-cache reference in `CodegenCtx` (R3 shape).
 Associated `NAME` / `VERSION` consts, `accepts(kind)` routing,
 `stages()` pipeline entry, `CodegenOutput` with `manifest` +
 `references`, `render_diagnostic`. Lands once real backend
-bodies surface the need — the instance-method skeleton form is
+bodies surface the need. the instance-method skeleton form is
 forward-compatible (retrofit requires no consumer changes).
 
 ## Non-blocking follow-ups
@@ -101,7 +101,7 @@ R3 ships `SymbolRef` as the opaque type that targets use to
 reference symbols across boundaries (vehje-jomini references
 vehje-builtin symbols, etc.). The resolution ALGORITHM
 (link-stage walker that matches SymbolRef producers ↔ consumers)
-is deferred — first vehje-jomini release will likely go without
+is deferred. first vehje-jomini release will likely go without
 cross-target references, and the algorithm lands when a concrete
 need arrives.
 
@@ -109,7 +109,7 @@ need arrives.
 
 Current design is sequential: compile all units with target A,
 then target B, etc. Parallel-codegen across targets (for
-tooling-friendly UX) is a future optimisation — needs shared
+tooling-friendly UX) is a future optimisation. needs shared
 ArtefactCache locking story.
 
 ## Post-review notes

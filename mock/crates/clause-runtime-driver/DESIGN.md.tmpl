@@ -1,4 +1,4 @@
-# vehje-runtime-driver — Design
+# vehje-runtime-driver. Design
 
 Compiler-side dispatcher. Owns the dylib handle; routes calls
 through the ABI.
@@ -23,7 +23,7 @@ Phase 6 skeleton round (2026-04-20) ships:
   `Err(LoaderError::NotImplemented)` regardless of path.
 - `RuntimeHandle: Send + Sync` trait with a single
   `execute(&self, input: &[u8], output: &mut impl ByteEmitter) -> Outcome<(), DriverError>`
-  method. No concrete impls this round — `DlopenHandle` is
+  method. No concrete impls this round. `DlopenHandle` is
   BACKLOG.
 - `DriverError` + `LoaderError` enums.
 
@@ -40,25 +40,25 @@ vehje-schedule integration are BACKLOG.
 ## Dependencies
 
 - `vehje-ir`, `vehje-runtime-abi`, `vehje-schedule`.
-- libloading for dlopen/dlsym (BACKLOG — currently not
+- libloading for dlopen/dlsym (BACKLOG. currently not
   depended on since the loader stub does not perform real
   loads).
 
 ## Provisional module layout
 
 Shipped this round:
-- `driver.rs` — `RuntimeDriver` placeholder.
-- `loader.rs` — `RuntimeLoader` + `load`.
-- `handle.rs` — `RuntimeHandle` trait.
-- `error.rs` — `LoaderError`, `DriverError`.
+- `driver.rs`. `RuntimeDriver` placeholder.
+- `loader.rs`. `RuntimeLoader` + `load`.
+- `handle.rs`. `RuntimeHandle` trait.
+- `error.rs`. `LoaderError`, `DriverError`.
 
 Deferred (BACKLOG):
-- `invoke.rs` — macro invocation wrapper.
-- `scratch.rs` — scratch-eval wrapper.
-- `generative.rs` — generative-expansion wrapper.
-- `convert.rs` — `AbiDiagnostic` → vehje-ir `Diagnostic`
+- `invoke.rs`. macro invocation wrapper.
+- `scratch.rs`. scratch-eval wrapper.
+- `generative.rs`. generative-expansion wrapper.
+- `convert.rs`. `AbiDiagnostic` → vehje-ir `Diagnostic`
   conversion.
-- `dlopen_handle.rs` — concrete `RuntimeHandle` impl backed
+- `dlopen_handle.rs`. concrete `RuntimeHandle` impl backed
   by `libloading`.
 
 ## Sources

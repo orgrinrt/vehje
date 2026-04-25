@@ -1,6 +1,6 @@
-# vehje — Architecture Principles
+# vehje. Architecture Principles
 
-<!-- BEGIN: shared cross-ecosystem principles (synced from vehje-dev/.shared/principles-fragment.md — do not edit in place) -->
+<!-- BEGIN: shared cross-ecosystem principles (synced from vehje-dev/.shared/principles-fragment.md. do not edit in place) -->
 
 ## No heap. Ever.
 
@@ -41,7 +41,7 @@ opt-in scope documented".
 ## No bare primitives. Anywhere.
 
 `u8` through `u128`, `i8` through `i128`, `f32`, `f64`, `usize`,
-`isize`, `bool`, `Option`, `Result`, `String`, non-static `&str` —
+`isize`, `bool`, `Option`, `Result`, `String`, non-static `&str` , 
 **they do not exist in this stack.** Not in public signatures, not
 in private fields, not in internal `let` bindings, not in cast
 expressions, not in literal suffixes, not in type aliases, not in
@@ -105,8 +105,8 @@ traits + `repr(C)` descriptors (inventory pattern), not `dyn`.
 
 ## Type taxonomy
 
-Every type anywhere in source — public or private, fn sig or field,
-local or cast expression — falls into one of three categories:
+Every type anywhere in source. public or private, fn sig or field,
+local or cast expression. falls into one of three categories:
 
 | Category | When | Examples |
 |----------|------|----------|
@@ -122,7 +122,7 @@ Decision test is the same as above: if two plausible implementations
 could differ, it's a trait.
 
 If you're asking "should this enum have room for plugin extensions?"
-— it shouldn't be an enum. It should be a trait.
+,  it shouldn't be an enum. It should be a trait.
 
 ## Sizes are const at type level
 
@@ -157,7 +157,7 @@ no copies, no parallel naming.
 ## ZST markers for discrimination
 
 Schema kinds, events, settings domains, storage locations, access
-levels, HTTP methods — all ZSTs. Marker types carry compile-time
+levels, HTTP methods. all ZSTs. Marker types carry compile-time
 identity without runtime footprint.
 
 ## Primitive vocabulary (the stack's own)
@@ -200,8 +200,8 @@ specific follow-up, the design is wrong, not the rule.
 ## Game-agnostic core
 
 The Vehje language knows nothing about Clausewitz, Witcher, Sims,
-Lua, or any specific target. All game-specific surface — bind
-targets, content types, codegen, vocabulary — ships as separate
+Lua, or any specific target. All game-specific surface. bind
+targets, content types, codegen, vocabulary. ships as separate
 extension repos (`vehje-jomini`, future others).
 
 If a feature can't be articulated without naming a specific game,
@@ -243,9 +243,9 @@ forced to express real tooling.
 
 ## Macros are procedural, run at compile time
 
-Vehje macros are proc-only — no `macro_rules!`. They execute as a
+Vehje macros are proc-only. no `macro_rules!`. They execute as a
 scheduler pass at compile time, using the same grammar primitives
-the parser uses. Macro bodies are Vehje code — typechecked by the
+the parser uses. Macro bodies are Vehje code. typechecked by the
 same typecheck the rest of the code sees.
 
 ## Generalise, don't exception

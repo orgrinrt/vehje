@@ -1,0 +1,13 @@
+# vehje-runtime-driver, known gaps
+
+## no-std
+
+The crate root carries `#![cfg_attr(not(feature = "std"), no_std)]`
+with `default = ["std"]`. The driver opens the Zig runtime dylib
+through `std::fs` paths and (future) `libloading`, both of which
+require std. The no_std variant is reserved for the embedded-target
+future where dylib dispatch is replaced with statically linked
+extension slots. The lint pack reads only the literal `#![no_std]`
+attribute and does not recognise the cfg_attr form yet; refinement
+is parked under a future mockspace task. Until then this gap is
+documented and accepted.

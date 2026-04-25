@@ -1,4 +1,4 @@
-# vehje-runtime-abi — Design
+# vehje-runtime-abi. Design
 
 C ABI contract between the Rust compiler and any runtime
 backend (Zig today; possibly others tomorrow). Pure type
@@ -18,13 +18,13 @@ surface + `extern "C"` entry points. No runtime logic.
 Phase 6 skeleton round (2026-04-20) ships a narrower instance
 of the above:
 
-- `ClauseResult` `#[repr(i32)]` — result code carrier.
+- `ClauseResult` `#[repr(i32)]`. result code carrier.
 - `ClauseRuntime` `#[repr(C)]` opaque handle (`[u8; 0]`
   private field).
 - `ClauseDiagnostic` `#[repr(C)]` carrier: flat `AbiSpan`
   (`{ file, start, end }`), pointer + length message, kind
   enum.
-- `ClauseDiagnosticKind` `#[repr(i32)]` — `Error`, `Warning`,
+- `ClauseDiagnosticKind` `#[repr(i32)]`. `Error`, `Warning`,
   `Info`.
 - Three `extern "C"` entries: `vehje_runtime_new`,
   `vehje_runtime_free`, `vehje_runtime_execute`.
@@ -52,7 +52,7 @@ expand_generative / last_error entry points are BACKLOG.
 - No `Option`, `Vec`, `String`, `Box` in ABI types.
 - No enum discriminants > u64.
 - Little-endian fixed; big-endian refuses load (BACKLOG).
-- Every struct has `abi_version: u32` first (BACKLOG —
+- Every struct has `abi_version: u32` first (BACKLOG , 
   skeleton types omit the version prefix until the first
   real-backend round surfaces the bump-compatibility need).
 
@@ -94,17 +94,17 @@ flips the bare sites. Until then, bare-with-allow is the policy.
 ## Provisional module layout
 
 Shipped this round:
-- `result.rs` — `ClauseResult` enum.
-- `handle.rs` — `ClauseRuntime` opaque handle.
-- `diagnostic.rs` — `ClauseDiagnostic` + `ClauseDiagnosticKind`
+- `result.rs`. `ClauseResult` enum.
+- `handle.rs`. `ClauseRuntime` opaque handle.
+- `diagnostic.rs`. `ClauseDiagnostic` + `ClauseDiagnosticKind`
   + flat `AbiSpan`.
-- `exports.rs` — `extern "C"` entries.
+- `exports.rs`. `extern "C"` entries.
 
 Deferred (BACKLOG):
-- `span.rs` — richer `AbiSpan` wrapping `FileId` / `ByteOffset`.
-- `token.rs` — `AbiToken`.
-- `node.rs` — `AbiNode`.
-- `convert.rs` — `From` impls between `vehje-ir` types and
+- `span.rs`. richer `AbiSpan` wrapping `FileId` / `ByteOffset`.
+- `token.rs`. `AbiToken`.
+- `node.rs`. `AbiNode`.
+- `convert.rs`. `From` impls between `vehje-ir` types and
   their `Abi*` mirrors.
 
 ## Sources

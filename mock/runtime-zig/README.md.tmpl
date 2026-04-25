@@ -1,4 +1,4 @@
-# vehje-runtime-zig — the runtime proper
+# vehje-runtime-zig. the runtime proper
 
 Zig-authored dynamic library implementing macro interpretation,
 scratch lowering, and generative expansion against Vehje IR
@@ -24,7 +24,7 @@ Rust-side `RuntimeLoader::load` returns
 `LoaderError::NotImplemented`. Follow-up rounds wire a locate
 path:
 
-- `CLAUSE_RUNTIME_PATH` environment variable — explicit path
+- `CLAUSE_RUNTIME_PATH` environment variable. explicit path
   to the dylib.
 - Fallback: next-to-Rust-binary convention.
 - Fallback: embedded runtime (statically linked lightweight
@@ -52,7 +52,7 @@ constants (`CLAUSE_RESULT_OK` = `0`, `CLAUSE_RESULT_ERR` = `-1`,
 `CLAUSE_RESULT_NULL_HANDLE` = `-2`, `CLAUSE_RESULT_INVALID_INPUT`
 = `-3`) mirror the Rust `#[repr(i32)] enum ClauseResult`
 discriminants. A one-field `extern struct { code: i32 }` wrapper
-was considered and rejected — it breaks the scalar-return calling
+was considered and rejected. it breaks the scalar-return calling
 convention on MSVC Windows x64 (hidden-pointer sret vs. `eax`).
 
 Real interpreter body lands in follow-up rounds.

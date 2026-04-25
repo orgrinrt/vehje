@@ -1,61 +1,61 @@
-# vehje-runtime-driver — backlog
+# vehje-runtime-driver. backlog
 
 ## Deferred loader implementation
 
 - Real `dlopen` / `libloading` integration in
   `RuntimeLoader::load`. Currently returns
   `Err(LoaderError::NotImplemented)` regardless of path.
-- Env-var convention — `CLAUSE_RUNTIME_PATH` points at the
+- Env-var convention. `CLAUSE_RUNTIME_PATH` points at the
   dylib. When unset, a conventional next-to-binary path is
   tried; when that fails, an embedded-fallback path is tried.
 - Windows / Linux / macOS dylib naming conventions
-  (`libvehje_runtime.{so,dylib,dll}`) — the loader inspects
+  (`libvehje_runtime.{so,dylib,dll}`). the loader inspects
   the target triple and prepends / appends accordingly.
-- Symbol resolution — `dlsym` each `extern "C"` entry by name;
+- Symbol resolution. `dlsym` each `extern "C"` entry by name;
   error with `LoaderError::SymbolNotFound { name }` on miss.
-- ABI version check at load time — read the runtime's
+- ABI version check at load time. read the runtime's
   published `abi_version` and refuse on mismatch.
 
 ## Deferred handle implementation
 
-- `DlopenHandle` — concrete `RuntimeHandle` impl backed by
+- `DlopenHandle`. concrete `RuntimeHandle` impl backed by
   `libloading::Library`. Holds the library handle and
   function pointers resolved at load time.
-- Handle lifecycle — drop closes the library via
+- Handle lifecycle. drop closes the library via
   `libloading::Library::close` (implicit on drop).
-- Multi-runtime management — load multiple runtime handles,
+- Multi-runtime management. load multiple runtime handles,
   route per-session.
-- Per-session arena management — driver allocates / frees
+- Per-session arena management. driver allocates / frees
   arenas through `vehje_runtime_init` /
   `vehje_runtime_shutdown`.
 
 ## Deferred driver features
 
-- Real `RuntimeDriver` state — holds an `Arc<dyn RuntimeHandle>`
+- Real `RuntimeDriver` state. holds an `Arc<dyn RuntimeHandle>`
   + per-session cache of diagnostic translations.
-- `AbiDiagnostic` → `vehje_ir::Diagnostic` conversion —
+- `AbiDiagnostic` → `vehje_ir::Diagnostic` conversion , 
   maps pointer-plus-length messages to `&'static str` or
   interned string ids.
-- `AbiSpan` → `vehje_ir::Span` conversion — reconstructs
+- `AbiSpan` → `vehje_ir::Span` conversion. reconstructs
   `FileId` + `ByteOffset` from the flat triple.
-- Fallback to embedded runtime when dylib not found —
+- Fallback to embedded runtime when dylib not found , 
   statically-linked lightweight backend for test / dev use.
-- Panic-at-FFI-boundary recovery — `catch_unwind` in the
+- Panic-at-FFI-boundary recovery. `catch_unwind` in the
   driver wrappers so a Zig-side abort surfaces as a
   `DriverError` instead of tearing down the process.
 
 ## Deferred vehje-schedule integration
 
-- Macro-expansion pass — driver-backed pass in the schedule
+- Macro-expansion pass. driver-backed pass in the schedule
   DAG that receives unit metadata and returns expanded nodes.
-- Generative-expansion pass — driver-backed pass that expands
+- Generative-expansion pass. driver-backed pass that expands
   generative subgraph blueprints into concrete nodes.
-- Scratch-evaluation pass — compile-time expression folding
+- Scratch-evaluation pass. compile-time expression folding
   via the driver.
 
 ## Non-blocking follow-ups
 
 - Hot-reload of the runtime dylib during dev iteration.
 - Per-runtime-version capability negotiation at load.
-- Crash recovery — detect a crashed runtime handle and
+- Crash recovery. detect a crashed runtime handle and
   reinstall a fresh one.

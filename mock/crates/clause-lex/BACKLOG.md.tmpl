@@ -1,20 +1,20 @@
-# vehje-lex — backlog
+# vehje-lex. backlog
 
-## Deferred tokenisers (skeleton round — implement one per follow-up)
+## Deferred tokenisers (skeleton round. implement one per follow-up)
 
-- **String literals** — `"..."` with escape sequences (`\n`,
+- **String literals**. `"..."` with escape sequences (`\n`,
   `\t`, `\"`, `\\`, `\0`).
-- **Char literals** — `'x'` with the same escapes.
-- **Float literals** — `1.5`, `1e10`, `1.5e-3`.
-- **Numeric suffixes** — `123u64`, `1.5f32`, etc.
-- **Unicode escape sequences** — `\u{1F600}`.
-- **Raw string literals** — `r"..."`, `r#"..."#` (match-hash).
-- **Byte literals** — `b'x'`, `b"..."`.
-- **Doc comments** — `///`, `//!`, `/** */`, `/*! */`.
-- **Nested block comments** — current lexer handles non-nested
+- **Char literals**. `'x'` with the same escapes.
+- **Float literals**. `1.5`, `1e10`, `1.5e-3`.
+- **Numeric suffixes**. `123u64`, `1.5f32`, etc.
+- **Unicode escape sequences**. `\u{1F600}`.
+- **Raw string literals**. `r"..."`, `r#"..."#` (match-hash).
+- **Byte literals**. `b'x'`, `b"..."`.
+- **Doc comments**. `///`, `//!`, `/** */`, `/*! */`.
+- **Nested block comments**. current lexer handles non-nested
   only.
-- **Shebang** — `#!` at file start.
-- **BOM handling** — strip U+FEFF if present at file start.
+- **Shebang**. `#!` at file start.
+- **BOM handling**. strip U+FEFF if present at file start.
 
 Each can ship as its own round (small, isolated); the lexer's
 drive-loop is designed to accommodate new tokenisers cleanly.
@@ -30,6 +30,6 @@ need.
 
 Future extension targets may want to inject token kinds (e.g.
 `vehje-jomini` needs to handle Clausewitz-specific syntax in
-embedded strings). The mechanism is open — probably an
+embedded strings). The mechanism is open. probably an
 `ExtensionTokenKind` variant on TokenKind carrying an extension
 ID + payload. Defer until a target surfaces the need.

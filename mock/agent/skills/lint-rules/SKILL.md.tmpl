@@ -3,7 +3,7 @@ skill_name: lint-rules
 skill_description: Guide for Vehje custom lint rules. Use this when adding new lints, fixing lint violations, or when `cargo mock` reports lint errors.
 ---
 
-# Lint rules — vehje
+# Lint rules. vehje
 
 ## Status
 
@@ -15,7 +15,7 @@ run.
 
 ## Severity system
 
-Every lint has three independent gate levels — what happens on
+Every lint has three independent gate levels. what happens on
 commit, on build, and on push. Four levels per gate: **error**
 (blocks), **warn** (reported, no block), **info** (informational),
 **off** (silent).
@@ -42,7 +42,7 @@ These are always available; severity is tuned per repo in
 
 | Lint | Purpose | Applicability today |
 |---|---|---|
-| `no-empty-crate` | Crate has no `pub` items | N/A while `mock/crates/` is empty — lint skips |
+| `no-empty-crate` | Crate has no `pub` items | N/A while `mock/crates/` is empty. lint skips |
 | `no-todo` | `todo!()` in source | Active once crates exist |
 | `file-size` | File exceeds `max_lines` | Active once crates exist; cap = 400 |
 | `undocumented-type` | Source type missing from design docs | Active once crates exist |
@@ -52,7 +52,7 @@ These are always available; severity is tuned per repo in
 | `changelist-immutability` | Edits to deprecated or frozen changelist | Always on |
 
 The four `changelist-*` lints are built into mockspace and
-non-negotiable — they enforce the design-round state machine.
+non-negotiable. they enforce the design-round state machine.
 
 ## Post-R1–R4 lint roadmap
 
@@ -101,23 +101,23 @@ discovers them and wires them into the generated proxy crate on the
 next `cargo mock` run.
 
 Reference pattern: `~/Dev/saalis/mock/lints/no_vec_in_signatures.rs`
-— a simple line-by-line scan with per-crate exemption.
+,  a simple line-by-line scan with per-crate exemption.
 
 ## Hook coverage today
 
 Two built-in hooks are always generated:
 
-- `check-byline.sh` — byline policy from `mock/agent/config.toml`.
-- `mockspace-write-guard.sh` — blocks writes to `.claude/**`,
+- `check-byline.sh`. byline policy from `mock/agent/config.toml`.
+- `mockspace-write-guard.sh`. blocks writes to `.claude/**`,
   `.github/copilot-instructions.md`, `.github/instructions/`,
   `.github/skills/`, `.github/hooks/` from outside `mock/`.
 
 Two repo-specific hooks ship today as reminders (not blockers):
 
-- `no-game-vocabulary-reminder.sh` — nudges when game-specific
+- `no-game-vocabulary-reminder.sh`. nudges when game-specific
   vocabulary appears in a Write/Edit, pointing at the extension-repo
   pattern.
-- `no-python-port-literal-guard.sh` — reminds that the Python
+- `no-python-port-literal-guard.sh`. reminds that the Python
   prototype is a parity oracle, not a line-by-line translation source,
   when Write/Edit target Rust files in the compiler tree.
 
@@ -127,13 +127,13 @@ wait for R1–R4. They will be added alongside the matching lints.
 ## Running lints
 
 ```bash
-# Default (Build mode) — standalone run
+# Default (Build mode). standalone run
 cargo mock --lint-only
 
-# Commit mode — pre-commit hook equivalent
+# Commit mode. pre-commit hook equivalent
 cargo mock --lint-only --commit
 
-# Push mode — pre-push hook equivalent
+# Push mode. pre-push hook equivalent
 cargo mock --lint-only --strict
 
 # Full pipeline (check + lint + docs + agent regen)
@@ -142,6 +142,6 @@ cargo mock
 
 ## No-exception policy
 
-Once a lint is enabled at `error`, flagged code is fixed — not
+Once a lint is enabled at `error`, flagged code is fixed. not
 suppressed. `#[allow(...)]` for mockspace-driven lints is not accepted
 without a design-round note justifying the carve-out.

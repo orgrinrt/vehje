@@ -20,7 +20,7 @@ in Rust.**
   pipelines. Small, fast, embeddable. Speaks C ABI. Pulls no `std`,
   no Rust runtime.
 - **Build tooling / deploy / orchestration**: written in Vehje
-  itself once the language is usable (rustc/cargo pattern — the
+  itself once the language is usable (rustc/cargo pattern. the
   compiler does one thing; tooling runs on top of what the compiler
   emits).
 
@@ -30,13 +30,13 @@ in Rust.**
 split is decided by the first four design rounds (R1–R4). Provisional
 targets, not binding:
 
-- `vehje-lex` — tokenisation
-- `vehje-syntax` — parser + AST
-- `vehje-resolve` — module resolution, use-tree, visibility
-- `vehje-typecheck` — coherence, bind targets, generics, validator framework
-- `vehje-schedule` — pass DAG (consumes `arvo-graph`)
-- `vehje-codegen` — target-agnostic codegen
-- `vehje` — top-level binary + orchestration
+- `vehje-lex`. tokenisation
+- `vehje-syntax`. parser + AST
+- `vehje-resolve`. module resolution, use-tree, visibility
+- `vehje-typecheck`. coherence, bind targets, generics, validator framework
+- `vehje-schedule`. pass DAG (consumes `arvo-graph`)
+- `vehje-codegen`. target-agnostic codegen
+- `vehje`. top-level binary + orchestration
 
 Until R1–R4 lands, crate-level rules and lints are stubs. The
 framework is set; the contents arrive with the crates.
@@ -45,11 +45,11 @@ framework is set; the contents arrive with the crates.
 
 This repo consumes two sibling substrate repos:
 
-- [`arvo`](https://github.com/orgrinrt/arvo) — numeric primitives +
+- [`arvo`](https://github.com/orgrinrt/arvo). numeric primitives +
   graph / sparse / bitmask / spectral / comb algorithms. Used for the
   pass DAG (`arvo-graph`) and artifact read/write sets
   (`arvo-bitmask`).
-- [`hilavitkutin`](https://github.com/orgrinrt/hilavitkutin) —
+- [`hilavitkutin`](https://github.com/orgrinrt/hilavitkutin) , 
   pipeline execution engine. Used by the **runtime** for morsel-driven
   macro / scratch / generative execution. The compiler itself does
   single-shot DAG walks and rarely needs the frame runtime.
@@ -61,21 +61,21 @@ sparse storage, or pipeline scheduling in Vehje.
 
 Game-specific targets ship as **separate repos** that extend Vehje:
 
-- `vehje-jomini` (future) — Clausewitz (Stellaris / CK3 / HOI4 /
+- `vehje-jomini` (future). Clausewitz (Stellaris / CK3 / HOI4 /
   Vic3 / EU4) grammar, bind targets, codegen to Clausewitz script.
-- `vehje-w3` (future) — Witcher 3 target.
-- `vehje-ts4` (future) — Sims 4 target.
-- `vehje-lua` (future) — generic Lua target.
+- `vehje-w3` (future). Witcher 3 target.
+- `vehje-ts4` (future). Sims 4 target.
+- `vehje-lua` (future). generic Lua target.
 
 The extension-point contract is one of the early design rounds. Until
 then, do not inline game-specific vocabulary, types, or codegen into
-this repo — it makes the core extraction harder later.
+this repo. it makes the core extraction harder later.
 
 ## Parity oracle
 
 A Python prototype of Vehje lives at
 `~/Dev/stellar-heritage/tools/vehje/` (~15k lines, 1500+ tests). It
-is the **parity oracle** during the Rust port — run its test corpus
+is the **parity oracle** during the Rust port. run its test corpus
 against the Rust implementation to verify semantic equivalence.
 
 It is **not** a line-by-line translation source. The Rust shape
@@ -99,7 +99,7 @@ compiler implementation:
   expected/actual), not just a string.
 - Procedural macros only for Vehje language semantics. `macro_rules!`
   is acceptable internally in the Rust compiler implementation for
-  boilerplate reduction, but never for Vehje itself — macros in the
+  boilerplate reduction, but never for Vehje itself. macros in the
   language are proc-only, scheduler-pass-driven, and typechecked.
 
 ## Single-binary distribution

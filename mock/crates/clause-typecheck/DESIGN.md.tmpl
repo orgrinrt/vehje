@@ -1,4 +1,4 @@
-# vehje-typecheck — Design
+# vehje-typecheck. Design
 
 Type checking, generic resolution, coherence checking, bind-target
 resolution, and the validator framework. Consumes the `Resolved`
@@ -7,16 +7,16 @@ vec of `Diagnostic`.
 
 ## Scope
 
-- `TypeChecker` — top-level state + drive loop (future round).
-- `TypeEnv` — type environment per scope (future round).
-- `Generics` — generic parameter handling, substitution, bounds
+- `TypeChecker`. top-level state + drive loop (future round).
+- `TypeEnv`. type environment per scope (future round).
+- `Generics`. generic parameter handling, substitution, bounds
   (future round).
-- `Coherence` — overlap detection for trait impls (ships this
+- `Coherence`. overlap detection for trait impls (ships this
   round as a ZST validator stub; body is future round).
-- `BindTarget` — resolution of target-language types (generic
+- `BindTarget`. resolution of target-language types (generic
   scaffolding; concrete targets land in vehje-jomini and friends
   via the extension point from R3).
-- **Validator framework** — ships this round in skeleton form
+- **Validator framework**. ships this round in skeleton form
   (trait + registry + 10 ZST stubs, each returning `Vec::new()`).
 - Type diagnostics (currently: each validator constructs its own
   `Diagnostic` and the registry flattens; sink API is BACKLOG).
@@ -38,15 +38,15 @@ vec of `Diagnostic`.
 
 ## Module layout (skeleton round, 2026-04-20)
 
-- `validator.rs` — `Validator` trait.
-- `registry.rs` — `ValidatorRegistry` with const `VALIDATORS`
+- `validator.rs`. `Validator` trait.
+- `registry.rs`. `ValidatorRegistry` with const `VALIDATORS`
   list and `run_all` collector.
-- `ctx.rs` — `ValidatorCtx<'a>` carrier.
-- `strict1.rs` … `strict7.rs` — one ZST per STRICT validator.
-- `coherence.rs` — `Coherence` ZST.
-- `orphan_rule.rs` — `OrphanRule` ZST.
-- `bind_target_shape.rs` — `BindTargetShape` ZST.
-- `lib.rs` — module decls + re-exports + top-level `typecheck`
+- `ctx.rs`. `ValidatorCtx<'a>` carrier.
+- `strict1.rs` … `strict7.rs`. one ZST per STRICT validator.
+- `coherence.rs`. `Coherence` ZST.
+- `orphan_rule.rs`. `OrphanRule` ZST.
+- `bind_target_shape.rs`. `BindTargetShape` ZST.
+- `lib.rs`. module decls + re-exports + top-level `typecheck`
   entry.
 
 Future rounds expand this into the richer layout originally
@@ -55,11 +55,11 @@ envisaged by R4 (`validator/` subtree with `trait.rs`,
 `builtin/` subdir). Deferred until the first real validator
 body lands and surfaces the need.
 
-## Validator framework — current shape (skeleton round)
+## Validator framework. current shape (skeleton round)
 
 `Validator` is a trait; `ValidatorRegistry` hosts a const
 `&[&'static dyn Validator]` slice with ten entries. Same
-`&'static dyn` exception as vehje-codegen's `TargetRegistry` —
+`&'static dyn` exception as vehje-codegen's `TargetRegistry` , 
 confined to the registry iteration surface, static-lifetime.
 
 ```rust
@@ -90,18 +90,18 @@ impl ValidatorRegistry {
 ```
 
 Core validators (ship in vehje-typecheck, bodies TBD):
-- STRICT1 `no-shadow` — variable shadowing detection.
-- STRICT2 `unused` — dead binding detection.
-- STRICT3 `assign-to-immut` — immutable binding reassignment.
-- STRICT4 `int-overflow` — compile-time integer-overflow audit.
-- STRICT5 `use-after-move` — move-semantics invariant check.
-- STRICT6 `ambiguous-imports` — use-tree ambiguity.
-- STRICT7 `clippy-batch` — curated style / bug-prone batch.
-- `coherence` — trait-impl overlap detection.
-- `orphan-rule` — foreign-type / foreign-trait impl guard.
-- `bind-target-shape` — target-registry entry-format check.
+- STRICT1 `no-shadow`. variable shadowing detection.
+- STRICT2 `unused`. dead binding detection.
+- STRICT3 `assign-to-immut`. immutable binding reassignment.
+- STRICT4 `int-overflow`. compile-time integer-overflow audit.
+- STRICT5 `use-after-move`. move-semantics invariant check.
+- STRICT6 `ambiguous-imports`. use-tree ambiguity.
+- STRICT7 `clippy-batch`. curated style / bug-prone batch.
+- `coherence`. trait-impl overlap detection.
+- `orphan-rule`. foreign-type / foreign-trait impl guard.
+- `bind-target-shape`. target-registry entry-format check.
 
-Each validator's `validate` this round returns `Vec::new()` —
+Each validator's `validate` this round returns `Vec::new()` , 
 the skeleton keeps `run_all` safe (no `todo!()` panic) so
 downstream consumers can exercise the registry surface.
 
@@ -136,6 +136,6 @@ not per-node; real per-node routing lands with the
   (STRICT1-7 batch in Python)
 - 202604262500/202604262500_changelist.doc.lock.md (R4)
 - 202604263500/202604263500_changelist.doc.lock.md (vehje-resolve
-  skeleton — produces the `Resolved` this round consumes)
+  skeleton. produces the `Resolved` this round consumes)
 - stellar-heritage/tools/vehje/grammar/vehje/typecheck.py
   (Python parity)
