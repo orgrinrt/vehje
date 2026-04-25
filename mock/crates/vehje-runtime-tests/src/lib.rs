@@ -14,7 +14,7 @@
 
 pub mod roundtrip;
 
-pub use vehje_runtime_abi::{AbiSpan, ClauseDiagnostic, ClauseDiagnosticKind, ClauseResult};
+pub use vehje_runtime_abi::{AbiSpan, VehjeDiagnostic, VehjeDiagnosticKind, VehjeResult};
 pub use vehje_runtime_driver::{
     DriverError, LoaderError, RuntimeDriver, RuntimeHandle, RuntimeLoader,
 };

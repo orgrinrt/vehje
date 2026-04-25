@@ -1,4 +1,4 @@
-//! `ClauseDiagnostic`, `#[repr(C)]` carrier for a single
+//! `VehjeDiagnostic`, `#[repr(C)]` carrier for a single
 //! runtime-emitted diagnostic.
 //!
 //! The diagnostic carries a flat `AbiSpan` (file / start / end
@@ -37,7 +37,7 @@ pub struct AbiSpan {
 /// info-splits are a compiler-side concern).
 #[repr(i32)] // lint:allow(arvo-types-only) tracked: #207 lint:allow(no-bare-numeric) tracked: #207
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub enum ClauseDiagnosticKind {
+pub enum VehjeDiagnosticKind {
     /// Error, execution fails, result code is non-`Ok`.
     Error = 0,
     /// Warning, execution succeeds but emits a notice.
@@ -59,7 +59,7 @@ pub enum ClauseDiagnosticKind {
 /// is BACKLOG.
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
-pub struct ClauseDiagnostic {
+pub struct VehjeDiagnostic {
     /// Span the diagnostic refers to.
     pub span: AbiSpan,
     /// Pointer to the message bytes (UTF-8, borrowed).
@@ -67,5 +67,5 @@ pub struct ClauseDiagnostic {
     /// Length of the message in bytes.
     pub message_len: arvo::USize,
     /// Severity-ish classification.
-    pub kind: ClauseDiagnosticKind,
+    pub kind: VehjeDiagnosticKind,
 }

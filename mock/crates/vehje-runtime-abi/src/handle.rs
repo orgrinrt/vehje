@@ -1,8 +1,8 @@
-//! `ClauseRuntime`, opaque handle to a live runtime session.
+//! `VehjeRuntime`, opaque handle to a live runtime session.
 //!
 //! The type body is intentionally `[u8; 0]`: a zero-sized
 //! private field that is never constructed in Rust and never
-//! inspected in C. Consumers only see `*mut ClauseRuntime`,
+//! inspected in C. Consumers only see `*mut VehjeRuntime`,
 //! which the runtime allocates on `vehje_runtime_new` and
 //! frees on `vehje_runtime_free`.
 //!
@@ -20,7 +20,7 @@ use core::marker::{PhantomData, PhantomPinned};
 /// Rust treats it as an opaque token, never inspected, never
 /// moved, never pinned on this side. Never construct this type
 /// directly in Rust: it exists only as a type-level marker for
-/// `*mut ClauseRuntime` pointers crossing the FFI boundary.
+/// `*mut VehjeRuntime` pointers crossing the FFI boundary.
 ///
 /// The `PhantomData<(*mut u8, PhantomPinned)>` marker makes the
 /// handle `!Send`, `!Sync`, and `!Unpin`, blocking the default
@@ -29,7 +29,7 @@ use core::marker::{PhantomData, PhantomPinned};
 /// The raw-pointer component denies `Send`/`Sync`; the
 /// `PhantomPinned` component denies `Unpin`.
 #[repr(C)]
-pub struct ClauseRuntime {
+pub struct VehjeRuntime {
     _opaque: [u8; 0], // lint:allow(arvo-types-only) tracked: #207 lint:allow(no-bare-numeric) tracked: #207
     // PhantomData here makes the handle !Send, !Sync, !Unpin.
     // The handle points to foreign-owned memory; only the Zig

@@ -4,7 +4,7 @@
 //! null, `vehje_runtime_free(null)` is safe, and
 //! `vehje_runtime_execute(null, _, 0)` returns `Err`.
 
-use vehje_runtime_abi::ClauseResult;
+use vehje_runtime_abi::VehjeResult;
 use vehje_runtime_abi::exports::{vehje_runtime_execute, vehje_runtime_free, vehje_runtime_new};
 
 #[test]
@@ -21,5 +21,5 @@ fn free_null_does_not_crash() {
 #[test]
 fn execute_null_returns_err() {
     let result = vehje_runtime_execute(core::ptr::null_mut(), core::ptr::null(), 0);
-    assert_eq!(result, ClauseResult::Err);
+    assert_eq!(result, VehjeResult::Err);
 }

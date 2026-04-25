@@ -10,8 +10,8 @@
 //! `#[unsafe(no_mangle)]` is the 2024-edition attribute form;
 //! earlier editions used the plain `#[no_mangle]` form.
 
-use crate::handle::ClauseRuntime;
-use crate::result::ClauseResult;
+use crate::handle::VehjeRuntime;
+use crate::result::VehjeResult;
 
 /// Create a new runtime session.
 ///
@@ -25,7 +25,7 @@ use crate::result::ClauseResult;
 // Both are tracked in BACKLOG as hard gates before non-stub
 // implementation.
 #[unsafe(no_mangle)]
-pub extern "C" fn vehje_runtime_new() -> *mut ClauseRuntime {
+pub extern "C" fn vehje_runtime_new() -> *mut VehjeRuntime {
     core::ptr::null_mut()
 }
 
@@ -40,13 +40,13 @@ pub extern "C" fn vehje_runtime_new() -> *mut ClauseRuntime {
 // Both are tracked in BACKLOG as hard gates before non-stub
 // implementation.
 #[unsafe(no_mangle)]
-pub extern "C" fn vehje_runtime_free(rt: *mut ClauseRuntime) {
+pub extern "C" fn vehje_runtime_free(rt: *mut VehjeRuntime) {
     let _ = rt;
 }
 
 /// Execute an input buffer against a runtime session.
 ///
-/// Skeleton: returns `ClauseResult::Err`. The real body hands
+/// Skeleton: returns `VehjeResult::Err`. The real body hands
 /// off to the runtime backend, which walks the IR-encoded
 /// input and emits an output buffer (BACKLOG).
 // SAFETY-GATE: no real body may land in this function before
@@ -54,16 +54,16 @@ pub extern "C" fn vehje_runtime_free(rt: *mut ClauseRuntime) {
 //      FFI otherwise).
 //   2. null+nonzero-len input guards are present for the
 //      `(input, len)` pair, a null `input` with `len > 0` is a
-//      caller bug that must surface as `ClauseResult::InvalidInput`,
+//      caller bug that must surface as `VehjeResult::InvalidInput`,
 //      not a segfault.
 // Both are tracked in BACKLOG as hard gates before non-stub
 // implementation.
 #[unsafe(no_mangle)]
 pub extern "C" fn vehje_runtime_execute(
-    rt: *mut ClauseRuntime,
+    rt: *mut VehjeRuntime,
     input: *const u8, // lint:allow(arvo-types-only) tracked: #207 lint:allow(no-bare-numeric) tracked: #207
     len: arvo::USize,
-) -> ClauseResult {
+) -> VehjeResult {
     let _ = (rt, input, len);
-    ClauseResult::Err
+    VehjeResult::Err
 }

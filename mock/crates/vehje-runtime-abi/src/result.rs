@@ -1,9 +1,9 @@
-//! `ClauseResult`, integer result code returned by every
+//! `VehjeResult`, integer result code returned by every
 //! `extern "C"` entry point in the Vehje runtime ABI.
 //!
 //! The discriminants follow a POSIX-ish convention: `Ok = 0`,
 //! errors are negative. The Zig side mirrors the same layout
-//! via `pub const ClauseResult = extern struct { code: i32 };`
+//! via `pub const VehjeResult = extern struct { code: i32 };`
 //!, Zig uses a one-field struct to work around the lack of a
 //! direct `extern enum` equivalent. The field width (`i32`) and
 //! values match the Rust discriminants exactly.
@@ -18,13 +18,13 @@
 /// round that surfaces those paths.
 #[repr(i32)] // lint:allow(arvo-types-only) tracked: #207 lint:allow(no-bare-numeric) tracked: #207
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub enum ClauseResult {
+pub enum VehjeResult {
     /// Success. Any accompanying out-buffer is valid.
     Ok = 0,
     /// Generic failure. Use `vehje_runtime_last_error` (BACKLOG)
     /// to fetch the associated diagnostic.
     Err = -1,
-    /// Caller passed a null `*mut ClauseRuntime` handle to an
+    /// Caller passed a null `*mut VehjeRuntime` handle to an
     /// entry that requires a valid handle.
     NullHandle = -2,
     /// Caller passed a malformed input buffer (length 0 with a

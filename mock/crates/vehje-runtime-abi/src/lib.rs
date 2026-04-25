@@ -8,9 +8,9 @@
 //! `vehje-runtime-driver` crate owns the compiler-side
 //! dispatch / dlopen integration.
 //!
-//! Skeleton round (2026-04-20): ships `ClauseResult`,
-//! `ClauseRuntime` (opaque), `ClauseDiagnostic` + `AbiSpan` +
-//! `ClauseDiagnosticKind`, and three stubbed `extern "C"`
+//! Skeleton round (2026-04-20): ships `VehjeResult`,
+//! `VehjeRuntime` (opaque), `VehjeDiagnostic` + `AbiSpan` +
+//! `VehjeDiagnosticKind`, and three stubbed `extern "C"`
 //! entries. Full `AbiToken` / `AbiNode` mirrors, `From`
 //! conversions, init / shutdown / invoke / scratch /
 //! generative / last_error entry points, and panic-at-FFI
@@ -18,8 +18,8 @@
 //!
 //! Stays `no_std` + `no_alloc` like every other vehje crate.
 //! Every ABI crossing carries only bare integers, `[u8; 0]`
-//! sentinels, and raw pointers: `ClauseResult`,
-//! `ClauseRuntime`, `ClauseDiagnostic`, and `AbiSpan`. A
+//! sentinels, and raw pointers: `VehjeResult`,
+//! `VehjeRuntime`, `VehjeDiagnostic`, and `AbiSpan`. A
 //! follow-up round wires panic-at-FFI guards via an explicit
 //! abort path rather than `std::panic::catch_unwind` (which
 //! would require `std`).
@@ -41,14 +41,14 @@ pub mod exports;
 pub mod handle;
 pub mod result;
 
-pub use diagnostic::{AbiSpan, ClauseDiagnostic, ClauseDiagnosticKind};
-pub use handle::ClauseRuntime;
-pub use result::ClauseResult;
+pub use diagnostic::{AbiSpan, VehjeDiagnostic, VehjeDiagnosticKind};
+pub use handle::VehjeRuntime;
+pub use result::VehjeResult;
 
 // `no_std` cdylib panic handler lives behind `#[cfg(not(feature = "std"))]`.
 // With the default `std` feature enabled the compiler's panic runtime is
 // used; without it, we abort. Follow-up round wires a real panic-at-FFI
-// guard that sets `ClauseResult::Err`, fills the last-error diagnostic,
+// guard that sets `VehjeResult::Err`, fills the last-error diagnostic,
 // and then aborts if unwinding would still be attempted.
 #[cfg(all(not(feature = "std"), not(test)))]
 #[panic_handler]

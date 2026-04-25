@@ -43,7 +43,7 @@ pub enum DriverError {
     /// runtime handle.
     HandleNull,
     /// The runtime returned a non-`Ok` result code. The
-    /// `code` matches the `ClauseResult` discriminant
+    /// `code` matches the `VehjeResult` discriminant
     /// received over the FFI.
     ExecuteFailed {
         /// The raw integer result code from the FFI.
