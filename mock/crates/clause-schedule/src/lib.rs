@@ -1,6 +1,6 @@
 #![no_std]
 
-//! vehje-schedule — pass DAG + scheduler harness for the Vehje
+//! vehje-schedule, pass DAG + scheduler harness for the Vehje
 //! compiler.
 //!
 //! Consumes `arvo-graph` for DAG topology and the

@@ -1,9 +1,9 @@
-//! vehje-runtime-abi — the C-ABI shim between the Rust
+//! vehje-runtime-abi, the C-ABI shim between the Rust
 //! compiler and any runtime backend (Zig today; possibly
 //! others tomorrow).
 //!
 //! This crate holds the pure type surface + `extern "C"` entry
-//! points. No runtime logic ships here — the Zig sibling tree
+//! points. No runtime logic ships here, the Zig sibling tree
 //! at `mock/runtime-zig/` owns the execution body; the
 //! `vehje-runtime-driver` crate owns the compiler-side
 //! dispatch / dlopen integration.

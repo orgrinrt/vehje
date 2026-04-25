@@ -1,4 +1,4 @@
-//! `RuntimeLoader` — entry point for locating + loading a
+//! `RuntimeLoader`, entry point for locating + loading a
 //! runtime dylib.
 //!
 //! Skeleton round: `load` always returns

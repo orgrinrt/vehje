@@ -5,7 +5,7 @@
 //! it, a classification tag (`SymbolKind`), and the name as an
 //! interned `Str` handle.
 //!
-//! Names are `hilavitkutin_str::Str` — 4-byte Copy handles keyed
+//! Names are `hilavitkutin_str::Str`, 4-byte Copy handles keyed
 //! by interned identity. This makes `Symbol` itself `Copy`, which
 //! in turn makes `ResolveError` `Copy` (the error variants carry
 //! a copied name).

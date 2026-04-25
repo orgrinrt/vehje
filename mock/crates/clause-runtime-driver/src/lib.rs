@@ -1,4 +1,4 @@
-//! vehje-runtime-driver — compiler-side dispatcher.
+//! vehje-runtime-driver, compiler-side dispatcher.
 //!
 //! Owns the dylib handle; routes calls through the ABI
 //! defined by `vehje-runtime-abi`. Driver-side wrappers

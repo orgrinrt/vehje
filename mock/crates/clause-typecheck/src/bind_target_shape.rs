@@ -14,7 +14,7 @@ use hilavitkutin_api::DiagnosticSink;
 use crate::ctx::ValidatorCtx;
 use crate::validator::Validator;
 
-/// Bind-target-shape validator — target-registry entry-format
+/// Bind-target-shape validator, target-registry entry-format
 /// check.
 ///
 /// ZST; carries no state. The implementation is a stub that

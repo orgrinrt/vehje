@@ -1,4 +1,4 @@
-//! vehje-resolve — skeleton name resolver for the Vehje
+//! vehje-resolve, skeleton name resolver for the Vehje
 //! authoring language.
 //!
 //! Consumes the `Ast` produced by vehje-syntax; produces a

@@ -1,4 +1,4 @@
-//! `TokenStream` — single-token-lookahead wrapper over `Lexer`.
+//! `TokenStream`, single-token-lookahead wrapper over `Lexer`.
 //!
 //! Parsers typically want a `peek` method without consuming the
 //! token. `TokenStream` buffers one token ahead; `peek` lazily

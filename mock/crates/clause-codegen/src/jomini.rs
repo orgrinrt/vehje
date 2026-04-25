@@ -1,4 +1,4 @@
-//! `JominiTarget` — Clausewitz engine script target.
+//! `JominiTarget`, Clausewitz engine script target.
 //!
 //! Placeholder for the future `vehje-jomini` sibling repo
 //! extension that emits Clausewitz engine script for Paradox
@@ -20,7 +20,7 @@ use crate::ctx::CodegenCtx;
 use crate::error::CodegenError;
 use crate::target::CodegenTarget;
 
-/// Jomini-target ZST — Clausewitz engine script backend.
+/// Jomini-target ZST, Clausewitz engine script backend.
 ///
 /// ZST; carries no state. Stub returns an empty `SourceFile`
 /// artifact; the real lowering walk lands once the vehje-jomini

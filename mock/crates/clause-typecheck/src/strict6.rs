@@ -1,4 +1,4 @@
-//! STRICT6 — `ambiguous-imports`.
+//! STRICT6, `ambiguous-imports`.
 //!
 //! Detects use-tree ambiguity (the same name resolving to two
 //! different paths at the same scope). Coordinates with
@@ -14,7 +14,7 @@ use hilavitkutin_api::DiagnosticSink;
 use crate::ctx::ValidatorCtx;
 use crate::validator::Validator;
 
-/// STRICT6 validator — use-tree ambiguity detection.
+/// STRICT6 validator, use-tree ambiguity detection.
 ///
 /// ZST; carries no state. The implementation is a stub that
 /// returns an empty diagnostic vec; the real walk lands in a

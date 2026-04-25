@@ -1,6 +1,6 @@
 #![no_std]
 
-//! vehje-typecheck — skeleton type checker + validator framework
+//! vehje-typecheck, skeleton type checker + validator framework
 //! for the Vehje authoring language.
 //!
 //! Consumes the `Resolved` bundle produced by vehje-resolve;

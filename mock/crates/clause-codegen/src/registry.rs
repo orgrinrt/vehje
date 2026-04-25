@@ -1,16 +1,16 @@
-//! `TargetRegistry` — const-sized list of all shipped codegen
+//! `TargetRegistry`, const-sized list of all shipped codegen
 //! targets plus `lookup` + `emit_for` helpers.
 //!
 //! The registry is a ZST with an associated `TARGETS` slice and
 //! associated `lookup` / `emit_for` functions. The slice holds
-//! `&'static dyn CodegenTarget` entries — this is the single
+//! `&'static dyn CodegenTarget` entries, this is the single
 //! sanctioned `dyn` exception in vehje-codegen per R3 DESIGN,
 //! mirroring the `ValidatorRegistry` pattern in vehje-typecheck.
 //! It's confined to the registry iteration surface and uses
 //! `'static` lifetimes only.
 //!
 //! Dynamic registration (a `register` method for plugin targets,
-//! e.g. for `vehje-jomini` loaded via `dlopen`) is BACKLOG —
+//! e.g. for `vehje-jomini` loaded via `dlopen`) is BACKLOG , 
 //! the skeleton round ships only the two built-in targets.
 
 use vehje_ir::Diagnostic;
@@ -25,7 +25,7 @@ use crate::native::NativeTarget;
 use crate::target::CodegenTarget;
 use vehje_resolve::Resolved;
 
-/// Target registry — const iteration surface over every
+/// Target registry, const iteration surface over every
 /// codegen target shipped in vehje-codegen.
 ///
 /// Carries no state; all functionality is associated. Plugin
@@ -97,7 +97,7 @@ impl TargetRegistry {
 /// # Caller obligation
 ///
 /// `TargetNotFound`'s `name` field is a sentinel (`""`) for
-/// efficiency — `CodegenError` is `Copy` and can't own a runtime
+/// efficiency, `CodegenError` is `Copy` and can't own a runtime
 /// string. Callers who need to render `"target not found: {name}"`
 /// should hold the `target_name` they passed in and interpolate
 /// at render time.

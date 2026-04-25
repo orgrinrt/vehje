@@ -1,10 +1,10 @@
-//! `ClauseResult` — integer result code returned by every
+//! `ClauseResult`, integer result code returned by every
 //! `extern "C"` entry point in the Vehje runtime ABI.
 //!
 //! The discriminants follow a POSIX-ish convention: `Ok = 0`,
 //! errors are negative. The Zig side mirrors the same layout
 //! via `pub const ClauseResult = extern struct { code: i32 };`
-//! — Zig uses a one-field struct to work around the lack of a
+//!, Zig uses a one-field struct to work around the lack of a
 //! direct `extern enum` equivalent. The field width (`i32`) and
 //! values match the Rust discriminants exactly.
 
