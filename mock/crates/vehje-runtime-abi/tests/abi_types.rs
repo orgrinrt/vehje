@@ -1,40 +1,40 @@
 //! ABI type surface tests.
 //!
-//! Assert the discriminants of `ClauseResult`, construct a
-//! `ClauseDiagnostic`, and verify variants compare unequal.
+//! Assert the discriminants of `VehjeResult`, construct a
+//! `VehjeDiagnostic`, and verify variants compare unequal.
 
-use vehje_runtime_abi::{AbiSpan, ClauseDiagnostic, ClauseDiagnosticKind, ClauseResult};
+use vehje_runtime_abi::{AbiSpan, VehjeDiagnostic, VehjeDiagnosticKind, VehjeResult};
 
 #[test]
 fn vehje_result_ok_is_zero() {
-    assert_eq!(ClauseResult::Ok as i32, 0);
+    assert_eq!(VehjeResult::Ok as i32, 0);
 }
 
 #[test]
 fn vehje_result_err_is_negative() {
-    assert_eq!(ClauseResult::Err as i32, -1);
+    assert_eq!(VehjeResult::Err as i32, -1);
 }
 
 #[test]
 fn vehje_result_variants_distinct() {
-    assert!(ClauseResult::Ok != ClauseResult::Err);
-    assert!(ClauseResult::Ok != ClauseResult::NullHandle);
-    assert!(ClauseResult::Ok != ClauseResult::InvalidInput);
-    assert!(ClauseResult::Err != ClauseResult::NullHandle);
-    assert!(ClauseResult::Err != ClauseResult::InvalidInput);
-    assert!(ClauseResult::NullHandle != ClauseResult::InvalidInput);
+    assert!(VehjeResult::Ok != VehjeResult::Err);
+    assert!(VehjeResult::Ok != VehjeResult::NullHandle);
+    assert!(VehjeResult::Ok != VehjeResult::InvalidInput);
+    assert!(VehjeResult::Err != VehjeResult::NullHandle);
+    assert!(VehjeResult::Err != VehjeResult::InvalidInput);
+    assert!(VehjeResult::NullHandle != VehjeResult::InvalidInput);
 }
 
 #[test]
 fn vehje_diagnostic_construction() {
     let message: &[u8] = b"stub message";
-    let diag = ClauseDiagnostic {
+    let diag = VehjeDiagnostic {
         span: AbiSpan { file: 1, start: 2, end: 7 },
         message: message.as_ptr(),
         message_len: message.len(),
-        kind: ClauseDiagnosticKind::Warning,
+        kind: VehjeDiagnosticKind::Warning,
     };
-    assert_eq!(diag.kind, ClauseDiagnosticKind::Warning);
+    assert_eq!(diag.kind, VehjeDiagnosticKind::Warning);
     assert_eq!(diag.span.file, 1);
     assert_eq!(diag.span.start, 2);
     assert_eq!(diag.span.end, 7);

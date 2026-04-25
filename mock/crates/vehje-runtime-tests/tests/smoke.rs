@@ -6,7 +6,7 @@
 //! be named + constructed from this crate.
 
 use vehje_runtime_tests::{
-    AbiSpan, ClauseDiagnostic, ClauseDiagnosticKind, ClauseResult, DriverError, LoaderError,
+    AbiSpan, VehjeDiagnostic, VehjeDiagnosticKind, VehjeResult, DriverError, LoaderError,
     RuntimeDriver, RuntimeLoader, test_runtime_roundtrip,
 };
 
@@ -22,15 +22,15 @@ fn types_are_accessible() {
     let _driver = RuntimeDriver::new();
     let _driver_default: RuntimeDriver = RuntimeDriver::default();
     let _loader = RuntimeLoader;
-    let _result = ClauseResult::Ok;
-    let _kind = ClauseDiagnosticKind::Error;
+    let _result = VehjeResult::Ok;
+    let _kind = VehjeDiagnosticKind::Error;
     let _span = AbiSpan { file: 0, start: 0, end: 0 };
     let message: &[u8] = b"smoke";
-    let _diag = ClauseDiagnostic {
+    let _diag = VehjeDiagnostic {
         span: AbiSpan { file: 0, start: 0, end: 0 },
         message: message.as_ptr(),
         message_len: message.len(),
-        kind: ClauseDiagnosticKind::Info,
+        kind: VehjeDiagnosticKind::Info,
     };
     let _loader_err = LoaderError::NotImplemented;
     let _driver_err = DriverError::NotImplemented;

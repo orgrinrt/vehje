@@ -6,7 +6,7 @@
 //! scratch-var evaluator, TokenStream emitter, diagnostic
 //! emission — is BACKLOG.
 //!
-//! The Rust-side `ClauseResult` is `#[repr(i32)]` with
+//! The Rust-side `VehjeResult` is `#[repr(i32)]` with
 //! discriminants `Ok = 0`, `Err = -1`, `NullHandle = -2`,
 //! `InvalidInput = -3`. We return the layout as a plain `i32`
 //! on both sides to preserve scalar-in-register calling
@@ -16,15 +16,15 @@
 //! return (which lowers to `eax`). Plain `i32` is the
 //! trivially portable form.
 //!
-//! Named constants (`CLAUSE_RESULT_*`) mirror the Rust
+//! Named constants (`VEHJE_RESULT_*`) mirror the Rust
 //! discriminants for readable call sites.
 
 const std = @import("std");
 
-pub const CLAUSE_RESULT_OK: i32 = 0;
-pub const CLAUSE_RESULT_ERR: i32 = -1;
-pub const CLAUSE_RESULT_NULL_HANDLE: i32 = -2;
-pub const CLAUSE_RESULT_INVALID_INPUT: i32 = -3;
+pub const VEHJE_RESULT_OK: i32 = 0;
+pub const VEHJE_RESULT_ERR: i32 = -1;
+pub const VEHJE_RESULT_NULL_HANDLE: i32 = -2;
+pub const VEHJE_RESULT_INVALID_INPUT: i32 = -3;
 
 export fn vehje_runtime_new() ?*anyopaque {
     return null;
@@ -42,5 +42,5 @@ export fn vehje_runtime_execute(
     _ = rt;
     _ = input;
     _ = len;
-    return CLAUSE_RESULT_ERR;
+    return VEHJE_RESULT_ERR;
 }
