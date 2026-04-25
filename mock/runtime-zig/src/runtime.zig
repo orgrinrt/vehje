@@ -26,15 +26,15 @@ pub const CLAUSE_RESULT_ERR: i32 = -1;
 pub const CLAUSE_RESULT_NULL_HANDLE: i32 = -2;
 pub const CLAUSE_RESULT_INVALID_INPUT: i32 = -3;
 
-export fn clause_runtime_new() ?*anyopaque {
+export fn vehje_runtime_new() ?*anyopaque {
     return null;
 }
 
-export fn clause_runtime_free(rt: ?*anyopaque) void {
+export fn vehje_runtime_free(rt: ?*anyopaque) void {
     _ = rt;
 }
 
-export fn clause_runtime_execute(
+export fn vehje_runtime_execute(
     rt: ?*anyopaque,
     input: [*]const u8,
     len: usize,
