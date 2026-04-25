@@ -4,7 +4,7 @@ Zig-authored dynamic library implementing macro interpretation,
 scratch lowering, and generative expansion against Vehje IR
 buffers received through the C ABI defined by
 `vehje-runtime-abi`. Delivered as
-`libclause_runtime.{so|dylib|dll}` bundled alongside the compiler
+`libvehje_runtime.{so|dylib|dll}` bundled alongside the compiler
 binary.
 
 ## Building
@@ -14,7 +14,7 @@ cd mock/runtime-zig
 zig build
 ```
 
-Output lands at `zig-out/lib/libclause_runtime.{so|dylib|dll}`
+Output lands at `zig-out/lib/libvehje_runtime.{so|dylib|dll}`
 (extension depends on host OS).
 
 ## How the Rust side locates the binary
@@ -42,9 +42,9 @@ Zig side by running `zig build` manually or via a CI job.
 
 Phase 6 skeleton (2026-04-20) ships three `extern "C"` stubs:
 
-- `clause_runtime_new() ?*anyopaque` → null.
-- `clause_runtime_free(?*anyopaque) void` → no-op.
-- `clause_runtime_execute(?*anyopaque, [*]const u8, usize) i32`
+- `vehje_runtime_new() ?*anyopaque` → null.
+- `vehje_runtime_free(?*anyopaque) void` → no-op.
+- `vehje_runtime_execute(?*anyopaque, [*]const u8, usize) i32`
   → `CLAUSE_RESULT_ERR` (`-1`).
 
 `ClauseResult` is returned as a plain `i32` on both sides. Named

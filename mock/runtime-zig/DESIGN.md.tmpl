@@ -19,13 +19,13 @@ IR interpreter, scratch-var folding, and generative expansion.
 
 Phase 6 skeleton round (2026-04-20) ships:
 
-- `build.zig` declaring a `clause_runtime` shared-library
-  target. Output: `zig-out/lib/libclause_runtime.{so|dylib|dll}`.
+- `build.zig` declaring a `vehje_runtime` shared-library
+  target. Output: `zig-out/lib/libvehje_runtime.{so|dylib|dll}`.
 - `src/runtime.zig` exporting three `extern "C"` stubs matching
   the Rust `vehje-runtime-abi` exports:
-  - `clause_runtime_new() ?*anyopaque` → null.
-  - `clause_runtime_free(?*anyopaque) void` → no-op.
-  - `clause_runtime_execute(?*anyopaque, [*]const u8, usize) i32`
+  - `vehje_runtime_new() ?*anyopaque` → null.
+  - `vehje_runtime_free(?*anyopaque) void` → no-op.
+  - `vehje_runtime_execute(?*anyopaque, [*]const u8, usize) i32`
     → `CLAUSE_RESULT_ERR` (`-1`).
   - `pub const CLAUSE_RESULT_OK: i32 = 0;` (+ `_ERR`,
     `_NULL_HANDLE`, `_INVALID_INPUT` matching the Rust
@@ -67,7 +67,7 @@ TokenStream emitter, and Zig test suite are all BACKLOG.
 ## Build integration
 
 - `build.zig` drives the Zig compilation.
-- Output: `zig-out/lib/libclause_runtime.{so|dylib|dll}`.
+- Output: `zig-out/lib/libvehje_runtime.{so|dylib|dll}`.
 - Target-triple-specific builds; a distribution bundle pairs the
   Rust compiler binary with the matching dylib for each supported
   platform.
