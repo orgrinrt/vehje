@@ -3,11 +3,11 @@
 ## Deferred soundness tests
 
 - **Struct-shape assertions.** For every `#[repr(C)]` type in
-  `vehje-runtime-abi` (`ClauseResult`, `ClauseRuntime`,
-  `ClauseDiagnostic`, `AbiSpan`, `AbiToken`, `AbiNode`, …):
+  `vehje-runtime-abi` (`VehjeResult`, `VehjeRuntime`,
+  `VehjeDiagnostic`, `AbiSpan`, `AbiToken`, `AbiNode`, …):
   `size_of`, `align_of`, and `offset_of` each public field.
 - **Enum discriminant stability.** For every `#[repr(...)]`
-  enum (`ClauseResult`, `ClauseDiagnosticKind`, …): assert the
+  enum (`VehjeResult`, `VehjeDiagnosticKind`, …): assert the
   discriminant value of each variant is what the spec says.
 - **ABI version monotonicity.** Assert the `abi_version`
   constant grew monotonically compared to the previous
@@ -26,7 +26,7 @@
 ## Deferred fuzz / regression
 
 - Fuzz harness over `vehje_runtime_execute` (random input
-  buffers; asserts no crash, returns valid `ClauseResult`).
+  buffers; asserts no crash, returns valid `VehjeResult`).
 - Regression tests. known-bad inputs (NUL bytes,
   zero-length, huge length) each gets a test.
 - Crash-recovery tests. runtime aborts, driver detects,

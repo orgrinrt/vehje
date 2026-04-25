@@ -11,7 +11,7 @@
   to byte blobs the compiler re-inserts into the AST.
 - **TokenStream emitter** — macros return `AbiToken` arrays.
 - **Diagnostic emission** — maps Zig-side failures to
-  `AbiDiagnostic` records. Matches the Rust `ClauseDiagnostic`
+  `AbiDiagnostic` records. Matches the Rust `VehjeDiagnostic`
   shape (flat `AbiSpan`, pointer-plus-length message, kind).
 
 ## Deferred entry points

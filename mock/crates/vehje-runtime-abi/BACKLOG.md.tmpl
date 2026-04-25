@@ -35,13 +35,13 @@
 
 ## Deferred framework features
 
-- **Full `ClauseRuntime` state struct.** Currently opaque
+- **Full `VehjeRuntime` state struct.** Currently opaque
   `[u8; 0]`; future round fills in the real state body when
   the runtime backend lands.
 - **Real `vehje_runtime_execute` wiring.** Currently returns
   `Err`. Future round hands off to a loaded runtime dylib via
   the driver-side dispatch.
-- **Error code → `ClauseDiagnostic` translation layer.** When
+- **Error code → `VehjeDiagnostic` translation layer.** When
   execute returns an error, surface the associated diagnostic
   via `vehje_runtime_last_error`.
 - **Panic handling at FFI boundary.** Wrap every `extern "C"`

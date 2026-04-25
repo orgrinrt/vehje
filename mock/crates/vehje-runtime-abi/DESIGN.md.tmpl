@@ -18,18 +18,18 @@ surface + `extern "C"` entry points. No runtime logic.
 Phase 6 skeleton round (2026-04-20) ships a narrower instance
 of the above:
 
-- `ClauseResult` `#[repr(i32)]`. result code carrier.
-- `ClauseRuntime` `#[repr(C)]` opaque handle (`[u8; 0]`
+- `VehjeResult` `#[repr(i32)]`. result code carrier.
+- `VehjeRuntime` `#[repr(C)]` opaque handle (`[u8; 0]`
   private field).
-- `ClauseDiagnostic` `#[repr(C)]` carrier: flat `AbiSpan`
+- `VehjeDiagnostic` `#[repr(C)]` carrier: flat `AbiSpan`
   (`{ file, start, end }`), pointer + length message, kind
   enum.
-- `ClauseDiagnosticKind` `#[repr(i32)]`. `Error`, `Warning`,
+- `VehjeDiagnosticKind` `#[repr(i32)]`. `Error`, `Warning`,
   `Info`.
 - Three `extern "C"` entries: `vehje_runtime_new`,
   `vehje_runtime_free`, `vehje_runtime_execute`.
   All stubbed: `new` returns null, `free` is a no-op, `execute`
-  returns `ClauseResult::Err`.
+  returns `VehjeResult::Err`.
 
 Full `AbiToken` / `AbiNode` / richer `AbiSpan` wrapping around
 `FileId` / `ByteOffset`, `From` conversion impls, and the
@@ -74,7 +74,7 @@ Two-tier policy (mirrors the policy established for
    type matches exactly and the arvo type carries semantic weight.
 
 2. **Bare primitive with single-token allow where not.**
-   `ClauseResult` is `#[repr(i32)]` and returns via the scalar
+   `VehjeResult` is `#[repr(i32)]` and returns via the scalar
    register on every ABI target. Wrapping it changes MSVC Windows
    x64 layout. `i32` / `u32` scalars that transit `extern "C"` fn
    signatures without a wire-stable arvo newtype available stay
@@ -94,9 +94,9 @@ flips the bare sites. Until then, bare-with-allow is the policy.
 ## Provisional module layout
 
 Shipped this round:
-- `result.rs`. `ClauseResult` enum.
-- `handle.rs`. `ClauseRuntime` opaque handle.
-- `diagnostic.rs`. `ClauseDiagnostic` + `ClauseDiagnosticKind`
+- `result.rs`. `VehjeResult` enum.
+- `handle.rs`. `VehjeRuntime` opaque handle.
+- `diagnostic.rs`. `VehjeDiagnostic` + `VehjeDiagnosticKind`
   + flat `AbiSpan`.
 - `exports.rs`. `extern "C"` entries.
 
