@@ -2,7 +2,7 @@
 //!
 //! Verify the harness fn propagates the loader's
 //! `NotImplemented` error and that every re-exported type
-//! from `clause-runtime-abi` + `clause-runtime-driver` can
+//! from `vehje-runtime-abi` + `vehje-runtime-driver` can
 //! be named + constructed from this crate.
 
 use vehje_runtime_tests::{

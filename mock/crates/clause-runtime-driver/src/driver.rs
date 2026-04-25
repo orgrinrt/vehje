@@ -1,4 +1,4 @@
-//! `RuntimeDriver` — compiler-side orchestrator wrapping a
+//! `RuntimeDriver`, compiler-side orchestrator wrapping a
 //! runtime handle.
 //!
 //! Skeleton round: placeholder struct with no state. The

@@ -1,17 +1,17 @@
-# vehje-runtime-tests — Design
+# vehje-runtime-tests. Design
 
 Soundness tests for the C ABI. Runs under `cargo test`; does NOT
 depend on the real Zig runtime.
 
 ## Scope
 
-- Struct shape assertions — `size_of`, `align_of`, `offset_of` on
+- Struct shape assertions. `size_of`, `align_of`, `offset_of` on
   every `#[repr(C)]` type in vehje-runtime-abi.
-- Enum discriminant stability — every public enum has asserted
+- Enum discriminant stability. every public enum has asserted
   discriminant values.
-- ABI version checks — the abi_version constants stay
+- ABI version checks. the abi_version constants stay
   monotonically increasing.
-- Minimal Zig stub dylib — `tests/zig_stub/` builds a small dylib
+- Minimal Zig stub dylib. `tests/zig_stub/` builds a small dylib
   implementing the ABI; tests dlopen it and round-trip buffers.
 
 ## Round-skeleton scope
@@ -29,14 +29,14 @@ Phase 6 skeleton round (2026-04-20) ships:
 Struct-shape assertions (`size_of` / `align_of` / `offset_of`),
 enum-discriminant stability tests, ABI-version monotonicity
 guards, and the Zig stub-dylib dlopen round-trip are all
-BACKLOG — those land once the real ABI types grow beyond the
+BACKLOG. those land once the real ABI types grow beyond the
 skeleton `ClauseResult` / `ClauseRuntime` / `ClauseDiagnostic`
 shape this round ships.
 
 ## Non-scope
 
-- Real runtime functionality — that's `mock/runtime-zig/`.
-- Performance benchmarks — separate bench round.
+- Real runtime functionality. that's `mock/runtime-zig/`.
+- Performance benchmarks. separate bench round.
 
 ## Dependencies
 

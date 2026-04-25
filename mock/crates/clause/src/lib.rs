@@ -1,4 +1,4 @@
-//! vehje — CLI orchestration for the Vehje compiler.
+//! vehje, CLI orchestration for the Vehje compiler.
 //!
 //! Dispatch spine only. Each subcommand module runs one pipeline
 //! chain and prints its result. Phase crates own the algorithmic

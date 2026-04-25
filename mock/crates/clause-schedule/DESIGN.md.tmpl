@@ -1,4 +1,4 @@
-# vehje-schedule — Design
+# vehje-schedule. Design
 
 Compiler pass DAG construction + scheduling. Consumes a typed
 program graph from vehje-typecheck. Uses arvo-graph for
@@ -7,13 +7,13 @@ codegen-ready IR hand-off for vehje-codegen.
 
 ## Scope
 
-- `PassDag` — directed acyclic graph of compiler passes, built
+- `PassDag`. directed acyclic graph of compiler passes, built
   from pass-registration + dependency declaration.
-- `PassRegistry` — registered passes (core + plugin). Each pass
+- `PassRegistry`. registered passes (core + plugin). Each pass
   declares: name, read set, write set, dependencies.
-- `Scheduler` — orders passes via arvo-graph topological sort +
+- `Scheduler`. orders passes via arvo-graph topological sort +
   optional critical-path analysis.
-- `Artifact` — cache key + artifact blob for incremental builds.
+- `Artifact`. cache key + artifact blob for incremental builds.
 - Schedule diagnostics (cycle detection, missing dependencies).
 
 ## Non-scope
@@ -32,11 +32,11 @@ codegen-ready IR hand-off for vehje-codegen.
 
 ## Provisional module layout
 
-- `dag.rs` — PassDag construction + integrity invariants.
-- `registry.rs` — PassRegistry + pass metadata.
-- `scheduler.rs` — Scheduler drive loop.
-- `artifact.rs` — Artifact + cache key derivation.
-- `diagnostics.rs` — schedule error construction.
+- `dag.rs`. PassDag construction + integrity invariants.
+- `registry.rs`. PassRegistry + pass metadata.
+- `scheduler.rs`. Scheduler drive loop.
+- `artifact.rs`. Artifact + cache key derivation.
+- `diagnostics.rs`. schedule error construction.
 
 ## Sources
 
@@ -44,4 +44,4 @@ codegen-ready IR hand-off for vehje-codegen.
 - arvo-graph DESIGN.md.tmpl (substrate contract)
 - arvo-bitmask DESIGN.md.tmpl (AccessMask contract)
 - 202604191500_changelist.doc.md (R1 round)
-- stellar-heritage/tools/clause/build.py (Python pass scheduler ref)
+- stellar-heritage/tools/vehje/build.py (Python pass scheduler ref)

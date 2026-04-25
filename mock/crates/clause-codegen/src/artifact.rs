@@ -13,7 +13,7 @@
 //! references. That retrofit is BACKLOG; lands when the first
 //! real target backend surfaces the need.
 
-/// Artifact kind — what the emitted payload represents.
+/// Artifact kind, what the emitted payload represents.
 ///
 /// Covers the common codegen output shapes: raw binaries,
 /// relocatable object files, assembly text, generic source
@@ -21,7 +21,7 @@
 /// configuration files (for targets that emit side-band
 /// settings alongside the primary artifact).
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
-#[repr(u8)]
+#[repr(u8)]  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
 pub enum ArtifactKind {
     /// Raw executable / linked binary output.
     Binary = 0,
@@ -36,7 +36,7 @@ pub enum ArtifactKind {
     Config = 4,
 }
 
-/// Codegen artifact descriptor — kind discriminator only.
+/// Codegen artifact descriptor, kind discriminator only.
 ///
 /// Bytes and diagnostics flow through caller-provided sinks
 /// during `CodegenTarget::emit`; the artifact reports only what

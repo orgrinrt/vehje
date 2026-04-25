@@ -8,7 +8,7 @@ use vehje_ir::TokenKind;
 
 /// Exhaustive list of every `TokenKind` variant.
 ///
-/// Adding a new variant requires a line here too — the test will
+/// Adding a new variant requires a line here too, the test will
 /// otherwise fail the uniqueness check below.
 const ALL: &[TokenKind] = &[
     // Keywords.

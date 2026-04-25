@@ -1,7 +1,9 @@
-//! vehje-codegen — skeleton codegen framework + extension-point
+#![no_std]
+
+//! vehje-codegen, skeleton codegen framework + extension-point
 //! contract for the Vehje authoring language.
 //!
-//! Consumes the `Resolved` bundle produced by clause-resolve;
+//! Consumes the `Resolved` bundle produced by vehje-resolve;
 //! routes emission through a fixed list of built-in
 //! `CodegenTarget` implementations (`native`, `jomini`) via the
 //! const `TargetRegistry`, and returns a `CodegenArtifact`.
@@ -13,12 +15,12 @@
 //! that walks the registry over an empty `Resolved` and returns
 //! an empty artifact. Every target backend (real Rust/LLVM for
 //! `NativeTarget`, Clausewitz emission for `JominiTarget` via
-//! the future `clause-jomini` sibling repo, …) lands as its own
+//! the future `vehje-jomini` sibling repo, …) lands as its own
 //! follow-up round on top of this stable harness.
 //!
 //! This crate uses `std`; it is host-side (compiler phase), not
 //! runtime. The `no_std` / fixed-arena discipline on
-//! `clause-ir`, `clause-lex`, `clause-syntax` does not propagate
+//! `vehje-ir`, `vehje-lex`, `vehje-syntax` does not propagate
 //! here.
 //!
 //! R3 (2026-04-26) finalised a richer trait shape with
@@ -31,7 +33,7 @@
 //! Result<CodegenArtifact, CodegenError>`) that is directly
 //! object-safe and suits the const `&'static dyn` registry
 //! iteration surface without `const_in_trait` gymnastics. This
-//! mirrors exactly the R4 → clause-typecheck skeleton pattern.
+//! mirrors exactly the R4 → vehje-typecheck skeleton pattern.
 
 #![deny(unused, unreachable_code, unused_must_use, unused_imports, dead_code)]
 

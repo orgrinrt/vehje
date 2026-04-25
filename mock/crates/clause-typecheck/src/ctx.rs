@@ -12,7 +12,7 @@ use vehje_resolve::Resolved;
 /// Read-only context passed to every `Validator::validate` call.
 ///
 /// Holds the resolver output. Validators should not mutate
-/// anything through the context — diagnostics come back via the
+/// anything through the context, diagnostics come back via the
 /// `Vec<Diagnostic>` return value. A mutable `DiagnosticSink` is
 /// BACKLOG for once emission volume justifies it.
 #[derive(Debug)]

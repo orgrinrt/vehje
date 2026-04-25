@@ -1,4 +1,4 @@
-# vehje-runtime-tests — backlog
+# vehje-runtime-tests. backlog
 
 ## Deferred soundness tests
 
@@ -15,21 +15,21 @@
 
 ## Deferred Zig-stub integration
 
-- `tests/zig_stub/build.zig` — builds a minimal Zig dylib
+- `tests/zig_stub/build.zig`. builds a minimal Zig dylib
   implementing the ABI. Takes `zig-out/lib/libzig_stub.*`.
-- `tests/smoke.rs` full round-trip — `RuntimeLoader::load`
+- `tests/smoke.rs` full round-trip. `RuntimeLoader::load`
   against the stub dylib returns `Ok(handle)`; `handle.execute`
   returns non-empty bytes.
-- `tests/diagnostics.rs` — stub dylib records an error;
+- `tests/diagnostics.rs`. stub dylib records an error;
   driver surfaces it as `vehje_ir::Diagnostic`.
 
 ## Deferred fuzz / regression
 
 - Fuzz harness over `vehje_runtime_execute` (random input
   buffers; asserts no crash, returns valid `ClauseResult`).
-- Regression tests — known-bad inputs (NUL bytes,
+- Regression tests. known-bad inputs (NUL bytes,
   zero-length, huge length) each gets a test.
-- Crash-recovery tests — runtime aborts, driver detects,
+- Crash-recovery tests. runtime aborts, driver detects,
   driver can reload a fresh runtime.
 
 ## Non-blocking follow-ups

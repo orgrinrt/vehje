@@ -1,4 +1,4 @@
-# vehje-ir — Design
+# vehje-ir. Design
 
 Leaf-dep crate carrying data contracts shared across every compiler
 phase. No algorithmic content.
@@ -7,55 +7,55 @@ phase. No algorithmic content.
 
 Types consumed by two or more phase crates:
 
-- `Span` — source span: `{ file: FileId, start: ByteOffset, end: ByteOffset }`.
+- `Span`. source span: `{ file: FileId, start: ByteOffset, end: ByteOffset }`.
   Carries original positions for diagnostics and incremental-build
   invalidation.
-- `FileId` — dense interned identifier for a loaded source file.
+- `FileId`. dense interned identifier for a loaded source file.
   Plan-time assigned by the workspace driver.
-- `NodeId` — dense interned identifier for AST nodes. Assigned at
+- `NodeId`. dense interned identifier for AST nodes. Assigned at
   parse time; stable across later phases for cross-phase
   annotations (resolution info, type info).
-- `ScopeId` — dense interned identifier for lexical scopes.
+- `ScopeId`. dense interned identifier for lexical scopes.
   `vehje-resolve` now holds interned `Str` handles
   (`hilavitkutin_str::Str`) where it previously held owned
   `String`; the shift is transparent to vehje-ir since its
   types do not touch the symbol name text.
-- `Diagnostic` — `{ phase, severity, span, message, related }`. The
+- `Diagnostic`. `{ phase, severity, span, message, related }`. The
   common error / warning / info structure. `Copy`; owns no heap;
   `message` is `&'static str` and `related` is `&'static [Span]`.
-- `Severity` — enum: `Error`, `Warning`, `Info`, `Help`.
-- `DiagPhase` — enum discriminating which compiler phase emitted a
+- `Severity`. enum: `Error`, `Warning`, `Info`, `Help`.
+- `DiagPhase`. enum discriminating which compiler phase emitted a
   diagnostic: `Lex`, `Syntax`, `Resolve`, `Typecheck`, `Codegen`,
   `Runtime`. Lets a diagnostic renderer / filter route by phase
   without parsing the static message.
-- `TokenKind` — enum discriminating lex tokens. Shared between
+- `TokenKind`. enum discriminating lex tokens. Shared between
   `vehje-lex` (producer) and `vehje-syntax` (consumer).
-- `AstNodeKind` — enum discriminating AST nodes. Shared between
+- `AstNodeKind`. enum discriminating AST nodes. Shared between
   `vehje-syntax` (producer) and downstream phases.
 
 ## Non-scope
 
-- Parsers, resolvers, typecheckers — each phase owns its own
+- Parsers, resolvers, typecheckers. each phase owns its own
   algorithms.
 - Token + AST concrete representations (the node types themselves)
   live in their producing crate; `vehje-ir` only hosts the
   discriminator enums and the common annotation slots.
-- Rendering of diagnostics (color, unicode art) — that's the
+- Rendering of diagnostics (color, unicode art). that's the
   `vehje` binary's renderer.
 
 ## Dependencies
 
 - arvo (for `USize`, `Cap`, newtype discipline).
-- No other hilavitkutin or clause deps.
+- No other hilavitkutin or vehje deps.
 - `#![no_std]`, no alloc.
 
 ## Provisional module layout
 
-- `span.rs` — Span, FileId, ByteOffset.
-- `ids.rs` — NodeId, ScopeId + dense-interning helpers.
-- `diagnostic.rs` — Diagnostic, Severity, DiagPhase.
-- `tokens.rs` — TokenKind.
-- `nodes.rs` — AstNodeKind + shared node annotation slots.
+- `span.rs`. Span, FileId, ByteOffset.
+- `ids.rs`. NodeId, ScopeId + dense-interning helpers.
+- `diagnostic.rs`. Diagnostic, Severity, DiagPhase.
+- `tokens.rs`. TokenKind.
+- `nodes.rs`. AstNodeKind + shared node annotation slots.
 
 ## Sources
 

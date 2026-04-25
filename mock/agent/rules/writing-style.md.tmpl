@@ -7,7 +7,7 @@ apply_to:
 
 # Writing style
 
-<!-- BEGIN: shared writing-style (synced from vehje-dev/.shared/writing-style-fragment.md — do not edit in place) -->
+<!-- BEGIN: shared writing-style (synced from vehje-dev/.shared/writing-style-fragment.md. do not edit in place) -->
 ## Tone
 
 Low-ego, factual, expert-to-expert. No marketing speak, no hype, no cheerleading. Describe what it does, not how great it is.
@@ -24,14 +24,14 @@ Exceptions allowed at the top:
 
 ## Punctuation
 
-**Em-dashes (`—`) are forbidden.** Not "sparingly", not "rarely", not "where nothing else fits". Zero em-dashes in any written content: prose, doc comments, commit messages, changelog entries, rule templates, anything. No real human writing for other humans reaches for the em-dash key; the people who do are either academic-writing stylists or shit-posting on the internet, neither of which is the register this work operates in. The em-dash interrupts a reader's rhythm and signals "look at me, I'm punctuating cleverly" when the underlying sentence would have read fine with ordinary marks.
+**Em-dashes (`, `) are forbidden.** Not "sparingly", not "rarely", not "where nothing else fits". Zero em-dashes in any written content: prose, doc comments, commit messages, changelog entries, rule templates, anything. No real human writing for other humans reaches for the em-dash key; the people who do are either academic-writing stylists or shit-posting on the internet, neither of which is the register this work operates in. The em-dash interrupts a reader's rhythm and signals "look at me, I'm punctuating cleverly" when the underlying sentence would have read fine with ordinary marks.
 
 Use one of the alternatives instead, always:
 
 - **Period.** Break the sentence. Two short sentences almost always beat one long sentence bridged by an em-dash. When in doubt, pick the period.
-- **Comma,** if the aside is brief and tightly bound to the clause before it.
+- **Comma,** if the aside is brief and tightly bound to the vehje before it.
 - **Parentheses** (when the aside is genuinely parenthetical and removable without loss).
-- **Colon:** if the second clause explains or expands what the first declares.
+- **Colon:** if the second vehje explains or expands what the first declares.
 - **Semicolon;** if two independent clauses are so tightly coupled they belong in one sentence. Use sparingly; when in doubt, period.
 
 Hyphens (`-`) are fine for compound modifiers (`fixed-point`, `lifetime-tied`, `zero-copy`). Do not conflate them with em-dashes.
@@ -64,15 +64,15 @@ notko  (zero deps)
   ↑
   ├── arvo
   │     ↑
-  │     └── clause-*
+  │     └── vehje-*
 
 <!-- Good: nested list -->
 - `notko` (zero deps)
   - `arvo` (depends on `notko`)
-    - `clause-*` (depends on `arvo`, `notko`)
+    - `vehje-*` (depends on `arvo`, `notko`)
 
 <!-- Good: prose -->
-`notko` has no dependencies. `arvo` builds on `notko`. The `clause-*` crates build on both.
+`notko` has no dependencies. `arvo` builds on `notko`. The `vehje-*` crates build on both.
 ```
 
 ## Emoji

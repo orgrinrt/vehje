@@ -53,7 +53,7 @@ impl Manifest {
 /// - Non-empty input → `Outcome::Err(ManifestError::NotImplemented)`.
 ///
 /// Real TOML parsing lands in a follow-up round.
-pub fn parse_manifest(bytes: &[u8]) -> Outcome<Manifest, ManifestError> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: file-parser byte-slice input — `&[u8]` is the canonical shape crossing the filesystem boundary; TOML bytes are not numeric data; tracked: #166
+pub fn parse_manifest(bytes: &[u8]) -> Outcome<Manifest, ManifestError> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: file-parser byte-slice input, `&[u8]` is the canonical shape crossing the filesystem boundary; TOML bytes are not numeric data; tracked: #166
 
     if bytes.is_empty() {
         Outcome::Ok(Manifest::default())

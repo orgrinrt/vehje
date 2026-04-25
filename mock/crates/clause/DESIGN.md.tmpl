@@ -1,8 +1,8 @@
-# clause — Design (top-level binary)
+# vehje. Design (top-level binary)
 
 Command-line binary tying together the compiler phase crates
 into a single shippable artifact. No algorithmic logic lives
-here — `vehje` only parses arguments, reads source files, and
+here. `vehje` only parses arguments, reads source files, and
 hands inputs to phase crates in order. Every phase owns its
 own logic.
 
@@ -20,11 +20,11 @@ reserve their exit-code semantics so scripts against them do
 not break as bodies land.
 
 ```
-clause lex <file>      # tokenise + print tokens
-clause parse <file>    # lex + parse + print AST
-clause check <file>    # through typecheck + report diagnostics
-clause build <file>    # through codegen + emit target
-clause run <file>      # compile + invoke interpreter
+vehje lex <file>      # tokenise + print tokens
+vehje parse <file>    # lex + parse + print AST
+vehje check <file>    # through typecheck + report diagnostics
+vehje build <file>    # through codegen + emit target
+vehje run <file>      # compile + invoke interpreter
 ```
 
 ### lex
@@ -49,11 +49,11 @@ line with two-space indent.
 
 Exit codes:
 
-- `0` — tokenisation completed without lex diagnostics.
-- `1` — at least one lex diagnostic fired (unterminated block
+- `0`. tokenisation completed without lex diagnostics.
+- `1`. at least one lex diagnostic fired (unterminated block
   comment, unclassifiable byte). Diagnostics go to stderr
   prefixed with `file:line:col`.
-- `2` — I/O failure (`<file>` missing or unreadable).
+- `2`. I/O failure (`<file>` missing or unreadable).
 
 ### parse / check / build / run
 
@@ -67,14 +67,14 @@ not change when bodies land.
 The binary is a dispatch spine. Its files each route one
 subcommand:
 
-- `main.rs` — argument parse + subcommand dispatch.
-- `args.rs` — hand-rolled CLI parser (no `clap` / `argh` this
+- `main.rs`. argument parse + subcommand dispatch.
+- `args.rs`. hand-rolled CLI parser (no `clap` / `argh` this
   round).
-- `lex.rs` — the only real body this round.
-- `parse.rs` / `check.rs` / `build.rs` / `run.rs` — stubs.
-- `diag.rs` — diagnostic printer (file:line:col prefix plus
+- `lex.rs`. the only real body this round.
+- `parse.rs` / `check.rs` / `build.rs` / `run.rs`. stubs.
+- `diag.rs`. diagnostic printer (file:line:col prefix plus
   phase tag plus message body).
-- `lib.rs` — shared orchestration surface (empty in round one;
+- `lib.rs`. shared orchestration surface (empty in round one;
   earns content when subcommands share helpers).
 
 Every subcommand file stays under 80 lines. Logic belongs in
@@ -82,14 +82,14 @@ the phase crates, not here.
 
 ## Dependencies
 
-- `vehje-ir` — shared types (`Diagnostic`, `Span`, `FileId`,
+- `vehje-ir`. shared types (`Diagnostic`, `Span`, `FileId`,
   `TokenKind`).
-- `vehje-lex` — the lexer.
-- `vehje-syntax` — parse entry.
-- `vehje-resolve` — resolve entry.
-- `vehje-typecheck` — typecheck entry.
-- `vehje-codegen` — emit entry.
-- `notko` — `Maybe<T>`, `Outcome<T, E>`.
+- `vehje-lex`. the lexer.
+- `vehje-syntax`. parse entry.
+- `vehje-resolve`. resolve entry.
+- `vehje-typecheck`. typecheck entry.
+- `vehje-codegen`. emit entry.
+- `notko`. `Maybe<T>`, `Outcome<T, E>`.
 
 No `clap` / `argh` dependency. CLI is small enough that a
 hand-rolled parser under `args.rs` costs less than the
@@ -108,6 +108,6 @@ swapping the hard-coded chain for a graph walk.
 
 - 202604211916_topic.binary-cli-skeleton.md
 - 202604191300_topic.vehje-design-seed.md (authoritative spec)
-- stellar-heritage/tools/clause/ (Python parity oracle — CLI
+- stellar-heritage/tools/vehje/ (Python parity oracle. CLI
   surface diverges from the oracle; parity is semantic, not
   flag-for-flag)

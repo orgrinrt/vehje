@@ -18,7 +18,7 @@ use vehje_ir::{DiagPhase, Diagnostic, Severity, Span};
 /// additional kinds (missing delimiter, invalid pattern, ambiguous
 /// operator) arrive alongside the production that first emits them.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
-#[repr(u8)]
+#[repr(u8)]  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
 pub enum SyntaxErrorKind {
     /// A token appeared where none of the active productions expect
     /// one.

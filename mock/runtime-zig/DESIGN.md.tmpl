@@ -1,19 +1,19 @@
-# clause-runtime-zig — Design
+# vehje-runtime-zig. Design
 
-Zig implementation of the clause runtime. Consumes the C ABI
+Zig implementation of the vehje runtime. Consumes the C ABI
 (vehje-runtime-abi); implements the entry points with a Vehje-
 IR interpreter, scratch-var folding, and generative expansion.
 
 ## Scope
 
-- Arena allocator — per-session state owning compile-time
+- Arena allocator. per-session state owning compile-time
   buffers.
-- IR interpreter — evaluates macro bodies + generative subgraph
+- IR interpreter. evaluates macro bodies + generative subgraph
   blueprints against the incoming ABI node buffers.
-- Scratch-var evaluator — folds compile-time expressions to byte
+- Scratch-var evaluator. folds compile-time expressions to byte
   blobs the compiler re-inserts into the AST.
-- TokenStream emitter — macros return AbiToken arrays.
-- Error reporter — maps Zig-side failures to AbiDiagnostic.
+- TokenStream emitter. macros return AbiToken arrays.
+- Error reporter. maps Zig-side failures to AbiDiagnostic.
 
 ## Round-skeleton scope
 
@@ -34,7 +34,7 @@ Phase 6 skeleton round (2026-04-20) ships:
 - `.gitignore` excluding `zig-out/`, `zig-cache/`.
 - `BACKLOG.md` listing deferred runtime features.
 
-### `ClauseResult` ABI layout — scalar i32
+### `ClauseResult` ABI layout. scalar i32
 
 The Rust side declares `#[repr(i32)] enum ClauseResult { Ok = 0,
 Err = -1, NullHandle = -2, InvalidInput = -3 }`. On System V
@@ -46,7 +46,7 @@ Alternative considered and rejected: mirror the Rust enum via
 `pub const ClauseResult = extern struct { code: i32 }` (a
 one-field wrapper struct). Rejected because on MSVC Windows
 x64 a one-field extern struct returns via hidden-pointer
-(sret) while a `#[repr(i32)]` enum returns in `eax` — the two
+(sret) while a `#[repr(i32)]` enum returns in `eax`. the two
 sides would disagree on the calling convention. Scalar `i32`
 return is the trivially portable form across every ABI.
 
@@ -61,7 +61,7 @@ TokenStream emitter, and Zig test suite are all BACKLOG.
 ## Non-scope
 
 - The ABI contract itself (`vehje-runtime-abi`).
-- The compiler-side dispatch (`clause-runtime-driver`).
+- The compiler-side dispatch (`vehje-runtime-driver`).
 - Runtime performance tuning (post-Phase 6).
 
 ## Build integration
@@ -71,14 +71,14 @@ TokenStream emitter, and Zig test suite are all BACKLOG.
 - Target-triple-specific builds; a distribution bundle pairs the
   Rust compiler binary with the matching dylib for each supported
   platform.
-- Mockspace does not build this tree — it ships source but
+- Mockspace does not build this tree. it ships source but
   cargo / mockspace lints ignore the `.zig` files. The Zig side
   is validated only by running `zig build` manually or in CI.
 
 ## Dependencies
 
 - Standard Zig library only. No third-party Zig packages. No
-  runtime allocator — arena-only.
+  runtime allocator. arena-only.
 
 ## Sources
 

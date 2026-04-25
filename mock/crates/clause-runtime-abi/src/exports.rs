@@ -1,8 +1,8 @@
 //! `extern "C"` entry points exposed by the `cdylib` build
-//! of `clause-runtime-abi`.
+//! of `vehje-runtime-abi`.
 //!
 //! These are the symbols the Zig runtime (or any other backend)
-//! implements on its side; the driver (`clause-runtime-driver`)
+//! implements on its side; the driver (`vehje-runtime-driver`)
 //! resolves them at load time via `dlsym`. The Rust-side bodies
 //! here are fall-backs / reference implementations, and every
 //! body in the skeleton round is a stub.
@@ -53,7 +53,7 @@ pub extern "C" fn vehje_runtime_free(rt: *mut ClauseRuntime) {
 //   1. catch_unwind wraps any Rust code that can panic (UB across
 //      FFI otherwise).
 //   2. null+nonzero-len input guards are present for the
-//      `(input, len)` pair — a null `input` with `len > 0` is a
+//      `(input, len)` pair, a null `input` with `len > 0` is a
 //      caller bug that must surface as `ClauseResult::InvalidInput`,
 //      not a segfault.
 // Both are tracked in BACKLOG as hard gates before non-stub
@@ -61,8 +61,8 @@ pub extern "C" fn vehje_runtime_free(rt: *mut ClauseRuntime) {
 #[unsafe(no_mangle)]
 pub extern "C" fn vehje_runtime_execute(
     rt: *mut ClauseRuntime,
-    input: *const u8,
-    len: usize,
+    input: *const u8, // lint:allow(arvo-types-only) tracked: #207 lint:allow(no-bare-numeric) tracked: #207
+    len: arvo::USize,
 ) -> ClauseResult {
     let _ = (rt, input, len);
     ClauseResult::Err

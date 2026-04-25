@@ -13,7 +13,7 @@ use vehje_resolve::Resolved;
 /// Read-only context passed to every `CodegenTarget::emit` call.
 ///
 /// Holds the resolver output. Targets should not mutate anything
-/// through the context — diagnostics come back via the
+/// through the context, diagnostics come back via the
 /// `CodegenArtifact.diagnostics` field on the return value. A
 /// mutable `DiagnosticSink` + `ArtefactCache` pair is BACKLOG
 /// for once emission volume justifies it.

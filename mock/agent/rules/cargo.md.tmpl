@@ -27,12 +27,12 @@ Vehje consumes two sibling substrate repos as git deps, defined once
 at `[workspace.dependencies]`:
 
 - `arvo`, `arvo-bits`, `arvo-bitmask`, `arvo-graph`, `arvo-sparse`,
-  `arvo-spectral`, `arvo-comb` — numeric + graph primitives.
-- `hilavitkutin-api`, `hilavitkutin`, `hilavitkutin-build` — pipeline
+  `arvo-spectral`, `arvo-comb`. numeric + graph primitives.
+- `hilavitkutin-api`, `hilavitkutin`, `hilavitkutin-build`. pipeline
   execution. Runtime only; the compiler rarely needs the frame engine.
 
 Both are currently pinned to `branch = "main"`. Cross-repo iteration
-(touching an arvo or hilavitkutin API while working in clause) uses a
+(touching an arvo or hilavitkutin API while working in vehje) uses a
 temporary `[patch."…"]` block in `mock/Cargo.toml` pointing at the
 local sibling. Remove the patch before pushing.
 
@@ -44,7 +44,7 @@ local sibling. Remove the patch before pushing.
   cross-builds (e.g. `openssl-sys` with system linkage; prefer
   pure-Rust or rustls alternatives).
 - The Rust compiler may use `std`. The Zig runtime does not depend on
-  Rust or on `std` — it communicates via C ABI the Rust side defines.
+  Rust or on `std`. it communicates via C ABI the Rust side defines.
   No `no_std` concern for the compiler crates; that constraint lives
   downstream in the runtime.
 

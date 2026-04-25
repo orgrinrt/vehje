@@ -30,17 +30,17 @@ use crate::error::SyntaxError;
 #[derive(
     Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default,
 )]
-pub struct TokenCursor(pub u32);
+pub struct TokenCursor(pub u32);  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207 lint:allow(no-public-raw-field) tracked: #207
 
 impl TokenCursor {
     /// Construct a cursor pointing at the token at index `idx`.
-    pub const fn new(idx: u32) -> Self {
+    pub const fn new(idx: u32) -> Self {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         Self(idx)
     }
 
     /// The cursor index as a `usize` for slice indexing.
-    pub const fn as_usize(self) -> usize {
-        self.0 as usize
+    pub const fn as_usize(self) -> usize {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+        self.0 as usize  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     }
 
     /// A cursor advanced by one position.
@@ -81,7 +81,7 @@ impl<'a> Parser<'a> {
 
     /// Token `offset` positions past the cursor, or `Maybe::Isnt`
     /// if out of range.
-    pub fn peek_at(&self, offset: usize) -> Maybe<&Token> {
+    pub fn peek_at(&self, offset: usize) -> Maybe<&Token> {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         match self.tokens.get(self.cursor.as_usize() + offset) {
             Some(t) => Maybe::Is(t),
             None => Maybe::Isnt,
@@ -101,13 +101,13 @@ impl<'a> Parser<'a> {
     }
 
     /// `true` if the current token has the given kind.
-    pub fn at(&self, kind: TokenKind) -> bool {
+    pub fn at(&self, kind: TokenKind) -> bool {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         self.peek_kind() == Maybe::Is(kind)
     }
 
     /// `true` if the cursor is past the end of the slice or the
     /// current token is `Eof`. Both conventions terminate parse.
-    pub fn is_eof(&self) -> bool {
+    pub fn is_eof(&self) -> bool {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         match self.peek_kind() {
             Maybe::Isnt => true,
             Maybe::Is(TokenKind::Eof) => true,

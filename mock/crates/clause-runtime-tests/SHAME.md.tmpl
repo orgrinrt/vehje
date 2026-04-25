@@ -1,0 +1,11 @@
+# vehje-runtime-tests, known gaps
+
+## no-std
+
+The crate root carries `#![cfg_attr(not(feature = "std"), no_std)]`
+with `default = ["std"]`. The harness exercises driver-side dylib
+load paths through std::path types. The no_std variant is reserved
+for future cross-target test runners. The lint pack reads only the
+literal `#![no_std]` and does not yet recognise the cfg_attr form;
+refinement is parked under a future mockspace task. Until then
+this gap is documented and accepted.

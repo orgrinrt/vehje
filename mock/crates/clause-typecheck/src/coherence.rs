@@ -13,7 +13,7 @@ use hilavitkutin_api::DiagnosticSink;
 use crate::ctx::ValidatorCtx;
 use crate::validator::Validator;
 
-/// Coherence validator — trait-impl overlap detection.
+/// Coherence validator, trait-impl overlap detection.
 ///
 /// ZST; carries no state. The implementation is a stub that
 /// returns an empty diagnostic vec; the real walk lands in a

@@ -1,37 +1,37 @@
-# vehje-syntax — backlog
+# vehje-syntax. backlog
 
-## Deferred productions (skeleton round — one per follow-up)
+## Deferred productions (skeleton round. one per follow-up)
 
 Each bullet lands as its own micro-round: add the production
 method on `Parser`, extend `parse` to dispatch, add a test file.
 The skeleton harness (`Ast`, `AstNode`, `Parser`, `SyntaxError`,
-top-level `parse`) is already stable — these rounds do not churn
+top-level `parse`) is already stable. these rounds do not churn
 it.
 
-- **Primary expressions** — identifier path. (Literal path
+- **Primary expressions**. identifier path. (Literal path
   landed with the skeleton.)
-- **Binary expressions** — precedence climbing over `+`, `-`,
+- **Binary expressions**. precedence climbing over `+`, `-`,
   `*`, `/`, `%`, comparisons, equality, logical and/or, bitwise
   and/or/xor, shifts.
-- **Unary expressions** — prefix `-`, `!`, `&`, `*`, `&mut`.
-- **Call expressions + argument lists** — `callee(a, b, c)`,
+- **Unary expressions**. prefix `-`, `!`, `&`, `*`, `&mut`.
+- **Call expressions + argument lists**. `callee(a, b, c)`,
   including trailing commas.
-- **Block expressions** — `{ stmt*; expr? }` with the
+- **Block expressions**. `{ stmt*; expr? }` with the
   trailing-expression-is-value rule.
-- **Let / assignment statements** — `let pat: ty = expr;`,
+- **Let / assignment statements**. `let pat: ty = expr;`,
   `lvalue = expr;`, compound assigns.
-- **If / match expressions** — `if cond { … } else { … }`,
+- **If / match expressions**. `if cond { … } else { … }`,
   `match scrutinee { arm => expr, … }`.
-- **Function definitions + parameter lists** — `fn name(params)
+- **Function definitions + parameter lists**. `fn name(params)
   -> ret { body }`, including `pub`, `mut`, default values
   (BACKLOG on defaults until the lang decides).
-- **Type annotations** — named types, path types, reference /
+- **Type annotations**. named types, path types, reference /
   pointer types, tuple types, array types, function types.
-- **Struct / enum definitions** — including tuple structs and
+- **Struct / enum definitions**. including tuple structs and
   struct-like enum variants.
-- **Module / import declarations** — `mod name;`, `mod name {
+- **Module / import declarations**. `mod name;`, `mod name {
   …; }`, `use path::…;`.
-- **Pattern syntax** — identifier, literal, tuple, struct,
+- **Pattern syntax**. identifier, literal, tuple, struct,
   enum variant, `_`, range, or-pattern.
 
 ## Error recovery
@@ -39,7 +39,7 @@ it.
 - Synchronise on `;`, `}`, and top-level keywords (`fn`, `let`,
   `struct`, `enum`, `mod`, `use`, `impl`, `trait`, `type`).
   After emitting a `SyntaxError`, advance to the next sync point
-  and continue parsing — multiple errors per invocation.
+  and continue parsing. multiple errors per invocation.
 - Parser switches from `Outcome<Ast, SyntaxError>` to a
   `{ ast: Ast, errors: &[SyntaxError] }` return shape; the
   skeleton's `Outcome` return stays as a convenience wrapper for
