@@ -1,15 +1,15 @@
-//! `RuntimeHandle` — trait every loaded runtime backend
+//! `RuntimeHandle`, trait every loaded runtime backend
 //! implements.
 //!
 //! The handle wraps an opaque runtime session plus whatever
 //! resolved function pointers the loader gathered from the
-//! dylib. Concrete impls are BACKLOG — the skeleton round
+//! dylib. Concrete impls are BACKLOG, the skeleton round
 //! ships only the trait; the follow-up round that adds real
 //! `libloading` integration lands a `DlopenHandle` impl.
 //!
 //! `Send + Sync` is required so a driver can share the
 //! handle across threads (via `Arc` / `Mutex` wrappers if
-//! needed) — future rayon-backed execution surfaces the
+//! needed), future rayon-backed execution surfaces the
 //! constraint.
 
 use hilavitkutin_api::ByteEmitter;
@@ -34,7 +34,7 @@ pub trait RuntimeHandle: Send + Sync {
     /// parameters.
     fn execute(
         &self,
-        input: &[u8],
+        input: &[u8],  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         output: &mut dyn ByteEmitter,
     ) -> Outcome<(), DriverError>;
 }

@@ -1,0 +1,14 @@
+# vehje-runtime-abi, known gaps
+
+## no-std
+
+The crate root carries `#![cfg_attr(not(feature = "std"), no_std)]`
+with `default = ["std"]` rather than a hardcoded `#![no_std]`. The
+`std` cargo feature is on by default for stable cdylib builds: a
+cdylib on stable Rust requires a panic runtime, which std provides
+out of the box. Disabling the std feature switches to the gated
+`#[panic_handler]` in `lib.rs` for embedded targets that bring their
+own unwind story. The lint pack reads only the literal `#![no_std]`
+and does not yet recognise the cfg_attr form; refining the lint to
+treat the cfg_attr pattern as compliant is parked under a future
+mockspace task. Until then this gap is documented and accepted.

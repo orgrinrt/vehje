@@ -1,4 +1,4 @@
-# vehje-runtime-abi — backlog
+# vehje-runtime-abi. backlog
 
 ## Deferred ABI type surface
 
@@ -9,22 +9,29 @@
 - `From` impls between vehje-ir types and their `Abi*`
   mirrors (one direction: vehje-ir → Abi for outgoing data;
   Abi → vehje-ir for incoming diagnostics).
-- `abi_version: u32` prefix on every public struct — carries
+- `abi_version: u32` prefix on every public struct. carries
   the ABI-version invariant R2 mandates.
+- Flip bare-primitive FFI-wire sites to `UWire<N>`. Current
+  policy keeps `i32` / `u32` scalars on the C-ABI boundary
+  bare with `lint:allow(arvo-types-only) tracked: #207` where
+  no arvo newtype provides wire-identical layout. A future
+  `arvo::UWire<N>` (see arvo BACKLOG) is a fixed-width wire-
+  stable newtype without the `S: Strategy` axis. When it
+  lands, every bare-primitive FFI site in this crate flips.
 
 ## Deferred entry points
 
-- `vehje_runtime_init(arena_bytes: u32)` — per-session arena
+- `vehje_runtime_init(arena_bytes: u32)`. per-session arena
   allocation.
-- `vehje_runtime_shutdown(handle)` — teardown entry.
-- `vehje_runtime_invoke_macro(handle, nodes, len)` — macro
+- `vehje_runtime_shutdown(handle)`. teardown entry.
+- `vehje_runtime_invoke_macro(handle, nodes, len)`. macro
   dispatch surface.
-- `vehje_runtime_eval_scratch(handle, expr_nodes, len)` —
+- `vehje_runtime_eval_scratch(handle, expr_nodes, len)` , 
   compile-time scratch evaluation.
-- `vehje_runtime_expand_generative(handle, blueprint, len)` —
+- `vehje_runtime_expand_generative(handle, blueprint, len)` , 
   generative subgraph expansion.
 - `vehje_runtime_last_error(handle) -> *const AbiDiagnostic`
-  — retrieve the last-recorded error diagnostic.
+ . retrieve the last-recorded error diagnostic.
 
 ## Deferred framework features
 
@@ -51,6 +58,6 @@
 ## Non-blocking follow-ups
 
 - C header generation (`cbindgen` run during build).
-- Stable ABI versioning tag — bumped on every breaking change.
+- Stable ABI versioning tag. bumped on every breaking change.
 - Cross-platform calling-convention audit (stdcall vs cdecl
   on Windows is the usual hazard).

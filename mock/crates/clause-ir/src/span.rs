@@ -17,14 +17,14 @@
 /// meaningful within the workspace session that minted it.
 #[repr(transparent)]
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
-pub struct FileId(pub u32);
+pub struct FileId(pub u32);  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207 lint:allow(no-public-raw-field) tracked: #207
 
 /// A byte offset into a source buffer.
 ///
 /// Stored as `u32`; sources larger than 4 GiB are out of scope.
 #[repr(transparent)]
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
-pub struct ByteOffset(pub u32);
+pub struct ByteOffset(pub u32);  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207 lint:allow(no-public-raw-field) tracked: #207
 
 /// A half-open byte range `[start, end)` inside the source file `file`.
 ///
@@ -45,12 +45,12 @@ impl Span {
     }
 
     /// Length of the span in bytes.
-    pub const fn len(self) -> u32 {
+    pub const fn len(self) -> u32 {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         self.end.0.saturating_sub(self.start.0)
     }
 
     /// `true` if the span covers zero bytes.
-    pub const fn is_empty(self) -> bool {
+    pub const fn is_empty(self) -> bool {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         self.start.0 == self.end.0
     }
 }

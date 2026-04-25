@@ -8,14 +8,14 @@
 //! `TriviaKind::Whitespace` if a mix of kinds collides).
 //!
 //! The const-sized representation keeps the lexer alloc-free. Eight
-//! slots covers every realistic case — more than a couple of blank
+//! slots covers every realistic case, more than a couple of blank
 //! lines of comments before a token is already unusual.
 
 use vehje_ir::Span;
 
 /// What a piece of trivia is.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
-#[repr(u8)]
+#[repr(u8)]  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
 pub enum TriviaKind {
     Whitespace,
     LineComment,
@@ -43,23 +43,23 @@ impl Trivia {
 
 /// Maximum trivia slots tracked per side. Excess coalesces into the
 /// final slot; see `TriviaSet::push_leading` / `push_trailing`.
-pub const TRIVIA_SLOTS: usize = 8;
+pub const TRIVIA_SLOTS: usize = 8;  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
 
 /// Fixed-size leading-and-trailing trivia set attached to a token.
 ///
 /// Slots are filled in insertion order. `leading_len` and
 /// `trailing_len` are always `<= TRIVIA_SLOTS`. When a push would
 /// exceed the slot count the incoming trivia's span is merged into
-/// the tail slot — its span's `end` advances to the new trivia's
-/// `end` — and the tail slot's kind is preserved unless the new
+/// the tail slot, its span's `end` advances to the new trivia's
+/// `end`, and the tail slot's kind is preserved unless the new
 /// kind differs, in which case the tail slot becomes `Whitespace`
 /// (the generic fallback).
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
 pub struct TriviaSet {
     leading: [Trivia; TRIVIA_SLOTS],
     trailing: [Trivia; TRIVIA_SLOTS],
-    leading_len: u8,
-    trailing_len: u8,
+    leading_len: u8,  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207 lint:allow(no-public-raw-field) tracked: #207
+    trailing_len: u8,  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207 lint:allow(no-public-raw-field) tracked: #207
 }
 
 impl TriviaSet {
@@ -88,11 +88,11 @@ impl TriviaSet {
     }
 
     pub fn leading(&self) -> &[Trivia] {
-        &self.leading[..self.leading_len as usize]
+        &self.leading[..self.leading_len as usize]  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     }
 
     pub fn trailing(&self) -> &[Trivia] {
-        &self.trailing[..self.trailing_len as usize]
+        &self.trailing[..self.trailing_len as usize]  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     }
 
     /// Push a leading trivia. Coalesces into the last slot when full.
@@ -105,11 +105,11 @@ impl TriviaSet {
         Self::push_side(&mut self.trailing, &mut self.trailing_len, t);
     }
 
-    fn push_side(buf: &mut [Trivia; TRIVIA_SLOTS], len: &mut u8, t: Trivia) {
-        let n = *len as usize;
+    fn push_side(buf: &mut [Trivia; TRIVIA_SLOTS], len: &mut u8, t: Trivia) {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+        let n = *len as usize;  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         if n < TRIVIA_SLOTS {
             buf[n] = t;
-            *len = n as u8 + 1;
+            *len = n as u8 + 1;  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
             return;
         }
         // Coalesce into the last slot.

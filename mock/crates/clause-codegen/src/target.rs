@@ -27,7 +27,7 @@ use crate::error::CodegenError;
 
 /// Codegen-target interface.
 ///
-/// Implementors should be ZSTs (zero-sized types) — target state
+/// Implementors should be ZSTs (zero-sized types), target state
 /// belongs in `CodegenCtx`, not the trait object. `Sync` is
 /// required so the registry's `&'static dyn CodegenTarget`
 /// entries are thread-safe for future multi-target parallel
@@ -59,7 +59,7 @@ pub trait CodegenTarget: Sync {
     /// # Implementor note
     ///
     /// `Diagnostic.message` is `&'static str`. Targets that surface
-    /// diagnostics must use string literals or `const` slices — no
+    /// diagnostics must use string literals or `const` slices, no
     /// `format!`-produced strings. Span-enriched rendering is the
     /// responsibility of the diagnostic renderer, not the target
     /// body.

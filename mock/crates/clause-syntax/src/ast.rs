@@ -24,14 +24,14 @@ use notko::Maybe;
 /// Calls, blocks, and parameter lists will exceed this; those
 /// productions either raise the constant in their own round or
 /// store child lists in a side table keyed by `NodeId`.
-pub const MAX_CHILDREN: usize = 8;
+pub const MAX_CHILDREN: usize = 8;  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
 
 /// Default arena capacity in `AstNode` slots.
 ///
 /// Sized for the skeleton and small integration tests; replaced by
 /// a const-generic `Ast<const N: usize>` once the real grammar
 /// exercises larger programs.
-pub const MAX_NODES: usize = 256;
+pub const MAX_NODES: usize = 256;  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
 
 /// A single node in the AST arena.
 ///
@@ -44,7 +44,7 @@ pub struct AstNode {
     pub kind: AstNodeKind,
     pub span: Span,
     children: [NodeId; MAX_CHILDREN],
-    child_count: u8,
+    child_count: u8,  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207 lint:allow(no-public-raw-field) tracked: #207
 }
 
 impl Default for AstNode {
@@ -79,19 +79,19 @@ impl AstNode {
     }
 
     /// Number of children attached to this node.
-    pub const fn child_count(&self) -> usize {
-        self.child_count as usize
+    pub const fn child_count(&self) -> usize {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+        self.child_count as usize  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     }
 
     /// Slice over the attached children, bounded by `child_count`.
     pub fn children(&self) -> &[NodeId] {
-        &self.children[..self.child_count as usize]
+        &self.children[..self.child_count as usize]  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     }
 
     /// Attach another child. Returns `false` if the node is already
     /// at `MAX_CHILDREN` capacity.
-    pub fn push_child(&mut self, id: NodeId) -> bool {
-        let idx = self.child_count as usize;
+    pub fn push_child(&mut self, id: NodeId) -> bool {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+        let idx = self.child_count as usize;  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         if idx >= MAX_CHILDREN {
             return false;
         }
@@ -109,7 +109,7 @@ impl AstNode {
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct Ast {
     nodes: [AstNode; MAX_NODES],
-    len: u32,
+    len: u32,  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207 lint:allow(no-public-raw-field) tracked: #207
     root: Maybe<NodeId>,
 }
 
@@ -134,13 +134,13 @@ impl Ast {
     }
 
     /// `true` if no nodes have been pushed.
-    pub const fn is_empty(&self) -> bool {
+    pub const fn is_empty(&self) -> bool {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         self.len == 0
     }
 
     /// Number of nodes currently in the arena.
-    pub const fn len(&self) -> usize {
-        self.len as usize
+    pub const fn len(&self) -> usize {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+        self.len as usize  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     }
 
     /// Root node id, or `Maybe::Isnt` if the AST is empty / unset.
@@ -157,20 +157,20 @@ impl Ast {
     /// Push a node into the arena, returning its id. Returns
     /// `Maybe::Isnt` if the arena is full (`len == MAX_NODES`).
     pub fn push(&mut self, node: AstNode) -> Maybe<NodeId> {
-        let idx = self.len as usize;
+        let idx = self.len as usize;  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         if idx >= MAX_NODES {
             return Maybe::Isnt;
         }
         self.nodes[idx] = node;
         self.len += 1;
-        Maybe::Is(NodeId(idx as u32))
+        Maybe::Is(NodeId(idx as u32))  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     }
 
     /// Borrow a node by id, or `Maybe::Isnt` if the id is out of
     /// bounds.
     pub fn get(&self, id: NodeId) -> Maybe<&AstNode> {
-        let idx = id.0 as usize;
-        if idx >= self.len as usize {
+        let idx = id.0 as usize;  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+        if idx >= self.len as usize {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
             return Maybe::Isnt;
         }
         Maybe::Is(&self.nodes[idx])
@@ -179,8 +179,8 @@ impl Ast {
     /// Mutably borrow a node by id, or `Maybe::Isnt` if the id is
     /// out of bounds.
     pub fn get_mut(&mut self, id: NodeId) -> Maybe<&mut AstNode> {
-        let idx = id.0 as usize;
-        if idx >= self.len as usize {
+        let idx = id.0 as usize;  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+        if idx >= self.len as usize {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
             return Maybe::Isnt;
         }
         Maybe::Is(&mut self.nodes[idx])

@@ -1,7 +1,7 @@
 //! Loader tests.
 //!
 //! Skeleton round: `RuntimeLoader::load` always returns
-//! `Err(LoaderError::NotImplemented)` — assert the error
+//! `Err(LoaderError::NotImplemented)`, assert the error
 //! variant for two different input paths.
 
 use std::path::Path;

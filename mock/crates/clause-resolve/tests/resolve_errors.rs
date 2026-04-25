@@ -4,7 +4,7 @@ use vehje_ir::{ByteOffset, FileId, Span};
 use vehje_resolve::ResolveError;
 use hilavitkutin_str::str_const;
 
-fn span(start: u32, end: u32) -> Span { // lint:allow(no-bare-numeric) reason: test-helper boundary — Span constructors take bare u32s until the substrate offers a typed-width span builder; tracked: #81
+fn span(start: u32, end: u32) -> Span { // lint:allow(no-bare-numeric) reason: test-helper boundary, Span constructors take bare u32s until the substrate offers a typed-width span builder; tracked: #81
     Span::new(FileId(0), ByteOffset(start), ByteOffset(end)) // lint:allow(no-bare-numeric) reason: FileId(0) sentinel for single-file tests; tracked: #81
 }
 

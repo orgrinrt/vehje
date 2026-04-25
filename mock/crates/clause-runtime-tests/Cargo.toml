@@ -14,4 +14,5 @@ notko.workspace = true
 mockspace.workspace = true
 
 [features]
-default = []
+default = ["std"]
+std = []

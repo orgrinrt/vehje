@@ -2,7 +2,7 @@
 //!
 //! `Scope` is a single lexical scope: an optional parent and a
 //! name → `Symbol` map. `ScopeTree` is the flat arena of all
-//! scopes, keyed by `ScopeId` (from `clause-ir`). The root scope
+//! scopes, keyed by `ScopeId` (from `vehje-ir`). The root scope
 //! lives at index `0` and has no parent.
 //!
 //! The map is keyed by interned `Str` handles; comparison is

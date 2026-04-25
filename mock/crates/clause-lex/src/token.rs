@@ -1,4 +1,4 @@
-//! Lex-level `Token` — kind + span + attached trivia.
+//! Lex-level `Token`, kind + span + attached trivia.
 //!
 //! A `Token` carries the discriminator the parser pattern-matches on,
 //! the source span it covers, and the trivia (whitespace + comments)

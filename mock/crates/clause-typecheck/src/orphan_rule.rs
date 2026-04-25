@@ -13,7 +13,7 @@ use hilavitkutin_api::DiagnosticSink;
 use crate::ctx::ValidatorCtx;
 use crate::validator::Validator;
 
-/// Orphan-rule validator — foreign-type / foreign-trait impl
+/// Orphan-rule validator, foreign-type / foreign-trait impl
 /// guard.
 ///
 /// ZST; carries no state. The implementation is a stub that

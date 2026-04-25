@@ -12,7 +12,7 @@ validate with `cargo check`; lock a doc changelist; then produce an
 src changelist. Only after both changelists lock does code move to
 real implementation paths. See `mock/WORKFLOW.md.tmpl`.
 
-### Compiler posture — strict by default
+### Compiler posture. strict by default
 
 At every crate root, deny warnings that hide real bugs:
 
@@ -29,7 +29,7 @@ correctness; warnings that mask mistakes stay off.
 - Infallible paths may use `.unwrap()` only when the compiler cannot
   see the invariant (rare). In that case, attach a short `// invariant:`
   comment explaining why the unwrap is sound.
-- `.expect("foo")` with a message is no better than `.unwrap()` — it
+- `.expect("foo")` with a message is no better than `.unwrap()`. it
   still panics. Return a `Result` instead.
 
 ### Tagged enums + trait dispatch, not duck typing
@@ -41,15 +41,15 @@ port does not. Model variation as:
   binding forms).
 - A trait with a blanket impl + newtypes when the set is open but
   known at compile time (pass registrations, validator rules).
-- A trait object (`dyn Trait`) — avoid. Compile-time monomorphisation
+- A trait object (`dyn Trait`). avoid. Compile-time monomorphisation
   is the house style; `dyn` / `TypeId` / `std::any` are forbidden in
   framework code. Leaf tooling that genuinely needs heterogeneous
   storage may use `dyn`, with a design-round note explaining why.
 
 ### Descriptive errors
 
-Every error variant carries structured context — span, phase,
-expected/actual, relevant identifier — not just a message string.
+Every error variant carries structured context. span, phase,
+expected/actual, relevant identifier. not just a message string.
 Error types are tagged enums per phase (e.g. `LexError`, `ParseError`,
 `ResolveError`, `TypeError`) joined by a crate-level `Diagnostic`
 that carries span + severity + code.
@@ -70,7 +70,7 @@ are typechecked like normal code.
 
 `macro_rules!` inside the Rust implementation is acceptable for Rust
 boilerplate (span forwarding, diagnostic code enums, test matrices).
-It is never acceptable for expressing Vehje semantics — every bit of
+It is never acceptable for expressing Vehje semantics. every bit of
 Vehje's macro story lands in the proc-macro compiler pass.
 
 ### Reuse the substrate
@@ -78,11 +78,11 @@ Vehje's macro story lands in the proc-macro compiler pass.
 Before adding a graph / DAG / bitmask / sparse / spectral / pipeline
 type, check the substrate:
 
-- DAG topology, traversal, dominators — `arvo-graph`.
-- Read/write sets, artifact tracking, dense-or-sparse bitmasks —
+- DAG topology, traversal, dominators. `arvo-graph`.
+- Read/write sets, artifact tracking, dense-or-sparse bitmasks , 
   `arvo-bitmask`.
-- Sparse containers — `arvo-sparse`.
-- Pipeline morsel execution, scheduler, pools — `hilavitkutin`.
+- Sparse containers. `arvo-sparse`.
+- Pipeline morsel execution, scheduler, pools. `hilavitkutin`.
 
 If a substrate API is close but wrong-shape, raise an issue (or a
 cross-repo design round) against the substrate repo. Do not fork the
@@ -98,7 +98,7 @@ extension repos (`vehje-jomini`, future), not at runtime.
 ### Game-agnostic core
 
 Nothing in this repo names a specific game. If you need to reference
-Clausewitz script, Witcher 3 script, Sims 4 script, or Lua — the
+Clausewitz script, Witcher 3 script, Sims 4 script, or Lua. the
 reference belongs in an extension repo. The base compiler is a
 language front-end, not a game adapter.
 
@@ -108,7 +108,7 @@ language front-end, not a game adapter.
   coverage.
 - Integration tests in `tests/` per crate.
 - The Python prototype's test corpus at
-  `~/Dev/stellar-heritage/tools/clause/` is the **parity oracle**:
+  `~/Dev/stellar-heritage/tools/vehje/` is the **parity oracle**:
   port relevant test cases to Rust, run them against the Rust
   implementation, verify semantic equivalence. Do not translate the
   Python implementation itself; translate the test intent.

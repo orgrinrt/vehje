@@ -1,4 +1,4 @@
-//! `NativeTarget` — Rust/LLVM codegen target.
+//! `NativeTarget`, Rust/LLVM codegen target.
 //!
 //! Placeholder for the future Rust / LLVM-IR / cranelift
 //! backend. Ported-in-spirit from the Python-era native
@@ -17,7 +17,7 @@ use crate::ctx::CodegenCtx;
 use crate::error::CodegenError;
 use crate::target::CodegenTarget;
 
-/// Native-target ZST — Rust / LLVM / cranelift backend.
+/// Native-target ZST, Rust / LLVM / cranelift backend.
 ///
 /// ZST; carries no state. The implementation is a stub that
 /// returns an empty `Binary` artifact; the real lowering walk

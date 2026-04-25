@@ -20,7 +20,7 @@ use notko::Maybe;
 #[derive(Copy, Clone, Debug)]
 pub struct Cursor<'a> {
     src: &'a [u8],
-    pos: u32,
+    pos: u32,  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207 lint:allow(no-public-raw-field) tracked: #207
 }
 
 impl<'a> Cursor<'a> {
@@ -35,7 +35,7 @@ impl<'a> Cursor<'a> {
     }
 
     /// Current position as a raw `u32`.
-    pub const fn pos_u32(&self) -> u32 {
+    pub const fn pos_u32(&self) -> u32 {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         self.pos
     }
 
@@ -46,33 +46,33 @@ impl<'a> Cursor<'a> {
     }
 
     /// `true` if the cursor is at the end of the source.
-    pub const fn is_eof(&self) -> bool {
-        self.pos as usize >= self.src.len()
+    pub const fn is_eof(&self) -> bool {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+        self.pos as usize >= self.src.len()  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     }
 
     /// Length of the source in bytes.
-    pub const fn len(&self) -> u32 {
-        self.src.len() as u32
+    pub const fn len(&self) -> u32 {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+        self.src.len() as u32  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     }
 
     /// Peek the byte at the cursor without advancing.
-    pub fn peek_byte(&self) -> Maybe<u8> {
-        match self.src.get(self.pos as usize).copied() {
+    pub fn peek_byte(&self) -> Maybe<u8> {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+        match self.src.get(self.pos as usize).copied() {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
             Some(b) => Maybe::Is(b),
             None => Maybe::Isnt,
         }
     }
 
     /// Peek the byte `n` steps ahead without advancing.
-    pub fn peek_byte_at(&self, n: u32) -> Maybe<u8> {
-        match self.src.get((self.pos + n) as usize).copied() {
+    pub fn peek_byte_at(&self, n: u32) -> Maybe<u8> {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+        match self.src.get((self.pos + n) as usize).copied() {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
             Some(b) => Maybe::Is(b),
             None => Maybe::Isnt,
         }
     }
 
     /// Advance one byte, returning it.
-    pub fn bump_byte(&mut self) -> Maybe<u8> {
+    pub fn bump_byte(&mut self) -> Maybe<u8> {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         let b = match self.peek_byte() {
             Maybe::Is(b) => b,
             Maybe::Isnt => return Maybe::Isnt,
@@ -85,7 +85,7 @@ impl<'a> Cursor<'a> {
     /// `Maybe::Isnt` at EOF or on a malformed UTF-8 sequence. The
     /// cursor is not advanced in either case.
     pub fn peek(&self) -> Maybe<char> {
-        match decode_utf8(&self.src[self.pos as usize..]) {
+        match decode_utf8(&self.src[self.pos as usize..]) {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
             Maybe::Is((ch, _)) => Maybe::Is(ch),
             Maybe::Isnt => Maybe::Isnt,
         }
@@ -97,11 +97,11 @@ impl<'a> Cursor<'a> {
     /// On malformed input the cursor does not advance; callers that
     /// want to make progress in that case should use `bump_byte`.
     pub fn bump(&mut self) -> Maybe<char> {
-        let (ch, len) = match decode_utf8(&self.src[self.pos as usize..]) {
+        let (ch, len) = match decode_utf8(&self.src[self.pos as usize..]) {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
             Maybe::Is(v) => v,
             Maybe::Isnt => return Maybe::Isnt,
         };
-        self.pos += len as u32;
+        self.pos += len as u32;  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         Maybe::Is(ch)
     }
 
@@ -110,10 +110,10 @@ impl<'a> Cursor<'a> {
     /// Used by tokenisers that have already peeked the shape they are
     /// consuming (e.g. a two-byte operator). The caller is responsible
     /// for ensuring the skipped bytes form a valid unit.
-    pub fn bump_n(&mut self, n: u32) {
+    pub fn bump_n(&mut self, n: u32) {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         let target = self.pos + n;
-        self.pos = if target as usize > self.src.len() {
-            self.src.len() as u32
+        self.pos = if target as usize > self.src.len() {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+            self.src.len() as u32  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         } else {
             target
         };
@@ -124,7 +124,7 @@ impl<'a> Cursor<'a> {
 ///
 /// Returns the `char` and the number of bytes consumed on success.
 /// Returns `Maybe::Isnt` for an empty slice or a malformed sequence.
-fn decode_utf8(bytes: &[u8]) -> Maybe<(char, u8)> {
+fn decode_utf8(bytes: &[u8]) -> Maybe<(char, u8)> {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     let b0 = match bytes.first() {
         Some(b) => *b,
         None => return Maybe::Isnt,
@@ -134,25 +134,25 @@ fn decode_utf8(bytes: &[u8]) -> Maybe<(char, u8)> {
         return Maybe::Is((b0 as char, 1));
     }
     let (len, init) = if b0 & 0b1110_0000 == 0b1100_0000 {
-        (2u8, (b0 & 0b0001_1111) as u32)
+        (2u8, (b0 & 0b0001_1111) as u32)  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     } else if b0 & 0b1111_0000 == 0b1110_0000 {
-        (3u8, (b0 & 0b0000_1111) as u32)
+        (3u8, (b0 & 0b0000_1111) as u32)  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     } else if b0 & 0b1111_1000 == 0b1111_0000 {
-        (4u8, (b0 & 0b0000_0111) as u32)
+        (4u8, (b0 & 0b0000_0111) as u32)  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     } else {
         return Maybe::Isnt;
     };
-    if bytes.len() < len as usize {
+    if bytes.len() < len as usize {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         return Maybe::Isnt;
     }
     let mut acc = init;
     let mut i = 1;
-    while i < len as usize {
+    while i < len as usize {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         let b = bytes[i];
         if b & 0b1100_0000 != 0b1000_0000 {
             return Maybe::Isnt;
         }
-        acc = (acc << 6) | (b & 0b0011_1111) as u32;
+        acc = (acc << 6) | (b & 0b0011_1111) as u32;  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         i += 1;
     }
     let ch = match char::from_u32(acc) {

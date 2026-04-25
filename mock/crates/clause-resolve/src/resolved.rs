@@ -21,10 +21,10 @@ use crate::symbol::Symbol;
 ///
 /// Holds:
 ///
-/// - `ast` — a copy of the input AST (so downstream phases can key
+/// - `ast`, a copy of the input AST (so downstream phases can key
 ///   off a single value; the AST is `Copy` via fixed-size arenas).
-/// - `scopes` — the `ScopeTree` the resolver constructed.
-/// - `resolution` — a flat map from `NodeId.0` to `Maybe<Symbol>`.
+/// - `scopes`, the `ScopeTree` the resolver constructed.
+/// - `resolution`, a flat map from `NodeId.0` to `Maybe<Symbol>`.
 #[derive(Clone, Debug, Default)]
 pub struct Resolved {
     ast: Ast,

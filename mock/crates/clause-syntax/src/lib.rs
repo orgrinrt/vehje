@@ -1,7 +1,7 @@
-//! vehje-syntax — skeleton parser for the Vehje authoring
+//! vehje-syntax, skeleton parser for the Vehje authoring
 //! language.
 //!
-//! Consumes a token slice from clause-lex, produces an `Ast`: a
+//! Consumes a token slice from vehje-lex, produces an `Ast`: a
 //! flat arena of `AstNode`s keyed by `NodeId`. Syntax-level
 //! diagnostics are carried as `SyntaxError`, which converts to
 //! `vehje_ir::Diagnostic` for merging into the compiler driver's
@@ -10,9 +10,9 @@
 //! Round-one scope is deliberately minimal: the skeleton harness
 //! (types + driver + peek/bump helpers) plus a `parse` entry point
 //! that handles the two trivial programs (empty input, single
-//! literal). Every grammar production — primary path, binary,
+//! literal). Every grammar production, primary path, binary,
 //! unary, call, block, let, if, match, fn, type, struct, enum,
-//! module, pattern — lands as its own follow-up micro-round on top
+//! module, pattern, lands as its own follow-up micro-round on top
 //! of the stable harness. Error recovery and incremental reparse
 //! are also BACKLOG.
 //!
