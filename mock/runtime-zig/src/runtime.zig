@@ -2,9 +2,9 @@
 //!
 //! Phase 6 skeleton round (2026-04-20). Three extern "C"
 //! stubs matching `clause-runtime-abi`'s exports. Real
-//! interpreter body — arena allocator, IR interpreter,
+//! interpreter body (arena allocator, IR interpreter,
 //! scratch-var evaluator, TokenStream emitter, diagnostic
-//! emission — is BACKLOG.
+//! emission) is BACKLOG.
 //!
 //! The Rust-side `VehjeResult` is `#[repr(i32)]` with
 //! discriminants `Ok = 0`, `Err = -1`, `NullHandle = -2`,
