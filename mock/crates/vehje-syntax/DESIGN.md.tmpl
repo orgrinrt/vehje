@@ -25,8 +25,8 @@ follow-up micro-round on top of the stable harness. see
 - `SyntaxError { span, kind, message }`. `Copy`, alloc-free.
 - `SyntaxErrorKind { UnexpectedToken, UnexpectedEof,
   InvalidLiteral }`.
-- `parse(tokens: &[Token], errors: &mut impl DiagnosticSink<SyntaxError>) -> Outcome<Ast, ()>` , 
-  top-level entry; empty input and single literal supported. The
+- `parse(tokens: &[Token], errors: &mut impl DiagnosticSink<SyntaxError>) -> Outcome<Ast, ()>`.
+  Top-level entry; empty input and single literal supported. The
   `Vec` carries one error today; future multi-error recovery
   populates it without another signature change.
 
@@ -43,8 +43,8 @@ method + a test file; the skeleton harness does not change.
 - Name binding / scope resolution (vehje-resolve).
 - Type checking (vehje-typecheck).
 - AST rewriting / macros (separate round post-core).
-- Concrete lossless syntax tree for formatter round-trip , 
-  deferred until the formatter drives the requirement.
+- Concrete lossless syntax tree for formatter round-trip (deferred
+  until the formatter drives the requirement).
 
 ## Dependencies
 
@@ -72,6 +72,5 @@ Follow-up rounds add `grammar/` with one file per production.
 - 202604191300_topic.vehje-grammar-framework-seed.md (G0
   primitives)
 - 202604191500_changelist.doc.md (R1 round)
-- 202604262900_changelist.doc.lock.md (vehje-lex skeleton , 
-  produces the tokens this round consumes)
-- stellar-heritage/tools/vehje/grammar/ (Python parity oracle)
+- 202604262900_changelist.doc.lock.md (vehje-lex skeleton; produces
+  the tokens this round consumes)

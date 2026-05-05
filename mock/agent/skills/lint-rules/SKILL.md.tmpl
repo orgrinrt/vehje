@@ -68,7 +68,7 @@ lint will be authored:
 | `strict-posture` | HARD_ERROR | Crate root missing `#![deny(unused, unreachable_code, unused_must_use, unused_imports, dead_code)]` | Add the deny attribute |
 | `no-unwrap` | BUILD_GATE | `.unwrap()` / `.expect()` outside `#[cfg(test)]` | Propagate with `?`; invariant unwraps need `// invariant:` comment |
 | `no-game-vocabulary` | BUILD_GATE | `clausewitz`, `witcher`, `stellaris`, `paradox`, `ck3`, `hoi4`, `eu4`, `the_sims`, `cities_skylines` in source or tests | Move the feature to an extension repo |
-| `no-substrate-reimpl` | BUILD_GATE | Local graph / DAG / bitmask / sparse types shadowing `arvo` | Consume the substrate |
+| `no-foundation-reimpl` | BUILD_GATE | Local graph / DAG / bitmask / sparse types shadowing `arvo` | Consume the foundation crate |
 | `compiler-phase-layering` | HARD_ERROR | Upward or skipping imports between phases (lex → syntax → resolve → typecheck → codegen) | Respect the DAG; extract shared contracts to a lower crate |
 
 Most of the compiler-phase layering lands as `[lints.forbidden-imports]`
@@ -100,8 +100,8 @@ Files ending in `_cross.rs` are treated as cross-crate. Bootstrap
 discovers them and wires them into the generated proxy crate on the
 next `cargo mock` run.
 
-Reference pattern: `~/Dev/saalis/mock/lints/no_vec_in_signatures.rs`
-,  a simple line-by-line scan with per-crate exemption.
+A simple line-by-line scan with per-crate exemption is the right
+default shape (see prior-art lints in sibling repos).
 
 ## Hook coverage today
 

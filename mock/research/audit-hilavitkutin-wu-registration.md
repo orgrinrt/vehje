@@ -1,5 +1,5 @@
 **Date:** 2026-04-21
-**Author:** substrate audit (task #132, SUB-H0)
+**Author:** foundations audit (task #132, SUB-H0)
 **Scope:** Does `hilavitkutin-api`'s WorkUnit registration surface
 fit clause's compile-pipeline needs? Do we need an extension round
 in hilavitkutin before populating `clause-schedule` (#131)?
@@ -71,16 +71,16 @@ fmt WUs.
 
 **Store descriptors** (`src/store.rs`):
 
-- `Resource<T>` — singleton shared state. Clause wires the
+- `Resource<T>`, singleton shared state. Clause wires the
   `StringInterner`, the diagnostic sink, the manifest, and the
   content-hash cache as resources.
-- `Column<T>` — morsel-chunked per-record state. Clause wires
+- `Column<T>`, morsel-chunked per-record state. Clause wires
   source bytes, tokens, AST nodes, resolved symbols, typecheck
   outputs, transpiled artifacts as columns.
-- `Virtual<T>` — zero-data DAG edge for fire flags. Clause fires
+- `Virtual<T>`, zero-data DAG edge for fire flags. Clause fires
   a `MacroExpansionPending` virtual when parse encounters a
   `#[cfg(...)]` or `#[patch(...)]` attribute needing expansion.
-- `Field<T>`, `Seq<T, N: Cap>`, `Map<K, V, N: Cap>` — resource
+- `Field<T>`, `Seq<T, N: Cap>`, `Map<K, V, N: Cap>`, resource
   layouts. Clause's deferred `clause-resolve` field storages
   (tracked to #131 / #134) re-express against these once
   scheduler ownership lands.
@@ -161,15 +161,15 @@ Populate `clause-schedule` with:
    scope for #131 and lands when hilavitkutin's
    `SchedulerBuilder` graduates past skeleton.
 
-This matches the substrate principle: clause applies
+This matches the foundations principle: clause applies
 hilavitkutin's contract; never invents its own.
 
 # Cross-reference
 
-- Substrate principle: `mock/research/substrate-principle.md`
+- Foundations principle: `mock/research/foundations-principle.md`
 - Port plan M0.2: `mock/research/parity-plan.md` (search
-  "M0.2 — clause-schedule as WorkUnit home")
+  "M0.2, clause-schedule as WorkUnit home")
 - Task: #131 (clause-schedule as hilavitkutin WorkUnit home),
-  blocked by #132 (this audit — now closable).
+  blocked by #132 (this audit, now closable).
 - Downstream engine gap (not blocking): hilavitkutin
   `SchedulerBuilder` composition + dispatch loop.

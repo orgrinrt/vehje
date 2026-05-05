@@ -5,7 +5,7 @@
 - Real `dlopen` / `libloading` integration in
   `RuntimeLoader::load`. Currently returns
   `Err(LoaderError::NotImplemented)` regardless of path.
-- Env-var convention. `CLAUSE_RUNTIME_PATH` points at the
+- Env-var convention. `VEHJE_RUNTIME_PATH` points at the
   dylib. When unset, a conventional next-to-binary path is
   tried; when that fails, an embedded-fallback path is tried.
 - Windows / Linux / macOS dylib naming conventions
@@ -33,13 +33,13 @@
 
 - Real `RuntimeDriver` state. holds an `Arc<dyn RuntimeHandle>`
   + per-session cache of diagnostic translations.
-- `AbiDiagnostic` → `vehje_ir::Diagnostic` conversion , 
-  maps pointer-plus-length messages to `&'static str` or
-  interned string ids.
+- `AbiDiagnostic` → `vehje_ir::Diagnostic` conversion. Maps
+  pointer-plus-length messages to `&'static str` or interned
+  string ids.
 - `AbiSpan` → `vehje_ir::Span` conversion. reconstructs
   `FileId` + `ByteOffset` from the flat triple.
-- Fallback to embedded runtime when dylib not found , 
-  statically-linked lightweight backend for test / dev use.
+- Fallback to embedded runtime when dylib not found.
+  Statically-linked lightweight backend for test / dev use.
 - Panic-at-FFI-boundary recovery. `catch_unwind` in the
   driver wrappers so a Zig-side abort surfaces as a
   `DriverError` instead of tearing down the process.

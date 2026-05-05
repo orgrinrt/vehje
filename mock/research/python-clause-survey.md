@@ -1,22 +1,21 @@
-# Python Clause — survey for the Rust port
+# Python Clause. survey for the Rust port
 
-> **Substrate principle applies to every section below.**
-> Read `substrate-principle.md` first. When this doc
-> describes a Python mechanism, the Rust equivalent is the
-> substrate (notko / arvo / hilavitkutin) — never an external
-> crate.
+> **Foundations principle applies to every section below.**
+> Read `foundations-principle.md` first. When this doc
+> describes a Python mechanism, the Rust equivalent is in
+> notko / arvo / hilavitkutin. never an external crate.
 
 **Date:** 2026-04-21
-**Corpus:** `/Users/orgrinrt/Dev/stellar-heritage/tools/clause/` —
+**Corpus:** `/Users/orgrinrt/Dev/stellar-heritage/tools/clause/`,
 ~41k LOC Python compiler, 25k LOC tests, plus playset/deploy/artgen
 siblings. ~264 `.py` files, 99 test files, 1511 test functions.
 
 **Headline.** Python Clause is a Rust-syntax authoring language
-(`.cse`) whose bodies transpile to **Clausewitz script** — the
+(`.cse`) whose bodies transpile to **Clausewitz script**, the
 plaintext scripted format Paradox Interactive games consume
 (Stellaris, CK3, HOI4, EU4, Victoria 3). The Clause grammar mimics
 Rust's surface ~1:1 (items/traits/impls/enums/macros/generics);
-the target is not bytecode, not Python — it is game-engine text
+the target is not bytecode, not Python, it is game-engine text
 files under `common/scripted_effects/auto/*.txt`,
 `events/auto/*.txt`, etc., routed per-item-kind. That reframes
 everything: Clause is a **source-to-source transpiler** from a
@@ -44,7 +43,7 @@ canonical spec. Headline:
 - **Control flow**: `if` / `else`, `match`, `for ... in`,
   `while`, `loop`, `return`, `break`, `continue`,
   `?` (early-return propagation).
-- **Types**: `PathType`, `RefType` (`&T` / `&mut T` — parsed,
+- **Types**: `PathType`, `RefType` (`&T` / `&mut T`, parsed,
   **erased at transpile**; Clausewitz has no borrow concept),
   `TupleType`, generic args (`<T>` turbofish `::<T>` in expr
   position). Scalars: `i32` / `int`, `f32` / `float`, `bool`,
@@ -59,19 +58,19 @@ canonical spec. Headline:
   (`|p| body`), return, break, continue, paren, question.
 - **Attributes**: outer `#[...]` + inner `#![...]`.
   Load-bearing:
-  - `#[name("...")]` — rename emitted symbol.
+  - `#[name("...")]`, rename emitted symbol.
   - `#[as_scripted_effect]` / `#[as_scripted_trigger]` /
-    `#[as_script_value]` / `#[as_inline_script]` — force
+    `#[as_script_value]` / `#[as_inline_script]`, force
     emission kind.
-  - `#[file("...")]` — override output path.
-  - `#[repr(<backend>)]` / `#[prefer(<backend>)]` — storage
+  - `#[file("...")]`, override output path.
+  - `#[repr(<backend>)]` / `#[prefer(<backend>)]`, storage
     backend.
   - `#[cfg(dlc="X")]` / `#[cfg(mod="X")]` /
-    `#[cfg(feature="X")]` — conditional compilation.
-  - `#[supersedes(...)]` / `#[deprecated(...)]` — rename /
+    `#[cfg(feature="X")]`, conditional compilation.
+  - `#[supersedes(...)]` / `#[deprecated(...)]`, rename /
     migration.
-  - `#[patch(target="...")]` — patch existing item.
-  - `#[test]` — test harness.
+  - `#[patch(target="...")]`, patch existing item.
+  - `#[test]`, test harness.
 - **Generics**: named params, per-param bounds, `where`,
   **const generics** (`const N: Type`), supertraits
   (`trait Sub: Super {}`), associated types (`type X;` in
@@ -88,20 +87,20 @@ canonical spec. Headline:
 
 ### Clause-unique surface (vs. Rust)
 
-1. `event Name for Country { body }` — first-class
+1. `event Name for Country { body }`, first-class
    content-item declaration targeting Paradox event kinds.
-2. `struct Bloodline : Country { ... }` — colon-syntax
+2. `struct Bloodline : Country { ... }`, colon-syntax
    **bind target**; binds a struct to a Clausewitz scope /
    entity class (`Country`, `Pop`, `Planet`, …), making its
    fields live as scope-local storage.
 3. `expect` / `actual` KMP-style cross-crate /
    cross-platform stubs.
-4. `sealed trait` / `sealed struct` — coherence sealed.
-5. Struct field modifiers `mut` and `const` — Clause-specific.
+4. `sealed trait` / `sealed struct`, coherence sealed.
+5. Struct field modifiers `mut` and `const`, Clause-specific.
 6. `#[cfg(dlc=..., mod=..., feature=...)]` with `all()` /
    `any()` / `not()` evaluator. DLC- and mod-aware
    conditional compilation.
-7. `#[patch(target="mod::path::Item")]` — patch-chain
+7. `#[patch(target="mod::path::Item")]`, patch-chain
    declarations pointing at existing items to overlay.
 
 ## 2. Macro system
@@ -134,27 +133,27 @@ Files: `macro_expansion.py` (1135L), `macro_interpreter.py`
 
 ### Two parallel pipelines (the architectural tension)
 
-**A. Clause front-end** — runs directly in `clause_cli.py
+**A. Clause front-end**, runs directly in `clause_cli.py
 cmd_build`, NOT through the pass scheduler:
 
-1. Lex — `grammar/clause/lexer.py` (424L), subclasses base
+1. Lex, `grammar/clause/lexer.py` (424L), subclasses base
    `grammar/lexer.py`.
-2. Parse — `grammar/clause/parser.py` (2367L). Recursive
+2. Parse, `grammar/clause/parser.py` (2367L). Recursive
    descent, **error-recovering** (accumulates diagnostics,
    inserts `ErrorNode` / `ErrorExpr` / `ErrorItem`, syncs to
    item-starters or `;` / `}`).
-3. Resolve modules — `grammar/clause/resolver.py` (625L).
+3. Resolve modules, `grammar/clause/resolver.py` (625L).
    Filesystem-walks `.cse` tree from `src/lib.cse`, builds
    `ResolvedCrate` / `ResolvedModule`, pairs `expect` /
    `actual`, records `UseDecl → ImportBinding`, flags dead
    files.
-4. Expand macros — `macro_expansion.py` walk; runs user
+4. Expand macros, `macro_expansion.py` walk; runs user
    macros via `macro_interpreter.py`.
-5. Cfg pruning — `cfg.py` drops items whose `#[cfg(...)]`
+5. Cfg pruning, `cfg.py` drops items whose `#[cfg(...)]`
    fails against `CompileEnv`.
-6. Cross-crate impls — `cross_crate.py` unions dep
+6. Cross-crate impls, `cross_crate.py` unions dep
    `impls_by_self_type`.
-7. Typecheck — `typecheck.py` (2058L). Builds symbol table
+7. Typecheck, `typecheck.py` (2058L). Builds symbol table
    (fqpath keyed), method table, enforces orphan rule,
    walks bodies for pattern-exhaustiveness on enum matches
    (including `Option` / `Result`), collects patch chains,
@@ -162,7 +161,7 @@ cmd_build`, NOT through the pass scheduler:
    **Deliberately omitted**: Hindley-Milner inference,
    generic-bound checking, monomorphization, scope-chain
    traversal validation.
-8. Validate (framework) —
+8. Validate (framework):
    `grammar/clause/validators/framework.py`. Single-walk
    visitor with per-node `enter` / `leave` +
    `finalize_scope(scope, ctx)`. Scope stack hardcoded
@@ -170,7 +169,7 @@ cmd_build`, NOT through the pass scheduler:
    dedupes on `(span.start, span.end, code)`. Separate
    checks: `shadow_check.py`, `unreachable_check.py`,
    `unused_check.py`.
-9. Storage routing — `storage_router.py` +
+9. Storage routing, `storage_router.py` +
    `storage_catalog.py` (927L combined). Walks every
    `struct X: BindTarget`, picks a Clausewitz backend per
    field from {`flag`, `variable`, `scripted_variable`,
@@ -178,7 +177,7 @@ cmd_build`, NOT through the pass scheduler:
    `paired`}. Honours `#[repr]` hard override + `#[prefer]`
    soft hint. Reconciles with manifest `[storage]` lock →
    `CL_STORAGE_DRIFT`.
-10. Transpile — `transpile.py` (1878L). For each `fn` body
+10. Transpile, `transpile.py` (1878L). For each `fn` body
     and each `event`, produces an `EmitPlan(item_name,
     item_kind, ClauseBlock body, source_span)`. Output is a
     **tree** (`ClauseValue` | `ClauseScalar` | `ClauseBlock`
@@ -188,18 +187,18 @@ cmd_build`, NOT through the pass scheduler:
     returning unit / `Result` → `scripted_effect`; `event
     Name for Country` → `country_event`. `#[as_*]`
     attributes override.
-11. Codegen — `codegen.py` (321L). Routes each `EmitPlan` to
+11. Codegen, `codegen.py` (321L). Routes each `EmitPlan` to
     `<crate>/<stellaris-subdir>/<module-hint>.txt` per a
     hardcoded `_KIND_DIRECTORY` table. Detects collisions,
     emits `source_map.json` for 1-indexed line ranges back
     to `.cse` origin.
-12. Manifest — `grammar/clause/manifest.py`. Processes
+12. Manifest, `grammar/clause/manifest.py`. Processes
     `#[supersedes]` / `#[deprecated]` into
     `symbol_aliases.manifest` YAML. Marked
-    `FIXME(rename-naive)` — cross-crate, chained, non-event
+    `FIXME(rename-naive)`, cross-crate, chained, non-event
     kinds all unfinished.
 
-**B. Pass scheduler** — `compiler/passes/`. Built for the
+**B. Pass scheduler**, `compiler/passes/`. Built for the
 pre-Clause `.txt`-patch pipeline (the `megapatch` legacy).
 Runs INDEPENDENTLY of the Clause front-end today. Five pass
 kinds: `Analyzer`, `Linter`, `Optimizer`, `Writer`,
@@ -253,7 +252,7 @@ resolution.
 
 `compiler/units/`: `CompileUnit(name, patch_dirs, output_dir,
 inline_script_prefix, descriptor)`. `Descriptor(name,
-supported_version="4.*", tags, remote_file_id, picture)` —
+supported_version="4.*", tags, remote_file_id, picture)`
 emits Stellaris `descriptor.mod`.
 
 ### Clausewitz G0 sub-grammar
@@ -263,7 +262,7 @@ emits Stellaris `descriptor.mod`.
 reading existing vanilla / mod text, for cwtools validation,
 and for depth / balance checks. `compiler/clausewitz/` (545L)
 adds `balance.py`, `localisation.py`, `vars.py`, thin parser
-wrapper. **Two Clausewitz parsers coexist** — a consolidation
+wrapper. **Two Clausewitz parsers coexist**, a consolidation
 debt.
 
 ## 4. Emission targets
@@ -294,18 +293,18 @@ Runtime semantics live in the Paradox engine.
 
 ### Non-compiler siblings
 
-- `artgen/` — 11 shell scripts + 1 Python helper for
+- `artgen/`, 11 shell scripts + 1 Python helper for
   invoking external AI image generation. Dispatched via
   `clause art <sub>`. Orthogonal to the compiler pipeline.
-- `playset/` — multi-mod orchestration: modlist discovery,
+- `playset/`, multi-mod orchestration: modlist discovery,
   workshop scan, load-order compute (evidence-weighted
   graph), item extraction. Has its own pass surface.
-- `deploy/` — local copy or SSH rsync of `.dist/` to
+- `deploy/`, local copy or SSH rsync of `.dist/` to
   Stellaris mod directory or remote host.
 
 ## 5. CLI surface
 
-`clause_cli.py` (2126L) — single `clause` command with
+`clause_cli.py` (2126L), single `clause` command with
 subcommands: `check`, `build`, `compile-crate`,
 `build-playset`, `new`, `explain` (with `--code CL_FOO`,
 `--list-codes`, or positional symbol explanation), `test`,
@@ -346,11 +345,11 @@ overrides.
 - Manifest: no git-diff auto-rename-detect; sham handler
   body gen deferred; only event-kind shams.
 - Parser: tuple exprs, struct literals as expressions,
-  lifetimes, async / await / unsafe blocks — all
+  lifetimes, async / await / unsafe blocks, all
   deliberately omitted.
 - CLI: `clause fmt` absent; `clause test` runtime stub;
   `clause doc` stub-level; `clause spec` read-only.
-- Clause front-end does NOT use the pass scheduler — runs
+- Clause front-end does NOT use the pass scheduler, runs
   phases directly in `cmd_build`.
 - `clause gen` LLM integration is stubbed.
 - Rename system marked `FIXME(rename-naive)`.
@@ -376,11 +375,11 @@ Light coverage: macros (two files), spec_ingest adapters.
    `BuildSummary` in `clause_cli.py` admits cache
    hit / miss surfaces as "(n/a)".
 2. **AST abuses `field(default_factory=lambda: None)` +
-   `type: ignore[assignment]`** — dozens of nodes use this
+   `type: ignore[assignment]`**, dozens of nodes use this
    because Python dataclasses can't express "required but
    forward-referenced". Fighting Python, and the
    `Optional`-in-disguise hurts readability.
-3. **Artifact JSON codec** (`passes/artifacts.py`) — custom
+3. **Artifact JSON codec** (`passes/artifacts.py`), custom
    tuple / dataclass type tags (`\x00dc`, `\x00tuple`,
    `\x00tupdict`, `\x00patcherr`) because stdlib json can't
    round-trip tuple-keyed dicts or frozen dataclasses.
@@ -388,28 +387,28 @@ Light coverage: macros (two files), spec_ingest adapters.
 4. **Macro interpreter is a separate tree-walker**, not the
    same walker the typechecker uses. Two interpretations of
    the AST diverge over time.
-5. **Clausewitz sub-grammar duplicates** —
+5. **Clausewitz sub-grammar duplicates**:
    `grammar/clausewitz/` (1079L, clean G0 subclass) and
    `compiler/clausewitz/` (545L, legacy hand-rolled) both
    parse Clausewitz. Consolidation debt.
-6. **Pass discovery via `inspect` + `pkgutil`** —
+6. **Pass discovery via `inspect` + `pkgutil`**:
    runtime-registration. Per clause-dev lints this is
    forbidden (`no-runtime-registration`). Rust port must
    use declarative inventory.
 7. **SQLite single-file cache**, WAL-mode covered,
-   "writes serialized through the parent process" — soft
+   "writes serialized through the parent process", soft
    bottleneck for large workspaces.
 8. **106 `CL_*` codes across a 2062-line registry** with
-   free-form prose — needs structure (category, severity
+   free-form prose, needs structure (category, severity
    tier, fix-suggestion machine-readability).
 9. **Reference types parsed then erased** (`RefType`,
-   `RefExpr`, `RefPat`) — author-facing sugar with zero
+   `RefExpr`, `RefPat`), author-facing sugar with zero
    enforcement. Port must decide: implement borrow-ish
    semantics, or reject the syntax.
 10. **`Option<T>` / `Result<T, E>` / `Vec<T>` are recognised
     as special generics** in `resolved_types.py`
     (hardcoded name-matches). Per clause-dev doctrine these
-    should be `Maybe` / `Outcome` / no-Vec — the *source
+    should be `Maybe` / `Outcome` / no-Vec, the *source
     language* itself carries the baggage here, not just the
     compiler.
 
@@ -461,7 +460,7 @@ Deep guidance lives in `lessons-learned.md` and
   retry; SQLite-as-primary-cache for the pass scheduler;
   asset decorators designed-but-unwired.
 
-- **Strictly better in Rust via the substrate**: hand-rolled
+- **Strictly better in Rust via the foundations**: hand-rolled
   recursive-descent parser with arena-allocated AST indexed
   by `arvo::USize`; pass fingerprinting with `arvo_hash::
   ContentHash`; cross-crate artifacts through
@@ -469,35 +468,35 @@ Deep guidance lives in `lessons-learned.md` and
   `bincode`, no `serde`); shared IR walker for typecheck +
   macro interpretation; const-generic storage-catalog
   backends dispatched at monomorphisation; diagnostics
-  rendered through substrate sinks (`DiagnosticSink` +
+  rendered through foundation sinks (`DiagnosticSink` +
   `ByteEmitter` from hilavitkutin-api), no external
   renderer; thread pool + morsel scheduling from
   hilavitkutin (no `rayon`, no `tokio`); the compile
   pipeline and the interpreter (if ever added) both run on
-  the same hilavitkutin engine — there is no separate
+  the same hilavitkutin engine, there is no separate
   runtime.
 
 ## 9. Natural port ordering
 
 Matches Python dependency order; cross-cuts flagged:
 
-L0 (done) — `clause-lex`, `clause-syntax` skeleton.
-L1 (partial) — `clause-ir`, `clause-resolve`,
+L0 (done), `clause-lex`, `clause-syntax` skeleton.
+L1 (partial), `clause-ir`, `clause-resolve`,
 `clause-typecheck`, `clause-codegen` shapes.
-L2 — `clause-cfg` + `clause-macros` (cross-cuts
+L2, `clause-cfg` + `clause-macros` (cross-cuts
 resolve + typecheck; design interpreter first, share IR
 with typecheck).
-L3 — `clause-storage` (catalog + router; depends on
+L3, `clause-storage` (catalog + router; depends on
 typecheck's resolved-types).
-L4 — `clause-transpile` + `clause-codegen-emit` (depends
+L4, `clause-transpile` + `clause-codegen-emit` (depends
 on storage + typecheck).
-L5 — `clause-manifest` + `clause-rename`.
-L6 — `clause-passes` framework (probably lives in
+L5, `clause-manifest` + `clause-rename`.
+L6, `clause-passes` framework (probably lives in
 hilavitkutin; typed artifacts + cache layer).
-L7 — `clause-validators`.
-L8 — `clause-spec-ingest`.
-L9 — `clause-cli`.
-L10 — Clausewitz G0 grammar (needed earlier for patch-ops
+L7, `clause-validators`.
+L8, `clause-spec-ingest`.
+L9, `clause-cli`.
+L10, Clausewitz G0 grammar (needed earlier for patch-ops
 but can be stub-first).
 
 ### Crate-scope expansions likely needed
@@ -548,7 +547,7 @@ Playset:
   ingest/*}`
 
 Tests (feature oracle):
-- `compiler/tests/{unit, integration}/` — 1511 test
+- `compiler/tests/{unit, integration}/`, 1511 test
   functions across 99 files.
 
 ---

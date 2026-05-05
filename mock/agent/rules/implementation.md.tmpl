@@ -73,19 +73,19 @@ boilerplate (span forwarding, diagnostic code enums, test matrices).
 It is never acceptable for expressing Vehje semantics. every bit of
 Vehje's macro story lands in the proc-macro compiler pass.
 
-### Reuse the substrate
+### Reuse arvo and hilavitkutin
 
 Before adding a graph / DAG / bitmask / sparse / spectral / pipeline
-type, check the substrate:
+type, check the foundation crates:
 
 - DAG topology, traversal, dominators. `arvo-graph`.
-- Read/write sets, artifact tracking, dense-or-sparse bitmasks , 
+- Read/write sets, artifact tracking, dense-or-sparse bitmasks.
   `arvo-bitmask`.
 - Sparse containers. `arvo-sparse`.
 - Pipeline morsel execution, scheduler, pools. `hilavitkutin`.
 
-If a substrate API is close but wrong-shape, raise an issue (or a
-cross-repo design round) against the substrate repo. Do not fork the
+If a foundation API is close but wrong-shape, raise an issue (or a
+cross-repo design round) against the upstream repo. Do not fork the
 behaviour locally.
 
 ### Single-binary distribution

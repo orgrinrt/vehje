@@ -41,21 +41,21 @@ targets, not binding:
 Until R1–R4 lands, crate-level rules and lints are stubs. The
 framework is set; the contents arrive with the crates.
 
-## Substrate
+## Foundations
 
-This repo consumes two sibling substrate repos:
+This repo consumes two sibling foundation repos:
 
 - [`arvo`](https://github.com/orgrinrt/arvo). numeric primitives +
   graph / sparse / bitmask / spectral / comb algorithms. Used for the
   pass DAG (`arvo-graph`) and artifact read/write sets
   (`arvo-bitmask`).
-- [`hilavitkutin`](https://github.com/orgrinrt/hilavitkutin) , 
-  pipeline execution engine. Used by the **runtime** for morsel-driven
+- [`hilavitkutin`](https://github.com/orgrinrt/hilavitkutin).
+  Pipeline execution engine. Used by the **runtime** for morsel-driven
   macro / scratch / generative execution. The compiler itself does
   single-shot DAG walks and rarely needs the frame runtime.
 
-Reuse the substrate. Do not reimplement DAG topology, bitmask ops,
-sparse storage, or pipeline scheduling in Vehje.
+Reuse arvo and hilavitkutin. Do not reimplement DAG topology, bitmask
+ops, sparse storage, or pipeline scheduling in Vehje.
 
 ## Extension pattern
 
