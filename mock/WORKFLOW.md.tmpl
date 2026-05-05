@@ -1,8 +1,21 @@
 # Workflow
 
+Vehje development moves through two registers. Design changes live in
+the mock workspace at `mock/` and are validated by `cargo check` plus
+generated documentation. Source under `crates/` is the implementation
+layer; it lags the design until a crate graduates from the mock
+workspace.
+
+The day-to-day shape is small, merge-friendly changes on feature
+branches off `dev`. Every change starts on a branch named for the
+work, not the round number. The pre-work check is short: confirm the
+working branch, read the design surface the work touches, and grep
+for existing helpers before adding new ones. Branch TODO files
+(`TODO.{branch}.md`) override the main TODO when they exist.
+
 ## Pre-work checklist
 
-- On main? If not, you are on a PR branch.
+- On dev? If yes, branch off before changing anything.
 - Look for branch TODO: `TODO.{branch}.md` overrides main TODO.
 - Read STRUCTURE to see what exists.
 - Read relevant DESIGN sections; update if your plan differs.
@@ -12,7 +25,7 @@
 
 **Current phase: design.** The mockspace validates design via `cargo
 check` + doc generation. Source is not expected to have real
-implementations yet. the goal is every DESIGN.md.tmpl agrees with
+implementations yet. The goal is every DESIGN.md.tmpl agrees with
 every other and the types compile.
 
 1. Design. update the mock workspace crate sources and documentation.
@@ -32,9 +45,9 @@ Rules:
 
 ## Graduation to real repo
 
-When an arvo crate's design is lockd and implementation stabilises, its
-contents move from `mock/crates/<name>/` to `crates/<name>/` at the
-repo root. Root-level `Cargo.toml` workspace takes over from
+When a vehje crate's design is locked and implementation stabilises,
+its contents move from `mock/crates/<name>/` to `crates/<name>/` at
+the repo root. Root-level `Cargo.toml` workspace takes over from
 `mock/Cargo.toml`.
 
 Until then, everything lives under `mock/`.

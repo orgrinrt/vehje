@@ -1,22 +1,22 @@
-# Rust Clause — parity + extension plan
+# Rust Clause. parity + extension plan
 
-> **Substrate principle is load-bearing for every milestone
-> below.** Read `substrate-principle.md` first. Every "new
+> **Foundations principle is load-bearing for every milestone
+> below.** Read `foundations-principle.md` first. Every "new
 > crate" named here is a clause-owned *application* of the
-> substrate; no milestone adds external-crate infrastructure.
+> foundations; no milestone adds external-crate infrastructure.
 > Every scheduling, caching, persistence, numeric, bit,
 > hashing, parallelism, fallibility, and collection story
 > routes through notko / arvo / hilavitkutin. Needs the
-> substrate does not yet cover become extend-the-substrate
+> foundations do not yet cover become extend-the-foundations
 > rounds in the arvo or hilavitkutin repo, landing before the
 > dependent clause round opens.
 
 **Date:** 2026-04-21
-**Reads:** `substrate-principle.md`, `python-clause-survey.md`,
+**Reads:** `foundations-principle.md`, `python-clause-survey.md`,
 `lessons-learned.md`.
 **Purpose:** the ordered task / design-round set that takes
 the Rust Clause skeleton to feature parity with Python Clause
-and beyond, via the substrate.
+and beyond, via the foundations.
 
 This plan is the set of **design-round topics** (not code
 tasks). Each topic maps to one design round which produces
@@ -56,7 +56,7 @@ The order is dependency-driven; reordering within a
 milestone is OK where cross-cuts allow.
 
 ```
-M0: substrate wiring               [polish + engine + persistence + hash]
+M0: foundations wiring             [polish + engine + persistence + hash]
 M1: parse the language             [real front-end]
 M2: resolve + typecheck            [real mid-end]
 M3: storage + transpile + codegen  [real back-end]
@@ -66,31 +66,31 @@ M6: cli + manifest + tooling       [productisation]
 M7: beyond-parity extensions       [interpreter, LSP, more targets]
 ```
 
-M0 is four rounds, not three — persistence wiring is
-explicit so the substrate dependencies are audited before
+M0 is four rounds, not three. persistence wiring is
+explicit so the foundation dependencies are audited before
 any real phase body runs. At end of M3 the compiler emits a
 working Clausewitz artifact from a Clause source file.
-That is "clause actually works". M4–M6 turn the compiler
+That is "clause actually works". M4 to M6 turn the compiler
 into the authoring tool the Python version aspired to be.
 M7 extends beyond Python.
 
-### Substrate extension rounds are called out explicitly
+### Foundation extension rounds are called out explicitly
 
 Where a milestone notes "possibly a hilavitkutin extension
-round", that means: if the substrate is missing the
+round", that means: if the foundations are missing the
 capability, a design round in the hilavitkutin repo (or
 arvo, or notko) lands first, *before* the clause round
 that consumes. These extension rounds are separate PRs in
-a separate repo. They are not silent substrate-side
-development — every one is a task, visible in the
+a separate repo. They are not silent foundation-side
+development. every one is a task, visible in the
 workspace task list.
 
-## M0 — type-surface + schedule spine
+## M0, type-surface + schedule spine
 
 Prerequisites for everything else. Also finishes the #73
 sweep.
 
-### M0.1 — primitives sweep (#73.3)
+### M0.1, primitives sweep (#73.3)
 
 Replace bare `usize` / `u*` / `i*` / `f*` / `bool` / `String`
 with `USize` / `UFixed` / `IFixed` / `FastFloat` /
@@ -104,11 +104,11 @@ Size: medium. One PR. Dependency: none. Outcome: zero bare
 primitives anywhere; type surface matches arvo / hilavitkutin
 sibling repos.
 
-### M0.2 — clause-schedule as hilavitkutin WorkUnit home
+### M0.2, clause-schedule as hilavitkutin WorkUnit home
 
 Populate the empty `clause-schedule` crate as the registry
 of clause-specific hilavitkutin WorkUnit types. **Not** a
-new pass framework — hilavitkutin already *is* the pass
+new pass framework, hilavitkutin already *is* the pass
 framework. This round defines the WorkUnit type skeletons
 clause needs (one per compile phase), their AccessSets, and
 their Column descriptors. Composition via hilavitkutin's
@@ -123,11 +123,11 @@ hilavitkutin extension round. Outcome: `clause-schedule`
 ships the WorkUnit shape that every later compile-phase
 round fills in.
 
-### M0.3 — unify the pipeline through hilavitkutin
+### M0.3, unify the pipeline through hilavitkutin
 
 Rewire the `clause` binary's `lex` / `parse` / `check` /
 `build` / `run` subcommands to run through hilavitkutin's
-scheduler — not through hard-coded phase chains in the
+scheduler, not through hard-coded phase chains in the
 binary. Each subcommand requests a WorkUnit set and a
 stopping point; the engine runs the resolved schedule.
 
@@ -136,27 +136,27 @@ hard-coded phase chains in `clause/src/*.rs`. The "two
 parallel pipelines" mistake Python Clause ships with is
 avoided from the first body that runs on the engine.
 
-### M0.4 — persistence spine wired to hilavitkutin-persistence
+### M0.4, persistence spine wired to hilavitkutin-persistence
 
 Before any pass body lands in M1+, clause declares its
 artifact Columns against `hilavitkutin-persistence`'s cold
 store for cross-run caching. Fingerprint keys are
-`arvo_hash::ContentHash`. No custom on-disk format in clause
-— if hilavitkutin-persistence does not yet expose a needed
+`arvo_hash::ContentHash`. No custom on-disk format in clause.
+If hilavitkutin-persistence does not yet expose a needed
 read / write shape, extend hilavitkutin-persistence first,
 then consume.
 
 Size: small-medium. One PR. Dependency: M0.3 + possibly a
 hilavitkutin-persistence extension round. Outcome: clause
-artifacts persist through the substrate. Incremental builds
+artifacts persist through the foundations. Incremental builds
 work from day one.
 
-## M1 — parse the language
+## M1, parse the language
 
 The front-end. By end of M1, `clause parse` produces a real
 AST for real programs.
 
-### M1.1 — lexer feature-complete
+### M1.1, lexer feature-complete
 
 Extend `clause-lex` to cover the remaining literal forms:
 string literals (`"..."` with escapes), char literals
@@ -168,7 +168,7 @@ for each failure mode.
 Size: medium. One PR. Dependency: M0.3. Outcome: lexer covers
 every token the `original-docs/GRAMMAR.md` grammar names.
 
-### M1.2 — parser: items, types, visibility
+### M1.2, parser: items, types, visibility
 
 Parser productions for `mod` / `use` / `pub` variants /
 `struct` / `enum` / `trait` / `impl` / `fn` / `const` /
@@ -180,7 +180,7 @@ Size: large. One PR. Dependency: M1.1. Outcome: every item
 form in `original-docs/CLAUSE_EBNF.md` parses into an AST
 node.
 
-### M1.3 — parser: patterns + expressions
+### M1.3, parser: patterns + expressions
 
 All pattern forms (wild / literal / ident / path /
 tuplestruct / tuple / range / or / rest / ref / bind). All
@@ -195,7 +195,7 @@ Size: large. One PR. Dependency: M1.2. Outcome:
 `clause parse` produces a complete AST for the Python test
 corpus's parseable inputs.
 
-### M1.4 — parser: attributes + `event` / `expect` / `actual`
+### M1.4, parser: attributes + `event` / `expect` / `actual`
 
 Outer + inner attributes. `#[name]` / `#[as_*]` / `#[file]` /
 `#[cfg]` / `#[supersedes]` / `#[deprecated]` /
@@ -207,7 +207,7 @@ on traits / structs. Struct field modifiers `mut` / `const`.
 Size: medium. One PR. Dependency: M1.3. Outcome: the
 Clause-unique language surface is fully parsed.
 
-### M1.5 — module resolver
+### M1.5, module resolver
 
 Populate `clause-resolve` with the filesystem walker. From
 `src/lib.cse`, resolve `mod foo;` declarations to sibling
@@ -220,12 +220,12 @@ Size: medium. One PR. Dependency: M1.4. Outcome: multi-file
 Clause programs resolve into a `ResolvedCrate` with
 `ResolvedModule`s and binding tables.
 
-## M2 — resolve + typecheck
+## M2, resolve + typecheck
 
 Mid-end. By end of M2, `clause check` catches real semantic
 errors.
 
-### M2.1 — cfg evaluator
+### M2.1, cfg evaluator
 
 Implement `#[cfg(dlc=X, mod=Y, feature=Z, all=..., any=...,
 not=...)]` evaluator against a `CompileEnv { dlcs, mods,
@@ -235,7 +235,7 @@ Size: small. One PR. Dependency: M1.4. Outcome:
 conditional-compilation works; DLC / mod / feature gates
 remove items deterministically.
 
-### M2.2 — typecheck: symbol + method tables, orphan + sealed
+### M2.2, typecheck: symbol + method tables, orphan + sealed
 
 Build fq-path-keyed symbol table. Method table
 (self-type → methods). Enforce orphan rule + sealed coherence.
@@ -246,17 +246,17 @@ Size: large. One PR. Dependency: M1.5 + M2.1. Outcome: type
 errors, missing-arm errors, orphan / sealed violations
 surface correctly.
 
-### M2.3 — typecheck: generics, bounds, associated types
+### M2.3, typecheck: generics, bounds, associated types
 
 Generic parameter binding, where-clause satisfaction,
 associated-type resolution, associated-const resolution,
 supertrait traversal. Const-generic parameters typed.
 
 Size: large. One PR. Dependency: M2.2. Outcome: generic code
-type-checks — where Python Clause deliberately punts, Rust
+type-checks, where Python Clause deliberately punts, Rust
 Clause delivers.
 
-### M2.4 — typecheck: `expect` / `actual` pairing
+### M2.4, typecheck: `expect` / `actual` pairing
 
 Match `expect` declarations in one crate against `actual`
 implementations in another. Shape check: same signature, same
@@ -265,7 +265,7 @@ generics, compatible visibility.
 Size: small-medium. One PR. Dependency: M2.3 + M1.5.
 Outcome: cross-crate stub pairing works.
 
-### M2.5 — typecheck: inference
+### M2.5, typecheck: inference
 
 Hindley-Milner-flavoured local inference. Python Clause
 deliberately omits this; the Rust port delivers it. Scope:
@@ -277,7 +277,7 @@ too big.
 Size: large. One or two PRs. Dependency: M2.3. Outcome: the
 author can omit most local type annotations.
 
-### M2.6 — shadow / unreachable / unused checkers
+### M2.6, shadow / unreachable / unused checkers
 
 Ports of `shadow_check.py` (372L), `unreachable_check.py`
 (274L), `unused_check.py` (506L). Emit STRICT1 / STRICT2 /
@@ -286,7 +286,7 @@ STRICT3-equivalent diagnostics.
 Size: medium. One PR. Dependency: M2.2. Outcome: the three
 strict lints ship.
 
-### M2.7 — validator framework
+### M2.7, validator framework
 
 Single-walk visitor with per-node enter / leave +
 finalize_scope. Dedup sink keyed on (span, code). The ten
@@ -299,16 +299,16 @@ Size: medium. One PR. Dependency: M2.6 + the existing
 validator skeleton from #30. Outcome: validators run in one
 walk; diagnostics are deduped.
 
-## M3 — storage + transpile + codegen
+## M3, storage + transpile + codegen
 
 Back-end. By end of M3, `clause build` emits real Clausewitz
 artifacts. **This is the "clause actually works" milestone.**
 
-### M3.1 — storage catalog
+### M3.1, storage catalog
 
 New crate `clause-storage`. Seven-backend catalog
 (`flag` / `variable` / `scripted_variable` / `event_target` /
-`scripted_list` / `string_storage` / `paired` — initial
+`scripted_list` / `string_storage` / `paired`, initial
 Paradox-target list; the architecture is target-agnostic).
 `BindTarget` trait with associated backend registry. Each
 backend is an associated type driven by const-generic
@@ -318,7 +318,7 @@ Size: medium-large. One PR. Dependency: M2.2. Outcome:
 `struct X : Country { field: T }` gets a typed backend
 assignment.
 
-### M3.2 — storage routing + manifest lock drift
+### M3.2, storage routing + manifest lock drift
 
 `StorageRouter` walks every `struct X : BindTarget`, picks
 backends per field, reconciles with manifest `[storage]`
@@ -330,7 +330,7 @@ parser). If M6.1 is not yet ready, ship M3.2 without lock
 reconciliation and add reconciliation when manifest lands.
 Outcome: storage routing is stable and auditable.
 
-### M3.3 — transpile — tree model + simple forms
+### M3.3, transpile, tree model + simple forms
 
 New crate `clause-transpile`. Emission-tree types
 (`ClauseValue` / `ClauseScalar` / `ClauseBlock` /
@@ -345,19 +345,19 @@ Size: large. One PR. Dependency: M3.1 + M2.2. Outcome: a
 Clause `fn` that does straight-line arithmetic or simple
 branching transpiles to real Clausewitz script AST.
 
-### M3.4 — transpile — control flow + closures
+### M3.4, transpile, control flow + closures
 
 The part Python Clause punted on. `for` / `while` / `loop` /
 closures / complex patterns all emit real code, not
 placeholder comments. Requires a concrete lowering strategy
-(since Clausewitz has limited flow-control primitives — the
+(since Clausewitz has limited flow-control primitives, the
 lowering is non-trivial and may introduce local scripted
 variables for loop bookkeeping).
 
 Size: large. One or two PRs. Dependency: M3.3. Outcome: the
 full Clause language lowers to the Paradox target.
 
-### M3.5 — codegen — kind routing + collision detect
+### M3.5, codegen, kind routing + collision detect
 
 Rewrite `clause-codegen` around the `EmitPlan` + emission
 tree. Routing table `item_kind → output subdir`. `#[file]`
@@ -367,9 +367,9 @@ pretty-printer (tabs, braces, comments).
 Size: medium. One PR. Dependency: M3.4. Outcome: `.txt`
 files land at the right paths; duplicates are flagged.
 
-### M3.6 — source maps + `#[cfg]`-stripped emission
+### M3.6, source maps + `#[cfg]`-stripped emission
 
-`source_map.json` (or `.bin` — pick the format in the design
+`source_map.json` (or `.bin`, pick the format in the design
 round) sidecar per output file. 1-indexed line ranges from
 emitted text back to `.cse` source. `#[cfg]`-stripped items
 never appear in output.
@@ -378,7 +378,7 @@ Size: small-medium. One PR. Dependency: M3.5 + M2.1. Outcome:
 runtime errors in the Paradox engine can be traced to Clause
 source.
 
-### M3.7 — auto-name + attribute overrides + kind heuristics
+### M3.7, auto-name + attribute overrides + kind heuristics
 
 `#[name("literal")]`, `#[as_scripted_effect]` /
 `#[as_scripted_trigger]` / `#[as_script_value]` /
@@ -390,7 +390,7 @@ Size: small. One PR. Dependency: M3.5. Outcome: attribute
 surface matches the Python spec; heuristics converge on the
 same kind assignments as the Python test corpus.
 
-### M3.8 — extern signatures + Clausewitz G0 parser
+### M3.8, extern signatures + Clausewitz G0 parser
 
 New crate `clause-clausewitz`. Parser for Clausewitz script
 (the target language). Needed for: reading extern signatures
@@ -401,7 +401,7 @@ Size: medium. One PR. Dependency: M3.3 (uses emission tree).
 Outcome: Clause can read the target-language source, not just
 write it.
 
-### M3.9 — patch ops
+### M3.9, patch ops
 
 Eight operations with priority: `override` > `replace_in_item`
 > `inject_field` > `prefer_mod` > `delete_item` >
@@ -413,12 +413,12 @@ Size: large. One PR. Dependency: M3.8 + M2.2. Outcome: mod
 authors can patch vanilla / other-mod content from Clause
 source.
 
-## M4 — macros
+## M4, macros
 
 After M3, the compiler works end-to-end on macro-free inputs.
 M4 brings macros up to and beyond Python parity.
 
-### M4.1 — macro expansion: built-in macros
+### M4.1, macro expansion: built-in macros
 
 New crate `clause-macros`. Built-in macro registry
 (compile-time inventory, no runtime registration). Ship:
@@ -431,9 +431,9 @@ Size: medium. One PR. Dependency: M3.3. Outcome: built-in
 macros work; most Python tests that use built-ins are
 portable.
 
-### M4.2 — user-authored macros: declarative subset
+### M4.2, user-authored macros: declarative subset
 
-`macro NAME(PARAMS) -> T { BODY }` — declarative subset
+`macro NAME(PARAMS) -> T { BODY }`, declarative subset
 (pattern → template). Matches a superset of `macro_rules!`
 with cleaner syntax. Hygiene via scope stack (NOT via
 no-shadow; that's a different feature). Call-site span
@@ -443,7 +443,7 @@ interpolations.
 Size: large. One PR. Dependency: M4.1 + M2.2. Outcome: users
 can define pattern-based macros as in Rust `macro_rules`.
 
-### M4.3 — user-authored macros: procedural via shared walker
+### M4.3, user-authored macros: procedural via shared walker
 
 Rust Clause macro bodies may contain the full language,
 including `struct` / `trait` / `impl` / `match` / closures.
@@ -456,7 +456,7 @@ Size: large. One PR. Dependency: M4.2 + M2.3. Outcome: macros
 are first-class. This is a strict improvement over Python
 Clause.
 
-### M4.4 — macro hygiene + diagnostics
+### M4.4, macro hygiene + diagnostics
 
 Scoped hygiene so macro-introduced bindings don't collide
 with caller scope. Shadow-lint continues to catch author
@@ -468,12 +468,12 @@ Size: medium. One PR. Dependency: M4.3. Outcome: macro users
 don't need to worry about name collisions; diagnostics are
 precise.
 
-## M5 — passes + validators + spec
+## M5, passes + validators + spec
 
 Ecosystem. After M4 the compiler is a complete language.
 M5 builds the authoring ecosystem around it.
 
-### M5.1 — validator implementations (STRICT1-7 + coherence + orphan + bind-target-shape)
+### M5.1, validator implementations (STRICT1-7 + coherence + orphan + bind-target-shape)
 
 The ten validators from the Python typecheck and strict
 families get real bodies. Fits on top of the validator
@@ -483,7 +483,7 @@ Size: medium-large. One PR, possibly split. Dependency:
 M2.7 + M3.2. Outcome: the same STRICT lint family that
 Python Clause ships.
 
-### M5.2 — content lint pack
+### M5.2, content lint pack
 
 Port the big Python linters: `CONTENT_SYNTAX_LINT` (12+
 sub-rules around scripted-effect / scripted-trigger /
@@ -495,7 +495,7 @@ three scripted-call-depth checks.
 Size: large. Probably two PRs. Dependency: M5.1 + M3.9.
 Outcome: the Python content-lint surface is fully ported.
 
-### M5.3 — spec ingest — adapters + merger
+### M5.3, spec ingest, adapters + merger
 
 New crate `clause-spec`. Spec adapters (paradox docs,
 cwtools, vanilla analysis), merger (multi-source
@@ -507,13 +507,13 @@ Size: large. Two PRs. Dependency: M2.4 (extern consumes
 spec). Outcome: `clause spec harvest` + `clause spec search`
 / `show` / `scope` / `list` work.
 
-### M5.4 — analyzer WorkUnits
+### M5.4, analyzer WorkUnits
 
 Port Python's five analyzers (`ITEM_INDEX`,
 `CALL_GRAPH_ANALYZER`, `DEPTH_ANALYZER`, `LEAF_ANALYZER`,
 `GLOBAL_VAR_LOADER`) as hilavitkutin WorkUnits. Call graph
 uses `arvo_graph`. Depth / leaf analysis piggybacks on the
-engine's own scheduling traversals where possible — if
+engine's own scheduling traversals where possible, if
 hilavitkutin already emits the data analyzer WorkUnits
 would recompute, consume it instead of recomputing.
 
@@ -522,7 +522,7 @@ analyzer Columns (call graph, depth map, leaf set, item
 index, global var map) are all hilavitkutin-persistence
 entries.
 
-### M5.5 — optimizers
+### M5.5, optimizers
 
 `LEAF_INLINER` ports first. Further optimizations (constant
 folding, dead-code elimination, scope merging) listed in a
@@ -532,12 +532,12 @@ Size: medium. One PR. Dependency: M5.4. Outcome: output
 `.txt` files are smaller and faster to evaluate in the
 engine, matching Python Clause's optimization passes.
 
-## M6 — cli + manifest + tooling
+## M6, cli + manifest + tooling
 
 Productisation. After M5 the compiler is complete. M6 turns
 it into a daily-driver tool.
 
-### M6.1 — manifest parser
+### M6.1, manifest parser
 
 `Clause.toml` reader. Workspace + package. Dep graph
 (workspace / path / version / features). DLC / feature
@@ -548,11 +548,11 @@ the front-end currently lacks.
 Size: medium-large. One PR. Dependency: M1.5. Outcome:
 multi-file multi-crate Clause projects build end-to-end.
 
-### M6.2 — rename shims
+### M6.2, rename shims
 
 `#[supersedes]` / `#[deprecated]` → `symbol_aliases.manifest`
-sidecar. This time without the Python `FIXME(rename-naive)`
-— supports cross-crate renames, chained renames,
+sidecar. This time without the Python `FIXME(rename-naive)`,
+supporting cross-crate renames, chained renames,
 non-event-kind renames, and save-embedded migration. Design
 round goes first; the limitations must be lifted before
 implementation.
@@ -561,7 +561,7 @@ Size: medium. One PR for design + one for implementation.
 Dependency: M6.1. Outcome: evolving Clause code does not
 break existing save games or consumer scripts.
 
-### M6.3 — diagnostics registry (structured)
+### M6.3, diagnostics registry (structured)
 
 Replace the free-form Python codes with a structured
 registry: (category, severity, code, brief, detail, example,
@@ -574,7 +574,7 @@ be retrofit every round that adds a code, but this round
 formalises the structure. Outcome: authoring-experience
 ergonomics match or exceed Python `clause explain`.
 
-### M6.4 — CLI: `check` / `build` / `test` / `new` / `explain`
+### M6.4, CLI: `check` / `build` / `test` / `new` / `explain`
 
 Populate the frozen stubs. `check` runs up to typecheck and
 validator; `build` runs through codegen; `test` compiles
@@ -584,7 +584,7 @@ validator; `build` runs through codegen; `test` compiles
 Size: medium. One PR. Dependency: M6.3 + all earlier
 milestones. Outcome: five of the Python CLI subcommands work.
 
-### M6.5 — CLI: `doc` / `fmt` / `fix`
+### M6.5, CLI: `doc` / `fmt` / `fix`
 
 `doc` generates markdown from Clause doc comments. `fmt` is
 the language formatter. `fix` applies machine-readable
@@ -595,7 +595,7 @@ Size: medium-large. Two PRs (doc separately). Dependency:
 M6.4. Outcome: Rust Clause exceeds Python in authoring
 support.
 
-### M6.6 — CLI: `compile-crate` / `build-playset` / `doctor` / `spec` / `deploy`
+### M6.6, CLI: `compile-crate` / `build-playset` / `doctor` / `spec` / `deploy`
 
 The remaining Python CLI subcommands. `compile-crate` / 
 `build-playset` handle cross-crate orchestration. `doctor`
@@ -605,7 +605,7 @@ runs preflight probes. `spec` is the spec-ingest driver.
 Size: medium-large. Two-three PRs. Dependency: M6.4 + M5.3.
 Outcome: every Python CLI subcommand has a Rust equivalent.
 
-### M6.7 — playset orchestration
+### M6.7, playset orchestration
 
 New crate `clause-playset`. Multi-mod orchestration, workshop
 scan, load-order compute (evidence-weighted graph), item
@@ -616,12 +616,12 @@ Size: large. Probably three PRs. Dependency: M6.1 + M5.4.
 Outcome: users running dozens of coexisting mods get coherent
 build output.
 
-## M7 — optional beyond-parity extensions
+## M7, optional beyond-parity extensions
 
 After M6, Rust Clause matches Python Clause. M7 is where it
 goes further. No ordering; pick as priorities shift.
 
-### M7.1 — interpreter (`clause run`)
+### M7.1, interpreter (`clause run`)
 
 Python Clause has no `run` subcommand. Rust Clause adds it
 **by running Clause bytecode as hilavitkutin WorkUnits**.
@@ -642,7 +642,7 @@ rounds). Outcome: `clause run foo.cse` executes; `clause
 test` runs real tests, not just compiles. Zero clause-side
 code that spells "thread" / "pool" / "scheduler" / "VM".
 
-### M7.2 — LSP server
+### M7.2, LSP server
 
 Full-IDE integration. Hover, go-to-def, find-references,
 rename (uses M6.2 rename infrastructure), diagnostics push,
@@ -652,7 +652,7 @@ error-recovering parser's incremental reparse surface.
 Size: very large. Multiple PRs. Outcome: Rust Clause is the
 first Paradox modding language with serious editor support.
 
-### M7.3 — debug adapter
+### M7.3, debug adapter
 
 DAP server so authors can set breakpoints in Clause source
 and step through execution (via interpreter or via
@@ -661,20 +661,20 @@ instrumented Paradox engine).
 Size: very large. Outcome: modders debug instead of
 printf-ing.
 
-### M7.4 — additional emission targets
+### M7.4, additional emission targets
 
 Python Clause emits Clausewitz only. Rust Clause is
 target-agnostic by design. Additional targets:
-- `clause-lua` — Lua target for modding environments that
+- `clause-lua`, Lua target for modding environments that
   use Lua.
-- `clause-llvm` — ahead-of-time compile to native for
+- `clause-llvm`, ahead-of-time compile to native for
   performance-sensitive bits.
-- `clause-wasm` — Wasm target for sandboxed execution.
+- `clause-wasm`, Wasm target for sandboxed execution.
 
 Size: very large each. Outcome: Clause is a polyglot
 authoring language.
 
-### M7.5 — formal verification integration
+### M7.5, formal verification integration
 
 Structured type system + `#[pure]` / `#[invariant]`
 attributes + SMT solver integration. Lets authors annotate
@@ -705,7 +705,7 @@ months.
 
 - Each milestone entry is a design-round topic. Opening it
   means writing the topic, doc CL, src CL, executing, and
-  merging — the standard mockspace flow.
+  merging, the standard mockspace flow.
 - Dependencies are hard. Don't start a round whose
   dependency is not landed unless you accept rebase pain.
 - Sizes are rough. Some rounds will be smaller than
@@ -717,7 +717,7 @@ months.
   language spec. Diverge only with a design round
   documenting the divergence.
 - Python tests in `/Users/orgrinrt/Dev/stellar-heritage/
-  tools/clause/compiler/tests/` are a feature oracle — a
+  tools/clause/compiler/tests/` are a feature oracle, a
   passing Python test should pass the Rust compiler on the
   same input (where the feature is implemented).
 - Python source is a semantic reference, not a blueprint.
@@ -729,15 +729,15 @@ months.
 When M6 lands, Rust Clause is a complete reimplementation of
 Python Clause, plus: type inference, hygienic + procedural
 macros sharing the typecheck walker, structured diagnostics
-rendered through substrate sinks, substrate-backed cross-crate
+rendered through foundation sinks, foundation-backed cross-crate
 artifacts via hilavitkutin-persistence, unified pipeline on
 the hilavitkutin engine, static WorkUnit composition,
 formatter + doc-gen + fix-apply tooling. M7 extends it
-beyond any modding-language existing today — interpreter on
+beyond any modding-language existing today: interpreter on
 the same hilavitkutin engine, LSP, DAP, additional emission
 targets.
 
-Every capability above is the substrate applied. Clause
+Every capability above is the foundations applied. Clause
 contributes language semantics, grammar, target lowering,
 and CLI surface. Everything else is notko / arvo /
 hilavitkutin.

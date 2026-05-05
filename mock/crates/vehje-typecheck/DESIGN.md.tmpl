@@ -59,7 +59,7 @@ body lands and surfaces the need.
 
 `Validator` is a trait; `ValidatorRegistry` hosts a const
 `&[&'static dyn Validator]` slice with ten entries. Same
-`&'static dyn` exception as vehje-codegen's `TargetRegistry` , 
+`&'static dyn` exception as vehje-codegen's `TargetRegistry`,
 confined to the registry iteration surface, static-lifetime.
 
 ```rust
@@ -101,8 +101,8 @@ Core validators (ship in vehje-typecheck, bodies TBD):
 - `orphan-rule`. foreign-type / foreign-trait impl guard.
 - `bind-target-shape`. target-registry entry-format check.
 
-Each validator's `validate` this round returns `Vec::new()` , 
-the skeleton keeps `run_all` safe (no `todo!()` panic) so
+Each validator's `validate` this round returns `Vec::new()`.
+The skeleton keeps `run_all` safe (no `todo!()` panic) so
 downstream consumers can exercise the registry surface.
 
 ## R4 retrofit (deferred)
@@ -137,5 +137,3 @@ not per-node; real per-node routing lands with the
 - 202604262500/202604262500_changelist.doc.lock.md (R4)
 - 202604263500/202604263500_changelist.doc.lock.md (vehje-resolve
   skeleton. produces the `Resolved` this round consumes)
-- stellar-heritage/tools/vehje/grammar/vehje/typecheck.py
-  (Python parity)

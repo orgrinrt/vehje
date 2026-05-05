@@ -21,7 +21,7 @@ TARGET=$(_extract file_path)
 
 # Only fire on Rust files inside vehje compiler or runtime trees.
 case "$TARGET" in
-    */clause/src/*.rs|*/vehje-*/src/*.rs|*/mock/crates/clause/*.rs|*/mock/crates/vehje-*/*.rs)
+    */vehje/src/*.rs|*/vehje-*/src/*.rs|*/mock/crates/vehje/*.rs|*/mock/crates/vehje-*/*.rs)
         context "Reminder: ~/Dev/stellar-heritage/tools/clause/ is a parity oracle. Port test intent, not implementation. Rust shape differs: tagged enums over Protocol, Result over exceptions, monomorphised trait dispatch over isinstance. Authoring from design docs; reading Python for semantics only."
         ;;
 esac

@@ -52,7 +52,7 @@ expand_generative / last_error entry points are BACKLOG.
 - No `Option`, `Vec`, `String`, `Box` in ABI types.
 - No enum discriminants > u64.
 - Little-endian fixed; big-endian refuses load (BACKLOG).
-- Every struct has `abi_version: u32` first (BACKLOG , 
+- Every struct has `abi_version: u32` first (BACKLOG;
   skeleton types omit the version prefix until the first
   real-backend round surfaces the bump-compatibility need).
 

@@ -1,11 +1,11 @@
-# Clause research — imported context + lessons + port plan
+# Clause research, imported context + lessons + port plan
 
-> **READ `substrate-principle.md` FIRST.** It is the first-principle
+> **READ `foundations-principle.md` FIRST.** It is the first-principle
 > that binds every other doc here. Clause uses notko / arvo /
 > hilavitkutin for everything; nothing clause-invented when the
-> substrate covers the need, nothing external when the substrate
-> should cover the need. If you are about to open a design round
-> for clause, re-read that doc before the first line of the topic
+> stack covers the need, nothing external when the stack should
+> cover the need. If you are about to open a design round for
+> clause, re-read that doc before the first line of the topic
 > file.
 
 This directory carries the research, design history, and lessons
@@ -18,22 +18,22 @@ on 2026-04-21. Source-of-record still lives there; these are local
 copies so the Rust repo has stable references independent of the
 stellar-heritage tree.
 
-- `original-docs/` — canonical Python-era docs (DESIGN, GRAMMAR,
+- `original-docs/`, canonical Python-era docs (DESIGN, GRAMMAR,
   EBNF, MANIFEST_SPEC, LANG_AUDIT_2026_04, COMPILER_PRUNE_PLAN,
   briefs/).
-- `original-reviews/` — third-party-style reviews the author
+- `original-reviews/`, third-party-style reviews the author
   commissioned on the Python implementation and language design
   (clause-review-{compiler-impl, language-design, migration,
   modder}, compiler-review-{llvm-lens, mod-domain, python-infra},
   plus rust-traits-research, typed-dsl-prior-art,
   cwtools-formalization-review).
-- `original-design-history/pre-clause/` — 2026-04-14 through
+- `original-design-history/pre-clause/`, 2026-04-14 through
   2026-04-16 design seeds before the Python implementation
   diverged.
-- `original-design-history/megapatch-era/` — architecture-v2,
+- `original-design-history/megapatch-era/`, architecture-v2,
   patch flow, lint catalog, cli design, etc. from the
   pre-Clause `.txt`-patch pipeline that Python Clause absorbed.
-- `clausewitz-context/` — research on the target language
+- `clausewitz-context/`, research on the target language
   (Clausewitz script: Paradox engine's scripted format).
   Includes jomini spec research, parser research, load rules,
   and five domain reviews (game-design, domain-wiring,
@@ -44,30 +44,30 @@ inherit their framing or their decisions by default.
 
 ## 2. Author-side research written for the port
 
-- `substrate-principle.md` — **THE load-bearing doc.** Clause
-  uses notko / arvo / hilavitkutin for every need the substrate
+- `foundations-principle.md`, **THE load-bearing doc.** Clause
+  uses notko / arvo / hilavitkutin for every need the stack
   covers or should cover. No external crates for
   infrastructure. The runtime IS hilavitkutin. The pass engine
   IS hilavitkutin. Persistence IS hilavitkutin-persistence.
   Numerics ARE arvo. Fallibility IS notko. Read this first;
   every other doc is subordinate to it.
-- `python-clause-survey.md` — deep survey of the Python
+- `python-clause-survey.md`, deep survey of the Python
   implementation (2026-04-21): language surface, compiler
   architecture, pass framework, CLI, what's done vs deferred,
   downfalls, features the Rust port must replicate. Frame of
-  reference only; substrate-principle overrides any Python
+  reference only; foundations-principle overrides any Python
   decision.
-- `lessons-learned.md` — what we learned from Python Clause:
+- `lessons-learned.md`, what we learned from Python Clause:
   decisions worth inheriting, decisions worth rejecting,
-  downfalls, and how the substrate lets Rust clause do strictly
-  better. Reads the survey and the reviews together through the
-  substrate lens.
-- `parity-plan.md` — the roadmap from today's Rust skeleton
+  downfalls, and how the stack lets Rust clause do strictly
+  better. Reads the survey and the reviews together through
+  that lens.
+- `parity-plan.md`, the roadmap from today's Rust skeleton
   (clause-lex real, everything else stub) to feature parity with
   Python Clause and beyond. Per-crate scope, design-round
   ordering, dependency graph, exit criteria. Every milestone
-  goes through substrate primitives; cross-crate extensions are
-  called out.
+  goes through the foundation primitives; cross-crate extensions
+  are called out.
 
 ## 3. How to use this directory
 

@@ -3,16 +3,16 @@
 **Date:** 2026-04-21
 **Audience:** Rust Clause port architects and implementers.
 
-> **Substrate principle is load-bearing.** Read
-> `substrate-principle.md` before this doc. Every "how to do X
+> **Foundations principle is load-bearing.** Read
+> `foundations-principle.md` before this doc. Every "how to do X
 > better" answer below goes through notko / arvo / hilavitkutin
 > primitives, never through external crates.
 
 Reading this doc assumes a pass through
-`python-clause-survey.md` first. This doc is opinionated —
-it says what the Rust port should inherit, what it should
+`python-clause-survey.md` first. This doc is opinionated. it
+says what the Rust port should inherit, what it should
 reject, and where it should go further than the Python
-reference, always via the substrate.
+reference, always via the foundations.
 
 ## 1. What the Python version got right
 
@@ -59,16 +59,16 @@ derives write→read edges, topsorts, and caches on
 `SHA-256(pass_id, version, read-artifact fingerprints,
 config_inputs)`. Deterministic and sound.
 
-Rust port inherits the *shape* — but the engine is
+Rust port inherits the *shape*. but the engine is
 hilavitkutin, not a clause-internal scheduler. Passes are
 hilavitkutin WorkUnits; artifacts are Columns declared by the
 WorkUnit's AccessSet. The scheduler is hilavitkutin's own.
 Fingerprinting uses `arvo_hash::ContentHash` over the
-substrate's in-memory `Encoder` stream (no JSON, no
+foundation's in-memory `Encoder` stream (no JSON, no
 `bincode`; the engine's serialisation is the canonical one).
 Cache keys live in `hilavitkutin_persistence`'s cold store.
-If the substrate is missing any piece, extend the substrate —
-do not duplicate the concept inside clause.
+If the foundations are missing any piece, extend them. do
+not duplicate the concept inside clause.
 
 ### 1.5 Structured diagnostic registry
 
@@ -149,8 +149,8 @@ the same `Span` type as the rest of the compiler.
 
 ### 1.13 Pass-kind distinction
 
-`Analyzer` / `Linter` / `Optimizer` / `Writer` / `Generator`
-— five kinds with distinct error-handling semantics. A
+`Analyzer` / `Linter` / `Optimizer` / `Writer` / `Generator`,
+five kinds with distinct error-handling semantics. A
 linter's failure is different from a writer's failure.
 
 Rust port inherits the distinction, unhooks `Generator`
@@ -210,7 +210,7 @@ registration.
 **Rust port forbids this** (`no-runtime-registration` lint,
 #108 landed). Passes are WorkUnits, registered through the
 hilavitkutin engine's static composition surface. No
-`linkme`, no `inventory`, no crate-level plugin trick —
+`linkme`, no `inventory`, no crate-level plugin trick.
 hilavitkutin's own registration is the mechanism. If the
 engine does not yet expose a registration surface that fits
 clause's needs, that is a hilavitkutin round, not a clause
@@ -224,8 +224,8 @@ tuples, tuple-keyed dicts, and frozen dataclasses through
 JSON. Hundreds of lines fighting `json.dumps`.
 
 **Rust port: `hilavitkutin_api::Encoder` / `Decoder`** with
-persistence through `hilavitkutin_persistence` — the
-substrate's own on-disk format. No `bincode`. No `rkyv`. No
+persistence through `hilavitkutin_persistence`. the
+engine's own on-disk format. No `bincode`. No `rkyv`. No
 `serde`. The engine's serialisation is the canonical one; if
 it does not yet cover what clause needs, extend
 hilavitkutin-api / hilavitkutin-persistence. Adding an
@@ -279,9 +279,9 @@ links.
 Single-file, WAL-mode, "writes serialised through the
 parent process". Works; slow under parallel builds.
 
-**Rust port: `hilavitkutin_persistence` cold store** — one
+**Rust port: `hilavitkutin_persistence` cold store**. one
 entry per pass artifact, keyed by
-`arvo_hash::ContentHash`, written through the substrate's
+`arvo_hash::ContentHash`, written through the engine's
 own format. No `sled`, no `redb`, no `bincode`, no `rkyv`.
 The cold store already carries its own atomicity contract;
 if clause finds it insufficient for the workload, extend
@@ -300,7 +300,7 @@ grammar. No dead syntax.
 
 ### 2.12 Reserved-but-unused keywords
 
-`unsafe`, `async`, `await`, `dyn`, `move` — tokenised,
+`unsafe`, `async`, `await`, `dyn`, `move`, tokenised,
 parser rejects them. Looks like a feature; is not.
 
 **Rust port: pick one.** Either implement, or drop from
@@ -343,7 +343,7 @@ migration BEFORE implementation starts.
    something the compiler doesn't do.
 4. **Rename system acknowledged broken.** A single
    `FIXME(rename-naive)` line covers cross-crate / chained
-   / non-event / save-embedded — four unsolved problems
+   / non-event / save-embedded, four unsolved problems
    stacked.
 5. **Transpile emits placeholder comments for `for` /
    `while` / `loop` / closures.** The grammar promises
@@ -356,13 +356,13 @@ The grammar / CLI / docs got ahead of the backend. The
 Rust port should keep grammar changes gated on backend
 support.
 
-## 4. What the substrate makes strictly better
+## 4. What the foundations make strictly better
 
 Every item below is "Rust Clause does better than Python
-Clause *because the substrate already solves this for the
+Clause *because the foundations already solve this for the
 whole stack*." None of these call out an external crate.
-Every one of them is a consume-from-substrate or
-extend-the-substrate answer.
+Every one of them is a consume-from-foundations or
+extend-the-foundations answer.
 
 ### 4.1 Parser error recovery and arena-allocated AST
 
@@ -370,7 +370,7 @@ Hand-rolled recursive-descent parser (already shipped in
 `clause-syntax` skeleton). AST lives in arena-allocated
 Columns declared by the crate. Each `NodeId` is a
 `arvo::USize` / `arvo::UFixed<N, 0, S>` indexing into the
-Column — not a pointer. No `Arc` / `Rc` / `Box`. No
+Column, not a pointer. No `Arc` / `Rc` / `Box`. No
 mutate-after-parse because the Column is write-once (a
 hilavitkutin-engine invariant).
 
@@ -413,7 +413,7 @@ clause gets it for free.
 Python's typechecker and macro interpreter are two tree
 walkers that drift. The Rust port collapses them: the
 macro interpreter is a mode on the same IR walker the
-typechecker uses. The IR walker itself is a WorkUnit —
+typechecker uses. The IR walker itself is a WorkUnit:
 its reads (AST Column, symbol-table Column) and writes
 (typed-IR Column, diagnostic sink) are declared once.
 
@@ -422,12 +422,12 @@ expansion" class of bugs. The engine's incremental
 recompute automatically recomputes macro expansions when
 their deps change.
 
-### 4.5 Storage catalog as trait-first substrate consumers
+### 4.5 Storage catalog as trait-first foundation consumers
 
 The storage router is a WorkUnit family. Each backend
 (`flag`, `variable`, `scripted_variable`, `event_target`,
 `scripted_list`, `string_storage`, `paired`) is an
-impl of a substrate trait — written against
+impl of a foundation trait. written against
 `hilavitkutin_api` primitives for any persistent state it
 needs. `#[repr]` / `#[prefer]` are const-generic drivers;
 the router WorkUnit dispatches at monomorphisation time.
@@ -436,7 +436,7 @@ Benefit over Python: compile-time backend dispatch,
 zero-cost, statically verifiable against the manifest
 lock file. No dict-of-strings.
 
-### 4.6 Diagnostics rendered through substrate sinks
+### 4.6 Diagnostics rendered through foundation sinks
 
 Diagnostics emit through `DiagnosticSink<D>` from
 hilavitkutin-api. Rendering (ANSI / plain / JSON / LSP
@@ -446,10 +446,10 @@ reads the sink's Column and writes to a `ByteEmitter`
 
 Benefit over Python: no external renderer dep (`ariadne`,
 `annotate-snippets`). Clause-owned renderer layered on
-the same sink contract every other substrate consumer
+the same sink contract every other foundation consumer
 uses. If the renderer shape generalises (color selection,
 unicode underlines, label chains), it migrates *up* to
-hilavitkutin-api — but the *dependency* never leaves the
+hilavitkutin-api. but the *dependency* never leaves the
 stack.
 
 ### 4.7 Parallelism and thread pool from hilavitkutin
@@ -483,16 +483,16 @@ duplicated scheduling code. No custom VM.
 
 The Python implementation teaches one meta-lesson:
 **clause is not its own stack.** Python Clause tried to be
-one — it invented a pass scheduler on top of `graphlib`, a
+one. it invented a pass scheduler on top of `graphlib`, a
 cache on top of SQLite, a serialiser on top of `json` with
 custom tags, a task registry on top of `inspect` +
 `pkgutil`. Every invention is a maintenance burden and a
 drift vector.
 
-Rust clause applies a substrate — notko, arvo,
-hilavitkutin — that already solves these problems for the
+Rust clause applies a foundation. notko, arvo,
+hilavitkutin. that already solves these problems for the
 whole stack. Clause adds only language-specific semantics
-on top. Read `substrate-principle.md` for the full rule.
+on top. Read `foundations-principle.md` for the full rule.
 
 Concretely:
 
@@ -508,8 +508,8 @@ Concretely:
 3. **Persistence is hilavitkutin-persistence.** Every cache
    key, every cross-crate artifact, every source-map
    sidecar. Clause does not spell binary formats. If the
-   substrate is missing a cold-store entry shape, extend
-   hilavitkutin-persistence — do not invent in clause.
+   foundations are missing a cold-store entry shape, extend
+   hilavitkutin-persistence. do not invent in clause.
 4. **Numerics and hashing are arvo.** Every `NodeId` is an
    arvo primitive. Every fingerprint is `arvo_hash::
    ContentHash`. Every bit contract (TokenKind variants,
@@ -528,9 +528,9 @@ Concretely:
    `FIXME(rename-naive)` twins in the Rust code.
 
 Everything else in the Python implementation is salvage
-material or cautionary tale. The language itself — its
+material or cautionary tale. The language itself. its
 Rust-ish surface, its `event` / `expect` / `actual` /
 `sealed` / `#[cfg]` additions, its storage routing and
-transpile model — is a genuinely good language design.
+transpile model. is a genuinely good language design.
 Port it; improve it; remove the rot; ship it on the
-substrate.
+foundations.
