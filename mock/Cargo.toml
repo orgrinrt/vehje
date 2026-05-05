@@ -39,7 +39,7 @@ hilavitkutin-str = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", bra
 
 notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false }
 
-# In-workspace phase crates — path deps for inter-phase consumption.
+# In-workspace phase crates. Path deps for inter-phase consumption.
 vehje-ir = { path = "crates/vehje-ir" }
 vehje-lex = { path = "crates/vehje-lex" }
 vehje-syntax = { path = "crates/vehje-syntax" }

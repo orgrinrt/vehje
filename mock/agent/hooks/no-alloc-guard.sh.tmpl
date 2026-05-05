@@ -6,7 +6,7 @@
 #
 # Scope: vehje-ir / vehje-lex / vehje-syntax / vehje-runtime-*. The
 # compiler phases (resolve, typecheck, schedule, codegen) and CLI binary
-# may use std — they're not caught here.
+# may use std; they're not caught here.
 #
 # Mirrors the mockspace `forbidden-imports` lint + the notko primitive
 # vocabulary. Tasks #77, #78.
@@ -37,7 +37,7 @@ if echo "$CONTENT" | grep -qE '^\s*(pub\s+)?use\s+alloc::'; then
 fi
 
 if echo "$CONTENT" | grep -qE '^\s*extern\s+crate\s+alloc'; then
-    deny "BLOCKED: \`extern crate alloc\` in a vehje no_std crate. Remove it — the no_std attribute is load-bearing."
+    deny "BLOCKED: \`extern crate alloc\` in a vehje no_std crate. Remove it; the no_std attribute is load-bearing."
 fi
 
 if echo "$CONTENT" | grep -qE '(^|[^a-zA-Z0-9_])Vec<'; then

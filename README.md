@@ -52,9 +52,9 @@ Build tooling, deployment, and orchestration are written in Vehje itself once th
 
 Vehje depends on three small crates that the language's shape relies on:
 
-- [`notko`](https://github.com/orgrinrt/notko) — foundation primitives: `Just<T>`, `Maybe<T>`, `Outcome<T, E>`, `MaybeNull<T>`. Replaces `Option<T>` and `Result<T, E>` at API boundaries.
-- [`arvo`](https://github.com/orgrinrt/arvo) — numeric substrate: fixed-point primitives with strategy markers. Replaces bare integer and float types at API boundaries.
-- [`hilavitkutin`](https://github.com/orgrinrt/hilavitkutin) — pipeline execution engine. The runtime uses it for scheduling and dispatch; the compiler uses the same machinery for its internal pass graph.
+- [`notko`](https://github.com/orgrinrt/notko). Foundation primitives: `Just<T>`, `Maybe<T>`, `Outcome<T, E>`, `MaybeNull<T>`. Replaces `Option<T>` and `Result<T, E>` at API boundaries.
+- [`arvo`](https://github.com/orgrinrt/arvo). Numeric substrate of fixed-point primitives with strategy markers. Replaces bare integer and float types at API boundaries.
+- [`hilavitkutin`](https://github.com/orgrinrt/hilavitkutin). Pipeline execution engine. The runtime uses it for scheduling and dispatch; the compiler uses the same machinery for its internal pass graph.
 
 Public APIs in Vehje use the substrate vocabulary (`Maybe` / `Outcome` / `UFixed` / `IFixed` / interned strings) rather than bare `core` primitives. Bare primitives appear only where a language-level trait signature fixes the choice.
 

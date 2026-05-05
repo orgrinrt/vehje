@@ -2,7 +2,7 @@
 //
 // Produces libvehje_runtime.{so|dylib|dll} as a dynamic library
 // that the Rust compiler loads via dlopen at distribution time.
-// Stub for R2 — full build logic lands with Phase 6 impl.
+// Stub for R2; full build logic lands with Phase 6 impl.
 
 const std = @import("std");
 

@@ -33,15 +33,15 @@ pass = "🧩 compiler pass"
 # Known macros for DESIGN.md table (description | usage)
 [known_macros]
 
-# Crate header colors for dependency graph (bg_color | fg_color) —
-# populated once crate names are decided.
+# Crate header colors for dependency graph (bg_color | fg_color).
+# Populated once crate names are decided.
 [crate_colors]
 # ---------------------------------------------------------------------------
 # Lint configuration
 #
 # Most crate-specific lints (no-unsafe, no-dyn, no-unwrap, compiler-phase
 # layering via forbidden-imports, no-game-vocabulary, no-substrate-reimpl,
-# strict-posture) are DEFERRED to post-R1–R4 — the crate split has to land
+# strict-posture) are DEFERRED to post-R1-R4: the crate split has to land
 # before they can scope correctly. Today's config covers universal
 # mockspace built-ins that work regardless of crate layout.
 # ---------------------------------------------------------------------------
@@ -212,10 +212,10 @@ commit = "off"
 build = "off"
 push = "off"
 
-# Pack lints (from mockspace-hilavitkutin-stack-lints) — graceful ramp.
+# Pack lints (from mockspace-hilavitkutin-stack-lints): graceful ramp.
 # These fire against pre-existing skeleton code that will be fixed in the
 # clause sweep (#73). Set to advisory during the sweep, flip to error
-# afterwards. Entries here only — no duplicates of the builtin lints
+# afterwards. Entries here only, no duplicates of the builtin lints
 # above (no-bare-result / no-bare-string / no-bare-vec / forbidden-imports
 # already have their own overrides).
 [lints.lint-allow-requires-task-id]
@@ -249,9 +249,9 @@ severity = "advisory"
 # External lint packs (mockspace #94 feature)
 # ---------------------------------------------------------------------------
 #
-# Git-based dep spec only — committed config must be portable.
+# Git-based dep spec only. Committed config must be portable.
 
-# Writing-style gate — pre-existing docs trip this until sweeps tidy them.
+# Writing-style gate. Pre-existing docs trip this until sweeps tidy them.
 [lints.writing-style]
 severity = "advisory"
 
