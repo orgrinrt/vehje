@@ -13,16 +13,16 @@ extension repo, not here.
 in Rust.**
 
 - **Compiler** (Rust): lex, parse, resolve, typecheck, transpile,
-  codegen, pass scheduler. Runs at dev time. Ships as a single static
-  binary per target platform. Cross-compilation is a first-class
-  concern.
+ codegen, pass scheduler. Runs at dev time. Ships as a single static
+ binary per target platform. Cross-compilation is a first-class
+ concern.
 - **Runtime** (Zig): executes macros, scratch variables, generative
-  pipelines. Small, fast, embeddable. Speaks C ABI. Pulls no `std`,
-  no Rust runtime.
+ pipelines. Small, fast, embeddable. Speaks C ABI. Pulls no `std`,
+ no Rust runtime.
 - **Build tooling / deploy / orchestration**: written in Vehje
-  itself once the language is usable (rustc/cargo pattern. the
-  compiler does one thing; tooling runs on top of what the compiler
-  emits).
+ itself once the language is usable (rustc/cargo pattern. the
+ compiler does one thing; tooling runs on top of what the compiler
+ emits).
 
 ## Crates
 
@@ -46,13 +46,13 @@ framework is set; the contents arrive with the crates.
 This repo consumes two sibling foundation repos:
 
 - [`arvo`](https://github.com/orgrinrt/arvo). numeric primitives +
-  graph / sparse / bitmask / spectral / comb algorithms. Used for the
-  pass DAG (`arvo-graph`) and artifact read/write sets
-  (`arvo-bitmask`).
+ graph / sparse / bitmask / spectral / comb algorithms. Used for the
+ pass DAG (`arvo-graph`) and artifact read/write sets
+ (`arvo-bitmask`).
 - [`hilavitkutin`](https://github.com/orgrinrt/hilavitkutin).
-  Pipeline execution engine. Used by the **runtime** for morsel-driven
-  macro / scratch / generative execution. The compiler itself does
-  single-shot DAG walks and rarely needs the frame runtime.
+ Pipeline execution engine. Used by the **runtime** for morsel-driven
+ macro / scratch / generative execution. The compiler itself does
+ single-shot DAG walks and rarely needs the frame runtime.
 
 Reuse arvo and hilavitkutin. Do not reimplement DAG topology, bitmask
 ops, sparse storage, or pipeline scheduling in Vehje.
@@ -62,7 +62,7 @@ ops, sparse storage, or pipeline scheduling in Vehje.
 Game-specific targets ship as **separate repos** that extend Vehje:
 
 - `vehje-jomini` (future). Clausewitz (Stellaris / CK3 / HOI4 /
-  Vic3 / EU4) grammar, bind targets, codegen to Clausewitz script.
+ Vic3 / EU4) grammar, bind targets, codegen to Clausewitz script.
 - `vehje-w3` (future). Witcher 3 target.
 - `vehje-ts4` (future). Sims 4 target.
 - `vehje-lua` (future). generic Lua target.
@@ -90,21 +90,21 @@ Strict by default, across both the Vehje language and the Rust
 compiler implementation:
 
 - Deny warnings at crate roots: `unused`, `unreachable_code`,
-  `unused_must_use`, `unused_imports`, `dead_code`.
+ `unused_must_use`, `unused_imports`, `dead_code`.
 - No `.unwrap()` / `.expect()` outside tests and documented infallible
-  paths.
+ paths.
 - Tagged enum + trait dispatch; no `dyn Trait` / `TypeId` / `std::any`
-  in framework code. Compile-time dispatch wins.
+ in framework code. Compile-time dispatch wins.
 - Descriptive error variants. Errors carry context (span, phase,
-  expected/actual), not just a string.
+ expected/actual), not just a string.
 - Procedural macros only for Vehje language semantics. `macro_rules!`
-  is acceptable internally in the Rust compiler implementation for
-  boilerplate reduction, but never for Vehje itself. macros in the
-  language are proc-only, scheduler-pass-driven, and typechecked.
+ is acceptable internally in the Rust compiler implementation for
+ boilerplate reduction, but never for Vehje itself. macros in the
+ language are proc-only, scheduler-pass-driven, and typechecked.
 
 ## Single-binary distribution
 
-End users should not need Python, Deno, .NET, JVM, or any runtime
+End users should not need Python, Deno,.NET, JVM, or any runtime
 alongside Vehje. `cargo build --release` produces one static binary
 per target. No dynamic runtime deps. No plugin shared-object loading
 at the compiler layer (the runtime may embed differently).
@@ -117,16 +117,16 @@ message`, no parens, no trailing period, under 72 characters.
 ## What not to do
 
 - Do not edit `.claude/` or `.github/` output. Those are generated
-  from `mock/agent/*.tmpl` by `cargo mock`. Edit the template.
+ from `mock/agent/*.tmpl` by `cargo mock`. Edit the template.
 - Do not inline game-specific vocabulary (`clausewitz`, `witcher`,
-  `stellaris`, `paradox`, …) into compiler or runtime code. Use an
-  extension repo.
+ `stellaris`, `paradox`, …) into compiler or runtime code. Use an
+ extension repo.
 - Do not reimplement graph / DAG / bitmask / sparse / pipeline types.
-  Use `arvo` and `hilavitkutin`.
+ Use `arvo` and `hilavitkutin`.
 - Do not translate the Python prototype line-by-line. Use it as a
-  parity oracle, not a template.
+ parity oracle, not a template.
 - Do not bypass the design-round state machine by renaming changelist
-  files manually. Use `cargo mock lock / unlock / deprecate / close`.
+ files manually. Use `cargo mock lock / unlock / deprecate / close`.
 - Do not add crate-specific lints or hooks before R1–R4 decides the
-  crate split. Document intent in the skill or framework doc; author
-  the enforcement once crates exist.
+ crate split. Document intent in the skill or framework doc; author
+ the enforcement once crates exist.

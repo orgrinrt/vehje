@@ -25,10 +25,10 @@ Rust-side `RuntimeLoader::load` returns
 path:
 
 - `VEHJE_RUNTIME_PATH` environment variable. explicit path
-  to the dylib.
+ to the dylib.
 - Fallback: next-to-Rust-binary convention.
 - Fallback: embedded runtime (statically linked lightweight
-  backend, for test / dev use).
+ backend, for test / dev use).
 
 See `BACKLOG.md` for the full deferred-feature list.
 
@@ -45,7 +45,7 @@ Phase 6 skeleton (2026-04-20) ships three `extern "C"` stubs:
 - `vehje_runtime_new() ?*anyopaque` → null.
 - `vehje_runtime_free(?*anyopaque) void` → no-op.
 - `vehje_runtime_execute(?*anyopaque, [*]const u8, usize) i32`
-  → `VEHJE_RESULT_ERR` (`-1`).
+ → `VEHJE_RESULT_ERR` (`-1`).
 
 `VehjeResult` is returned as a plain `i32` on both sides. Named
 constants (`VEHJE_RESULT_OK` = `0`, `VEHJE_RESULT_ERR` = `-1`,

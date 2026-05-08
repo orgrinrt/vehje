@@ -60,7 +60,7 @@ If a foreign crate's trait or an unavoidable language feature forces
 a specific std primitive, the first question is: *can we implement
 the foreign contract on an arvo type instead?* If yes, that's the
 path. If no, the crate smells like ass and we drop it. The escape
-hatch `// lint:allow(<rule>) reason: ...; tracked: #N` exists only
+hatch `// lint:allow(<rule>) reason:...; tracked: #N` exists only
 for the genuinely unavoidable boundary, always with a tracked
 remediation task.
 
@@ -122,7 +122,7 @@ Decision test is the same as above: if two plausible implementations
 could differ, it's a trait.
 
 If you're asking "should this enum have room for plugin extensions?"
-,  it shouldn't be an enum. It should be a trait.
+, it shouldn't be an enum. It should be a trait.
 
 ## Sizes are const at type level
 
@@ -209,7 +209,7 @@ it doesn't belong in this repo.
 
 ## Single-binary distribution
 
-End users should not need to install Python, Deno, .NET, or any
+End users should not need to install Python, Deno,.NET, or any
 runtime alongside Vehje. `cargo build --release` produces one
 static binary per target platform. Cross-compilation is a
 first-class concern.
@@ -228,10 +228,10 @@ hygiene story depends on the strict posture being reliable.
 ## Reuse the foundations
 
 - `arvo` owns numeric primitives + graph / sparse / bitmask / spectral
-  / comb algorithms. Vehje consumes.
+ / comb algorithms. Vehje consumes.
 - `hilavitkutin` owns pipeline execution. Vehje runtime consumes.
 - Don't reimplement DAG topology, bitmask ops, or pipeline scheduling
-  in Vehje. Use the crates.
+ in Vehje. Use the crates.
 
 ## Dogfood in Vehje
 

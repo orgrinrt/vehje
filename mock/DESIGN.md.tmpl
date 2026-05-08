@@ -12,7 +12,7 @@ Python-implemented prototype on 2026-04-19. The Python implementation
 (~15k lines, 1500+ tests) remains as a reference + parity oracle in
 `stellar-heritage/tools/clause/`.
 
-The authoritative design spec is the seeded `mock/design_rounds/202604191300_topic.vehje-design-seed.md` (3095 lines). Grammar is in the grammar seed. See the changelist `mock/design_rounds/202604191301_changelist.initial-seed.md` for what's imported and what the first fresh session needs to consolidate.
+
 
 ## Two-language strategy
 
@@ -32,13 +32,13 @@ The authoritative design spec is the seeded `mock/design_rounds/202604191300_top
 The compiler crate split is TBD. Provisional:
 
 ```
-vehje-lex        tokenisation
-vehje-syntax     parser + AST
-vehje-resolve    module resolution, use-tree, visibility
-vehje-typecheck  coherence, bind targets, generics, validator framework
-vehje-schedule   pass DAG (consumes arvo-graph)
-vehje-codegen    target-agnostic codegen
-vehje            top-level binary + orchestration
+vehje-lex tokenisation
+vehje-syntax parser + AST
+vehje-resolve module resolution, use-tree, visibility
+vehje-typecheck coherence, bind targets, generics, validator framework
+vehje-schedule pass DAG (consumes arvo-graph)
+vehje-codegen target-agnostic codegen
+vehje top-level binary + orchestration
 ```
 
 Runtime crate split (Zig side, TBD).
@@ -63,8 +63,8 @@ The extension point contract is TBD (one of the first session's design rounds).
 
 ## See also
 
-- `mock/design_rounds/`. 11 seed topics + 1 changelist. Fresh session starts here.
-- `mock/PRINCIPLES.md.tmpl`. language principles.
-- `mock/WORKFLOW.md.tmpl`. design → validate → implement discipline.
+
+- `mock/PRINCIPLES.md`. language principles.
+- `mock/WORKFLOW.md`. design → validate → implement discipline.
 - [`arvo`](https://github.com/orgrinrt/arvo). numeric foundations.
 - [`hilavitkutin`](https://github.com/orgrinrt/hilavitkutin). runtime engine.

@@ -8,11 +8,11 @@ codegen-ready IR hand-off for vehje-codegen.
 ## Scope
 
 - `PassDag`. directed acyclic graph of compiler passes, built
-  from pass-registration + dependency declaration.
+ from pass-registration + dependency declaration.
 - `PassRegistry`. registered passes (core + plugin). Each pass
-  declares: name, read set, write set, dependencies.
+ declares: name, read set, write set, dependencies.
 - `Scheduler`. orders passes via arvo-graph topological sort +
-  optional critical-path analysis.
+ optional critical-path analysis.
 - `Artifact`. cache key + artifact blob for incremental builds.
 - Schedule diagnostics (cycle detection, missing dependencies).
 
@@ -38,9 +38,5 @@ codegen-ready IR hand-off for vehje-codegen.
 - `artifact.rs`. Artifact + cache key derivation.
 - `diagnostics.rs`. schedule error construction.
 
-## Sources
 
-- 202604191300_topic.vehje-design-seed.md
-- arvo-graph DESIGN.md.tmpl (foundations contract)
-- arvo-bitmask DESIGN.md.tmpl (AccessMask contract)
-- 202604191500_changelist.doc.md (R1 round)
+Round-by-round history is recorded in `mock/research/vehje-schedule-history.md` (Tier 2).

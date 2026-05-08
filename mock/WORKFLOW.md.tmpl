@@ -1,53 +1,34 @@
 # Workflow
 
-Vehje development moves through two registers. Design changes live in
-the mock workspace at `mock/` and are validated by `cargo check` plus
-generated documentation. Source under `crates/` is the implementation
-layer; it lags the design until a crate graduates from the mock
-workspace.
+How a consumer uses Vehje from a Rust project, what shape the
+dependency takes, and how the language toolchain evolves.
 
-The day-to-day shape is small, merge-friendly changes on feature
-branches off `dev`. Every change starts on a branch named for the
-work, not the round number. The pre-work check is short: confirm the
-working branch, read the design surface the work touches, and grep
-for existing helpers before adding new ones. Branch TODO files
-(`TODO.{branch}.md`) override the main TODO when they exist.
+## Adding Vehje to a project
 
-## Pre-work checklist
+Vehje is in pre-implementation phase. The compiler and runtime are
+not yet shipping; pin to a specific git rev or wait for the first
+crates.io release.
 
-- On dev? If yes, branch off before changing anything.
-- Look for branch TODO: `TODO.{branch}.md` overrides main TODO.
-- Read STRUCTURE to see what exists.
-- Read relevant DESIGN sections; update if your plan differs.
-- Grep for existing helpers and types before adding new ones.
+```toml
+[dependencies]
+# Future shape (not yet published):
+# vehje = "0.0"
+```
 
-## Development order
+## Status
 
-**Current phase: design.** The mockspace validates design via `cargo
-check` + doc generation. Source is not expected to have real
-implementations yet. The goal is every DESIGN.md.tmpl agrees with
-every other and the types compile.
+Pre-implementation. The design lives under `mock/`;
+real crates under `crates/` are stub-shaped while the design
+stabilises. The seed topic is `vehje-design-seed`; the seed
+changelist captures what's imported from prior research and what the
+first implementation session needs to consolidate.
 
-1. Design. update the mock workspace crate sources and documentation.
-2. Validate. `cargo check` in the mock workspace. It must compile.
-3. Regenerate. `cargo mock` to produce generated docs.
-4. Types. declare internal types if needed.
-5. Tests. write to fail first.
-6. Implement. code until tests pass.
-7. Document. STRUCTURE is auto-generated; verify it reflects changes.
+## Pre-1.0 stability
 
-Rules:
-- Do not change tests to make them pass; fix design or code.
-- Keep changes small and merge-friendly.
-- `#![no_std]`, no `alloc`, no platform deps.
-- Prefer trait contracts over concrete types in sub-crate APIs.
-- Every numeric with a tradeoff axis carries a `Strategy` parameter.
+Vehje is in pre-1.0 design phase. Public surfaces stabilise at
+`0.0.x`; expect breaking changes between minor versions.
 
-## Graduation to real repo
+## Reporting issues
 
-When a vehje crate's design is locked and implementation stabilises,
-its contents move from `mock/crates/<name>/` to `crates/<name>/` at
-the repo root. Root-level `Cargo.toml` workspace takes over from
-`mock/Cargo.toml`.
-
-Until then, everything lives under `mock/`.
+Issues and feature discussion happen on the GitHub repo. Patches
+arrive as feature-branch PRs.
