@@ -10,55 +10,55 @@ skeleton harness (`Resolver`, `ScopeTree`, `Scope`, `Symbol`,
 rounds do not churn it.
 
 - **Top-level item resolution**. `fn`, `type`, `const`, `use`
-  declarations register symbols in the module scope.
+ declarations register symbols in the module scope.
 - **Local binding resolution + shadowing**. `let` bindings
-  inside blocks, shadowing rules.
+ inside blocks, shadowing rules.
 - **Path resolution**. `a::b::c` lookups through nested scopes.
 - **Use / import statements + re-exports**. `use path::…;`,
-  `pub use path::…;`.
+ `pub use path::…;`.
 - **Glob imports**. `use foo::*;`.
 - **Generic parameter scopes**. type and const generics as
-  scoped bindings.
+ scoped bindings.
 - **Self-type in impl blocks**. `Self` alias inside `impl`
-  items.
+ items.
 - **Trait method resolution**. resolving method calls through
-  trait impls.
+ trait impls.
 - **Macro hygiene**. once macros land.
 
 ## Deferred manifest features
 
 - **TOML parsing**. replace stub with `toml_edit` reader.
 - **Dependency graph construction**. build a DAG of crates +
-  topological sort.
+ topological sort.
 - **Feature flag resolution**. `[features]` table + conditional
-  compilation.
+ compilation.
 - **Workspace manifests**. `[workspace]` + members.
 
 ## Non-blocking follow-ups
 
 - **`ScopeId` in vehje-ir**. already landed in R1; BACKLOG
-  only notes that any future cross-crate tweak should stay
-  reusable.
+ only notes that any future cross-crate tweak should stay
+ reusable.
 - **Interned `Str` name expansion**. this round adopts
-  `hilavitkutin_str::Str`; follow-up work connects the
-  `StringInterner` instance to the compiler driver so the
-  runtime-origin bit of `Str` carries real IDs (not just the
-  compile-time `str_const!()` path).
+ `hilavitkutin_str::Str`; follow-up work connects the
+ `StringInterner` instance to the compiler driver so the
+ runtime-origin bit of `Str` carries real IDs (not just the
+ compile-time `str_const!()` path).
 - **Incremental resolve for IDE**. delta walk that re-resolves
-  only the changed subtree, keyed off AST node diff.
+ only the changed subtree, keyed off AST node diff.
 
 ## Diagnostic surface
 
 - `ResolveError` currently carries two variants
-  (`UnresolvedIdentifier`, `DuplicateDefinition`); additional
-  variants (`AmbiguousImport`, `CycleDetected`, `PrivateAccess`,
-  `UnknownCrate`) arrive with the rule that first emits them.
+ (`UnresolvedIdentifier`, `DuplicateDefinition`); additional
+ variants (`AmbiguousImport`, `CycleDetected`, `PrivateAccess`,
+ `UnknownCrate`) arrive with the rule that first emits them.
 - `ManifestError` currently carries two variants (`Parse`,
-  `NotImplemented`); real TOML parsing will extend this with
-  `MissingField`, `InvalidVersion`, `DuplicateDependency`, etc.
+ `NotImplemented`); real TOML parsing will extend this with
+ `MissingField`, `InvalidVersion`, `DuplicateDependency`, etc.
 - The `From<ResolveError> for Diagnostic` conversion currently
-  emits static placeholder messages; follow-up rounds replace
-  them with per-variant messages once the producer rules land.
+ emits static placeholder messages; follow-up rounds replace
+ them with per-variant messages once the producer rules land.
 
 ## Scheduler handoff for collection fields
 
