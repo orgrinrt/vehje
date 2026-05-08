@@ -7,10 +7,9 @@
 
 ## Status
 
-**Initial seed.** This repo was extracted from the stellar-heritage
-Python-implemented prototype on 2026-04-19. The Python implementation
-(~15k lines, 1500+ tests) remains as a reference + parity oracle in
-`stellar-heritage/tools/clause/`.
+**Initial state.** This repo was extracted from the
+Python-implemented prototype on 2026-04-19. The Python prototype
+(~15k lines, 1500+ tests) remains as a parity oracle.
 
 
 
@@ -56,15 +55,13 @@ The extension point contract is TBD (one of the first session's design rounds).
 
 ## Not in this repo
 
-- Clausewitz-specific code, bind targets, content. stays in stellar-heritage until `vehje-jomini` repo exists.
-- Python reference implementation. stays in stellar-heritage as parity oracle.
+- Clausewitz-specific code, bind targets, content. out of scope until `vehje-jomini` repo exists.
+- Python reference implementation. out of scope here; the Python prototype is the parity oracle.
 - Stellaris mod crates (std, stellaris, heritage, DLC-specific). they're *programs written in Vehje*, not the language itself.
-- Deploy / playset / artgen orchestration. belongs in stellar-heritage; eventually rewritten in Vehje as dogfood.
+- Deploy / playset / artgen orchestration. out of scope here; eventually rewritten in Vehje as dogfood.
 
 ## See also
 
 
-- `mock/PRINCIPLES.md`. language principles.
-- `mock/WORKFLOW.md`. design → validate → implement discipline.
 - [`arvo`](https://github.com/orgrinrt/arvo). numeric foundations.
 - [`hilavitkutin`](https://github.com/orgrinrt/hilavitkutin). runtime engine.
