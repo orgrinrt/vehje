@@ -1,0 +1,83 @@
+# vehje. backlog
+
+> **Type-surface reminder**: new entries use `arvo::USize` /
+> `arvo::UFixed<N, 0, S>` instead of `usize` / `u*`,
+> `notko::Maybe` / `notko::Outcome` instead of `Option` /
+> `Result`, `hilavitkutin_str::Str` instead of `String` or
+> non-static `&str`. See `.claude/rules/type-surface.md`.
+
+Items decided but deliberately out of the round-one shipping
+scope. Each lands as its own follow-up design round.
+
+## parse subcommand. real AST printer
+
+The round-one stub prints a phase placeholder. The real
+implementation pretty-prints the AST via a
+`vehje-syntax`-owned printer once the parser productions
+ship. Output format echoes the shape of the stellar-heritage
+Python oracle's `vehje parse --json` but stays human-readable
+by default.
+
+## check subcommand. real typecheck
+
+Depends on `vehje-typecheck` validator bodies. Prints every
+diagnostic the registry emits for the input program, sorted
+by file + offset. Exit code `1` on any emitted diagnostic.
+
+## build subcommand. target dispatch
+
+Takes a `--target <name>` flag, dispatches to a
+`CodegenTarget` implementation, writes emitted bytes to
+stdout or a `--out <file>` path. Depends on real `vehje-
+codegen` target bodies.
+
+## run subcommand. compile + interpret
+
+Compiles through the front end, passes the emitted bytecode
+to an embedded interpreter. Depends on an interpreter design
+round (not yet opened).
+
+## Pass-DAG wiring via vehje-schedule
+
+Replaces the hard-coded phase chain in each subcommand with
+a graph walk through `vehje-schedule` once that crate ships
+a pass DAG. Round-one subcommands stay hard-coded; the
+swap happens when `vehje-schedule` offers a real entry
+point.
+
+## Workspace manifest parsing
+
+Round one takes a single `<file>` input. Real projects are
+multi-file with a `Vehje.toml` manifest. The manifest round
+introduces module-graph loading, edition selection, target
+list, dependency resolution. Parser lives in
+`vehje-resolve::manifest` today as a stub; the binary
+invokes it once it is real.
+
+## Argument parser library swap
+
+The hand-rolled `args.rs` is fine for five subcommands with
+one positional each. If the CLI grows beyond that (flags per
+subcommand, output formatters, verbosity levels, `--help`
+generation), swap to `argh` or `clap`. Criterion: `args.rs`
+exceeds ~120 lines or requires more than one parser per
+subcommand family.
+
+## Script-mode entry
+
+`vehje <file>` as a shorthand for `vehje run <file>` so the
+binary works as a `#!`-invoked interpreter for `.vehje`
+scripts. Depends on `run` landing first.
+
+## Exit code table freeze
+
+Round-one freezes:
+
+- `0`. success.
+- `1`. phase-level failure (lex diagnostic, parse error,
+  typecheck diagnostic, codegen error).
+- `2`. stub / not-yet-implemented or I/O failure.
+
+Script authors against the binary may rely on these codes.
+Future rounds that widen the surface add new codes from `3`
+upward; they do not repurpose `0`, `1`, `2`.

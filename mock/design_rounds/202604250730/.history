@@ -1,0 +1,50 @@
+835d1ac chore: lock src CL for 202604250730
+31fb9f0 feat: rename ABI types Clause* to Vehje*
+6099335 docs: open src CL for ABI type rename
+3ada9be chore: lock doc CL for 202604250730
+8ccee52 docs: rename ABI type names in templates (Clause* to Vehje*)
+f482462 docs: open doc CL for ABI type rename round
+b57cae1 chore: close round 202604250700
+7a30d86 chore: lock src CL for 202604250700
+fe1a9d7 chore: regenerate auto files after dir rename
+d8157d2 feat: rename mock/crates/clause-* dirs to vehje-*
+587886f docs: open src CL for dir rename
+8e2962f chore: lock doc CL for 202604250700
+b927d40 docs: open empty doc CL for dir-rename src-only round
+1493034 chore: close design round 202604250637
+e32aa39 chore: lock src changelist for 202604250637
+a5a9ae1 feat: align zig runtime exports with vehje_runtime_* abi names
+cfe8c10 chore: lock doc changelist for 202604250637
+fda3633 docs: complete clause to vehje rename in templates + zig docs
+cdce480 docs: open doc CL for clause to vehje rename completion round
+8507df0 Merge pull request #21 from orgrinrt/chore/severity-restore-218
+775e404 chore: restore primitive-vocabulary lints to error post-#214
+e0185cd Merge pull request #20 from orgrinrt/feat/vehje-skeleton-debt-sweep
+72ed4f0 chore: close design round 202604300000
+8838cff chore: lock src changelist for 202604300400_changelist.src.lock.md
+54f159e refactor: em-dash sweep on src/*.rs doc comments + final src CL update
+590bb9b docs: add final src CL 202604300400 (supersedes 202604300300)
+84943a4 chore: relock doc CL after final cleanup
+bccb053 docs: em-dash sweep on tmpl, SHAME entries for no-std + undocumented-type
+233b5b8 chore: unlock to fold final cleanup (SHAME, DESIGN updates, em-dash sweep)
+6a17df7 refactor: bulk lint:allow sweep across skeleton crates (#207 tracked)
+d73de82 refactor: gate std behind feature flag for runtime-driver + runtime-tests
+03946c2 feat: populate vehje-schedule skeleton harness (clears no-empty-crate)
+be31fe4 chore: relock doc CL, reopen src CL (dir rename blocked by phase-gate; will revisit post-merge via mockspace #41)
+2b41ac5 chore: unlock design round to fold directory rename into doc CL
+69b5471 refactor: clause-runtime-abi no_std-first with std feature gate + FFI policy annotations
+d398710 refactor: D5 source-side rename of residual clause/Clause prose to vehje/Vehje
+a9668f0 docs: add src CL 202604300200 (supersedes deprecated 202604300100)
+2e0c5e2 chore: lock doc changelist for 202604300000_changelist.doc.lock.md
+ea9ea5e docs: D5 rename sweep — drain residual clause/Clause prose to vehje/Vehje
+9b4cfda chore: unlock design round to fold rename cleanup into doc CL
+6d6240e refactor: reframe clause-resolve lib.rs doc as no_std-first
+fe79f82 refactor: add no_std to clean compiler-phase crates
+f4ec5aa docs: add src changelist for vehje skeleton debt sweep
+7da51fa chore: lock doc changelist for 202604300000_changelist.doc.lock.md
+74314ee docs: open vehje skeleton debt sweep round — no_std-first + FFI policy
+e02f3f6 refactor: rename clause -> vehje (#19)
+e4d95ae docs: refresh README to personal crates.io format for consistency (#18)
+706f9b6 docs: update guideline generation rules (#17)
+a0b8626 docs: audit hilavitkutin workunit surface for clause fit (#132) (#16)
+07b1bbe feat: clause-resolve primitives sweep + lint flip (m0.1, #130) (#15)

@@ -1,0 +1,9 @@
+# vehje. top-level binary
+
+The `vehje` binary ties together the compiler phases (lex, syntax,
+resolve, typecheck, schedule, codegen) into a single shippable tool.
+Consumes its sibling crates; no algorithmic content lives here.
+
+Consumer-facing subcommands live here (compile, check, build, new).
+Phase crate split + responsibilities finalised by Phase 2b (R1)
+design round.

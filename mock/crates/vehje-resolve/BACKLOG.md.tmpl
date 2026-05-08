@@ -1,0 +1,73 @@
+# vehje-resolve. backlog
+
+## Deferred name-resolution rules (skeleton round. one per follow-up)
+
+Each bullet lands as its own micro-round: extend the `Resolver`
+walk to handle the production, populate `ScopeTree` and
+`Resolved::resolution` accordingly, add a test file. The
+skeleton harness (`Resolver`, `ScopeTree`, `Scope`, `Symbol`,
+`Resolved`, top-level `resolve`) is already stable. these
+rounds do not churn it.
+
+- **Top-level item resolution**. `fn`, `type`, `const`, `use`
+  declarations register symbols in the module scope.
+- **Local binding resolution + shadowing**. `let` bindings
+  inside blocks, shadowing rules.
+- **Path resolution**. `a::b::c` lookups through nested scopes.
+- **Use / import statements + re-exports**. `use path::…;`,
+  `pub use path::…;`.
+- **Glob imports**. `use foo::*;`.
+- **Generic parameter scopes**. type and const generics as
+  scoped bindings.
+- **Self-type in impl blocks**. `Self` alias inside `impl`
+  items.
+- **Trait method resolution**. resolving method calls through
+  trait impls.
+- **Macro hygiene**. once macros land.
+
+## Deferred manifest features
+
+- **TOML parsing**. replace stub with `toml_edit` reader.
+- **Dependency graph construction**. build a DAG of crates +
+  topological sort.
+- **Feature flag resolution**. `[features]` table + conditional
+  compilation.
+- **Workspace manifests**. `[workspace]` + members.
+
+## Non-blocking follow-ups
+
+- **`ScopeId` in vehje-ir**. already landed in R1; BACKLOG
+  only notes that any future cross-crate tweak should stay
+  reusable.
+- **Interned `Str` name expansion**. this round adopts
+  `hilavitkutin_str::Str`; follow-up work connects the
+  `StringInterner` instance to the compiler driver so the
+  runtime-origin bit of `Str` carries real IDs (not just the
+  compile-time `str_const!()` path).
+- **Incremental resolve for IDE**. delta walk that re-resolves
+  only the changed subtree, keyed off AST node diff.
+
+## Diagnostic surface
+
+- `ResolveError` currently carries two variants
+  (`UnresolvedIdentifier`, `DuplicateDefinition`); additional
+  variants (`AmbiguousImport`, `CycleDetected`, `PrivateAccess`,
+  `UnknownCrate`) arrive with the rule that first emits them.
+- `ManifestError` currently carries two variants (`Parse`,
+  `NotImplemented`); real TOML parsing will extend this with
+  `MissingField`, `InvalidVersion`, `DuplicateDependency`, etc.
+- The `From<ResolveError> for Diagnostic` conversion currently
+  emits static placeholder messages; follow-up rounds replace
+  them with per-variant messages once the producer rules land.
+
+## Scheduler handoff for collection fields
+
+The four skeleton-backed collection fields (`Scope::symbols`,
+`ScopeTree::scopes`, `Resolved::resolution`,
+`Manifest::dependencies`) are tracked in SHAME.md against #131
+(vehje-schedule as hilavitkutin WorkUnit home) and #134
+(persistence spine). Once the scheduler owns resolver state,
+each field moves to a scheduler-managed `Column<T>` or a
+`Map<K, V, N: Cap>` descriptor over an AccessSet-typed
+read/write pair. Do not rewrite the fields inline before
+#131 lands.

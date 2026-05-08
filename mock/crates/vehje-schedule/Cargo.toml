@@ -1,0 +1,18 @@
+[package]
+name = "vehje-schedule"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+vehje-ir.workspace = true
+vehje-typecheck.workspace = true
+arvo.workspace = true
+arvo-bitmask.workspace = true
+arvo-graph.workspace = true
+
+[build-dependencies]
+mockspace.workspace = true
+
+[features]
+default = []

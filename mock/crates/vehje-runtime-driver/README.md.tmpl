@@ -1,0 +1,6 @@
+# vehje-runtime-driver. compiler-side runtime dispatcher
+
+Dlopens the shipped Zig runtime dylib, validates abi_version,
+dispatches macro / scratch / generative calls through the ABI.
+Consumed by vehje-schedule (macro expansion pass) and by
+vehje-codegen (generative expansion pass).

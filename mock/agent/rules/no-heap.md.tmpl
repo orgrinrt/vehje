@@ -4,8 +4,8 @@ apply_to: ["crates/**/*.rs", "src/**/*.rs"]
 
 ## No heap. Ever.
 
-No ad-hoc allocations in the no_std front-end crates (clause-ir,
-clause-lex, clause-syntax) and the runtime crates (clause-runtime-*).
+No ad-hoc allocations in the no_std front-end crates (vehje-ir,
+vehje-lex, vehje-syntax) and the runtime crates (vehje-runtime-*).
 The compiler's higher phases (resolve, typecheck, schedule, codegen)
 may use std because they're dev-time compile-only processes, but the
 published/runtime-shipped code universe has no heap.
@@ -14,7 +14,7 @@ Every lint that forbids `alloc::*` / `Vec` / `Box` / `String` / `HashMap`
 in the no_std crates is a consequence of this first principle, not a
 standalone rule.
 
-### Red flags (stop and reshape) — in no_std crates
+### Red flags (stop and reshape). in no_std crates
 
 - "I need a list temporarily" → the heap is never temporarily available
   in no_std.
@@ -51,4 +51,4 @@ signatures are fixed by the language:
 
 Anywhere else in public API of a no_std crate, use the
 notko/arvo/hilavitkutin-api vocabulary. `lint:allow(...)` is for
-tracked debt with a linked task id only — never skeleton convenience.
+tracked debt with a linked task id only. never skeleton convenience.

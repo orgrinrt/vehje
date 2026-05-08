@@ -14,7 +14,7 @@ dependencies = [
 [[package]]
 name = "arvo"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#541e4c775c7dba31c5e905c316a95330c35d3461"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#24afda0a663fadf1f689b9ec37a4abafd7f6abcf"
 dependencies = [
  "mockspace",
  "notko",
@@ -23,17 +23,18 @@ dependencies = [
 [[package]]
 name = "arvo-bitmask"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#541e4c775c7dba31c5e905c316a95330c35d3461"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#24afda0a663fadf1f689b9ec37a4abafd7f6abcf"
 dependencies = [
  "arvo",
  "arvo-bits",
+ "arvo-tensor",
  "mockspace",
 ]
 
 [[package]]
 name = "arvo-bits"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#541e4c775c7dba31c5e905c316a95330c35d3461"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#24afda0a663fadf1f689b9ec37a4abafd7f6abcf"
 dependencies = [
  "arvo",
  "mockspace",
@@ -46,6 +47,15 @@ source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#541e4c775c7dba31
 dependencies = [
  "arvo",
  "arvo-bitmask",
+ "mockspace",
+]
+
+[[package]]
+name = "arvo-tensor"
+version = "0.1.0"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#24afda0a663fadf1f689b9ec37a4abafd7f6abcf"
+dependencies = [
+ "arvo",
  "mockspace",
 ]
 
@@ -66,112 +76,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 
 [[package]]
-name = "clause"
-version = "0.1.0"
-dependencies = [
- "mockspace",
-]
-
-[[package]]
-name = "clause-codegen"
-version = "0.1.0"
-dependencies = [
- "clause-ir",
- "clause-resolve",
- "mockspace",
- "notko",
-]
-
-[[package]]
-name = "clause-ir"
-version = "0.1.0"
-dependencies = [
- "mockspace",
-]
-
-[[package]]
-name = "clause-lex"
-version = "0.1.0"
-dependencies = [
- "clause-ir",
- "mockspace",
- "notko",
-]
-
-[[package]]
-name = "clause-resolve"
-version = "0.1.0"
-dependencies = [
- "clause-ir",
- "clause-syntax",
- "mockspace",
- "notko",
-]
-
-[[package]]
-name = "clause-runtime-abi"
-version = "0.1.0"
-dependencies = [
- "clause-ir",
- "mockspace",
-]
-
-[[package]]
-name = "clause-runtime-driver"
-version = "0.1.0"
-dependencies = [
- "clause-ir",
- "clause-runtime-abi",
- "clause-schedule",
- "mockspace",
- "notko",
-]
-
-[[package]]
-name = "clause-runtime-tests"
-version = "0.1.0"
-dependencies = [
- "clause-runtime-abi",
- "clause-runtime-driver",
- "mockspace",
- "notko",
-]
-
-[[package]]
-name = "clause-schedule"
-version = "0.1.0"
-dependencies = [
- "arvo",
- "arvo-bitmask",
- "arvo-graph",
- "clause-ir",
- "clause-typecheck",
- "mockspace",
-]
-
-[[package]]
-name = "clause-syntax"
-version = "0.1.0"
-dependencies = [
- "clause-ir",
- "clause-lex",
- "mockspace",
- "notko",
-]
-
-[[package]]
-name = "clause-typecheck"
-version = "0.1.0"
-dependencies = [
- "arvo",
- "arvo-bitmask",
- "clause-ir",
- "clause-resolve",
- "clause-syntax",
- "mockspace",
-]
-
-[[package]]
 name = "equivalent"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -188,6 +92,33 @@ name = "hashbrown"
 version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4f467dd6dccf739c208452f8014c75c18bb8301b050ad1cfb27153803edb0f51"
+
+[[package]]
+name = "hilavitkutin-api"
+version = "0.1.0"
+source = "git+ssh://git@github.com/orgrinrt/hilavitkutin.git?branch=dev#56d325665b824b508ba4349e8ad9909d93962870"
+dependencies = [
+ "arvo",
+ "arvo-bitmask",
+ "hilavitkutin-ctx",
+ "mockspace",
+ "notko",
+]
+
+[[package]]
+name = "hilavitkutin-ctx"
+version = "0.1.0"
+source = "git+ssh://git@github.com/orgrinrt/hilavitkutin.git?branch=dev#56d325665b824b508ba4349e8ad9909d93962870"
+
+[[package]]
+name = "hilavitkutin-str"
+version = "0.1.0"
+source = "git+ssh://git@github.com/orgrinrt/hilavitkutin.git?branch=dev#56d325665b824b508ba4349e8ad9909d93962870"
+dependencies = [
+ "arvo",
+ "arvo-bits",
+ "notko",
+]
 
 [[package]]
 name = "indexmap"
@@ -218,7 +149,7 @@ checksum = "f8ca58f447f06ed17d5fc4043ce1b10dd205e060fb3ce5b979b8ed8e59ff3f79"
 [[package]]
 name = "mockspace"
 version = "0.1.0"
-source = "git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main#e3f6f6dc30690a5f480ba2bce46b870ece2d17b7"
+source = "git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main#acf2861fa9589593e4086cabbfb4b37089b0e88a"
 dependencies = [
  "libloading",
  "mockspace-lint-rules",
@@ -231,7 +162,7 @@ dependencies = [
 [[package]]
 name = "mockspace-lint-rules"
 version = "0.1.0"
-source = "git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main#e3f6f6dc30690a5f480ba2bce46b870ece2d17b7"
+source = "git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main#acf2861fa9589593e4086cabbfb4b37089b0e88a"
 dependencies = [
  "tree-sitter",
  "tree-sitter-rust",
@@ -414,6 +345,128 @@ name = "unicode-ident"
 version = "1.0.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e6e4313cd5fcd3dad5cafa179702e2b244f760991f45397d14d4ebf38247da75"
+
+[[package]]
+name = "vehje"
+version = "0.1.0"
+dependencies = [
+ "mockspace",
+ "notko",
+ "vehje-codegen",
+ "vehje-ir",
+ "vehje-lex",
+ "vehje-resolve",
+ "vehje-syntax",
+ "vehje-typecheck",
+]
+
+[[package]]
+name = "vehje-codegen"
+version = "0.1.0"
+dependencies = [
+ "hilavitkutin-api",
+ "mockspace",
+ "notko",
+ "vehje-ir",
+ "vehje-resolve",
+]
+
+[[package]]
+name = "vehje-ir"
+version = "0.1.0"
+dependencies = [
+ "mockspace",
+]
+
+[[package]]
+name = "vehje-lex"
+version = "0.1.0"
+dependencies = [
+ "mockspace",
+ "notko",
+ "vehje-ir",
+]
+
+[[package]]
+name = "vehje-resolve"
+version = "0.1.0"
+dependencies = [
+ "arvo",
+ "arvo-bits",
+ "hilavitkutin-str",
+ "mockspace",
+ "notko",
+ "vehje-ir",
+ "vehje-syntax",
+]
+
+[[package]]
+name = "vehje-runtime-abi"
+version = "0.1.0"
+dependencies = [
+ "arvo",
+ "mockspace",
+ "vehje-ir",
+]
+
+[[package]]
+name = "vehje-runtime-driver"
+version = "0.1.0"
+dependencies = [
+ "hilavitkutin-api",
+ "mockspace",
+ "notko",
+ "vehje-ir",
+ "vehje-runtime-abi",
+ "vehje-schedule",
+]
+
+[[package]]
+name = "vehje-runtime-tests"
+version = "0.1.0"
+dependencies = [
+ "hilavitkutin-api",
+ "mockspace",
+ "notko",
+ "vehje-runtime-abi",
+ "vehje-runtime-driver",
+]
+
+[[package]]
+name = "vehje-schedule"
+version = "0.1.0"
+dependencies = [
+ "arvo",
+ "arvo-bitmask",
+ "arvo-graph",
+ "mockspace",
+ "vehje-ir",
+ "vehje-typecheck",
+]
+
+[[package]]
+name = "vehje-syntax"
+version = "0.1.0"
+dependencies = [
+ "hilavitkutin-api",
+ "mockspace",
+ "notko",
+ "vehje-ir",
+ "vehje-lex",
+]
+
+[[package]]
+name = "vehje-typecheck"
+version = "0.1.0"
+dependencies = [
+ "arvo",
+ "arvo-bitmask",
+ "hilavitkutin-api",
+ "mockspace",
+ "vehje-ir",
+ "vehje-resolve",
+ "vehje-syntax",
+]
 
 [[package]]
 name = "windows-link"

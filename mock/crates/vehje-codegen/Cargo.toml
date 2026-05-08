@@ -1,0 +1,17 @@
+[package]
+name = "vehje-codegen"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+vehje-ir.workspace = true
+vehje-resolve.workspace = true
+hilavitkutin-api.workspace = true
+notko.workspace = true
+
+[build-dependencies]
+mockspace.workspace = true
+
+[features]
+default = []

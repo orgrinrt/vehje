@@ -1,0 +1,15 @@
+[package]
+name = "vehje-lex"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+vehje-ir.workspace = true
+notko.workspace = true
+
+[build-dependencies]
+mockspace.workspace = true
+
+[features]
+default = []

@@ -13,7 +13,7 @@ today is listed below; anything more specific waits on R1–R4.
 
 ### Known today
 
-- Workspace inheritance: every Clause crate uses
+- Workspace inheritance: every Vehje crate uses
   `version.workspace = true`, `edition.workspace = true`,
   `license.workspace = true`. Edition 2024.
 - Shared deps go in `[workspace.dependencies]`. Sibling crates in this
@@ -21,18 +21,18 @@ today is listed below; anything more specific waits on R1–R4.
 - License: MPL-2.0 across the workspace.
 - `mockspace` is a build-script dependency, pinned to the git repo.
 
-### Substrate dependencies
+### Foundation dependencies
 
-Clause consumes two sibling substrate repos as git deps, defined once
+Vehje consumes two sibling foundation repos as git deps, defined once
 at `[workspace.dependencies]`:
 
 - `arvo`, `arvo-bits`, `arvo-bitmask`, `arvo-graph`, `arvo-sparse`,
-  `arvo-spectral`, `arvo-comb` — numeric + graph primitives.
-- `hilavitkutin-api`, `hilavitkutin`, `hilavitkutin-build` — pipeline
+  `arvo-spectral`, `arvo-comb`. numeric + graph primitives.
+- `hilavitkutin-api`, `hilavitkutin`, `hilavitkutin-build`. pipeline
   execution. Runtime only; the compiler rarely needs the frame engine.
 
 Both are currently pinned to `branch = "main"`. Cross-repo iteration
-(touching an arvo or hilavitkutin API while working in clause) uses a
+(touching an arvo or hilavitkutin API while working in vehje) uses a
 temporary `[patch."…"]` block in `mock/Cargo.toml` pointing at the
 local sibling. Remove the patch before pushing.
 
@@ -44,25 +44,25 @@ local sibling. Remove the patch before pushing.
   cross-builds (e.g. `openssl-sys` with system linkage; prefer
   pure-Rust or rustls alternatives).
 - The Rust compiler may use `std`. The Zig runtime does not depend on
-  Rust or on `std` — it communicates via C ABI the Rust side defines.
+  Rust or on `std`. it communicates via C ABI the Rust side defines.
   No `no_std` concern for the compiler crates; that constraint lives
   downstream in the runtime.
 
 ### Proc macros
 
-- Clause language macros are procedural and live in the compiler
+- Vehje language macros are procedural and live in the compiler
   itself (scheduler-pass-driven), not in separate `proc-macro = true`
   crates like traditional Rust proc macros.
 - If the Rust implementation needs internal `macro_rules!` for
   boilerplate (trait derivation, span forwarding), that is acceptable.
-  `macro_rules!` is forbidden for expressing Clause language semantics.
+  `macro_rules!` is forbidden for expressing Vehje language semantics.
 
 ### After R1–R4
 
 Once the crate split is decided, this document grows:
 
-- Per-layer dependency direction (e.g. `clause-lex` → none;
-  `clause-syntax` → `clause-lex`; …; `clause` top-level orchestrator).
+- Per-layer dependency direction (e.g. `vehje-lex` → none;
+  `vehje-syntax` → `vehje-lex`; …; `vehje` top-level orchestrator).
 - `forbidden-imports` rules in `mockspace.toml` per scope to enforce
   the layering.
 - Proc-macro / cdylib / build-dependency posture per crate.

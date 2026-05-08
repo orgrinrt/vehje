@@ -1,0 +1,50 @@
+# vehje-runtime-tests. Design
+
+Soundness tests for the C ABI. Runs under `cargo test`; does NOT
+depend on the real Zig runtime.
+
+## Scope
+
+- Struct shape assertions. `size_of`, `align_of`, `offset_of` on
+  every `#[repr(C)]` type in vehje-runtime-abi.
+- Enum discriminant stability. every public enum has asserted
+  discriminant values.
+- ABI version checks. the abi_version constants stay
+  monotonically increasing.
+- Minimal Zig stub dylib. `tests/zig_stub/` builds a small dylib
+  implementing the ABI; tests dlopen it and round-trip buffers.
+
+## Round-skeleton scope
+
+Phase 6 skeleton round (2026-04-20) ships:
+
+- Crate scaffold consuming `vehje-runtime-abi` +
+  `vehje-runtime-driver`.
+- One `pub fn test_runtime_roundtrip()` harness that attempts
+  to load a runtime via `RuntimeLoader::load` and verifies the
+  return is `Err(LoaderError::NotImplemented)`.
+- Smoke tests asserting the public types of both abi + driver
+  are usable from this crate.
+
+Struct-shape assertions (`size_of` / `align_of` / `offset_of`),
+enum-discriminant stability tests, ABI-version monotonicity
+guards, and the Zig stub-dylib dlopen round-trip are all
+BACKLOG. those land once the real ABI types grow beyond the
+skeleton `VehjeResult` / `VehjeRuntime` / `VehjeDiagnostic`
+shape this round ships.
+
+## Non-scope
+
+- Real runtime functionality. that's `mock/runtime-zig/`.
+- Performance benchmarks. separate bench round.
+
+## Dependencies
+
+- `vehje-runtime-abi`.
+- `vehje-runtime-driver` (skeleton round needs driver types).
+- libloading (via dev-dep) for the stub-dylib dlopen (BACKLOG).
+
+## Sources
+
+- 202604262100_changelist.doc.md (R2 round)
+- 202604264100_changelist.doc.md (Phase 6 skeleton round)

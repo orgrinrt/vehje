@@ -6,7 +6,7 @@
 # line-by-line translation source, when Write/Edit targets Rust files
 # in the compiler tree.
 #
-# Uses context() — this is a nudge, not a block. The Rust shape differs
+# Uses context(): this is a nudge, not a block. The Rust shape differs
 # meaningfully from the Python (tagged enums vs Protocol, Result vs
 # exceptions, monomorphised dispatch vs isinstance). Translate test
 # intent, not implementation.
@@ -19,10 +19,10 @@ __INPUT=$(cat)
 
 TARGET=$(_extract file_path)
 
-# Only fire on Rust files inside clause compiler or runtime trees.
+# Only fire on Rust files inside vehje compiler or runtime trees.
 case "$TARGET" in
-    */clause/src/*.rs|*/clause-*/src/*.rs|*/mock/crates/clause/*.rs|*/mock/crates/clause-*/*.rs)
-        context "Reminder: ~/Dev/stellar-heritage/tools/clause/ is a parity oracle. Port test intent, not implementation. Rust shape differs — tagged enums over Protocol, Result over exceptions, monomorphised trait dispatch over isinstance. Authoring from design docs; reading Python for semantics only."
+    */vehje/src/*.rs|*/vehje-*/src/*.rs|*/mock/crates/vehje/*.rs|*/mock/crates/vehje-*/*.rs)
+        context "Reminder: ~/Dev/stellar-heritage/tools/clause/ is a parity oracle. Port test intent, not implementation. Rust shape differs: tagged enums over Protocol, Result over exceptions, monomorphised trait dispatch over isinstance. Authoring from design docs; reading Python for semantics only."
         ;;
 esac
 

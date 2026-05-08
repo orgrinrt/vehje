@@ -1,0 +1,56 @@
+# vehje-resolve. known gaps
+
+Each section below keys a specific known gap in the shipped
+crate, documented to the 50-word minimum so the mockspace lint
+runner honours it as a suppression for the named type. Every
+gap tracks back to a scheduler-integration task; none of them
+is a design loss.
+
+## Scope
+
+`Scope::symbols` is backed by `std::collections::HashMap<Str,
+Symbol>` in the skeleton compiler crate. The canonical target
+is a scheduler-managed store: either a `Column<Symbol>` keyed
+by a `Map<Str, SymbolSlot, N: Cap>` descriptor, or a single
+`Column<(Str, Symbol)>` with sparse lookup, depending on how
+`vehje-schedule` elects to partition resolver state. Tracked
+to #131 (vehje-schedule as hilavitkutin WorkUnit home) and
+#147 (validator framework single-walk visitor with scope
+stack). Until the scheduler lands, the field stores names
+inline so the resolver has somewhere to write.
+
+## ScopeTree
+
+`ScopeTree::scopes` is backed by a skeleton `Vec<Scope>` for
+the same reason as `Scope::symbols`: the resolver needs
+somewhere to hold scope state before the scheduler owns it. The
+canonical target is a `Column<Scope>` indexed by `ScopeId`
+(which is already a dense `u32`. so the column degenerates to
+a contiguous arena). Tracked to #131. The skeleton's `Vec` is
+not a design loss; it is the shape `Column<Scope>` will compile
+to once `vehje-schedule` dispatches over it. Shallow
+walk-in-place remains available throughout the transition.
+
+## Resolved
+
+`Resolved::resolution` is backed by a skeleton
+`Vec<Maybe<Symbol>>` keyed by `NodeId.0` as dense-index. The
+canonical target is a sidecar `Column<Maybe<Symbol>>`
+materialised from a `hilavitkutin-persistence` cold-store entry
+on incremental rebuilds, and reduced from an AccessSet walk on
+fresh compiles. Tracked to #131 (scheduler handoff) and #134
+(persistence spine cold-store shape audit, SUB-H1). Interim
+skeleton holds the inline vector so `resolve()` can return
+something other than `Maybe::Isnt`.
+
+## Manifest
+
+`Manifest::dependencies` is backed by a skeleton `Vec<Str>`
+listing dependency crate names. The canonical target blends
+three tasks: #166 (real TOML parsing of `Vehje.toml`), #131
+(scheduler handoff. the manifest-walker becomes a WorkUnit),
+and #134 (persistence spine. the crate graph is a cold-store
+artifact). The skeleton `Vec<Str>` is the shape that all three
+final homes reduce to at the leaf; it is not a design
+compromise. Interim skeleton holds the inline vector until the
+manifest parser and the scheduler/persistence plumbing land.

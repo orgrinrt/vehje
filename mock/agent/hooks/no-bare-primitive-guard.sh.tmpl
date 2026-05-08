@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # @matchers: Write, Edit
 # @timeout: 5
-# Agent hook: block bare primitive identifiers anywhere in clause
+# Agent hook: block bare primitive identifiers anywhere in vehje
 # crate source.
 #
-# Scope is broader than `no-alloc-guard.sh` — this fires on ALL
-# clause crates (no_std and std-using alike). The rule is physical-
+# Scope is broader than `no-alloc-guard.sh`: this fires on ALL
+# vehje crates (no_std and std-using alike). The rule is physical-
 # presence: bare `u8..u128`, `i8..i128`, `f32`, `f64`, `usize`,
 # `isize`, `bool`, `Option`, `Result`, `String`, and non-static
 # `&str` do not exist in this stack. Not in public fn sigs, not in
@@ -39,7 +39,7 @@ if [[ -z "$CONTENT" ]]; then
     CONTENT=$(_extract content)
 fi
 
-if ! echo "$TARGET" | grep -qE "mock/crates/clause[^/]*/src/.*\.rs$"; then
+if ! echo "$TARGET" | grep -qE "mock/crates/vehje[^/]*/src/.*\.rs$"; then
     allow
 fi
 
@@ -62,25 +62,25 @@ while IFS= read -r LINE; do
     STRIPPED=$(printf '%s' "$LINE" | sed -e 's/"[^"]*"//g' -e "s/'[^']*'//g")
 
     if printf '%s' "$STRIPPED" | grep -qE "(^|[^a-zA-Z0-9_])($BARE_NUMS)([^a-zA-Z0-9_]|$)"; then
-        deny "clause has no bare numeric/bool primitives. Line: \`$TRIMMED\`. Use UFixed / IFixed / FastFloat / StrictFloat / USize / Cap / Bool or a domain alias. Escape: \`// lint:allow(no-bare-numeric) reason: ...; tracked: #N\`."
+        deny "vehje has no bare numeric/bool primitives. Line: \`$TRIMMED\`. Use UFixed / IFixed / FastFloat / StrictFloat / USize / Cap / Bool or a domain alias. Escape: \`// lint:allow(no-bare-numeric) reason: ...; tracked: #N\`."
     fi
 
     if printf '%s' "$STRIPPED" | grep -qE "(^|[^a-zA-Z0-9_])Option([^a-zA-Z0-9_]|$)"; then
-        deny "clause has no bare \`Option\`. Use \`notko::Maybe<T>\`. Line: \`$TRIMMED\`. Escape: \`// lint:allow(no-bare-option) reason: std trait parity; tracked: #N\`."
+        deny "vehje has no bare \`Option\`. Use \`notko::Maybe<T>\`. Line: \`$TRIMMED\`. Escape: \`// lint:allow(no-bare-option) reason: std trait parity; tracked: #N\`."
     fi
 
     if printf '%s' "$STRIPPED" | grep -qE "(^|[^a-zA-Z0-9_])Result([^a-zA-Z0-9_]|$)"; then
         if ! printf '%s' "$STRIPPED" | grep -qE "(fmt|io)::Result"; then
-            deny "clause has no bare \`Result\`. Use \`notko::Outcome<T, E>\` (cold) or \`notko::Just<T>\` (hot). Line: \`$TRIMMED\`. Escape: \`// lint:allow(no-bare-result) reason: ...; tracked: #N\`."
+            deny "vehje has no bare \`Result\`. Use \`notko::Outcome<T, E>\` (cold) or \`notko::Just<T>\` (hot). Line: \`$TRIMMED\`. Escape: \`// lint:allow(no-bare-result) reason: ...; tracked: #N\`."
         fi
     fi
 
     if printf '%s' "$STRIPPED" | grep -qE "(^|[^a-zA-Z0-9_])String([^a-zA-Z0-9_]|$)"; then
-        deny "clause has no bare \`String\` (heap-allocated). Use \`hilavitkutin_str::Str\`. Line: \`$TRIMMED\`."
+        deny "vehje has no bare \`String\` (heap-allocated). Use \`hilavitkutin_str::Str\`. Line: \`$TRIMMED\`."
     fi
 
     if printf '%s' "$STRIPPED" | grep -qE "(^|[^a-zA-Z0-9_'])&[[:space:]]*(mut[[:space:]]+)?str([^a-zA-Z0-9_]|$)"; then
-        deny "clause has no non-static \`&str\`. Use \`&'static str\` or \`hilavitkutin_str::Str\`. Line: \`$TRIMMED\`."
+        deny "vehje has no non-static \`&str\`. Use \`&'static str\` or \`hilavitkutin_str::Str\`. Line: \`$TRIMMED\`."
     fi
 done <<< "$CONTENT"
 

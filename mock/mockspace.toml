@@ -1,5 +1,5 @@
-project_name = "clause"
-crate_prefix = "clause"
+project_name = "vehje"
+crate_prefix = "vehje"
 abi_version = 1
 
 proc_macro_crates = []
@@ -10,20 +10,20 @@ primary_domain_macro = "pass"
 primary_domain_label = "Passes"
 
 # Layer labels by depth index. R1 finalised the 8-crate compiler
-# split (clause-ir, lex, syntax, resolve, typecheck, schedule,
+# split (vehje-ir, lex, syntax, resolve, typecheck, schedule,
 # codegen, clause binary). Runtime split lands with R2.
 layers = [
-    "IR",         # clause-ir
-    "Lex",        # clause-lex
-    "Syntax",     # clause-syntax
-    "Resolve",    # clause-resolve
-    "TypeCheck",  # clause-typecheck
-    "Schedule",   # clause-schedule
-    "CodeGen",    # clause-codegen
-    "Rt:ABI",     # clause-runtime-abi
-    "Rt:Driver",  # clause-runtime-driver
-    "Rt:Tests",   # clause-runtime-tests
-    "CLI",        # clause (binary)
+  "IR",  # vehje-ir
+  "Lex",  # vehje-lex
+  "Syntax",  # vehje-syntax
+  "Resolve",  # vehje-resolve
+  "TypeCheck",  # vehje-typecheck
+  "Schedule",  # vehje-schedule
+  "CodeGen",  # vehje-codegen
+  "Rt:ABI",  # vehje-runtime-abi
+  "Rt:Driver",  # vehje-runtime-driver
+  "Rt:Tests",  # vehje-runtime-tests
+  "CLI",  # vehje (binary)
 ]
 
 # Domain kind labels for STRUCTURE.md domain items table
@@ -33,16 +33,15 @@ pass = "🧩 compiler pass"
 # Known macros for DESIGN.md table (description | usage)
 [known_macros]
 
-# Crate header colors for dependency graph (bg_color | fg_color) —
-# populated once crate names are decided.
+# Crate header colors for dependency graph (bg_color | fg_color).
+# Populated once crate names are decided.
 [crate_colors]
-
 # ---------------------------------------------------------------------------
 # Lint configuration
 #
 # Most crate-specific lints (no-unsafe, no-dyn, no-unwrap, compiler-phase
 # layering via forbidden-imports, no-game-vocabulary, no-substrate-reimpl,
-# strict-posture) are DEFERRED to post-R1–R4 — the crate split has to land
+# strict-posture) are DEFERRED to post-R1-R4: the crate split has to land
 # before they can scope correctly. Today's config covers universal
 # mockspace built-ins that work regardless of crate layout.
 # ---------------------------------------------------------------------------
@@ -69,99 +68,87 @@ build = "warn"
 push = "warn"
 
 # --- Drift-catching primitive-vocabulary lints (task #84) ------------------
-# Enabled at warn pending the sweep (#73) that will reshape the existing
-# shipped code. Upgrade to error once the sweep lands.
-#
-# Part of the primitive-vocabulary retrofit after fidelity audit 2026-04-20
-# surfaced 44 bare Option / Result uses and extern crate alloc drift.
+# Commit + push gates are `error` post-#73 / #130 (primitives sweep
+# completion). `build` stays `warn` for the cycle following the flip so
+# intermediate branch work surfaces the rule without hard-blocking the
+# compile loop.
 
 [lints.no-bare-result]
-commit = "off"
+commit = "warn"
 build = "warn"
 push = "warn"
 
 [lints.no-bare-string]
-commit = "off"
-build = "warn"
-push = "warn"
+commit = "error"
+build = "error"
+push = "error"
 
 [lints.no-bare-vec]
-commit = "off"
+commit = "warn"
 build = "warn"
 push = "warn"
 
-# New scope post-enforcement-tightening (2026-04-20): lints now scan every
-# src/*.rs via LintContext.all_sources (hiisi-digital/mockspace#4) AND skip
-# per-primitive per-crate via LintContext.introduces()
-# (mockspace-hilavitkutin-stack-lints#3). 309 pre-existing drift sites in
-# clause source surface after the tightening — each is a sweep target
-# under #73 (clause sweep, blocked on #72). Ramp to warn at every gate;
-# FLIP BACK TO `error` once #73 completes.
+# Commit + push gates are `error` post-#130. Drift sites all remediated
+# or carved out (SHAME.md + trailing lint:allow with `tracked: #131`
+# for the clause-resolve collection-field skeleton storages).
 
 [lints.no-bare-numeric]
-commit = "off"
-build = "warn"
-push = "warn"
+commit = "error"
+build = "error"
+push = "error"
 
 [lints.no-bare-option]
-commit = "off"
+commit = "warn"
 build = "warn"
 push = "warn"
 
 [lints.arvo-types-only]
-commit = "off"
-build = "warn"
-push = "warn"
+commit = "error"
+build = "error"
+push = "error"
 
 [lints.no-public-raw-field]
-commit = "off"
-build = "warn"
-push = "warn"
+commit = "error"
+build = "error"
+push = "error"
 
 [lints.no-box]
-commit = "off"
+commit = "warn"
 build = "warn"
 push = "warn"
 
 [lints.no-float]
-commit = "off"
+commit = "warn"
 build = "warn"
 push = "warn"
 
 # Post-hilavitkutin-str crates (clause consumes Str interning) must
 # not introduce bare `const NAME: &str` / `static NAME: &str`. The
-# replacement is `hilavitkutin_str::Str::const!()`. Pre-sweep drift
-# ramps to warn; flip to error alongside #73 completion (task #125).
+# replacement is `hilavitkutin_str::Str::const!()`. Commit + push
+# gates are `error` post-#130 / #125.
 [lints.no-bare-static-str]
-commit = "off"
+commit = "warn"
 build = "warn"
 push = "warn"
 
 # --- Layer enforcement via forbidden-imports (task #78) --------------------
 #
 # Closes the gap where `extern crate alloc; use alloc::vec::Vec;` compiled
-# clean in the front-end no_std crates. clause-ir, clause-lex, and
-# clause-syntax are declared `#![no_std]` in their lib.rs but had no
-# enforcement against reintroducing alloc/std via `extern crate`.
-#
-# Severity is WARN across all gates for the first shipping cycle so the
-# clause-syntax drift (Vec<SyntaxError> return from parse()) surfaces as a
-# warning without blocking the pipeline. The clause sweep (#73) will
-# reshape the surface to trait-bound sinks, after which this lint upgrades
-# to `build = "error", push = "error"` to match arvo / hilavitkutin.
+# clean in the front-end no_std crates. Commit + push gates are `error`
+# post-#130. `build` stays `warn` for the cycle following the flip.
 
 [lints.forbidden-imports]
-commit = "warn"
+commit = "error"
 build = "warn"
-push = "warn"
+push = "error"
 rules = [
-    { scope = "clause-ir", forbidden = "alloc::*, std::*", reason = "clause-ir is no_std + no_alloc" },
-    { scope = "clause-lex", forbidden = "alloc::*, std::*", reason = "clause-lex is no_std + no_alloc" },
-    { scope = "clause-syntax", forbidden = "alloc::*, std::*", reason = "clause-syntax is no_std + no_alloc — the front-end produces IR only, never runtime state" },
+  { scope = "vehje-ir", forbidden = "alloc::*, std::*", reason = "vehje-ir is no_std + no_alloc" },
+  { scope = "vehje-lex", forbidden = "alloc::*, std::*", reason = "vehje-lex is no_std + no_alloc" },
+  { scope = "vehje-syntax", forbidden = "alloc::*, std::*", reason = "vehje-syntax is no_std + no_alloc. the front-end produces IR only, never runtime state" },
 
-    # Universal: runtime crates guard against hidden syscalls sneaking
-    # through the C ABI boundary.
-    { scope = "clause-runtime-abi", forbidden = "std::thread::*, std::fs::*, std::net::*, std::io::*, std::process::*", reason = "clause-runtime-abi is the C ABI surface; syscalls belong above/below it, not inside" },
+  # Universal: runtime crates guard against hidden syscalls sneaking
+  # through the C ABI boundary.
+  { scope = "vehje-runtime-abi", forbidden = "std::thread::*, std::fs::*, std::net::*, std::io::*, std::process::*", reason = "vehje-runtime-abi is the C ABI surface; syscalls belong above/below it, not inside" },
 ]
 
 # --- Built-in mockspace lints that don't apply to clause -------------------
@@ -225,10 +212,10 @@ commit = "off"
 build = "off"
 push = "off"
 
-# Pack lints (from mockspace-hilavitkutin-stack-lints) — graceful ramp.
+# Pack lints (from mockspace-hilavitkutin-stack-lints): graceful ramp.
 # These fire against pre-existing skeleton code that will be fixed in the
 # clause sweep (#73). Set to advisory during the sweep, flip to error
-# afterwards. Entries here only — no duplicates of the builtin lints
+# afterwards. Entries here only, no duplicates of the builtin lints
 # above (no-bare-result / no-bare-string / no-bare-vec / forbidden-imports
 # already have their own overrides).
 [lints.lint-allow-requires-task-id]
@@ -243,12 +230,6 @@ severity = "advisory"
 [lints.trait-first-signatures]
 severity = "advisory"
 
-[lints.no-bare-numeric]
-severity = "advisory"
-
-[lints.no-bare-option]
-severity = "advisory"
-
 [lints.no-dyn-dispatch]
 severity = "advisory"
 
@@ -258,13 +239,7 @@ severity = "advisory"
 [lints.no-runtime-registration]
 severity = "advisory"
 
-[lints.no-public-raw-field]
-severity = "advisory"
-
 [lints.no-vec-in-trait-sig]
-severity = "advisory"
-
-[lints.arvo-types-only]
 severity = "advisory"
 
 [lints.strategy-marker-required]
@@ -274,11 +249,11 @@ severity = "advisory"
 # External lint packs (mockspace #94 feature)
 # ---------------------------------------------------------------------------
 #
-# Git-based dep spec only — committed config must be portable.
+# Git-based dep spec only. Committed config must be portable.
+
+# Writing-style gate. Pre-existing docs trip this until sweeps tidy them.
+[lints.writing-style]
+severity = "advisory"
 
 [lint-crates]
 mockspace-hilavitkutin-stack-lints = { git = "ssh://git@github.com/orgrinrt/mockspace-hilavitkutin-stack-lints.git", branch = "main" }
-
-# Writing-style gate — pre-existing docs trip this until sweeps tidy them.
-[lints.writing-style]
-severity = "advisory"

@@ -1,0 +1,20 @@
+[package]
+name = "vehje"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+vehje-ir.workspace = true
+vehje-lex.workspace = true
+vehje-syntax.workspace = true
+vehje-resolve.workspace = true
+vehje-typecheck.workspace = true
+vehje-codegen.workspace = true
+notko.workspace = true
+
+[build-dependencies]
+mockspace.workspace = true
+
+[features]
+default = []
