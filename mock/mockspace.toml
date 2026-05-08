@@ -11,7 +11,7 @@ primary_domain_label = "Passes"
 
 # Layer labels by depth index. R1 finalised the 8-crate compiler
 # split (vehje-ir, lex, syntax, resolve, typecheck, schedule,
-# codegen, clause binary). Runtime split lands with R2.
+# codegen, vehje binary). Runtime split lands with R2.
 layers = [
   "IR",  # vehje-ir
   "Lex",  # vehje-lex
@@ -90,7 +90,7 @@ push = "warn"
 
 # Commit + push gates are `error` post-#130. Drift sites all remediated
 # or carved out (SHAME.md + trailing lint:allow with `tracked: #131`
-# for the clause-resolve collection-field skeleton storages).
+# for the vehje-resolve collection-field skeleton storages).
 
 [lints.no-bare-numeric]
 commit = "error"
@@ -122,7 +122,7 @@ commit = "warn"
 build = "warn"
 push = "warn"
 
-# Post-hilavitkutin-str crates (clause consumes Str interning) must
+# Post-hilavitkutin-str crates (vehje consumes Str interning) must
 # not introduce bare `const NAME: &str` / `static NAME: &str`. The
 # replacement is `hilavitkutin_str::Str::const!()`. Commit + push
 # gates are `error` post-#130 / #125.
@@ -151,7 +151,7 @@ rules = [
   { scope = "vehje-runtime-abi", forbidden = "std::thread::*, std::fs::*, std::net::*, std::io::*, std::process::*", reason = "vehje-runtime-abi is the C ABI surface; syscalls belong above/below it, not inside" },
 ]
 
-# --- Built-in mockspace lints that don't apply to clause -------------------
+# --- Built-in mockspace lints that don't apply to vehje --------------------
 # Disables a family of lints carried over from loimu (the original home of
 # mockspace) that encode loimu's plugin / registrable / visibility-macro
 # conventions. Matches the disables in hilavitkutin and saalis
@@ -214,7 +214,7 @@ push = "off"
 
 # Pack lints (from mockspace-hilavitkutin-stack-lints): graceful ramp.
 # These fire against pre-existing skeleton code that will be fixed in the
-# clause sweep (#73). Set to advisory during the sweep, flip to error
+# vehje sweep (#73). Set to advisory during the sweep, flip to error
 # afterwards. Entries here only, no duplicates of the builtin lints
 # above (no-bare-result / no-bare-string / no-bare-vec / forbidden-imports
 # already have their own overrides).
