@@ -6,25 +6,25 @@ depend on the real Zig runtime.
 ## Scope
 
 - Struct shape assertions. `size_of`, `align_of`, `offset_of` on
-  every `#[repr(C)]` type in vehje-runtime-abi.
+ every `#[repr(C)]` type in vehje-runtime-abi.
 - Enum discriminant stability. every public enum has asserted
-  discriminant values.
+ discriminant values.
 - ABI version checks. the abi_version constants stay
-  monotonically increasing.
+ monotonically increasing.
 - Minimal Zig stub dylib. `tests/zig_stub/` builds a small dylib
-  implementing the ABI; tests dlopen it and round-trip buffers.
+ implementing the ABI; tests dlopen it and round-trip buffers.
 
 ## Round-skeleton scope
 
 Phase 6 skeleton round (2026-04-20) ships:
 
 - Crate scaffold consuming `vehje-runtime-abi` +
-  `vehje-runtime-driver`.
+ `vehje-runtime-driver`.
 - One `pub fn test_runtime_roundtrip()` harness that attempts
-  to load a runtime via `RuntimeLoader::load` and verifies the
-  return is `Err(LoaderError::NotImplemented)`.
+ to load a runtime via `RuntimeLoader::load` and verifies the
+ return is `Err(LoaderError::NotImplemented)`.
 - Smoke tests asserting the public types of both abi + driver
-  are usable from this crate.
+ are usable from this crate.
 
 Struct-shape assertions (`size_of` / `align_of` / `offset_of`),
 enum-discriminant stability tests, ABI-version monotonicity
@@ -44,7 +44,5 @@ shape this round ships.
 - `vehje-runtime-driver` (skeleton round needs driver types).
 - libloading (via dev-dep) for the stub-dylib dlopen (BACKLOG).
 
-## Sources
 
-- 202604262100_changelist.doc.md (R2 round)
-- 202604264100_changelist.doc.md (Phase 6 skeleton round)
+Round-by-round history is recorded in `mock/research/vehje-runtime-tests-history.md` (Tier 2).

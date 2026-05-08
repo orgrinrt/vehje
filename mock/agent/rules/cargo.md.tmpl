@@ -14,10 +14,10 @@ today is listed below; anything more specific waits on R1–R4.
 ### Known today
 
 - Workspace inheritance: every Vehje crate uses
-  `version.workspace = true`, `edition.workspace = true`,
-  `license.workspace = true`. Edition 2024.
+ `version.workspace = true`, `edition.workspace = true`,
+ `license.workspace = true`. Edition 2024.
 - Shared deps go in `[workspace.dependencies]`. Sibling crates in this
-  workspace use `{ workspace = true }` once they exist.
+ workspace use `{ workspace = true }` once they exist.
 - License: MPL-2.0 across the workspace.
 - `mockspace` is a build-script dependency, pinned to the git repo.
 
@@ -27,9 +27,9 @@ Vehje consumes two sibling foundation repos as git deps, defined once
 at `[workspace.dependencies]`:
 
 - `arvo`, `arvo-bits`, `arvo-bitmask`, `arvo-graph`, `arvo-sparse`,
-  `arvo-spectral`, `arvo-comb`. numeric + graph primitives.
+ `arvo-spectral`, `arvo-comb`. numeric + graph primitives.
 - `hilavitkutin-api`, `hilavitkutin`, `hilavitkutin-build`. pipeline
-  execution. Runtime only; the compiler rarely needs the frame engine.
+ execution. Runtime only; the compiler rarely needs the frame engine.
 
 Both are currently pinned to `branch = "main"`. Cross-repo iteration
 (touching an arvo or hilavitkutin API while working in vehje) uses a
@@ -39,30 +39,30 @@ local sibling. Remove the patch before pushing.
 ### Single-binary distribution
 
 - No runtime dynamic dep. No dlopen / shared-object plugin loading
-  from the compiler layer.
+ from the compiler layer.
 - Cross-compilation is a first-class concern. Avoid deps that break
-  cross-builds (e.g. `openssl-sys` with system linkage; prefer
-  pure-Rust or rustls alternatives).
+ cross-builds (e.g. `openssl-sys` with system linkage; prefer
+ pure-Rust or rustls alternatives).
 - The Rust compiler may use `std`. The Zig runtime does not depend on
-  Rust or on `std`. it communicates via C ABI the Rust side defines.
-  No `no_std` concern for the compiler crates; that constraint lives
-  downstream in the runtime.
+ Rust or on `std`. it communicates via C ABI the Rust side defines.
+ No `no_std` concern for the compiler crates; that constraint lives
+ downstream in the runtime.
 
 ### Proc macros
 
 - Vehje language macros are procedural and live in the compiler
-  itself (scheduler-pass-driven), not in separate `proc-macro = true`
-  crates like traditional Rust proc macros.
+ itself (scheduler-pass-driven), not in separate `proc-macro = true`
+ crates like traditional Rust proc macros.
 - If the Rust implementation needs internal `macro_rules!` for
-  boilerplate (trait derivation, span forwarding), that is acceptable.
-  `macro_rules!` is forbidden for expressing Vehje language semantics.
+ boilerplate (trait derivation, span forwarding), that is acceptable.
+ `macro_rules!` is forbidden for expressing Vehje language semantics.
 
 ### After R1–R4
 
 Once the crate split is decided, this document grows:
 
 - Per-layer dependency direction (e.g. `vehje-lex` → none;
-  `vehje-syntax` → `vehje-lex`; …; `vehje` top-level orchestrator).
+ `vehje-syntax` → `vehje-lex`; …; `vehje` top-level orchestrator).
 - `forbidden-imports` rules in `mockspace.toml` per scope to enforce
-  the layering.
+ the layering.
 - Proc-macro / cdylib / build-dependency posture per crate.
