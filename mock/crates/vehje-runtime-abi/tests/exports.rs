@@ -20,6 +20,6 @@ fn free_null_does_not_crash() {
 
 #[test]
 fn execute_null_returns_err() {
-    let result = vehje_runtime_execute(core::ptr::null_mut(), core::ptr::null(), 0);
+    let result = vehje_runtime_execute(core::ptr::null_mut(), core::ptr::null(), arvo::USize(0)); // lint:allow(no-bare-numeric) reason: zero-length input sentinel for null-input test; tracked: #412
     assert_eq!(result, VehjeResult::Err);
 }

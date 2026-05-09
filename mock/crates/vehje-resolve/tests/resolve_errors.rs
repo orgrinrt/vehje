@@ -1,3 +1,4 @@
+#![feature(const_trait_impl)]
 //! ResolveError variant construction + field readback.
 
 use vehje_ir::{ByteOffset, FileId, Span};

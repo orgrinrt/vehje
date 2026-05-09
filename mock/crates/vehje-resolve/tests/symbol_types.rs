@@ -1,3 +1,4 @@
+#![feature(const_trait_impl)]
 //! Symbol + SymbolKind: variant distinctness, field round-trip,
 //! default.
 

@@ -5,6 +5,7 @@
 //! from `vehje-runtime-abi` + `vehje-runtime-driver` can
 //! be named + constructed from this crate.
 
+use notko::Outcome;
 use vehje_runtime_tests::{
     AbiSpan, VehjeDiagnostic, VehjeDiagnosticKind, VehjeResult, DriverError, LoaderError,
     RuntimeDriver, RuntimeLoader, test_runtime_roundtrip,
@@ -13,7 +14,7 @@ use vehje_runtime_tests::{
 #[test]
 fn test_runtime_roundtrip_returns_not_implemented() {
     let result = test_runtime_roundtrip();
-    assert!(matches!(result, Err(LoaderError::NotImplemented)));
+    assert!(matches!(result, Outcome::Err(LoaderError::NotImplemented)));
 }
 
 #[test]
@@ -29,7 +30,7 @@ fn types_are_accessible() {
     let _diag = VehjeDiagnostic {
         span: AbiSpan { file: 0, start: 0, end: 0 },
         message: message.as_ptr(),
-        message_len: message.len(),
+        message_len: arvo::USize(message.len()),
         kind: VehjeDiagnosticKind::Info,
     };
     let _loader_err = LoaderError::NotImplemented;
