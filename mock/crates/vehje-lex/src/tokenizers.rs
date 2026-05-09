@@ -47,10 +47,10 @@ pub const fn is_whitespace(b: u8) -> bool {  // lint:allow(arvo-types-only) lint
 /// and the `(start, end)` byte-offset pair.
 pub fn read_ident_or_keyword(c: &mut Cursor<'_>) -> (TokenKind, u32, u32) {
     let start = c.pos_u32();
-    c.bump_byte();
+    let _ = c.bump_byte();
     while let Maybe::Is(b) = c.peek_byte() {
         if is_ident_cont(b) {
-            c.bump_byte();
+            let _ = c.bump_byte();
         } else {
             break;
         }
@@ -77,7 +77,7 @@ pub fn read_int_literal(c: &mut Cursor<'_>) -> (TokenKind, u32, u32) {
     let start = c.pos_u32();
     while let Maybe::Is(b) = c.peek_byte() {
         if is_digit(b) {
-            c.bump_byte();
+            let _ = c.bump_byte();
         } else {
             break;
         }
@@ -92,13 +92,13 @@ pub fn read_int_literal(c: &mut Cursor<'_>) -> (TokenKind, u32, u32) {
 /// Returns `(kind, start, end)`.
 pub fn read_line_comment(c: &mut Cursor<'_>) -> (TriviaKind, u32, u32) {
     let start = c.pos_u32();
-    c.bump_byte();
-    c.bump_byte();
+    let _ = c.bump_byte();
+    let _ = c.bump_byte();
     while let Maybe::Is(b) = c.peek_byte() {
         if b == b'\n' {
             break;
         }
-        c.bump_byte();
+        let _ = c.bump_byte();
     }
     let end = c.pos_u32();
     (TriviaKind::LineComment, start, end)
@@ -111,15 +111,15 @@ pub fn read_line_comment(c: &mut Cursor<'_>) -> (TriviaKind, u32, u32) {
 /// `unterminated block comment` diagnostic.
 pub fn read_block_comment(c: &mut Cursor<'_>) -> (TriviaKind, u32, u32) {
     let start = c.pos_u32();
-    c.bump_byte();
-    c.bump_byte();
+    let _ = c.bump_byte();
+    let _ = c.bump_byte();
     while let Maybe::Is(b) = c.peek_byte() {
         if b == b'*' && c.peek_byte_at(1) == Maybe::Is(b'/') {
-            c.bump_byte();
-            c.bump_byte();
+            let _ = c.bump_byte();
+            let _ = c.bump_byte();
             break;
         }
-        c.bump_byte();
+        let _ = c.bump_byte();
     }
     let end = c.pos_u32();
     (TriviaKind::BlockComment, start, end)
@@ -131,7 +131,7 @@ pub fn read_whitespace(c: &mut Cursor<'_>) -> (TriviaKind, u32, u32) {
     let start = c.pos_u32();
     while let Maybe::Is(b) = c.peek_byte() {
         if is_whitespace(b) {
-            c.bump_byte();
+            let _ = c.bump_byte();
         } else {
             break;
         }

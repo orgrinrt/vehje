@@ -131,7 +131,7 @@ impl<'a> Lexer<'a> {
         let start = self.cursor.pos_u32();
         if self.cursor.bump().isnt() {
             // Malformed UTF-8 mid-stream; fall back to byte advance.
-            self.cursor.bump_byte();
+            let _ = self.cursor.bump_byte();
         }
         let end = self.cursor.pos_u32();
         (sink)(Diagnostic::new(
@@ -204,11 +204,11 @@ impl<'a> Lexer<'a> {
                 // optionally a single newline.
                 while let Maybe::Is(bb) = self.cursor.peek_byte() {
                     if bb == b'\n' {
-                        self.cursor.bump_byte();
+                        let _ = self.cursor.bump_byte();
                         break;
                     }
                     if is_whitespace(bb) {
-                        self.cursor.bump_byte();
+                        let _ = self.cursor.bump_byte();
                     } else {
                         break;
                     }
