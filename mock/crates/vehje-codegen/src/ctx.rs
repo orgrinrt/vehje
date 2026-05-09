@@ -12,11 +12,12 @@ use vehje_resolve::Resolved;
 
 /// Read-only context passed to every `CodegenTarget::emit` call.
 ///
-/// Holds the resolver output. Targets should not mutate anything
-/// through the context, diagnostics come back via the
-/// `CodegenArtifact.diagnostics` field on the return value. A
-/// mutable `DiagnosticSink` + `ArtefactCache` pair is BACKLOG
-/// for once emission volume justifies it.
+/// Holds the resolver output. Targets receive the context plus two
+/// caller-owned sinks (`&mut dyn ByteEmitter` and
+/// `&mut dyn DiagnosticSink<Diagnostic>`); diagnostics push into the
+/// sink, bytes push into the byte emitter, and the returned
+/// `CodegenArtifact` carries only an `ArtifactKind`. A future
+/// `ArtefactCache` for incremental codegen is BACKLOG.
 #[derive(Debug)]
 pub struct CodegenCtx<'a> {
     resolved: &'a Resolved,
