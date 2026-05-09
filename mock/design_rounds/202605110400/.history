@@ -1,0 +1,50 @@
+c6bcad1 chore: lock src cl for 202605110400
+5db7d75 fix: correct stale CodegenArtifact.diagnostics reference in CodegenCtx doc
+a90d788 chore: lock doc cl + add src cl for 202605110400
+8e59f09 docs: open round 202605110400 — codegen ctx.rs doc fix
+bb66cbd chore: close round 202605110300
+df8f69f chore: lock src cl for 202605110300
+174c2ae test: vehje-codegen test rehab past Round-5d emit() reshape
+910ba64 chore: lock doc cl + add src cl for 202605110300
+c030ab4 docs: open round 202605110300 — vehje-codegen test rehab
+5d185fc test: vehje test rehab past arvo Round D + Maybe surface drift (#33)
+ce2d2c5 test: vehje library adoption — must_use Maybe + arvo Round D facade (#32)
+d6eae20 docs: vehje doc audit round (Tier 1 leakage + drift sweep) (#31)
+1373e66 chore: bump mockspace pin + regen docs (#30)
+6305a09 chore: clean stale clause references after vehje rename (#29)
+6f462c2 docs: rewrite readme (#27)
+f3893bb docs: vocab + leakage + em-dash sweep across templates (#26)
+7e996ce docs: em-dash sweep across live surfaces (#25)
+9e24ef6 docs: extend byline policy to PR titles, descriptions, comments (#24)
+1974cf7 Merge pull request #23 from orgrinrt/feat/dir-rename-clause-to-vehje
+33fa2f9 Merge pull request #22 from orgrinrt/feat/rename-completion-clause-to-vehje
+1e20477 chore: close round 202604250730
+835d1ac chore: lock src CL for 202604250730
+31fb9f0 feat: rename ABI types Clause* to Vehje*
+6099335 docs: open src CL for ABI type rename
+3ada9be chore: lock doc CL for 202604250730
+8ccee52 docs: rename ABI type names in templates (Clause* to Vehje*)
+f482462 docs: open doc CL for ABI type rename round
+b57cae1 chore: close round 202604250700
+7a30d86 chore: lock src CL for 202604250700
+fe1a9d7 chore: regenerate auto files after dir rename
+d8157d2 feat: rename mock/crates/clause-* dirs to vehje-*
+587886f docs: open src CL for dir rename
+8e2962f chore: lock doc CL for 202604250700
+b927d40 docs: open empty doc CL for dir-rename src-only round
+1493034 chore: close design round 202604250637
+e32aa39 chore: lock src changelist for 202604250637
+a5a9ae1 feat: align zig runtime exports with vehje_runtime_* abi names
+cfe8c10 chore: lock doc changelist for 202604250637
+fda3633 docs: complete clause to vehje rename in templates + zig docs
+cdce480 docs: open doc CL for clause to vehje rename completion round
+8507df0 Merge pull request #21 from orgrinrt/chore/severity-restore-218
+775e404 chore: restore primitive-vocabulary lints to error post-#214
+e0185cd Merge pull request #20 from orgrinrt/feat/vehje-skeleton-debt-sweep
+72ed4f0 chore: close design round 202604300000
+8838cff chore: lock src changelist for 202604300400_changelist.src.lock.md
+54f159e refactor: em-dash sweep on src/*.rs doc comments + final src CL update
+590bb9b docs: add final src CL 202604300400 (supersedes 202604300300)
+84943a4 chore: relock doc CL after final cleanup
+bccb053 docs: em-dash sweep on tmpl, SHAME entries for no-std + undocumented-type
+233b5b8 chore: unlock to fold final cleanup (SHAME, DESIGN updates, em-dash sweep)

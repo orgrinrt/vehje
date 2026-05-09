@@ -28,10 +28,11 @@ fn artifact_kind_variants_distinct() {
 
 #[test]
 fn artifact_construction() {
+    // Bytes and diagnostics are now caller-owned sinks; the
+    // artifact carries only the emitted-payload kind. See round
+    // 5d codegen redesign.
     let artifact = CodegenArtifact::empty(ArtifactKind::Binary);
     assert_eq!(artifact.kind, ArtifactKind::Binary);
-    assert!(artifact.bytes.is_empty());
-    assert!(artifact.diagnostics.is_empty());
 }
 
 #[test]
