@@ -166,7 +166,7 @@ impl<'a> Parser<'a> {
                 },
             };
             self.ast.set_root(id);
-            self.bump();
+            let _ = self.bump();
 
             if !self.is_eof() {
                 errors.push(SyntaxError::unexpected_token(

@@ -10,7 +10,7 @@
 //! Skeleton round: every entry is `Maybe::Isnt`; the resolver does
 //! not walk the AST.
 
-use arvo::newtype::Bool;
+use arvo::Bool;
 use vehje_syntax::Ast;
 use notko::Maybe;
 

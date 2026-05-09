@@ -12,7 +12,7 @@
 
 use std::collections::HashMap;
 
-use arvo::{newtype::Bool, USize};
+use arvo::{Bool, USize};
 use vehje_ir::ScopeId;
 use hilavitkutin_str::Str;
 use notko::Maybe;
