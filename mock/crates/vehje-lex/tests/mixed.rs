@@ -1,12 +1,13 @@
 //! Lex a small program and verify the TokenKind sequence.
 
+use notko::Maybe;
 use vehje_ir::{FileId, TokenKind};
 use vehje_lex::{Lexer, TokenStream};
 
 fn collect(src: &str) -> Vec<TokenKind> {
     let mut lx = Lexer::from_str(src, FileId(0));
     let mut out = Vec::new();
-    while let Some(t) = lx.next() {
+    while let Maybe::Is(t) = lx.next() {
         out.push(t.kind);
     }
     out
@@ -109,10 +110,10 @@ fn token_stream_peek_does_not_consume() {
     let mut ts = TokenStream::new(lx);
     let k1 = ts.peek().map(|t| t.kind);
     let k2 = ts.peek().map(|t| t.kind);
-    assert_eq!(k1, Some(TokenKind::Ident));
-    assert_eq!(k2, Some(TokenKind::Ident));
+    assert_eq!(k1, Maybe::Is(TokenKind::Ident));
+    assert_eq!(k2, Maybe::Is(TokenKind::Ident));
     let n1 = ts.next().map(|t| t.kind);
-    assert_eq!(n1, Some(TokenKind::Ident));
+    assert_eq!(n1, Maybe::Is(TokenKind::Ident));
     let n2 = ts.next().map(|t| t.kind);
-    assert_eq!(n2, Some(TokenKind::Ident));
+    assert_eq!(n2, Maybe::Is(TokenKind::Ident));
 }

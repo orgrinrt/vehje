@@ -47,7 +47,7 @@ fn empty_input_emits_only_eof() {
     let mut lx = Lexer::from_str("", FileId(0));
     let t = lx.next().unwrap();
     assert_eq!(t.kind, TokenKind::Eof);
-    assert!(lx.next().is_none());
+    assert!(lx.next().isnt());
 }
 
 #[test]

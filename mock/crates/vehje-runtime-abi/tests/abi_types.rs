@@ -31,12 +31,12 @@ fn vehje_diagnostic_construction() {
     let diag = VehjeDiagnostic {
         span: AbiSpan { file: 1, start: 2, end: 7 },
         message: message.as_ptr(),
-        message_len: message.len(),
+        message_len: arvo::USize(message.len()),
         kind: VehjeDiagnosticKind::Warning,
     };
     assert_eq!(diag.kind, VehjeDiagnosticKind::Warning);
     assert_eq!(diag.span.file, 1);
     assert_eq!(diag.span.start, 2);
     assert_eq!(diag.span.end, 7);
-    assert_eq!(diag.message_len, message.len());
+    assert_eq!(diag.message_len, arvo::USize(message.len()));
 }

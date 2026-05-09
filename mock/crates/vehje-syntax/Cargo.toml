@@ -10,6 +10,9 @@ vehje-lex.workspace = true
 hilavitkutin-api.workspace = true
 notko.workspace = true
 
+[dev-dependencies]
+arvo.workspace = true
+
 [build-dependencies]
 mockspace.workspace = true
 

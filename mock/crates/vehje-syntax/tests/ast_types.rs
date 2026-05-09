@@ -1,6 +1,7 @@
 //! AST type surface: arena push/get, NodeId monotonicity, leaf
 //! construction.
 
+use notko::Maybe;
 use vehje_ir::{AstNodeKind, ByteOffset, FileId, NodeId, Span};
 use vehje_syntax::{Ast, AstNode};
 
@@ -13,7 +14,7 @@ fn ast_empty_is_empty() {
     let ast = Ast::empty();
     assert_eq!(ast.len(), 0);
     assert!(ast.is_empty());
-    assert_eq!(ast.root(), None);
+    assert_eq!(ast.root(), Maybe::Isnt);
 }
 
 #[test]

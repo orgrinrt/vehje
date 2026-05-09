@@ -538,6 +538,7 @@ dependencies = [
 name = "vehje-runtime-tests"
 version = "0.1.0"
 dependencies = [
+ "arvo",
  "hilavitkutin-api",
  "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
@@ -561,6 +562,7 @@ dependencies = [
 name = "vehje-syntax"
 version = "0.1.0"
 dependencies = [
+ "arvo",
  "hilavitkutin-api",
  "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
