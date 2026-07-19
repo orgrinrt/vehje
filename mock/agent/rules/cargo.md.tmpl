@@ -6,63 +6,69 @@ apply_to: ["**/Cargo.toml"]
 
 ### Status
 
-`mock/crates/` is empty at seed. The compiler + runtime crate split is
-decided by the first four design rounds (R1–R4). Detailed layer
-discipline and forbidden-import rules land after that. What is known
-today is listed below; anything more specific waits on R1–R4.
+The framework crate surface is settled by the extension-point round:
+`vehje-ir`, `vehje-codegen`, `vehje-schedule`, `vehje-resolve`,
+`vehje-check`, `vehje-runtime-abi`, `vehje-runtime-driver`, `vehje`.
+Front-end and consumer crates live in separate consumer repos.
 
 ### Known today
 
 - Workspace inheritance: every Vehje crate uses
  `version.workspace = true`, `edition.workspace = true`,
  `license.workspace = true`. Edition 2024.
-- Shared deps go in `[workspace.dependencies]`. Sibling crates in this
- workspace use `{ workspace = true }` once they exist.
+- Shared deps go in `[workspace.dependencies]`. Sibling crates use
+ `{ workspace = true }`.
 - License: MPL-2.0 across the workspace.
 - `mockspace` is a build-script dependency, pinned to the git repo.
 
 ### Foundation dependencies
 
-Vehje consumes two sibling foundation repos as git deps, defined once
-at `[workspace.dependencies]`:
+Vehje consumes the sibling foundation repos as git deps, defined once at
+`[workspace.dependencies]`:
 
-- `arvo`, `arvo-bits`, `arvo-bitmask`, `arvo-graph`, `arvo-sparse`,
- `arvo-spectral`, `arvo-comb`. numeric + graph primitives.
-- `hilavitkutin-api`, `hilavitkutin`, `hilavitkutin-build`. pipeline
- execution. Runtime only; the compiler rarely needs the frame engine.
+- `arvo` and its member crates (`arvo-bitmask`, `arvo-graph`, `arvo-tensor`,
+ …): numeric, bit, graph, and fixed-capacity primitives.
+- `hilavitkutin-api` (the `AccessSet` typestate reused for the family and
+ effect axes, plus the memory and storage contracts) and `hilavitkutin-str`
+ (the interned `Str`). The Zig runtime side uses hilavitkutin's execution
+ engine; the compile side does single-shot DAG walks.
+- `notko` for `Maybe` / `Outcome`.
 
-Both are currently pinned to `branch = "main"`. Cross-repo iteration
-(touching an arvo or hilavitkutin API while working in vehje) uses a
-temporary `[patch."…"]` block in `mock/Cargo.toml` pointing at the
-local sibling. Remove the patch before pushing.
+Cross-repo iteration (touching an arvo or hilavitkutin API while working in
+vehje) uses a temporary `[patch."…"]` block in `mock/Cargo.toml` pointing at
+the local sibling. Remove the patch before pushing.
+
+### no_std, no alloc, everywhere
+
+Every framework crate is `#![no_std]` with no `alloc`, the same discipline
+as arvo, hilavitkutin, and notko. This includes the compile-side passes;
+there is no host-side dispensation. The IR and the passes operate over
+caller-provided memory (a `MemoryProvider`-backed arena), never an ad-hoc
+heap. A runnable reference distribution, being the deployment host, is the
+one place that supplies the arena backing and the I/O; the library crates
+stay strict. The Zig runtime likewise pulls no `std` and no Rust runtime.
 
 ### Single-binary distribution
 
-- No runtime dynamic dep. No dlopen / shared-object plugin loading
- from the compiler layer.
+- No runtime dynamic dep. No dlopen / shared-object plugin loading from the
+ compiler layer; the Zig runtime is statically linked, and target
+ composition is compile-time (no `dyn`).
 - Cross-compilation is a first-class concern. Avoid deps that break
- cross-builds (e.g. `openssl-sys` with system linkage; prefer
- pure-Rust or rustls alternatives).
-- The Rust compiler may use `std`. The Zig runtime does not depend on
- Rust or on `std`. it communicates via C ABI the Rust side defines.
- No `no_std` concern for the compiler crates; that constraint lives
- downstream in the runtime.
+ cross-builds (prefer pure-Rust alternatives).
 
 ### Proc macros
 
-- Vehje language macros are procedural and live in the compiler
- itself (scheduler-pass-driven), not in separate `proc-macro = true`
- crates like traditional Rust proc macros.
-- If the Rust implementation needs internal `macro_rules!` for
- boilerplate (trait derivation, span forwarding), that is acceptable.
- `macro_rules!` is forbidden for expressing Vehje language semantics.
+- If the Rust implementation needs internal `macro_rules!` for boilerplate
+ (trait derivation, span forwarding), that is acceptable. A consumer
+ language's own macros are that consumer's concern, expressed through the
+ staging substrate (the `Interp` form and the effect axis), not through
+ Rust proc macros in the framework.
 
-### After R1–R4
+### Per-crate layering
 
-Once the crate split is decided, this document grows:
-
-- Per-layer dependency direction (e.g. `vehje-lex` → none;
- `vehje-syntax` → `vehje-lex`; …; `vehje` top-level orchestrator).
-- `forbidden-imports` rules in `mockspace.toml` per scope to enforce
- the layering.
-- Proc-macro / cdylib / build-dependency posture per crate.
+Dependency direction: `vehje-ir` is the leaf every crate depends on;
+`vehje-codegen` / `vehje-resolve` / `vehje-check` / `vehje-schedule` depend
+on it; `vehje-runtime-abi` mirrors the residual layout; `vehje-runtime-driver`
+depends on the abi; `vehje` composes the lot. `forbidden-imports` rules in
+`mockspace.toml` enforce the no_std, no-alloc, and layering discipline per
+scope.

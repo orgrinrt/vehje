@@ -8,20 +8,19 @@ A pattern book for "I need to X" questions. Pick the matching intent,
 use the suggested trait / type. When none fits, the correct answer is
 usually "add a trait to the ecosystem", not "use a std primitive".
 
-Vehje's compiler phases (resolve, typecheck, schedule, codegen) may
-use std; vehje-ir / vehje-lex / vehje-syntax and the runtime crates
-are `#![no_std]` and follow the stricter discipline.
+Every framework crate is `#![no_std]`, no alloc, the compile-side passes as
+much as the runtime crates. The discipline is uniform; there is no
+std-permitting tier.
 
 ## "I need to return an optional value"
 
-Return `Maybe<T>` (from `notko`) in no_std crates. `Option<T>` is
-acceptable in std-permitting crates but prefer `Maybe<T>` for ABI
-stability across the compiler / runtime boundary.
+Return `Maybe<T>` (from `notko`). `Option<T>` appears only in std-trait
+method signatures whose shape the language fixes (`Iterator::next`).
 
 ## "I need a fallible operation"
 
-Return `Outcome<T, E>` (from `notko`). Use `Result<T, E>` only when
-interfacing with a std-permitting API (e.g., CLI argument parsing).
+Return `Outcome<T, E>` (from `notko`). `Result<T, E>` appears only in
+std-trait method signatures fixed by the language.
 
 ## "I need to emit diagnostics from a compiler phase"
 

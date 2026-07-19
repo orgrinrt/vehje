@@ -4,17 +4,19 @@ apply_to: ["crates/**/*.rs", "src/**/*.rs"]
 
 ## No heap. Ever.
 
-No ad-hoc allocations in the no_std front-end crates (vehje-ir,
-vehje-lex, vehje-syntax) and the runtime crates (vehje-runtime-*).
-The compiler's higher phases (resolve, typecheck, schedule, codegen)
-may use std because they're dev-time compile-only processes, but the
-published/runtime-shipped code universe has no heap.
+No ad-hoc allocations in any framework crate. Every crate is `#![no_std]`
+with no `alloc`, the compile-side passes (ir, resolve, check, schedule,
+codegen) exactly as much as the runtime crates. There is no host-side
+dispensation: the compile side is dev-time, but it still allocates nothing
+ad hoc. The IR and the passes operate over caller-provided memory (a
+`MemoryProvider`-backed arena); the one place a runnable reference
+distribution supplies that backing is the deployment host, not the library
+crates.
 
 Every lint that forbids `alloc::*` / `Vec` / `Box` / `String` / `HashMap`
-in the no_std crates is a consequence of this first principle, not a
-standalone rule.
+is a consequence of this first principle, not a standalone rule.
 
-### Red flags (stop and reshape). in no_std crates
+### Red flags (stop and reshape)
 
 - "I need a list temporarily" → the heap is never temporarily available
  in no_std.
