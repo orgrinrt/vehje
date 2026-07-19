@@ -16,7 +16,7 @@ use core::marker::PhantomData;
 
 use hilavitkutin_api::sink::ByteEmitter;
 use notko::Outcome;
-use vehje_ir::{AccessSet, Arena, ContainsAll, NodeRef, Span};
+use vehje_ir::{AccessSet, Arena, ContainsAll, Node, NodeRef, Span};
 
 /// The output plug-in contract.
 ///
@@ -93,6 +93,52 @@ where
     T::Permits: ContainsAll<Effects>,
 {
     Checked { arena, root, _target: PhantomData }
+}
+
+/// The one generic fold over the Core substrate: a pre-order walk that
+/// invokes `visit` on each node before recursing into its children.
+///
+/// This is the shared traversal every target folds over; a target
+/// supplies the per-node emit logic through `visit` (matching on the node
+/// kind) and never re-implements the walk. Family nodes reach `visit`
+/// through `Raw`; a family's own sub-structure is walked by the family's
+/// fold extension.
+// FIXME: thread the family-fold extension for Raw sub-structure once a
+// family defines its payload. M0 visits Raw as a leaf.
+pub fn fold_core<F: FnMut(&Node)>(arena: &Arena<'_>, at: NodeRef, visit: &mut F) {
+    let node = arena.get(at);
+    visit(&node);
+    match node {
+        Node::Lit(_) | Node::Var(_) | Node::Raw { .. } => {}
+        Node::Let { value, body, .. } => {
+            fold_core(arena, value, visit);
+            fold_core(arena, body, visit);
+        }
+        Node::Lambda { body, .. } => fold_core(arena, body, visit),
+        Node::Apply { callee, args } => {
+            fold_core(arena, callee, visit);
+            for child in arena.list(args) {
+                fold_core(arena, *child, visit);
+            }
+        }
+        Node::Project { base, .. } => fold_core(arena, base, visit),
+        Node::If { cond, then_branch, else_branch } => {
+            fold_core(arena, cond, visit);
+            fold_core(arena, then_branch, visit);
+            fold_core(arena, else_branch, visit);
+        }
+        Node::Match { scrutinee, arms } => {
+            fold_core(arena, scrutinee, visit);
+            for child in arena.list(arms) {
+                fold_core(arena, *child, visit);
+            }
+        }
+        Node::Iter { seq, body } => {
+            fold_core(arena, seq, visit);
+            fold_core(arena, body, visit);
+        }
+        Node::Interp { value } => fold_core(arena, value, visit),
+    }
 }
 
 /// A codegen diagnostic.

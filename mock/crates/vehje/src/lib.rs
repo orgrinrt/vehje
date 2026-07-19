@@ -16,6 +16,7 @@
 
 use hilavitkutin_api::sink::ByteEmitter;
 use notko::Outcome;
+use vehje_codegen::fold_core;
 use vehje_ir::{Arena, Cons, Core, Diagnostic, Empty, Node, NodeRef};
 
 /// The `Target` output contract, re-exported from `vehje-codegen`.
@@ -72,59 +73,25 @@ impl Target for DebugTarget {
         checked: &Checked<'_, Self>,
         sink: &mut S,
     ) -> Outcome<(), CodegenError> {
-        fold(checked.arena(), checked.root(), sink);
+        // The traversal is codegen's shared `fold_core`; the target
+        // supplies only the per-form tag.
+        fold_core(checked.arena(), checked.root(), &mut |node| {
+            let tag: &[u8] = match node { // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) reason: byte-stream tag fed to the ByteEmitter contract; bytes are the 8-bit I/O unit; tracked: #207
+                Node::Lit(_) => b"lit ",
+                Node::Var(_) => b"var ",
+                Node::Let { .. } => b"let ",
+                Node::Lambda { .. } => b"lambda ",
+                Node::Apply { .. } => b"apply ",
+                Node::Project { .. } => b"project ",
+                Node::If { .. } => b"if ",
+                Node::Match { .. } => b"match ",
+                Node::Iter { .. } => b"iter ",
+                Node::Interp { .. } => b"interp ",
+                Node::Raw { .. } => b"raw ",
+            };
+            sink.push_bulk(tag);
+        });
         Outcome::Ok(())
-    }
-}
-
-/// Pre-order fold: push each form's tag, then recurse into its children.
-fn fold<S: ByteEmitter>(arena: &Arena<'_>, at: NodeRef, sink: &mut S) {
-    match arena.get(at) {
-        Node::Lit(_) => sink.push_bulk(b"lit "),
-        Node::Var(_) => sink.push_bulk(b"var "),
-        Node::Let { value, body, .. } => {
-            sink.push_bulk(b"let ");
-            fold(arena, value, sink);
-            fold(arena, body, sink);
-        }
-        Node::Lambda { body, .. } => {
-            sink.push_bulk(b"lambda ");
-            fold(arena, body, sink);
-        }
-        Node::Apply { callee, args } => {
-            sink.push_bulk(b"apply ");
-            fold(arena, callee, sink);
-            for child in arena.list(args) {
-                fold(arena, *child, sink);
-            }
-        }
-        Node::Project { base, .. } => {
-            sink.push_bulk(b"project ");
-            fold(arena, base, sink);
-        }
-        Node::If { cond, then_branch, else_branch } => {
-            sink.push_bulk(b"if ");
-            fold(arena, cond, sink);
-            fold(arena, then_branch, sink);
-            fold(arena, else_branch, sink);
-        }
-        Node::Match { scrutinee, arms } => {
-            sink.push_bulk(b"match ");
-            fold(arena, scrutinee, sink);
-            for child in arena.list(arms) {
-                fold(arena, *child, sink);
-            }
-        }
-        Node::Iter { seq, body } => {
-            sink.push_bulk(b"iter ");
-            fold(arena, seq, sink);
-            fold(arena, body, sink);
-        }
-        Node::Interp { value } => {
-            sink.push_bulk(b"interp ");
-            fold(arena, value, sink);
-        }
-        Node::Raw { .. } => sink.push_bulk(b"raw "),
     }
 }
 
