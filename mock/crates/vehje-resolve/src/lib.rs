@@ -9,6 +9,9 @@
 //! `#![no_std]`, no alloc.
 
 #![no_std]
+// const_trait_impl: WATCH-allowed (unstable-features.md); required by
+// hilavitkutin-str's `str_const!` for its static-context const construction.
+#![feature(const_trait_impl)]
 #![deny(unused, unreachable_code, unused_must_use, unused_imports, dead_code)]
 
 use arvo::{Maybe, Outcome};
@@ -140,5 +143,54 @@ fn frame_for<'p>(name: Str, binder: NodeRef, parent: Maybe<&'p Scope<'p>>) -> Sc
     match parent {
         Maybe::Is(p) => Scope::child(name, binder, p),
         Maybe::Isnt => Scope::root(name, binder),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use arvo::{Bool, Identity, USize};
+    use hilavitkutin_str::str_const;
+    use vehje_ir::{Builder, Literal, Node};
+
+    fn expect(m: Maybe<NodeRef>) -> NodeRef {
+        match m {
+            Maybe::Is(r) => r,
+            Maybe::Isnt => panic!("arena full"),
+        }
+    }
+
+    #[test]
+    fn resolves_a_bound_var() {
+        let mut nodes = [Node::Lit(Literal::Unit); 8];
+        let mut pool = [NodeRef::new(USize::ZERO); 8];
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut pool));
+
+        // let x = () in x
+        let x = str_const!("x");
+        let unit = expect(b.lit(Literal::Unit));
+        let var = expect(b.var(x));
+        let root = expect(b.let_(Bool::FALSE, x, unit, var));
+
+        let mut arena = b.into_arena();
+        assert!(matches!(resolve(&mut arena, root), Outcome::Ok(())));
+    }
+
+    #[test]
+    fn refuses_an_unbound_var() {
+        let mut nodes = [Node::Lit(Literal::Unit); 8];
+        let mut pool = [NodeRef::new(USize::ZERO); 8];
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut pool));
+
+        // a bare, unbound reference to y
+        let y = str_const!("y");
+        let root = expect(b.var(y));
+
+        let mut arena = b.into_arena();
+        assert!(matches!(
+            resolve(&mut arena, root),
+            Outcome::Err(ResolveError::Unresolved { .. })
+        ));
     }
 }
