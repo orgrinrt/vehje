@@ -11,7 +11,6 @@ members = [
     "crates/vehje-codegen",
     "crates/vehje-runtime-abi",
     "crates/vehje-runtime-driver",
-    "crates/vehje-runtime-tests",
 ]
 
 [workspace.package]
@@ -49,4 +48,3 @@ vehje-schedule = { path = "crates/vehje-schedule" }
 vehje-codegen = { path = "crates/vehje-codegen" }
 vehje-runtime-abi = { path = "crates/vehje-runtime-abi" }
 vehje-runtime-driver = { path = "crates/vehje-runtime-driver" }
-vehje-runtime-tests = { path = "crates/vehje-runtime-tests" }
