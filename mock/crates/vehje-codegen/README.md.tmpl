@@ -1,6 +1,9 @@
-# vehje-codegen. target-agnostic codegen
+# vehje-codegen. output machinery
 
-Consumes a scheduled IR from vehje-schedule, emits the target-
-agnostic representation. Extension targets (vehje-jomini,
-vehje-w3, vehje-lua,...) plug in via the extension-point
-contract finalised in R3.
+The framework's output side: one generic fold over the Core substrate
+plus a program's families, the `Target` plug-in contract (a target
+declares the family set it `Supports` and the effect set it `Permits`),
+the inclusion and effect checks that gate emission on the target's
+declaration, and compile-time target composition. No `dyn`; a
+distribution composes its targets and a generated match resolves a
+target name to a monomorphised emit.

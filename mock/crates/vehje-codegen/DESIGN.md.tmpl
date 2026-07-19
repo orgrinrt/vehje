@@ -1,133 +1,98 @@
 # vehje-codegen. Design
 
-Target-agnostic codegen. Consumes a `Resolved` bundle from
-vehje-resolve (later: a scheduled / typed IR from vehje-schedule
-+ vehje-typecheck). Defines the `CodegenTarget` extension-point
-contract; targets opt-in by implementing the trait and being
-registered in the const `TargetRegistry`.
+The framework's output machinery. It consumes a checked IR from the Core
+passes and provides the contract by which a target plugs in, declares
+what it supports, is inclusion- and effect-checked against that
+declaration, and emits. The design authority is the output-side topic
+(`202607192310`) and the ABI topic (`202607192340`).
+
+## The spine
+
+A target declares what it supports, and everything else is a proof
+obligation against that declaration. A target names a type-level set of
+families it handles and a type-level set of effects it permits; emission
+is bounded on the program's families being included in the target's set,
+and the program's effects in the target's permitted set. The guarantee is
+inclusion, not coverage: a program using a family or effect outside a
+target's declaration is refused, with the construct named, never silently
+degraded.
 
 ## Scope
 
-- `CodegenTarget`. extension-point trait.
-- `TargetRegistry`. registered codegen targets (built-in + plugin).
-- `CodegenCtx`. read-only carrier every target sees.
-- `CodegenArtifact` + `ArtifactKind`. per-file output bundle.
-- `CodegenError`. codegen error variants.
-- Two built-in target ZST stubs: `NativeTarget`, `JominiTarget`.
+- `Target`. The output plug-in contract. Associated `type Supports` (a
+ family set) and `type Permits` (an effect set), both type-level sets
+ built from the `vehje-ir` family and effect markers over the reused
+ `AccessSet` machinery. A total fold method over the Core substrate plus
+ the declared families, writing bytes through a caller-provided sink.
+- `Checked`. The typestate witness that a program has been inclusion- and
+ effect-checked against a specific target. `emit` accepts only a
+ `Checked`; a `Checked` is producible only by running the check for that
+ target. The obligation to check is enforced at compile time; for a
+ statically known program the check discharges at compile time, for a
+ runtime-parsed program it is a bitmask comparison the typestate makes
+ unskippable.
+- The generic fold. One fold over the Core substrate plus a program's
+ families, parameterised by the target, monomorphised per target. A
+ target is total over the families it declares.
+- Compile-time target composition. A distribution links the targets it
+ supports; a generated match resolves a target name to a monomorphised
+ emit. No `dyn`, no trait objects, no plugin shared-object loading at the
+ compiler layer. Target selection by name is a runtime string resolving
+ through the generated match; the emit itself is monomorphised.
+- `CodegenError`. Error variants carrying context (the refused construct,
+ the target, the missing family or effect), not a bare string.
 
 ## Non-scope
 
-- Concrete target backends (real LLVM/cranelift lowering for
- `NativeTarget`; Clausewitz script emission for `JominiTarget`
- via the future `vehje-jomini` sibling repo). Each ships in
- its own follow-up round or its own repo.
-- Pass DAG scheduling (vehje-schedule).
-- Target-specific IR lowering (BACKLOG).
-- Target-selection priority chain (CLI → package → workspace →
- builtin) (deferred BACKLOG).
+- Concrete target backends. Each target (the native LLVM/cranelift target,
+ the Clausewitz emitter, the markdown/terminal/html document writers)
+ ships in its own consumer repo with its own `Target` impl.
+- The pass DAG (`vehje-schedule`) and the Core passes (`vehje-resolve`,
+ `vehje-check`).
+- The residual serialization and the C ABI (`vehje-runtime-abi`); this
+ crate produces the `Checked` residual, the ABI crate lowers it.
 
-## Extension-point contract (R3, finalised 2026-04-26)
+## Dispatch: compile-time composition, no `dyn`
 
-`CodegenTarget` is a trait that game-specific target repos
-(`vehje-jomini`, future `vehje-w3`, etc.) implement.
+The framework posture is explicit: no `dyn Trait` / `TypeId` / `std::any`
+in framework code, compile-time dispatch wins, single static binary, no
+plugin shared-object loading at the compiler layer. Those jointly mandate
+a compile-time-composed target set. A distribution is a crate that links
+its targets and composes them; adding a target is a crate dependency plus
+a rebuild, the rustc model. The runtime (Zig) is exempt and may load
+dynamically for evaluation; the rule cuts along the compiler/runtime seam.
+The previously shipped `dyn CodegenTarget` registry is drift this design
+corrects.
 
-R3 finalised a richer shape:
+## Renderers are total over the declared family set
 
-```rust
-pub trait CodegenTarget: Send + Sync + 'static {
- const NAME: &'static str;
- const VERSION: u32;
-
- fn accepts(&self, kind: AstNodeKind) -> bool;
- fn stages(&self) -> &'static [Stage];
-
- fn compile(
- &self,
- unit: &TypedUnit,
- ctx: &mut CodegenCtx<'_>,
- ) -> Outcome<CodegenOutput, Diagnostic>;
-
- fn render_diagnostic(&self, err: &TargetError) -> Diagnostic;
-}
-```
-
-Stages: PreTypecheck / PostTypecheck / CodegenPre / Codegen /
-Link. Targets opt in via `stages()`.
-
-The skeleton round (202604263900) lands a narrower
-instance-method shape that is object-safe directly in the const
-`&'static dyn CodegenTarget` registry without `const-in-trait`
-gymnastics:
-
-```rust
-pub trait CodegenTarget: Sync {
- fn name(&self) -> &'static str;
- fn emit(
- &self,
- ctx: &CodegenCtx,
- bytes: &mut impl ByteEmitter,
- diagnostics: &mut impl DiagnosticSink<Diagnostic>,
- ) -> Outcome<CodegenArtifact, CodegenError>;
-}
-```
-
-The R3 full shape (associated-const `NAME` / `VERSION`,
-`accepts(kind)`, `stages()`, `CodegenOutput` with `manifest` +
-`references`, `render_diagnostic`) is BACKLOG. lands when real
-target backends surface the need.
-
-`TargetRegistry` is const-sized
-`&'static [&'static dyn CodegenTarget]`. The `dyn CodegenTarget`
-is the ONE exception to the no-dyn discipline; acceptable because
-(a) it's static-lifetime, (b) const-sized, (c) limited to the
-registry iteration surface while individual `emit` calls
-monomorphise via impl bound elsewhere. This mirrors the
-`ValidatorRegistry` pattern in vehje-typecheck.
-
-Target selection priority: CLI `--target <name>` wins; then
-package-level `[targets]` in Vehje.toml; then `[workspace.targets]`;
-then the built-in fallback. Implementation deferred to BACKLOG.
-Skeleton round exposes only `lookup(name)` + `emit_for(name, ctx)`.
-
-`CodegenCtx<'a>` this round bundles only `&'a Resolved`. R3's
-`&mut DiagnosticSink`, `&mut ArtefactCache`, `&Workspace` fields
-are BACKLOG.
-
-`CodegenArtifact { kind }` carries only the artifact tag this
-round; bytes and diagnostics flow through caller-provided sinks
-(`ByteEmitter` / `DiagnosticSink`). R3's fuller
-`CodegenOutput { bytes, manifest, references }` is BACKLOG.
-
-Built-in targets: `NativeTarget` (future Rust/LLVM or cranelift
-backend) and `JominiTarget` (future Clausewitz engine bytecode,
-to be moved out to a `vehje-jomini` sibling repo once it has a
-real body). Both are stubs this round. `emit` returns an empty
-`CodegenArtifact`.
+A target must handle every constructor in the families it declares, and
+that totality is checked. Totality is over the declared set, not a closed
+universe: a target declaring `Supports = (Core, Doc)` must be total over
+those, with no obligation toward a family it never claimed. This composes
+with inclusion rather than conflicting; it is the same inclusion move one
+level down.
 
 ## Dependencies
 
-- `vehje-ir`. `Diagnostic`.
-- `vehje-resolve`. `Resolved`.
-- `std` allowed (host compiler crate).
+- `vehje-ir`. The Core substrate, the `Family` and effect markers, the
+ family-set and effect-set typestate.
+- `hilavitkutin-api`. The `AccessSet` inclusion machinery (reused, not
+ reinvented).
+- `#![no_std]`, no alloc. Byte output flows through a caller-provided
+ sink; no heap-backed buffer is owned here.
 
 ## Module layout
 
-- `target.rs`. `CodegenTarget` trait (skeleton instance-method
- form of the R3 contract).
-- `registry.rs`. `TargetRegistry` ZST with const `TARGETS`
- slice + `lookup` + `emit_for` associated functions.
-- `ctx.rs`. `CodegenCtx<'a>` bundling `&Resolved`.
-- `artifact.rs`. `CodegenArtifact` + `ArtifactKind`.
-- `error.rs`. `CodegenError` enum.
-- `native.rs`. `NativeTarget` ZST stub.
-- `jomini.rs`. `JominiTarget` ZST stub.
-- `lib.rs`. re-exports + top-level `emit(&Resolved, &str)` entry.
+- `target.rs`. The `Target` trait, `Supports` / `Permits` associated sets.
+- `check.rs`. The inclusion and effect checks, `Checked` gating, the
+ two-stage (static discharge and runtime bitmask) proof.
+- `fold.rs`. The one generic fold over Core plus families.
+- `compose.rs`. Compile-time target composition and name resolution.
+- `error.rs`. `CodegenError`.
+- `lib.rs`. Re-exports and the top-level emit entry.
 
-Deferred modules (BACKLOG, added when real backends / framework
-features land): `codegen.rs` (top-level driver), `target_ir.rs`
-(target-agnostic IR), `output.rs` (full `CodegenOutput`),
-`selection.rs` (priority chain), `stage.rs` (pipeline stages),
-`diagnostics.rs` (per-target rendering).
-
-
-Round-by-round history is recorded in `mock/research/vehje-codegen-history.md` (Tier 2).
+Deferred (BACKLOG): the Jsonnet manifestation-as-library layer (renderers
+written in a consumer language, composing total renderers) sits above the
+total-renderer guarantee; the clustered-writer cost model (markdown /
+terminal / plain sharing one path) is a per-consumer concern.
