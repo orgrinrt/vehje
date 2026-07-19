@@ -1,27 +1,36 @@
-//! vehje-runtime-driver, compiler-side dispatcher.
+//! vehje-runtime-driver, the framework's compile-side runtime dispatch.
 //!
-//! Owns the dylib handle; routes calls through the ABI
-//! defined by `vehje-runtime-abi`. Driver-side wrappers
-//! convert `AbiDiagnostic` to `vehje_ir::Diagnostic` and
-//! integrate with `vehje-schedule`'s pass DAG (both
-//! BACKLOG).
+//! Takes a checked residual, serializes it at the chosen tier through
+//! `vehje-runtime-abi`, hands it to the embedded Zig runtime, and maps the
+//! runtime's result and diagnostics back to `vehje-ir` diagnostics.
+//! Compile-time dispatch, no `dyn`, no plugin shared-object loading at the
+//! compiler layer; the Zig runtime is statically linked.
 //!
-//! Skeleton round (2026-04-20): ships `RuntimeDriver`
-//! placeholder, `RuntimeLoader` with a stubbed `load`,
-//! `RuntimeHandle` trait, and `LoaderError` / `DriverError`
-//! enums. Real `libloading` integration, env-var convention,
-//! per-session handle lifecycle, and vehje-schedule
-//! integration are BACKLOG.
+//! `#![no_std]`, no alloc.
 
-#![cfg_attr(not(feature = "std"), no_std)]
+#![no_std]
 #![deny(unused, unreachable_code, unused_must_use, unused_imports, dead_code)]
 
-pub mod driver;
-pub mod error;
-pub mod handle;
-pub mod loader;
+use notko::Outcome;
+use vehje_runtime_abi::Residual;
 
-pub use driver::RuntimeDriver;
-pub use error::{DriverError, LoaderError};
-pub use handle::RuntimeHandle;
-pub use loader::RuntimeLoader;
+/// A driver diagnostic.
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub enum DriverError {
+    /// The runtime rejected the residual.
+    RuntimeRejected,
+    /// The residual could not be serialized at the requested tier.
+    SerializeFailed,
+}
+
+/// Hand a checked residual to the runtime and read back its outcome.
+///
+/// M0 defines the dispatch entry; serialization through the tier tag,
+/// the static Zig-runtime linkage, and the result and diagnostic mapping
+/// are the next behavior gate.
+// FIXME: serialize the residual at its tier through vehje-runtime-abi,
+// call into the statically-linked Zig runtime, and map the wire
+// diagnostics back to vehje-ir::Diagnostic. M0 ships the surface.
+pub fn dispatch(_residual: &Residual) -> Outcome<(), DriverError> {
+    Outcome::Ok(())
+}

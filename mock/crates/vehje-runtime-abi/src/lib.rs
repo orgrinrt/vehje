@@ -1,57 +1,46 @@
-//! vehje-runtime-abi, the C-ABI shim between the Rust
-//! compiler and any runtime backend (Zig today; possibly
-//! others tomorrow).
+//! vehje-runtime-abi, the framework's tier-tagged C ABI.
 //!
-//! This crate holds the pure type surface + `extern "C"` entry
-//! points. No runtime logic ships here, the Zig sibling tree
-//! at `mock/runtime-zig/` owns the execution body; the
-//! `vehje-runtime-driver` crate owns the compiler-side
-//! dispatch / dlopen integration.
+//! A `Checked` residual crosses tier-tagged: a flat serialized IR arena
+//! (baseline), an optimized bytecode, or native code. The tier is an
+//! optimization axis orthogonal to correctness; the effect proof is
+//! discharged in Rust before any lowering. Pure type surface plus the
+//! runtime-environment interface descriptor, no runtime logic.
 //!
-//! Skeleton round (2026-04-20): ships `VehjeResult`,
-//! `VehjeRuntime` (opaque), `VehjeDiagnostic` + `AbiSpan` +
-//! `VehjeDiagnosticKind`, and three stubbed `extern "C"`
-//! entries. Full `AbiToken` / `AbiNode` mirrors, `From`
-//! conversions, init / shutdown / invoke / scratch /
-//! generative / last_error entry points, and panic-at-FFI
-//! guards are all BACKLOG.
-//!
-//! Stays `no_std` + `no_alloc` like every other vehje crate.
-//! Every ABI crossing carries only bare integers, `[u8; 0]`
-//! sentinels, and raw pointers: `VehjeResult`,
-//! `VehjeRuntime`, `VehjeDiagnostic`, and `AbiSpan`. A
-//! follow-up round wires panic-at-FFI guards via an explicit
-//! abort path rather than `std::panic::catch_unwind` (which
-//! would require `std`).
-//!
-//! The bare-primitive sites at the `extern "C"` boundary
-//! (`i32` / `u32` / `u8` / `usize` scalars in `#[repr(C)]`
-//! and `#[repr(i32)]` types) follow the two-tier FFI-wire
-//! primitive policy declared in `DESIGN.md`: arvo newtype
-//! where wire-identical, bare primitive with single-token
-//! `lint:allow(...) tracked: #207` where no wire-stable arvo
-//! newtype exists yet. A future `arvo::UWire<N>` flips the
-//! bare sites when it lands.
+//! `#![no_std]`, no alloc. Bare primitives appear only at the
+//! `#[repr(C)]` wire boundary (the documented FFI exception), which the
+//! tier-0 serialization introduces when it lands.
 
-#![cfg_attr(not(feature = "std"), no_std)]
+#![no_std]
 #![deny(unused, unreachable_code, unused_must_use, unused_imports, dead_code)]
 
-pub mod diagnostic;
-pub mod exports;
-pub mod handle;
-pub mod result;
+/// The representation a residual crosses the ABI in.
+///
+/// The tier is chosen for execution speed, never semantics: the effect
+/// proof holds across all tiers, so a residual is the same proven-safe
+/// object whether it crosses as an arena, bytecode, or native code.
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub enum Tier {
+    /// The flat serialized IR arena: the reference semantics, and the
+    /// tier the first working version ships.
+    Arena,
+    /// An optimized linear bytecode (encoder deferred).
+    Bytecode,
+    /// Native machine code, where the runtime is environment plumbing
+    /// around LLVM/cranelift output (encoder deferred).
+    Native,
+}
 
-pub use diagnostic::{AbiSpan, VehjeDiagnostic, VehjeDiagnosticKind};
-pub use handle::VehjeRuntime;
-pub use result::VehjeResult;
-
-// `no_std` cdylib panic handler lives behind `#[cfg(not(feature = "std"))]`.
-// With the default `std` feature enabled the compiler's panic runtime is
-// used; without it, we abort. Follow-up round wires a real panic-at-FFI
-// guard that sets `VehjeResult::Err`, fills the last-error diagnostic,
-// and then aborts if unwinding would still be attempted.
-#[cfg(all(not(feature = "std"), not(test)))]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    unsafe { core::hint::unreachable_unchecked() }
+/// The wire form of a checked residual at a given tier.
+///
+/// M0 names the tier; the tier-0 wire struct (a `#[repr(C)]` node buffer,
+/// the child-index pool, a string blob, and a root id) and the
+/// runtime-environment interface descriptor land with the serialization.
+// FIXME: define the tier-0 `#[repr(C)]` wire struct mirroring the vehje-ir
+// arena layout, plus the runtime-environment interface descriptor and the
+// `extern "C"` entry points. Bare primitives at that boundary carry the
+// documented FFI `lint:allow`. M0 ships the tier tag only.
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub struct Residual {
+    /// The representation this residual crosses in.
+    pub tier: Tier,
 }

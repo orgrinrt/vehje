@@ -6,8 +6,6 @@ license.workspace = true
 
 [dependencies]
 vehje-ir.workspace = true
-vehje-lex.workspace = true
-vehje-syntax.workspace = true
 vehje-resolve.workspace = true
 vehje-typecheck.workspace = true
 vehje-codegen.workspace = true

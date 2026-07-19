@@ -1,51 +1,54 @@
+//! vehje-schedule, the framework's compile-side pass scheduler.
+//!
+//! A DAG of Core passes over `arvo-graph`, ordered by declared
+//! dependencies, walked once (single-shot topological walks). This is the
+//! compile side; the runtime side uses hilavitkutin's morsel-driven
+//! execution, not this crate.
+//!
+//! `#![no_std]`, no alloc.
+
 #![no_std]
+#![deny(unused, unreachable_code, unused_must_use, unused_imports, dead_code)]
 
-//! vehje-schedule, pass DAG + scheduler harness for the Vehje
-//! compiler.
-//!
-//! Consumes `arvo-graph` for DAG topology and the
-//! `hilavitkutin-api` WorkUnit contracts for per-pass access-set
-//! declaration. Hosts the `CompilerSchedule` type that the driver
-//! assembles from lex + parse + resolve + typecheck + codegen
-//! passes, and exposes the entry point consumers call to run a
-//! compilation.
-//!
-//! Skeleton round: ships the marker `CompilerSchedule` type and
-//! the `ScheduleError` carrier. Real pass wiring (M0.2, tracked
-//! under #131) follows in a dedicated round that re-frames each
-//! compiler phase as a hilavitkutin WorkUnit.
+use arvo::Maybe;
 
-/// Placeholder type for the full pass schedule the driver
-/// assembles across every compiler phase.
+/// A registered compile pass: a name, and the passes it depends on.
 ///
-/// Skeleton shape: unit struct. The M0.2 round (see #131) grows
-/// this into a concrete DAG over WorkUnit handles, fed by the
-/// `arvo-graph` topology primitive and dispatched via the
-/// hilavitkutin scheduler.
-pub struct CompilerSchedule;
+/// A pass reads and writes the IR; resolve and check are the framework
+/// passes, a consumer's family passes register alongside them. The read
+/// and write sets are a later addition (they drive the `arvo-bitmask`
+/// adjacency); M0 carries the dependency edges by name.
+// FIXME: add the per-pass read/write sets over the IR (arvo-bitmask
+// AccessMask) that let the scheduler prove pass ordering, not just name
+// dependencies. Lands with the real DAG wiring.
+pub trait Pass {
+    /// The pass name, for diagnostics and dependency reference.
+    const NAME: &'static str;
+}
 
-/// Error carrier returned by schedule construction and execution.
-///
-/// Skeleton: one variant flagging the not-yet-wired state.
-/// Expands in M0.2 (#131) to cover DAG cycle detection,
-/// access-set conflict reporting, and missing-pass diagnostics.
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+/// A schedule diagnostic.
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum ScheduleError {
-    /// The pass DAG has not been populated yet. Returned by the
-    /// skeleton `CompilerSchedule::run` until M0.2 (#131) wires
-    /// the real pass graph.
-    Unimplemented,
+    /// The pass DAG contains a cycle.
+    Cycle,
+    /// A declared dependency names no registered pass.
+    MissingDependency,
 }
 
-impl CompilerSchedule {
-    /// Construct an empty schedule harness.
-    pub const fn new() -> Self {
-        Self
-    }
-}
+/// A topological order of passes.
+///
+/// Produced by the pass DAG's `arvo-graph` topological walk; a cycle is
+/// the `valid_count < N` signal that sort returns.
+// FIXME: build the arvo-bitmask BitMatrix adjacency from the registered
+// passes' dependency edges and run arvo-graph::topo_sort over it, mapping
+// valid_count < N to ScheduleError::Cycle. M0 defines the surface; the
+// DAG wiring is the next behavior gate.
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub struct Schedule;
 
-impl Default for CompilerSchedule {
-    fn default() -> Self {
-        Self::new()
+impl Schedule {
+    /// Build a schedule over a set of registered passes.
+    pub fn build() -> Maybe<Self> {
+        Maybe::Is(Self)
     }
 }

@@ -12,16 +12,11 @@ vehje-ir.workspace = true
 mockspace.workspace = true
 
 [features]
-default = ["std"]
-# `std` is the baseline feature for cdylib builds on stable Rust:
-# the panic runtime lives in `std`. Turning it off means
-# `#![no_std]` + custom panic handler, suitable for embedded /
-# cross-compilation targets that bring their own unwind story.
-std = []
+default = []
 
 [lib]
-# cdylib: the Rust-side exports `extern "C"` entry points the Zig
-# runtime consumes via dlopen. Also `rlib` so downstream Rust
-# crates (vehje-runtime-driver, vehje-runtime-tests) can depend
-# on the type surface directly without going through FFI.
-crate-type = ["rlib", "cdylib"]
+# rlib for now: downstream Rust crates (vehje-runtime-driver) depend on
+# the type surface directly. The cdylib export of the `extern "C"` entry
+# points (which needs the no_std panic-handler story) is restored when
+# the tier-0 serialization and the ABI functions land (M3).
+crate-type = ["rlib"]

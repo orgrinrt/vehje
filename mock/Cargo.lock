@@ -467,9 +467,7 @@ dependencies = [
  "notko",
  "vehje-codegen",
  "vehje-ir",
- "vehje-lex",
  "vehje-resolve",
- "vehje-syntax",
  "vehje-typecheck",
 ]
 
@@ -489,16 +487,11 @@ dependencies = [
 name = "vehje-ir"
 version = "0.1.0"
 dependencies = [
- "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
-]
-
-[[package]]
-name = "vehje-lex"
-version = "0.1.0"
-dependencies = [
+ "arvo",
+ "hilavitkutin-api",
+ "hilavitkutin-str",
  "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
- "vehje-ir",
 ]
 
 [[package]]
@@ -511,7 +504,6 @@ dependencies = [
  "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
  "vehje-ir",
- "vehje-syntax",
 ]
 
 [[package]]
@@ -536,18 +528,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "vehje-runtime-tests"
-version = "0.1.0"
-dependencies = [
- "arvo",
- "hilavitkutin-api",
- "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
- "notko",
- "vehje-runtime-abi",
- "vehje-runtime-driver",
-]
-
-[[package]]
 name = "vehje-schedule"
 version = "0.1.0"
 dependencies = [
@@ -556,19 +536,6 @@ dependencies = [
  "arvo-graph",
  "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "vehje-ir",
- "vehje-typecheck",
-]
-
-[[package]]
-name = "vehje-syntax"
-version = "0.1.0"
-dependencies = [
- "arvo",
- "hilavitkutin-api",
- "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
- "notko",
- "vehje-ir",
- "vehje-lex",
 ]
 
 [[package]]
@@ -581,7 +548,6 @@ dependencies = [
  "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "vehje-ir",
  "vehje-resolve",
- "vehje-syntax",
 ]
 
 [[package]]

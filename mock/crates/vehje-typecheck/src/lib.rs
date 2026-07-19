@@ -1,63 +1,40 @@
+//! vehje-typecheck, the framework's Core-level check pass.
+//!
+//! The `vehje-check` role (the crate directory keeps the
+//! `vehje-typecheck` name until a later cosmetic rename). Checks the
+//! resolved Core IR, generic over the family set, with family-extension
+//! hooks for family-specific checks (a consumer's coherence, routing, or
+//! fragment rules).
+//!
+//! `#![no_std]`, no alloc.
+
 #![no_std]
-
-//! vehje-typecheck, skeleton type checker + validator framework
-//! for the Vehje authoring language.
-//!
-//! Consumes the `Resolved` bundle produced by vehje-resolve;
-//! runs a fixed list of core validators (STRICT1-7 plus
-//! `coherence` / `orphan-rule` / `bind-target-shape`) and returns
-//! a flat `Vec<Diagnostic>`.
-//!
-//! Round-one scope is deliberately minimal: the harness
-//! (`Validator` trait + `ValidatorRegistry` + `ValidatorCtx` +
-//! ten ZST validator stubs) plus a top-level `typecheck` entry
-//! that walks the registry over an empty `Resolved` and returns
-//! an empty vec. Every validator body (the actual shadow check,
-//! overlap detection, orphan-rule walk, …) lands as its own
-//! follow-up micro-round on top of this stable harness.
-//!
-//! This crate uses `std`; it is host-side (compiler phase), not
-//! runtime. The `no_std` / fixed-arena discipline on
-//! `vehje-ir`, `vehje-lex`, `vehje-syntax` does not propagate
-//! here.
-//!
-//! R4 (2026-04-26) finalised a richer trait shape with
-//! associated `NAME` / `CATEGORY` consts, `accepts(kind)` AST
-//! routing, and a `DiagnosticSink` emission API. That retrofit
-//! is BACKLOG; this skeleton ships a narrower instance-method
-//! form (`name(&self)`, `validate(&self, ctx) -> Vec<Diagnostic>`)
-//! that is directly object-safe and suits the const `&'static dyn`
-//! registry iteration surface without `const_in_trait` gymnastics.
-
 #![deny(unused, unreachable_code, unused_must_use, unused_imports, dead_code)]
 
-pub mod bind_target_shape;
-pub mod coherence;
-pub mod ctx;
-pub mod orphan_rule;
-pub mod registry;
-pub mod strict1;
-pub mod strict2;
-pub mod strict3;
-pub mod strict4;
-pub mod strict5;
-pub mod strict6;
-pub mod strict7;
-pub mod validator;
+use arvo::Outcome;
 
-pub use bind_target_shape::BindTargetShape;
-pub use coherence::Coherence;
-pub use ctx::ValidatorCtx;
-pub use orphan_rule::OrphanRule;
-pub use registry::{typecheck, ValidatorRegistry};
-pub use strict1::Strict1;
-pub use strict2::Strict2;
-pub use strict3::Strict3;
-pub use strict4::Strict4;
-pub use strict5::Strict5;
-pub use strict6::Strict6;
-pub use strict7::Strict7;
-pub use validator::Validator;
+use vehje_ir::{Arena, NodeRef, Span};
 
-pub use vehje_ir::{Diagnostic, NodeId, Span};
-pub use vehje_resolve::Resolved;
+/// A check diagnostic.
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub enum CheckError {
+    /// A Core form is malformed (bad arity, dangling child).
+    Malformed { span: Span },
+    /// A family node's own check failed.
+    FamilyRule { span: Span },
+}
+
+/// The Core check pass over a program's IR.
+///
+/// Runs the shared, target-agnostic checks every consumer's IR must pass
+/// (well-formed binders, arity, family and effect classifications
+/// consistent with their nodes), and dispatches family nodes to their
+/// family checks. M0 defines the entry; the shared checks and the
+/// family-extension dispatch are the next behavior gate.
+// FIXME: implement the shared Core checks (well-formedness, arity, the
+// family/effect classification consistency) and the family-check dispatch
+// for Raw nodes. M0 ships the surface; the check body is the behavior
+// gate.
+pub fn check(_arena: &Arena<'_>, _root: NodeRef) -> Outcome<(), CheckError> {
+    Outcome::Ok(())
+}

@@ -5,6 +5,10 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
+arvo.workspace = true
+notko.workspace = true
+hilavitkutin-api.workspace = true
+hilavitkutin-str.workspace = true
 
 [build-dependencies]
 mockspace.workspace = true

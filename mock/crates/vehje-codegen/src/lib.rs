@@ -1,57 +1,102 @@
+//! vehje-codegen, the framework's output machinery.
+//!
+//! A target declares what it supports, and everything else is a proof
+//! obligation against that declaration. A target names a type-level set
+//! of families it handles (`Supports`) and a type-level set of effects it
+//! permits (`Permits`); emission is bounded on the program's families
+//! being included in `Supports` and its effects in `Permits`. The
+//! guarantee is inclusion, not coverage.
+//!
+//! `#![no_std]`, no alloc.
+
 #![no_std]
-
-//! vehje-codegen, skeleton codegen framework + extension-point
-//! contract for the Vehje authoring language.
-//!
-//! Consumes the `Resolved` bundle produced by vehje-resolve;
-//! routes emission through a fixed list of built-in
-//! `CodegenTarget` implementations (`native`, `jomini`) via the
-//! const `TargetRegistry`, and returns a `CodegenArtifact`.
-//!
-//! Round-one scope is deliberately minimal: the harness
-//! (`CodegenTarget` trait + `TargetRegistry` + `CodegenCtx` +
-//! two ZST target stubs + `CodegenArtifact` / `ArtifactKind` /
-//! `CodegenError` payload types) plus a top-level `emit` entry
-//! that walks the registry over an empty `Resolved` and returns
-//! an empty artifact. Every target backend (real Rust/LLVM for
-//! `NativeTarget`, Clausewitz emission for `JominiTarget` via
-//! the future `vehje-jomini` sibling repo, …) lands as its own
-//! follow-up round on top of this stable harness.
-//!
-//! This crate uses `std`; it is host-side (compiler phase), not
-//! runtime. The `no_std` / fixed-arena discipline on
-//! `vehje-ir`, `vehje-lex`, `vehje-syntax` does not propagate
-//! here.
-//!
-//! R3 (2026-04-26) finalised a richer trait shape with
-//! associated `NAME` / `VERSION` consts, `accepts(kind)` AST
-//! routing, a `stages()` pipeline entry, and a `compile(unit,
-//! ctx) -> Result<CodegenOutput, Diagnostic>` emission API with
-//! a `CodegenOutput { bytes, manifest, references }` payload.
-//! That retrofit is BACKLOG; this skeleton ships a narrower
-//! instance-method form (`name(&self)`, `emit(&self, ctx) ->
-//! Result<CodegenArtifact, CodegenError>`) that is directly
-//! object-safe and suits the const `&'static dyn` registry
-//! iteration surface without `const_in_trait` gymnastics. This
-//! mirrors exactly the R4 → vehje-typecheck skeleton pattern.
-
 #![deny(unused, unreachable_code, unused_must_use, unused_imports, dead_code)]
 
-pub mod artifact;
-pub mod ctx;
-pub mod error;
-pub mod jomini;
-pub mod native;
-pub mod registry;
-pub mod target;
+use core::marker::PhantomData;
 
-pub use artifact::{ArtifactKind, CodegenArtifact};
-pub use ctx::CodegenCtx;
-pub use error::CodegenError;
-pub use jomini::JominiTarget;
-pub use native::NativeTarget;
-pub use registry::{emit, TargetRegistry};
-pub use target::CodegenTarget;
+use notko::Outcome;
+use vehje_ir::{AccessSet, Arena, ContainsAll, NodeRef, Span};
 
-pub use vehje_ir::Diagnostic;
-pub use vehje_resolve::Resolved;
+/// The output plug-in contract.
+///
+/// A target declares the family set it handles and the effect set it
+/// permits, both type-level sets over the `AccessSet` machinery, and
+/// emits a checked residual. A target is total over the families it
+/// declares.
+pub trait Target {
+    /// The families this target handles.
+    type Supports: AccessSet;
+    /// The effects this target permits.
+    type Permits: AccessSet;
+    /// The target name, resolved through the compile-time composition.
+    const NAME: &'static str;
+
+    /// Emit a residual this target has been proven to accept.
+    ///
+    /// One generic fold over the Core substrate plus the declared
+    /// families, writing through a caller-provided sink.
+    // FIXME: take a byte sink (hilavitkutin-api ByteEmitter) and perform
+    // the total fold over Core + the declared families. M0 defines the
+    // contract; the fold body is the behavior gate.
+    fn emit(&self, checked: &Checked<'_, Self>) -> Outcome<(), CodegenError>
+    where
+        Self: Sized;
+}
+
+/// A witness that a program has been inclusion- and effect-checked
+/// against a specific target.
+///
+/// `emit` accepts only a `Checked`; a `Checked` is producible only by
+/// running the check for that target (see [`check`]). The obligation to
+/// check is enforced at compile time; for a statically known program the
+/// inclusion discharges at compile time.
+pub struct Checked<'a, T> {
+    arena: &'a Arena<'a>,
+    root: NodeRef,
+    _target: PhantomData<T>,
+}
+
+impl<'a, T> Checked<'a, T> {
+    /// The checked program's arena.
+    pub fn arena(&self) -> &'a Arena<'a> {
+        self.arena
+    }
+
+    /// The checked program's root node.
+    pub fn root(&self) -> NodeRef {
+        self.root
+    }
+}
+
+/// Check a statically known program against target `T` at compile time.
+///
+/// The `where` bounds are the inclusion proof: the target's `Supports`
+/// contains every family in the program's `Families` set, and its
+/// `Permits` contains every effect in the program's `Effects` set. A
+/// mismatch is a compile error naming the missing family or effect
+/// (through the `Contains` diagnostic). This is the static half of the
+/// two-stage proof; the runtime half (a bitmask over a parsed program's
+/// family ids) produces the same `Checked` witness through a checked
+/// path.
+pub fn check_for<'a, T, Families, Effects>(
+    arena: &'a Arena<'a>,
+    root: NodeRef,
+) -> Checked<'a, T>
+where
+    T: Target,
+    T::Supports: ContainsAll<Families>,
+    T::Permits: ContainsAll<Effects>,
+{
+    Checked { arena, root, _target: PhantomData }
+}
+
+/// A codegen diagnostic.
+///
+/// Carries the refused construct and the target, not a bare string.
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub enum CodegenError {
+    /// A construct outside the target's declared family set.
+    UnsupportedFamily { span: Span, target: &'static str },
+    /// An effect outside the target's permitted set.
+    ForbiddenEffect { span: Span, target: &'static str },
+}

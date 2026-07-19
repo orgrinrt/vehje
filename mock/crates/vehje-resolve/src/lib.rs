@@ -1,49 +1,78 @@
-//! vehje-resolve, skeleton name resolver for the Vehje
-//! authoring language.
+//! vehje-resolve, the framework's Core-level resolve pass.
 //!
-//! Consumes the `Ast` produced by vehje-syntax; produces a
-//! `Resolved` bundle carrying the AST plus a `ScopeTree` and a
-//! per-`NodeId` resolution map. Also hosts the `Vehje.toml`
-//! manifest parser (stubbed this round; real TOML handling is
-//! BACKLOG).
+//! Name resolution over the shared Core binders (`Let`, `Lambda`,
+//! `Var`), with a borrowed non-allocating scope chain: each scope frame
+//! lives on the walk's own stack and chains to its parent by reference,
+//! so no owned scope table is allocated. Generic over the family set,
+//! with family-extension hooks for family-specific resolution.
 //!
-//! Round-one scope is deliberately minimal: the harness (types
-//! + driver + manifest stub + error carriers) plus a top-level
-//! `resolve` entry point that walks nothing and returns a
-//! `Maybe::Isnt`-filled resolution map sized to `ast.len()`.
-//! Every resolution rule (top-level items, local bindings,
-//! paths, use statements, globs, generics, self-type, trait
-//! methods, macro hygiene) lands as its own follow-up
-//! micro-round on top of this stable harness.
-//!
-//! vehje-resolve is `no_std` + `no_alloc` first, like every crate
-//! in the stack. Host-side compiler phases do not inherit a
-//! dispensation from the runtime's discipline. Current skeleton
-//! uses `std::collections::HashMap` + `Vec` inside the scope
-//! implementation as tracked escapes (see `SHAME.md` `## Scope`);
-//! these flip to scheduler-managed `Column<Symbol>` +
-//! `Map<Str, SymbolSlot>` when #131 (M0.2: vehje-schedule as
-//! hilavitkutin WorkUnit home) lands. After that, `#![no_std]`
-//! goes at the crate root and any remaining `std`-requiring
-//! surface lands behind `#[cfg(feature = "std")]` as a feature-
-//! gated opt-in for third-party ecosystem fit.
+//! `#![no_std]`, no alloc.
 
+#![no_std]
 #![deny(unused, unreachable_code, unused_must_use, unused_imports, dead_code)]
 
-pub mod error;
-pub mod manifest;
-pub mod resolved;
-pub mod resolver;
-pub mod scope;
-pub mod symbol;
+use arvo::{Maybe, Outcome};
 
-pub use error::{ManifestError, ResolveError};
-pub use manifest::{Manifest, parse_manifest};
-pub use resolved::Resolved;
-pub use resolver::{resolve, Resolver};
-pub use scope::{Scope, ScopeTree};
-pub use symbol::{Symbol, SymbolKind};
+use hilavitkutin_str::Str;
+use vehje_ir::{Arena, NodeRef, Span};
 
-pub use vehje_ir::{Diagnostic, NodeId, ScopeId, Span};
-pub use hilavitkutin_str::Str;
-pub use vehje_syntax::{Ast, AstNode};
+/// A borrowed scope frame: a single binding, chained to its parent.
+///
+/// A scope chain is a stack of these, each frame borrowed from the
+/// resolve walk's own call stack. Resolution of a `Var` walks the chain
+/// from the innermost frame outward. No allocation: the chain is the call
+/// stack.
+pub struct Scope<'p> {
+    /// The name this frame binds.
+    pub name: Str,
+    /// The node that introduced the binding.
+    pub binder: NodeRef,
+    /// The enclosing scope, or `Isnt` at the root.
+    pub parent: Maybe<&'p Scope<'p>>,
+}
+
+impl<'p> Scope<'p> {
+    /// A root frame with no parent.
+    pub fn root(name: Str, binder: NodeRef) -> Self {
+        Self { name, binder, parent: Maybe::Isnt }
+    }
+
+    /// A child frame chained to `parent`.
+    pub fn child(name: Str, binder: NodeRef, parent: &'p Scope<'p>) -> Self {
+        Self { name, binder, parent: Maybe::Is(parent) }
+    }
+
+    /// Resolve `name` by walking the chain from this frame outward.
+    pub fn resolve(&self, name: Str) -> Maybe<NodeRef> {
+        if self.name == name {
+            return Maybe::Is(self.binder);
+        }
+        match self.parent {
+            Maybe::Is(p) => p.resolve(name),
+            Maybe::Isnt => Maybe::Isnt,
+        }
+    }
+}
+
+/// A resolve diagnostic.
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub enum ResolveError {
+    /// A `Var` names no binding in scope.
+    Unresolved { span: Span },
+    /// Two bindings of the same name in one scope.
+    Duplicate { span: Span },
+}
+
+/// The Core resolve pass over a program's IR.
+///
+/// Generic over the family set through the family-extension hooks (a
+/// family's own binding forms extend the walk). M0 defines the entry and
+/// the scope-chain machinery; the full walk over every Core binder, plus
+/// the family-extension dispatch, is the next behavior gate.
+// FIXME: implement the full resolve walk over the Core forms (Let/Lambda
+// introduce frames; Var resolves against the chain; Apply/Project/If/etc.
+// recurse) and the family-extension hook dispatch. M0 ships the scope
+// chain and the entry; the walk body is the behavior gate.
+pub fn resolve(_arena: &mut Arena<'_>, _root: NodeRef) -> Outcome<(), ResolveError> {
+    Outcome::Ok(())
+}

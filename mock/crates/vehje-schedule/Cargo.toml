@@ -6,7 +6,6 @@ license.workspace = true
 
 [dependencies]
 vehje-ir.workspace = true
-vehje-typecheck.workspace = true
 arvo.workspace = true
 arvo-bitmask.workspace = true
 arvo-graph.workspace = true
