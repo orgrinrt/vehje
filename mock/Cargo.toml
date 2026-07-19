@@ -3,8 +3,6 @@ resolver = "2"
 members = [
     "crates/vehje",
     "crates/vehje-ir",
-    "crates/vehje-lex",
-    "crates/vehje-syntax",
     "crates/vehje-resolve",
     "crates/vehje-typecheck",
     "crates/vehje-schedule",
@@ -40,8 +38,6 @@ notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", defau
 
 # In-workspace phase crates. Path deps for inter-phase consumption.
 vehje-ir = { path = "crates/vehje-ir" }
-vehje-lex = { path = "crates/vehje-lex" }
-vehje-syntax = { path = "crates/vehje-syntax" }
 vehje-resolve = { path = "crates/vehje-resolve" }
 vehje-typecheck = { path = "crates/vehje-typecheck" }
 vehje-schedule = { path = "crates/vehje-schedule" }
