@@ -1,23 +1,24 @@
 //! `vehje lex`, tokenise a file and print its token stream.
 
+use notko::Maybe;
 use vehje_ir::{Diagnostic, FileId, TokenKind};
 use vehje_lex::{Lexer, Token};
-use notko::Maybe;
 
-pub fn run(args: &[String]) -> i32 { // lint:allow(bare_string) lint:allow(bare_numeric) reason: CLI entry plumbing; argv and exit code are the std-boundary shapes; tracked: #73 lint:allow(arvo-types-only) lint:allow(no-bare-numeric) lint:allow(no-bare-string) tracked: #207
+pub fn run(args: &[String]) -> i32 {
+    // lint:allow(bare_string) lint:allow(bare_numeric) reason: CLI entry plumbing; argv and exit code are the std-boundary shapes; tracked: #73 lint:allow(arvo-types-only) lint:allow(no-bare-numeric) lint:allow(no-bare-string) tracked: #207
     let path = match crate::args::single_file_arg(args) {
         Maybe::Is(p) => p,
         Maybe::Isnt => {
             eprintln!("vehje lex: missing <file>");
             return 2;
-        }
+        },
     };
     let src = match std::fs::read_to_string(path) {
         Ok(s) => s,
         Err(e) => {
             eprintln!("vehje lex: {path}: {e}");
             return 2;
-        }
+        },
     };
     let file = FileId(1); // lint:allow(bare_numeric) reason: single-file mode carries a literal FileId placeholder until multi-file manifest round; tracked: #73
     let mut lexer = Lexer::from_str(&src, file);
@@ -32,17 +33,14 @@ pub fn run(args: &[String]) -> i32 { // lint:allow(bare_string) lint:allow(bare_
             Maybe::Isnt => break,
         }
     }
-    if had_diag {
-        1
-    } else {
-        0
-    }
+    if had_diag { 1 } else { 0 }
 }
 
-fn print_token(src: &str, tok: &Token) { // lint:allow(bare_string) reason: host-side CLI prints to stdout via &str; tracked: #73 lint:allow(no-bare-string) tracked: #207
-    let start = tok.span.start.0 as usize;  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
-    let end = tok.span.end.0 as usize;  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
-    let slice = &src.as_bytes()[start..end.min(src.len())];
+fn print_token(src: &str, tok: &Token) {
+    // lint:allow(bare_string) reason: host-side CLI prints to stdout via &str; tracked: #73 lint:allow(no-bare-string) tracked: #207
+    let start = tok.span.start.0 as usize; // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+    let end = tok.span.end.0 as usize; // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+    let slice = &src.as_bytes()[start .. end.min(src.len())];
     let lit = core::str::from_utf8(slice).unwrap_or("<non-utf8>");
     if carries_literal(tok.kind) && !lit.is_empty() {
         println!("{start}..{end}  {:?}  {lit}", tok.kind);
@@ -51,7 +49,8 @@ fn print_token(src: &str, tok: &Token) { // lint:allow(bare_string) reason: host
     }
 }
 
-fn carries_literal(k: TokenKind) -> bool {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+fn carries_literal(k: TokenKind) -> bool {
+    // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     matches!(
         k,
         TokenKind::Ident
@@ -69,7 +68,8 @@ fn carries_literal(k: TokenKind) -> bool {  // lint:allow(arvo-types-only) lint:
         || is_operator_or_punct(k)
 }
 
-fn is_keyword(k: TokenKind) -> bool {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+fn is_keyword(k: TokenKind) -> bool {
+    // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     use TokenKind::*;
     matches!(
         k,
@@ -117,7 +117,8 @@ fn is_keyword(k: TokenKind) -> bool {  // lint:allow(arvo-types-only) lint:allow
     )
 }
 
-fn is_operator_or_punct(k: TokenKind) -> bool {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+fn is_operator_or_punct(k: TokenKind) -> bool {
+    // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     use TokenKind::*;
     matches!(
         k,

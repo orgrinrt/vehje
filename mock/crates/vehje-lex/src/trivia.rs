@@ -15,7 +15,7 @@ use vehje_ir::Span;
 
 /// What a piece of trivia is.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
-#[repr(u8)]  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+#[repr(u8)] // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
 pub enum TriviaKind {
     Whitespace,
     LineComment,
@@ -37,13 +37,16 @@ pub struct Trivia {
 
 impl Trivia {
     pub const fn new(kind: TriviaKind, span: Span) -> Self {
-        Self { kind, span }
+        Self {
+            kind,
+            span,
+        }
     }
 }
 
 /// Maximum trivia slots tracked per side. Excess coalesces into the
 /// final slot; see `TriviaSet::push_leading` / `push_trailing`.
-pub const TRIVIA_SLOTS: usize = 8;  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+pub const TRIVIA_SLOTS: usize = 8; // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
 
 /// Fixed-size leading-and-trailing trivia set attached to a token.
 ///
@@ -56,17 +59,17 @@ pub const TRIVIA_SLOTS: usize = 8;  // lint:allow(arvo-types-only) lint:allow(no
 /// (the generic fallback).
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
 pub struct TriviaSet {
-    leading: [Trivia; TRIVIA_SLOTS],
-    trailing: [Trivia; TRIVIA_SLOTS],
-    leading_len: u8,  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207 lint:allow(no-public-raw-field) tracked: #207
-    trailing_len: u8,  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207 lint:allow(no-public-raw-field) tracked: #207
+    leading:      [Trivia; TRIVIA_SLOTS],
+    trailing:     [Trivia; TRIVIA_SLOTS],
+    leading_len:  u8, // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207 lint:allow(no-public-raw-field) tracked: #207
+    trailing_len: u8, // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207 lint:allow(no-public-raw-field) tracked: #207
 }
 
 impl TriviaSet {
     /// Construct an empty trivia set.
     pub const fn new() -> Self {
         Self {
-            leading: [Trivia {
+            leading:      [Trivia {
                 kind: TriviaKind::Whitespace,
                 span: Span::new(
                     vehje_ir::FileId(0),
@@ -74,7 +77,7 @@ impl TriviaSet {
                     vehje_ir::ByteOffset(0),
                 ),
             }; TRIVIA_SLOTS],
-            trailing: [Trivia {
+            trailing:     [Trivia {
                 kind: TriviaKind::Whitespace,
                 span: Span::new(
                     vehje_ir::FileId(0),
@@ -82,17 +85,17 @@ impl TriviaSet {
                     vehje_ir::ByteOffset(0),
                 ),
             }; TRIVIA_SLOTS],
-            leading_len: 0,
+            leading_len:  0,
             trailing_len: 0,
         }
     }
 
     pub fn leading(&self) -> &[Trivia] {
-        &self.leading[..self.leading_len as usize]  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+        &self.leading[.. self.leading_len as usize] // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     }
 
     pub fn trailing(&self) -> &[Trivia] {
-        &self.trailing[..self.trailing_len as usize]  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+        &self.trailing[.. self.trailing_len as usize] // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     }
 
     /// Push a leading trivia. Coalesces into the last slot when full.
@@ -105,11 +108,12 @@ impl TriviaSet {
         Self::push_side(&mut self.trailing, &mut self.trailing_len, t);
     }
 
-    fn push_side(buf: &mut [Trivia; TRIVIA_SLOTS], len: &mut u8, t: Trivia) {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
-        let n = *len as usize;  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+    fn push_side(buf: &mut [Trivia; TRIVIA_SLOTS], len: &mut u8, t: Trivia) {
+        // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+        let n = *len as usize; // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         if n < TRIVIA_SLOTS {
             buf[n] = t;
-            *len = n as u8 + 1;  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+            *len = n as u8 + 1; // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
             return;
         }
         // Coalesce into the last slot.

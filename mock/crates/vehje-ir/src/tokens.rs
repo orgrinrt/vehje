@@ -22,7 +22,7 @@
 /// The variant `Self_` carries a trailing underscore because `self`
 /// is a Rust keyword and cannot be used as a variant name unraw.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
-#[repr(u8)]  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+#[repr(u8)] // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
 pub enum TokenKind {
     // ── Keywords ──────────────────────────────────────────────
     Fn,

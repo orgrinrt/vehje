@@ -29,10 +29,14 @@ fn vehje_result_variants_distinct() {
 fn vehje_diagnostic_construction() {
     let message: &[u8] = b"stub message";
     let diag = VehjeDiagnostic {
-        span: AbiSpan { file: 1, start: 2, end: 7 },
-        message: message.as_ptr(),
+        span:        AbiSpan {
+            file:  1,
+            start: 2,
+            end:   7,
+        },
+        message:     message.as_ptr(),
         message_len: arvo::USize(message.len()),
-        kind: VehjeDiagnosticKind::Warning,
+        kind:        VehjeDiagnosticKind::Warning,
     };
     assert_eq!(diag.kind, VehjeDiagnosticKind::Warning);
     assert_eq!(diag.span.file, 1);

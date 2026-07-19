@@ -7,8 +7,15 @@
 
 use notko::Outcome;
 use vehje_runtime_tests::{
-    AbiSpan, VehjeDiagnostic, VehjeDiagnosticKind, VehjeResult, DriverError, LoaderError,
-    RuntimeDriver, RuntimeLoader, test_runtime_roundtrip,
+    AbiSpan,
+    DriverError,
+    LoaderError,
+    RuntimeDriver,
+    RuntimeLoader,
+    VehjeDiagnostic,
+    VehjeDiagnosticKind,
+    VehjeResult,
+    test_runtime_roundtrip,
 };
 
 #[test]
@@ -25,13 +32,21 @@ fn types_are_accessible() {
     let _loader = RuntimeLoader;
     let _result = VehjeResult::Ok;
     let _kind = VehjeDiagnosticKind::Error;
-    let _span = AbiSpan { file: 0, start: 0, end: 0 };
+    let _span = AbiSpan {
+        file:  0,
+        start: 0,
+        end:   0,
+    };
     let message: &[u8] = b"smoke";
     let _diag = VehjeDiagnostic {
-        span: AbiSpan { file: 0, start: 0, end: 0 },
-        message: message.as_ptr(),
+        span:        AbiSpan {
+            file:  0,
+            start: 0,
+            end:   0,
+        },
+        message:     message.as_ptr(),
         message_len: arvo::USize(message.len()),
-        kind: VehjeDiagnosticKind::Info,
+        kind:        VehjeDiagnosticKind::Info,
     };
     let _loader_err = LoaderError::NotImplemented;
     let _driver_err = DriverError::NotImplemented;

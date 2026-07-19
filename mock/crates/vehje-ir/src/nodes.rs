@@ -13,7 +13,7 @@
 /// pattern / type refinement arrives as later rounds extend the enum
 /// by adding variants at the tail; existing discriminants are stable.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
-#[repr(u8)]  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+#[repr(u8)] // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
 pub enum AstNodeKind {
     File,
     Item,

@@ -2,9 +2,9 @@
 //! Symbol + SymbolKind: variant distinctness, field round-trip,
 //! default.
 
+use hilavitkutin_str::str_const;
 use vehje_ir::{NodeId, ScopeId};
 use vehje_resolve::{Symbol, SymbolKind};
-use hilavitkutin_str::str_const;
 
 #[test]
 fn symbol_kind_variants_distinct() {

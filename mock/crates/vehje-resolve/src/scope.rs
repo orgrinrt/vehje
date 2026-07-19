@@ -13,9 +13,9 @@
 use std::collections::HashMap;
 
 use arvo::{Bool, USize};
-use vehje_ir::ScopeId;
 use hilavitkutin_str::Str;
 use notko::Maybe;
+use vehje_ir::ScopeId;
 
 use crate::symbol::Symbol;
 
@@ -27,14 +27,17 @@ use crate::symbol::Symbol;
 /// previous entry; see `insert`).
 #[derive(Clone, Debug, Default)]
 pub struct Scope {
-    parent: Maybe<ScopeId>,
+    parent:  Maybe<ScopeId>,
     symbols: HashMap<Str, Symbol>, // lint:allow(bare_collection) reason: skeleton scope-symbol backing; re-expressed as scheduler-managed Column<Symbol> + Map<Str, SymbolSlot> once #131 lands (see SHAME.md `## Scope`); tracked: #131
 }
 
 impl Scope {
     /// Construct a scope with the given parent.
     pub fn new(parent: Maybe<ScopeId>) -> Self {
-        Self { parent, symbols: HashMap::new() }
+        Self {
+            parent,
+            symbols: HashMap::new(),
+        }
     }
 
     /// Parent scope, or `Maybe::Isnt` for the root.
@@ -81,7 +84,9 @@ impl Default for ScopeTree {
 impl ScopeTree {
     /// Construct a tree containing only the root scope.
     pub fn new() -> Self {
-        Self { scopes: vec![Scope::new(Maybe::Isnt)] }
+        Self {
+            scopes: vec![Scope::new(Maybe::Isnt)],
+        }
     }
 
     /// Root scope id. Always `ScopeId(0)`.
@@ -102,7 +107,8 @@ impl ScopeTree {
     /// Borrow a scope by id, or `Maybe::Isnt` if the id is out of
     /// range.
     pub fn get(&self, id: ScopeId) -> Maybe<&Scope> {
-        match self.scopes.get(id.0 as usize) { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal u32-to-usize cast for std Vec indexing; Vec is carved out above; tracked: #131
+        match self.scopes.get(id.0 as usize) {
+            // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal u32-to-usize cast for std Vec indexing; Vec is carved out above; tracked: #131
             Some(s) => Maybe::Is(s),
             None => Maybe::Isnt,
         }
@@ -111,7 +117,8 @@ impl ScopeTree {
     /// Mutably borrow a scope by id, or `Maybe::Isnt` if out of
     /// range.
     pub fn get_mut(&mut self, id: ScopeId) -> Maybe<&mut Scope> {
-        match self.scopes.get_mut(id.0 as usize) { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal u32-to-usize cast for std Vec indexing; Vec is carved out above; tracked: #131
+        match self.scopes.get_mut(id.0 as usize) {
+            // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: internal u32-to-usize cast for std Vec indexing; Vec is carved out above; tracked: #131
             Some(s) => Maybe::Is(s),
             None => Maybe::Isnt,
         }

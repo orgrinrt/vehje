@@ -16,78 +16,66 @@ fn collect(src: &str) -> Vec<TokenKind> {
 #[test]
 fn fn_declaration() {
     let kinds = collect("fn add(a, b) { a + b }");
-    assert_eq!(
-        kinds,
-        vec![
-            TokenKind::Fn,
-            TokenKind::Ident,
-            TokenKind::LParen,
-            TokenKind::Ident,
-            TokenKind::Comma,
-            TokenKind::Ident,
-            TokenKind::RParen,
-            TokenKind::LBrace,
-            TokenKind::Ident,
-            TokenKind::Plus,
-            TokenKind::Ident,
-            TokenKind::RBrace,
-            TokenKind::Eof,
-        ]
-    );
+    assert_eq!(kinds, vec![
+        TokenKind::Fn,
+        TokenKind::Ident,
+        TokenKind::LParen,
+        TokenKind::Ident,
+        TokenKind::Comma,
+        TokenKind::Ident,
+        TokenKind::RParen,
+        TokenKind::LBrace,
+        TokenKind::Ident,
+        TokenKind::Plus,
+        TokenKind::Ident,
+        TokenKind::RBrace,
+        TokenKind::Eof,
+    ]);
 }
 
 #[test]
 fn let_statement() {
     let kinds = collect("let x = 42;");
-    assert_eq!(
-        kinds,
-        vec![
-            TokenKind::Let,
-            TokenKind::Ident,
-            TokenKind::Eq,
-            TokenKind::IntLit,
-            TokenKind::Semi,
-            TokenKind::Eof,
-        ]
-    );
+    assert_eq!(kinds, vec![
+        TokenKind::Let,
+        TokenKind::Ident,
+        TokenKind::Eq,
+        TokenKind::IntLit,
+        TokenKind::Semi,
+        TokenKind::Eof,
+    ]);
 }
 
 #[test]
 fn nested_parens_and_ops() {
     let kinds = collect("((a + b) * c) == 0");
-    assert_eq!(
-        kinds,
-        vec![
-            TokenKind::LParen,
-            TokenKind::LParen,
-            TokenKind::Ident,
-            TokenKind::Plus,
-            TokenKind::Ident,
-            TokenKind::RParen,
-            TokenKind::Star,
-            TokenKind::Ident,
-            TokenKind::RParen,
-            TokenKind::EqEq,
-            TokenKind::IntLit,
-            TokenKind::Eof,
-        ]
-    );
+    assert_eq!(kinds, vec![
+        TokenKind::LParen,
+        TokenKind::LParen,
+        TokenKind::Ident,
+        TokenKind::Plus,
+        TokenKind::Ident,
+        TokenKind::RParen,
+        TokenKind::Star,
+        TokenKind::Ident,
+        TokenKind::RParen,
+        TokenKind::EqEq,
+        TokenKind::IntLit,
+        TokenKind::Eof,
+    ]);
 }
 
 #[test]
 fn path_with_colon_colon() {
     let kinds = collect("std::io::println");
-    assert_eq!(
-        kinds,
-        vec![
-            TokenKind::Ident,
-            TokenKind::ColonColon,
-            TokenKind::Ident,
-            TokenKind::ColonColon,
-            TokenKind::Ident,
-            TokenKind::Eof,
-        ]
-    );
+    assert_eq!(kinds, vec![
+        TokenKind::Ident,
+        TokenKind::ColonColon,
+        TokenKind::Ident,
+        TokenKind::ColonColon,
+        TokenKind::Ident,
+        TokenKind::Eof,
+    ]);
 }
 
 #[test]

@@ -5,7 +5,7 @@ use hilavitkutin_api::{Len, Push};
 use notko::Maybe;
 use vehje_ir::{ByteOffset, FileId, Span, TokenKind};
 use vehje_lex::Token;
-use vehje_syntax::{parse, SyntaxError};
+use vehje_syntax::{SyntaxError, parse};
 
 fn span(start: u32, end: u32) -> Span {
     Span::new(FileId(0), ByteOffset(start), ByteOffset(end)) // lint:allow(no-bare-numeric) reason: FileId(0) sentinel for single-file tests; tracked: #412

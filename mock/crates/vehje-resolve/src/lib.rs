@@ -38,12 +38,11 @@ pub mod scope;
 pub mod symbol;
 
 pub use error::{ManifestError, ResolveError};
+pub use hilavitkutin_str::Str;
 pub use manifest::{Manifest, parse_manifest};
 pub use resolved::Resolved;
-pub use resolver::{resolve, Resolver};
+pub use resolver::{Resolver, resolve};
 pub use scope::{Scope, ScopeTree};
 pub use symbol::{Symbol, SymbolKind};
-
 pub use vehje_ir::{Diagnostic, NodeId, ScopeId, Span};
-pub use hilavitkutin_str::Str;
 pub use vehje_syntax::{Ast, AstNode};

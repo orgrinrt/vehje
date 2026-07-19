@@ -11,9 +11,9 @@
 //! body moves out to `github.com/orgrinrt/vehje-jomini` once it
 //! has a meaningful implementation.
 
-use vehje_ir::Diagnostic;
 use hilavitkutin_api::{ByteEmitter, DiagnosticSink};
 use notko::Outcome;
+use vehje_ir::Diagnostic;
 
 use crate::artifact::{ArtifactKind, CodegenArtifact};
 use crate::ctx::CodegenCtx;

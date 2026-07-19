@@ -13,9 +13,9 @@
 //! validators) is BACKLOG, the skeleton round ships only the
 //! ten core validators.
 
+use hilavitkutin_api::DiagnosticSink;
 use vehje_ir::Diagnostic;
 use vehje_resolve::Resolved;
-use hilavitkutin_api::DiagnosticSink;
 
 use crate::bind_target_shape::BindTargetShape;
 use crate::coherence::Coherence;
@@ -65,10 +65,7 @@ impl ValidatorRegistry {
     ///
     /// Execution is sequential this round. Parallel (rayon)
     /// fan-out is BACKLOG.
-    pub fn run_all(
-        ctx: &ValidatorCtx,
-        sink: &mut dyn DiagnosticSink<Diagnostic>,
-    ) {
+    pub fn run_all(ctx: &ValidatorCtx, sink: &mut dyn DiagnosticSink<Diagnostic>) {
         for validator in Self::VALIDATORS {
             validator.validate(ctx, sink);
         }
@@ -81,10 +78,7 @@ impl ValidatorRegistry {
 /// Skeleton round: each validator pushes nothing, so `sink` stays
 /// empty. Each deferred validator body flips its stub into a real
 /// check in its own follow-up round.
-pub fn typecheck(
-    resolved: &Resolved,
-    sink: &mut dyn DiagnosticSink<Diagnostic>,
-) {
+pub fn typecheck(resolved: &Resolved, sink: &mut dyn DiagnosticSink<Diagnostic>) {
     let ctx = ValidatorCtx::new(resolved);
     ValidatorRegistry::run_all(&ctx, sink);
 }

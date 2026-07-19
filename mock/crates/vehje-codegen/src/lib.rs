@@ -50,8 +50,7 @@ pub use ctx::CodegenCtx;
 pub use error::CodegenError;
 pub use jomini::JominiTarget;
 pub use native::NativeTarget;
-pub use registry::{emit, TargetRegistry};
+pub use registry::{TargetRegistry, emit};
 pub use target::CodegenTarget;
-
 pub use vehje_ir::Diagnostic;
 pub use vehje_resolve::Resolved;

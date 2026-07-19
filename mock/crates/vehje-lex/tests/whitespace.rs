@@ -67,6 +67,11 @@ fn newline_between_tokens_ends_trailing_of_first() {
     let b = lx.next().unwrap();
     assert_eq!(a.kind, TokenKind::Ident);
     assert_eq!(b.kind, TokenKind::Ident);
-    assert!(a.trivia.trailing().iter().any(|tr| tr.kind == TriviaKind::Whitespace));
+    assert!(
+        a.trivia
+            .trailing()
+            .iter()
+            .any(|tr| tr.kind == TriviaKind::Whitespace)
+    );
     assert!(b.trivia.leading().is_empty());
 }

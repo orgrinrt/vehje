@@ -20,9 +20,15 @@ fn ast_empty_is_empty() {
 #[test]
 fn ast_push_returns_monotonic_ids() {
     let mut ast = Ast::empty();
-    let a = ast.push(AstNode::leaf(AstNodeKind::Expr, span(0, 1))).unwrap();
-    let b = ast.push(AstNode::leaf(AstNodeKind::Expr, span(2, 3))).unwrap();
-    let c = ast.push(AstNode::leaf(AstNodeKind::Expr, span(4, 5))).unwrap();
+    let a = ast
+        .push(AstNode::leaf(AstNodeKind::Expr, span(0, 1)))
+        .unwrap();
+    let b = ast
+        .push(AstNode::leaf(AstNodeKind::Expr, span(2, 3)))
+        .unwrap();
+    let c = ast
+        .push(AstNode::leaf(AstNodeKind::Expr, span(4, 5)))
+        .unwrap();
     assert_eq!(a, NodeId(0));
     assert_eq!(b, NodeId(1));
     assert_eq!(c, NodeId(2));

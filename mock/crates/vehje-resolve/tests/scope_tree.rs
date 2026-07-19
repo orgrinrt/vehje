@@ -1,9 +1,9 @@
 //! ScopeTree: root construction, push, parent chain, bounds.
 
 use arvo::USize;
+use notko::Maybe;
 use vehje_ir::ScopeId;
 use vehje_resolve::ScopeTree;
-use notko::Maybe;
 
 #[test]
 fn root_scope_has_no_parent() {

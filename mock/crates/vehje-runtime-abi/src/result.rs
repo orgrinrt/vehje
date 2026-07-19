@@ -20,13 +20,13 @@
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum VehjeResult {
     /// Success. Any accompanying out-buffer is valid.
-    Ok = 0,
+    Ok           = 0,
     /// Generic failure. Use `vehje_runtime_last_error` (BACKLOG)
     /// to fetch the associated diagnostic.
-    Err = -1,
+    Err          = -1,
     /// Caller passed a null `*mut VehjeRuntime` handle to an
     /// entry that requires a valid handle.
-    NullHandle = -2,
+    NullHandle   = -2,
     /// Caller passed a malformed input buffer (length 0 with a
     /// non-null pointer, or length non-zero with a null
     /// pointer).

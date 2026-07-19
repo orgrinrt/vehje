@@ -10,8 +10,8 @@
 //! in turn makes `ResolveError` `Copy` (the error variants carry
 //! a copied name).
 
-use vehje_ir::{NodeId, ScopeId};
 use hilavitkutin_str::Str;
+use vehje_ir::{NodeId, ScopeId};
 
 /// Classification of a `Symbol`.
 ///
@@ -52,16 +52,21 @@ impl Default for SymbolKind {
 /// because `Str` is `Copy`.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub struct Symbol {
-    name: Str,
+    name:  Str,
     scope: ScopeId,
-    node: NodeId,
-    kind: SymbolKind,
+    node:  NodeId,
+    kind:  SymbolKind,
 }
 
 impl Symbol {
     /// Construct a `Symbol` from its parts.
     pub fn new(name: Str, scope: ScopeId, node: NodeId, kind: SymbolKind) -> Self {
-        Self { name, scope, node, kind }
+        Self {
+            name,
+            scope,
+            node,
+            kind,
+        }
     }
 
     /// Name handle of this symbol.

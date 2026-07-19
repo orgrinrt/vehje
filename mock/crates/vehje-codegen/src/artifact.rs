@@ -21,19 +21,19 @@
 /// configuration files (for targets that emit side-band
 /// settings alongside the primary artifact).
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
-#[repr(u8)]  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+#[repr(u8)] // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
 pub enum ArtifactKind {
     /// Raw executable / linked binary output.
-    Binary = 0,
+    Binary     = 0,
     /// Relocatable object file (ELF / Mach-O / COFF).
-    Object = 1,
+    Object     = 1,
     /// Target-specific assembly text.
-    Assembly = 2,
+    Assembly   = 2,
     /// Source-language output (e.g. Clausewitz script from the
     /// future `jomini` backend).
     SourceFile = 3,
     /// Configuration file output (e.g. distribution manifest).
-    Config = 4,
+    Config     = 4,
 }
 
 /// Codegen artifact descriptor, kind discriminator only.
@@ -54,6 +54,8 @@ impl CodegenArtifact {
     /// as the canonical return value after pushing bytes /
     /// diagnostics into the sinks their caller provided.
     pub fn empty(kind: ArtifactKind) -> Self {
-        Self { kind }
+        Self {
+            kind,
+        }
     }
 }
