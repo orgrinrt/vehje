@@ -14,7 +14,7 @@
 use arvo::{Maybe, Outcome};
 
 use hilavitkutin_str::Str;
-use vehje_ir::{Arena, NodeRef, Span};
+use vehje_ir::{Arena, Node, NodeRef};
 
 /// A borrowed scope frame: a single binding, chained to its parent.
 ///
@@ -55,24 +55,90 @@ impl<'p> Scope<'p> {
 }
 
 /// A resolve diagnostic.
+///
+/// M0 keys the diagnostic on the offending name. A source span requires a
+/// per-node span table (nodes carry no span in the arena today); adding
+/// it is a marked follow-up.
+// FIXME: carry a Span once vehje-ir grows a per-node span side-table (a
+// caller-provided region parallel to the node arena). M0 reports the name.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum ResolveError {
     /// A `Var` names no binding in scope.
-    Unresolved { span: Span },
-    /// Two bindings of the same name in one scope.
-    Duplicate { span: Span },
+    Unresolved { name: Str },
 }
 
 /// The Core resolve pass over a program's IR.
 ///
-/// Generic over the family set through the family-extension hooks (a
-/// family's own binding forms extend the walk). M0 defines the entry and
-/// the scope-chain machinery; the full walk over every Core binder, plus
-/// the family-extension dispatch, is the next behavior gate.
-// FIXME: implement the full resolve walk over the Core forms (Let/Lambda
-// introduce frames; Var resolves against the chain; Apply/Project/If/etc.
-// recurse) and the family-extension hook dispatch. M0 ships the scope
-// chain and the entry; the walk body is the behavior gate.
-pub fn resolve(_arena: &mut Arena<'_>, _root: NodeRef) -> Outcome<(), ResolveError> {
-    Outcome::Ok(())
+/// Walks the Core forms from `root`: `Let` and `Lambda` introduce scope
+/// frames (borrowed on the walk's own stack); `Var` resolves against the
+/// chain; the compound forms recurse into their children. An unresolved
+/// `Var` is refused with its name.
+///
+/// Generic over the family set through the family-extension hooks. The
+/// hooks (a family's own binding forms) and a produced resolution
+/// side-table are the next additions.
+// FIXME: dispatch Raw nodes to the family-extension resolve hooks, and
+// produce a resolution side-table (Var handle to binder handle) for the
+// check and emit passes. M0 walks and validates against the scope chain.
+pub fn resolve(arena: &mut Arena<'_>, root: NodeRef) -> Outcome<(), ResolveError> {
+    walk(arena, root, Maybe::Isnt)
+}
+
+/// Recurse over one node, resolving `Var`s against `scope`.
+fn walk(arena: &Arena<'_>, at: NodeRef, scope: Maybe<&Scope<'_>>) -> Outcome<(), ResolveError> {
+    match arena.get(at) {
+        Node::Lit(_) => Outcome::Ok(()),
+        Node::Var(name) => match scope {
+            Maybe::Is(s) => match s.resolve(name) {
+                Maybe::Is(_) => Outcome::Ok(()),
+                Maybe::Isnt => Outcome::Err(ResolveError::Unresolved { name }),
+            },
+            Maybe::Isnt => Outcome::Err(ResolveError::Unresolved { name }),
+        },
+        Node::Let { name, value, body, .. } => {
+            walk(arena, value, scope)?;
+            let frame = frame_for(name, at, scope);
+            walk(arena, body, Maybe::Is(&frame))
+        }
+        Node::Lambda { param, body } => {
+            let frame = frame_for(param, at, scope);
+            walk(arena, body, Maybe::Is(&frame))
+        }
+        Node::Apply { callee, args } => {
+            walk(arena, callee, scope)?;
+            for child in arena.list(args) {
+                walk(arena, *child, scope)?;
+            }
+            Outcome::Ok(())
+        }
+        Node::Project { base, .. } => walk(arena, base, scope),
+        Node::If { cond, then_branch, else_branch } => {
+            walk(arena, cond, scope)?;
+            walk(arena, then_branch, scope)?;
+            walk(arena, else_branch, scope)
+        }
+        Node::Match { scrutinee, arms } => {
+            walk(arena, scrutinee, scope)?;
+            for child in arena.list(arms) {
+                walk(arena, *child, scope)?;
+            }
+            Outcome::Ok(())
+        }
+        Node::Iter { seq, body } => {
+            walk(arena, seq, scope)?;
+            walk(arena, body, scope)
+        }
+        Node::Interp { value } => walk(arena, value, scope),
+        // FIXME: dispatch Raw to the family-extension resolve hook; M0
+        // treats a family node as opaque (no Core-level names inside).
+        Node::Raw { .. } => Outcome::Ok(()),
+    }
+}
+
+/// A scope frame binding `name` at `binder`, chained to `parent`.
+fn frame_for<'p>(name: Str, binder: NodeRef, parent: Maybe<&'p Scope<'p>>) -> Scope<'p> {
+    match parent {
+        Maybe::Is(p) => Scope::child(name, binder, p),
+        Maybe::Isnt => Scope::root(name, binder),
+    }
 }
