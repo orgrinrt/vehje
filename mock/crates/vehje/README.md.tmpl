@@ -1,9 +1,8 @@
-# vehje. top-level binary
+# vehje. public API and composition
 
-The `vehje` binary ties together the compiler phases (lex, syntax,
-resolve, typecheck, schedule, codegen) into a single shippable tool.
-Consumes its sibling crates; no algorithmic content lives here.
-
-Consumer-facing subcommands live here (compile, check, build, new).
-Phase crate split + responsibilities finalised by Phase 2b (R1)
-design round.
+The framework's public crate: the two plug-in contracts (the grammar
+contract on the input side, the target contract on the output side), the
+re-exports a consumer builds against, the orchestration that runs a program
+from grammar through the Core passes to a `Checked` residual, and the
+distribution-composition entry point that links a set of targets at compile
+time. A reference distribution lives here. `#![no_std]`, no alloc.

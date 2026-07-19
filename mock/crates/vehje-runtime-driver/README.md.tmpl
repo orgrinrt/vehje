@@ -1,6 +1,6 @@
-# vehje-runtime-driver. compiler-side runtime dispatcher
+# vehje-runtime-driver. compiler-side runtime dispatch
 
-Dlopens the shipped Zig runtime dylib, validates abi_version,
-dispatches macro / scratch / generative calls through the ABI.
-Consumed by vehje-schedule (macro expansion pass) and by
-vehje-codegen (generative expansion pass).
+The compiler-side dispatch over the tier-tagged C ABI: serialize a
+`Checked` residual at the chosen tier, hand it to the embedded Zig runtime,
+map results and diagnostics back. Compile-time dispatch, no `dyn`, no
+plugin shared-object loading at the compiler layer. `#![no_std]`, no alloc.

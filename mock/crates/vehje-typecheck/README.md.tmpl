@@ -1,5 +1,8 @@
-# vehje-typecheck. types + coherence + validator framework
+# vehje-typecheck. Core check pass
 
-Consumes a resolved program graph, produces a typed graph. Runs
-the validator framework (R4 scope). Handles generics, bind-target
-resolution, coherence checks, and type-level analyses.
+The framework's Core-level check pass (the `vehje-check` role; the crate
+dir keeps the `vehje-typecheck` name until a later cosmetic rename). Checks
+the resolved Core IR, generic over the family set, with family-extension
+hooks for family-specific checks (a consumer's coherence, routing, or
+fragment rules). A framework-owned Core pass, not a consumer pass.
+`#![no_std]`, no alloc.

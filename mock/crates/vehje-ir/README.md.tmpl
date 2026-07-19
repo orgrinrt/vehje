@@ -1,6 +1,8 @@
-# vehje-ir. shared IR types
+# vehje-ir. shared representation
 
-Leaf-dep crate carrying types shared across every compiler phase:
-span, file id, node id, scope id, diagnostic, token kind discriminator,
-AST node kind discriminator. No algorithms. just the data contract
-every phase reads and writes.
+The framework's shared IR, the crate every other framework crate depends
+on. The eleven Core substrate forms, the `Family` extension trait plus
+effect classification, the family-set and effect-set typestate (reusing
+`hilavitkutin-api`'s `AccessSet`), the node builder, and interner
+integration. No algorithms; the data contract the passes and targets read
+and write. `#![no_std]`, no alloc: the IR lives in caller-provided memory.

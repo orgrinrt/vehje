@@ -1,133 +1,40 @@
 # vehje-typecheck. Design
 
-Type checking, generic resolution, coherence checking, bind-target
-resolution, and the validator framework. Consumes the `Resolved`
-bundle from vehje-resolve; produces a typed graph plus a flat
-vec of `Diagnostic`.
+The framework's Core-level check pass (the `vehje-check` role; the crate
+directory retains the `vehje-typecheck` name until a later cosmetic
+rename). It checks the resolved Core IR, generic over the family set, with
+family-extension hooks. Like resolve, it is framework-owned because the
+shared passes are what make the shared IR real rather than nominal. The
+design authority is `202607192320`. `#![no_std]`, no alloc.
 
 ## Scope
 
-- `TypeChecker`. top-level state + drive loop (future round).
-- `TypeEnv`. type environment per scope (future round).
-- `Generics`. generic parameter handling, substitution, bounds
- (future round).
-- `Coherence`. overlap detection for trait impls (ships this
- round as a ZST validator stub; body is future round).
-- `BindTarget`. resolution of target-language types (generic
- scaffolding; concrete targets land in vehje-jomini and friends
- via the extension point from R3).
-- **Validator framework**. ships this round in skeleton form
- (trait + registry + 10 ZST stubs, each returning `Vec::new()`).
-- Type diagnostics (currently: each validator constructs its own
- `Diagnostic` and the registry flattens; sink API is BACKLOG).
+- The check walk over the Core forms: the shared, target-agnostic checks
+ every consumer's IR must pass (well-formed binders, arity, the family and
+ effect classifications being consistent with the nodes that carry them).
+- Family-extension hooks: a family's own checks (a language's coherence and
+ orphan rules, a Clausewitz family's routing checks, a doc family's block
+ nesting rules) extend the walk. The Core pass runs the shared checks and
+ dispatches to the family checks for family nodes.
+- Check diagnostics, carrying the construct and the rule violated.
 
 ## Non-scope
 
-- Pass DAG scheduling (vehje-schedule).
-- Codegen (vehje-codegen).
-- Concrete target bind-table content (extension crates).
+- Any one consumer's type system (generics, traits, coherence as surface
+ features). Those are a consumer family's checks, plugged in through the
+ extension hooks, not Core.
+- Resolution (`vehje-resolve`), scheduling (`vehje-schedule`), emission
+ (`vehje-codegen`).
 
 ## Dependencies
 
-- `vehje-ir`, `vehje-syntax`, `vehje-resolve`.
-- arvo for numeric / newtype discipline.
-- arvo-bitmask for validator access sets (one validator ↔ one
- AccessSet over Namespace/Scope entries; surfaces in a future
- round).
-- `std` allowed (host-side compiler crate, not embedded).
+- `vehje-ir` for the Core IR and the family and effect classifications.
+- `hilavitkutin-api` for the family-set typestate.
+- `hilavitkutin-str` for interned identity.
+- `notko` for `Maybe` / `Outcome`.
+- `#![no_std]`, no alloc.
 
-## Module layout (skeleton round, 2026-04-20)
+## Deferred (BACKLOG)
 
-- `validator.rs`. `Validator` trait.
-- `registry.rs`. `ValidatorRegistry` with const `VALIDATORS`
- list and `run_all` collector.
-- `ctx.rs`. `ValidatorCtx<'a>` carrier.
-- `strict1.rs` … `strict7.rs`. one ZST per STRICT validator.
-- `coherence.rs`. `Coherence` ZST.
-- `orphan_rule.rs`. `OrphanRule` ZST.
-- `bind_target_shape.rs`. `BindTargetShape` ZST.
-- `lib.rs`. module decls + re-exports + top-level `typecheck`
- entry.
-
-Future rounds expand this into the richer layout originally
-envisaged by R4 (`validator/` subtree with `trait.rs`,
-`registry.rs`, `ctx.rs`, `suppression.rs`, `severity.rs`,
-`builtin/` subdir). Deferred until the first real validator
-body lands and surfaces the need.
-
-## Validator framework. current shape (skeleton round)
-
-`Validator` is a trait; `ValidatorRegistry` hosts a const
-`&[&'static dyn Validator]` slice with ten entries. Same
-`&'static dyn` exception as vehje-codegen's `TargetRegistry`,
-confined to the registry iteration surface, static-lifetime.
-
-```rust
-pub trait Validator: Sync {
- fn name(&self) -> &'static str;
- fn validate(&self, ctx: &ValidatorCtx, sink: &mut impl DiagnosticSink<Diagnostic>);
-}
-
-pub struct ValidatorCtx<'a> {
- resolved: &'a Resolved,
-}
-
-impl ValidatorCtx<'_> {
- pub fn new(resolved: &Resolved) -> ValidatorCtx<'_> { /*... */ }
-}
-
-pub struct ValidatorRegistry;
-
-impl ValidatorRegistry {
- pub const VALIDATORS: &[&'static dyn Validator] = &[
- &Strict1, &Strict2, &Strict3, &Strict4,
- &Strict5, &Strict6, &Strict7,
- &Coherence, &OrphanRule, &BindTargetShape,
- ];
-
- pub fn run_all(ctx: &ValidatorCtx, sink: &mut impl DiagnosticSink<Diagnostic>) { /*... */ }
-}
-```
-
-Core validators (ship in vehje-typecheck, bodies TBD):
-- STRICT1 `no-shadow`. variable shadowing detection.
-- STRICT2 `unused`. dead binding detection.
-- STRICT3 `assign-to-immut`. immutable binding reassignment.
-- STRICT4 `int-overflow`. compile-time integer-overflow audit.
-- STRICT5 `use-after-move`. move-semantics invariant check.
-- STRICT6 `ambiguous-imports`. use-tree ambiguity.
-- STRICT7 `clippy-batch`. curated style / bug-prone batch.
-- `coherence`. trait-impl overlap detection.
-- `orphan-rule`. foreign-type / foreign-trait impl guard.
-- `bind-target-shape`. target-registry entry-format check.
-
-Each validator's `validate` this round returns `Vec::new()`.
-The skeleton keeps `run_all` safe (no `todo!()` panic) so
-downstream consumers can exercise the registry surface.
-
-## R4 retrofit (deferred)
-
-The R4 doc CL (2026-04-26) finalised a richer trait shape with
-associated `NAME` / `CATEGORY` consts, `accepts(kind)` node
-routing, and a `DiagnosticSink` emission API. That shape lands
-retrospectively once the first real validator body surfaces the
-need; it does not change the consumer-visible registry surface
-(a `&[&'static dyn Validator]` slice), so the retrofit is
-non-breaking downstream.
-
-## Suppression (deferred)
-
-R4 section 5 describes the three-tier suppression model
-(per-item attributes → crate `[lints]` → workspace
-`[workspace.lints]`). Not in this skeleton; lands with the first
-validator body that produces real diagnostics.
-
-## Scheduling (deferred)
-
-`vehje-schedule` will eventually walk validators per AST node.
-The current skeleton's `run_all` is sequential and per-registry,
-not per-node; real per-node routing lands with the
-`accepts(kind)` retrofit.
-
-
-Round-by-round history is recorded in `mock/research/vehje-typecheck-history.md` (Tier 2).
+The concrete family-check registration surface (lands with the first
+consumer family). The eventual `vehje-check` directory rename.

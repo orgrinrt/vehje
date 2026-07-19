@@ -1,6 +1,8 @@
-# vehje-runtime-abi. C ABI contract
+# vehje-runtime-abi. tier-tagged C ABI
 
-Defines the C ABI for compiler ↔ runtime communication. Pure
-`#[repr(C)]` types + `extern "C"` entry points. No runtime logic.
-Consumed by vehje-runtime-driver (Rust side) and
-vehje-runtime-zig (Zig side).
+The framework's compiler-to-runtime C ABI. A `Checked` residual crosses
+tier-tagged: a flat serialized IR arena (baseline), an optimized bytecode,
+or native code. Pure `#[repr(C)]` type surface plus the runtime-environment
+interface descriptor. No runtime logic. Bare primitives appear only at the
+`#[repr(C)]` wire boundary (the documented FFI exception). `#![no_std]`,
+no alloc.

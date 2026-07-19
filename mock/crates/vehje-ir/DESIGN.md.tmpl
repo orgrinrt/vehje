@@ -1,61 +1,140 @@
 # vehje-ir. Design
 
-Leaf-dep crate carrying data contracts shared across every compiler
-phase. No algorithmic content.
+The shared representation every framework crate depends on: the Core
+substrate forms, the `Family` extension trait plus effect classification,
+the family-set and effect-set typestate, the node builder, and interner
+integration. The design authority is the Core-forms topic (`202607192330`)
+and the crate-surface topic (`202607192320`). `#![no_std]`, no alloc: the
+IR lives in caller-provided memory, never an ad-hoc heap.
 
-## Scope
+## The Core substrate (11 forms, ratified)
 
-Types consumed by two or more phase crates:
+Core is the shared evaluation substrate every grammar lowers into: general
+evaluation primitives, closed, in the low tens. The eleven ratified forms
+are `Lit`, `Var`, `Let`, `Lambda`, `Apply`, `Project`, `If`, `Match`,
+`Iter`, `Interp`, `Raw`. A form is a general evaluation primitive; a
+language-specific construct is a family node, not a Core form. `Raw` is the
+one typed escape hatch and, in this representation, the seam through which a
+family's own node kinds attach to the Core arena.
 
-- `Span`. source span: `{ file: FileId, start: ByteOffset, end: ByteOffset }`.
- Carries original positions for diagnostics and incremental-build
- invalidation.
-- `FileId`. dense interned identifier for a loaded source file.
- Plan-time assigned by the workspace driver.
-- `NodeId`. dense interned identifier for AST nodes. Assigned at
- parse time; stable across later phases for cross-phase
- annotations (resolution info, type info).
-- `ScopeId`. dense interned identifier for lexical scopes.
- `vehje-resolve` now holds interned `Str` handles
- (`hilavitkutin_str::Str`) where it previously held owned
- `String`; the shift is transparent to vehje-ir since its
- types do not touch the symbol name text.
-- `Diagnostic`. `{ phase, severity, span, message, related }`. The
- common error / warning / info structure. `Copy`; owns no heap;
- `message` is `&'static str` and `related` is `&'static [Span]`.
-- `Severity`. enum: `Error`, `Warning`, `Info`, `Help`.
-- `DiagPhase`. enum discriminating which compiler phase emitted a
- diagnostic: `Lex`, `Syntax`, `Resolve`, `Typecheck`, `Codegen`,
- `Runtime`. Lets a diagnostic renderer / filter route by phase
- without parsing the static message.
-- `TokenKind`. enum discriminating lex tokens. Shared between
- `vehje-lex` (producer) and `vehje-syntax` (consumer).
-- `AstNodeKind`. enum discriminating AST nodes. Shared between
- `vehje-syntax` (producer) and downstream phases.
+- `Node`. The Core node, one arena slot. An enum over the eleven forms;
+ each variant carries `NodeRef` operands, a `NodeList` for variadic
+ children, a `Str` for names, and a `LitRef` for literal payloads, as the
+ form requires. Fixed size per slot, stored in a caller-provided node
+ arena, addressed by `NodeRef`.
+- `NodeRef`. A `u32`-shaped index into the node arena (an arvo newtype, not
+ a bare `u32`).
+- `NodeList`. A `{ start, len }` slice into the child-index pool, giving a
+ form its variable-arity children (an `Apply`'s arguments, a `Match`'s
+ arms, a `Let`'s bindings) without a per-node allocation.
+- `LitRef`. A handle into the literal arena. Fixed scalars and enums inline
+ via arvo primitives; variable text and arrays are an `(offset, len)`
+ handle into the generation-time byte arena, itself `Copy`.
+
+## The arena (no-alloc, caller-provided)
+
+The IR lives in three caller-provided bump regions: a node arena
+(`&mut [Node]`), a child-index pool (`&mut [NodeRef]`) for variadic
+children, and a literal byte arena (`&mut [u8]`). Each carries a bump
+cursor; construction appends and returns a handle. The top-level driver
+sizes and provides the regions; on a hosted platform it may back them
+behind a `std`/allocator feature, on an embedded platform from static
+storage. No framework library crate allocates.
+
+This is the hand-built equivalent of a cranelift-entity `EntityList` /
+`ListPool` (the substrate ships no such primitive today). The arena module
+is kept free of vehje-specific policy so it can be lifted upstream into
+hilavitkutin (which owns the memory and storage layer: `MemoryProviderApi`,
+`ColumnStorage`) once its shape is proven, and vehje-ir repointed at it.
+Arvo is numerics only and is not the home for arenas.
+
+## Families and effects (the two typestate axes)
+
+- `Family`. The extension trait. A family is a type (a ZST marker) with a
+ `const NAME`, a family id, and an effect-classification contribution.
+ `Core` is the reference family (its node kinds are the eleven forms); a
+ `Doc` family and each consumer's families are separate, attaching through
+ `Raw`. New families are new types, added without touching existing passes.
+- The family set. A program carries a type-level set of the families it
+ uses, built from `hilavitkutin-api`'s `AccessSet` (`Empty` / `Cons<H, T>`)
+ with vehje family markers as members. `Cons` requires only `H: 'static`,
+ so the markers drop in with no upstream change. Inclusion against a
+ target's declared set is the `ContainsAll` check; the `Contains`
+ diagnostic names a missing family for free.
+- The effect vocabulary is parametrized, not enumerated: `Pure`,
+ `Reads<E>`, `Writes<E>`, where `E` ranges over an open environment axis
+ (`BuildEnv`, `RuntimeEnv`, and later kinds). `Pure` is the empty set. Each
+ `Reads<E>` / `Writes<E>` at a concrete `E` is a distinct `'static` marker,
+ so the effect set is a second `AccessSet` instantiation, a perfect mirror
+ of the family axis. `Writes<BuildEnv>` exists for free; no fifth member is
+ reserved.
+- Effect classification. A construct's effect set is computed from what it
+ references (a build-environment read is `Reads<BuildEnv>`, a runtime input
+ is `Reads<RuntimeEnv>`), decidably, never inferred probabilistically.
+
+## The builder (monoid smart-constructors)
+
+- `Builder`. Holds the three arena regions and an interner; exposes one
+ smart-constructor per Core form (`lit`, `var`, `let_`, `lambda`, `apply`,
+ `project`, `if_`, `match_`, `iter`, `interp`, `raw`), each appending a node
+ and returning its `NodeRef`. Content composition is monoidal: a sequence
+ of values concatenates through the child-index pool rather than a `Seq`
+ node, so there is no `Seq` Core form.
+
+## Interner integration
+
+`Str` (the 4-byte `#![no_std]` interned handle from `hilavitkutin-str`) is
+the name identity in nodes. `StringInterner<A: ArenaInterner>` interns; the
+`ArenaInterner` impl (runtime string storage) is supplied by the driver.
+Const strings resolve through the linker-section table with zero runtime
+storage; runtime strings go through the provided arena.
+
+## Salvaged infrastructure
+
+`Span { file, start, end }`, `FileId`, `ByteOffset`, `Diagnostic`, and
+`Severity` carry over from the prior shape (generic, framework-agnostic).
+The phase discriminator is reframed to the framework's phases (resolve,
+check, emit, runtime), not a single language's compiler phases. The old
+9-kind `AstNodeKind` and the Rust-shaped `TokenKind` are dropped: they were
+the first-party language's front-end vocabulary, superseded by the Core
+forms, and tokens are a front-end concern that lives in a consumer.
 
 ## Non-scope
 
-- Parsers, resolvers, typecheckers. each phase owns its own
- algorithms.
-- Token + AST concrete representations (the node types themselves)
- live in their producing crate; `vehje-ir` only hosts the
- discriminator enums and the common annotation slots.
-- Rendering of diagnostics (color, unicode art). that's the
- `vehje` binary's renderer.
+- Parsers, lexers, resolvers, checkers, emitters. Each is its own crate or
+ a consumer's front-end; vehje-ir is the data contract they share.
+- Consumer family node kinds. They attach through `Raw`; vehje-ir ships the
+ Core family only.
+- Runtime execution and the C ABI (`vehje-runtime-abi`).
 
 ## Dependencies
 
-- arvo (for `USize`, `Cap`, newtype discipline).
-- No other hilavitkutin or vehje deps.
+- `hilavitkutin-api` for the `AccessSet` typestate (`Empty` / `Cons` /
+ `Contains` / `ContainsAll` / `Concat`).
+- `hilavitkutin-str` for `Str` and `StringInterner`.
+- `arvo` for the newtype discipline (`USize`, `Cap`, `Bool`, the `u32`-
+ shaped `NodeRef` newtype).
+- `notko` for `Maybe` / `Outcome`.
 - `#![no_std]`, no alloc.
 
-## Provisional module layout
+## Module layout
 
-- `span.rs`. Span, FileId, ByteOffset.
-- `ids.rs`. NodeId, ScopeId + dense-interning helpers.
-- `diagnostic.rs`. Diagnostic, Severity, DiagPhase.
-- `tokens.rs`. TokenKind.
-- `nodes.rs`. AstNodeKind + shared node annotation slots.
+- `arena.rs`. The three bump regions and their handles (upstream-extraction
+ candidate).
+- `node.rs`. `Node` (the eleven Core forms), `NodeRef`, `NodeList`,
+ `LitRef`.
+- `family.rs`. The `Family` trait, the `Core` family, the family-set
+ typestate over `AccessSet`.
+- `effect.rs`. `Reads<E>` / `Writes<E>` / `Pure`, the environment markers,
+ the effect-set typestate, the classifier.
+- `builder.rs`. `Builder` and the monoid smart-constructors.
+- `intern.rs`. Interner integration over `hilavitkutin-str`.
+- `span.rs`, `diagnostic.rs`. Salvaged `Span` / `FileId` / `ByteOffset` /
+ `Diagnostic` / `Severity`.
+- `lib.rs`. Re-exports.
 
+## Deferred (BACKLOG)
 
-Round-by-round history is recorded in `mock/research/vehje-ir-history.md` (Tier 2).
+The Doc family constructor list (lands with the first document consumer).
+Type-safe `NodeRef` variants. A bit-packed node encoding if profiling shows
+the enum-slot representation wastes space.

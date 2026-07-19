@@ -1,108 +1,49 @@
-# vehje. Design (top-level binary)
+# vehje. Design (public API and composition)
 
-Command-line binary tying together the compiler phase crates
-into a single shippable artifact. No algorithmic logic lives
-here. `vehje` only parses arguments, reads source files, and
-hands inputs to phase crates in order. Every phase owns its
-own logic.
+The framework's public crate. It defines the two plug-in contracts a
+consumer builds against, re-exports the surface, orchestrates a program
+from grammar through the Core passes to a `Checked` residual, and composes a
+distribution's targets at compile time. No algorithmic logic lives here; it
+is the framework's front door. The design authority is the identity,
+input-side, and output-side topics (`202607192254`, `202607192300`,
+`202607192310`). `#![no_std]`, no alloc.
 
-The binary is host-side (compiler side), not runtime. It uses
-`std` freely. The `no_std` / fixed-arena discipline applied to
-`vehje-ir`, `vehje-lex`, `vehje-syntax` does not propagate
-upward to this crate.
+## The two contracts
 
-## Subcommands
+- `Grammar`. The input-side plug-in: a consumer's front-end produces
+ well-formed Core-plus-family IR. The framework mandates the IR contract
+ and offers, but does not mandate, front-end scaffolding.
+- `Target`. Re-exported from `vehje-codegen`: the output-side plug-in
+ declaring `Supports` and `Permits` and emitting.
 
-Five subcommands name the pipeline stopping point the user
-wants. Only `lex` carries real behaviour in the round-one body;
-the others reserve their CLI names so the shape is frozen and
-reserve their exit-code semantics so scripts against them do
-not break as bodies land.
+## Scope
 
-```
-vehje lex <file> # tokenise + print tokens
-vehje parse <file> # lex + parse + print AST
-vehje check <file> # through typecheck + report diagnostics
-vehje build <file> # through codegen + emit target
-vehje run <file> # compile + invoke interpreter
-```
+- The `Grammar` contract and the `Target` re-export.
+- Orchestration: run a grammar's IR through resolve, check, and the family
+ and effect inclusion checks to produce a `Checked` residual, then hand it
+ to the runtime driver.
+- Compile-time distribution composition: a distribution links the targets
+ it supports; a generated match resolves a target name to a monomorphised
+ emit. No `dyn`, no runtime plugin loading at the compiler layer.
+- A reference distribution demonstrating the composition end to end.
 
-### lex
+## Non-scope
 
-Reads `<file>` from disk, tokenises it through
-`vehje_lex::Lexer::from_str`, and prints one line per token.
-
-Output format:
-
-```
-<offset_start>..<offset_end> <TokenKind> <byte_literal?>
-```
-
-- `offset_start..offset_end` is the half-open byte range in the
- source file.
-- `TokenKind` is the `vehje_ir::TokenKind` discriminant.
-- `byte_literal?` is the raw source slice for tokens that carry
- user text; empty for structural / trivia-only tokens.
-
-Trivia attached to the next real token prints on a continuation
-line with two-space indent.
-
-Exit codes:
-
-- `0`. tokenisation completed without lex diagnostics.
-- `1`. at least one lex diagnostic fired (unterminated block
- comment, unclassifiable byte). Diagnostics go to stderr
- prefixed with `file:line:col`.
-- `2`. I/O failure (`<file>` missing or unreadable).
-
-### parse / check / build / run
-
-Round-one stubs. Each prints `"<phase> not yet implemented\n"`
-to stderr and exits `2`. Their CLI name, argument positional
-form, and exit-code envelope are frozen by this DESIGN and do
-not change when bodies land.
-
-## Orchestration role
-
-The binary is a dispatch spine. Its files each route one
-subcommand:
-
-- `main.rs`. argument parse + subcommand dispatch.
-- `args.rs`. hand-rolled CLI parser (no `clap` / `argh` this
- round).
-- `lex.rs`. the only real body this round.
-- `parse.rs` / `check.rs` / `build.rs` / `run.rs`. stubs.
-- `diag.rs`. diagnostic printer (file:line:col prefix plus
- phase tag plus message body).
-- `lib.rs`. shared orchestration surface (empty in round one;
- earns content when subcommands share helpers).
-
-Every subcommand file stays under 80 lines. Logic belongs in
-the phase crates, not here.
+- Any consumer's surface syntax, family, or targets. The old
+ language-oriented CLI (lex, parse, check, build, run over source files)
+ was the first-party language's front-end; it moves to that consumer. The
+ framework crate ships the contracts and the composition, not a language.
+- The Core passes, the output machinery, and the ABI (their own crates).
 
 ## Dependencies
 
-- `vehje-ir`. shared types (`Diagnostic`, `Span`, `FileId`,
- `TokenKind`).
-- `vehje-lex`. the lexer.
-- `vehje-syntax`. parse entry.
-- `vehje-resolve`. resolve entry.
-- `vehje-typecheck`. typecheck entry.
-- `vehje-codegen`. emit entry.
-- `notko`. `Maybe<T>`, `Outcome<T, E>`.
+- `vehje-ir`, `vehje-codegen`, `vehje-schedule`, `vehje-resolve`,
+ `vehje-typecheck`, `vehje-runtime-driver`.
+- `#![no_std]`, no alloc. A runnable reference distribution, being the
+ deployment host, supplies the arena-backing `MemoryProvider` and the I/O;
+ the framework library crates stay strict.
 
-No `clap` / `argh` dependency. CLI is small enough that a
-hand-rolled parser under `args.rs` costs less than the
-dependency. Revisit when subcommand count exceeds five or
-per-subcommand flag count exceeds three.
+## Deferred (BACKLOG)
 
-## Pass-DAG interaction
-
-`vehje-schedule` is not consumed this round. Round-one
-subcommands each correspond to one hard-coded phase chain
-(`lex` → just the lexer; `parse` → lex + parse; and so on). A
-future round threads the pass-DAG via `vehje-schedule`,
-swapping the hard-coded chain for a graph walk.
-
-
-Round-by-round history is recorded in `mock/research/vehje-history.md` (Tier 2).
+The reference distribution's concrete target set (lands as consumers do).
+The distribution-composition macro surface.
