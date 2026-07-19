@@ -197,73 +197,82 @@ specific follow-up, the design is wrong, not the rule.
 
 *The following principles are specific to vehje.*
 
-## Game-agnostic core
+## Framework, not a language
 
-The Vehje language knows nothing about Clausewitz, Witcher, Sims,
-Lua, or any specific target. All game-specific surface. bind
-targets, content types, codegen, vocabulary. ships as separate
-extension repos (`vehje-jomini`, future others).
+Vehje is the framework. It knows nothing about Clausewitz, Witcher,
+Sims, Lua, or any surface syntax. Every consumer surface (a grammar's
+front-end, a family's node kinds, a target's lowering, game vocabulary)
+ships as a separate consumer repo. The framework owns the shared Core
+substrate, the Core passes, the output machinery, and the runtime ABI.
 
-If a feature can't be articulated without naming a specific game,
-it doesn't belong in this repo.
+If a feature can't be articulated without naming a specific consumer's
+syntax or a specific game, it doesn't belong in this repo.
+
+## The two contracts are the founding shape
+
+Input: a grammar owes well-formed IR (Core forms plus its family node
+kinds). The framework owns no front-end and mandates none. Output: a
+target declares a `Supports` family set and a `Permits` effect set;
+emission is bounded on the program's families being included in
+`Supports` and its effects in `Permits`. The guarantee is inclusion,
+not coverage: anything outside the declaration is refused with the
+construct named, never silently degraded. Both axes reuse
+`hilavitkutin-api`'s `AccessSet` typestate.
 
 ## Single-binary distribution
 
-End users should not need to install Python, Deno,.NET, or any
-runtime alongside Vehje. `cargo build --release` produces one
-static binary per target platform. Cross-compilation is a
-first-class concern.
+Consumers should not need to install Python, Deno, .NET, or any runtime
+alongside a vehje-based toolchain. `cargo build --release` produces one
+static binary per target platform for the compile side. Cross-compilation
+is a first-class concern.
 
 ## Strict by default
 
-Shadowing is an error. Unused bindings / imports are errors.
-Unreachable code is an error. Path-unresolved is an error. Mutating
-an immutable binding is an error. Integer literals out of range are
-errors.
+Shadowing is an error. Unused bindings and imports are errors.
+Unreachable code is an error. Path-unresolved is an error. Mutating an
+immutable binding is an error. Integer literals out of range are errors.
 
-Strict mode is not opt-in. The assumption is that authors writing
-Vehje code want their mistakes surfaced immediately, and the macro
-hygiene story depends on the strict posture being reliable.
+Strict mode is not opt-in, across both the Rust framework implementation
+and the checks the framework runs over a consumer's IR. The assumption
+is that a consumer wants its authors' mistakes surfaced immediately.
 
 ## Reuse the foundations
 
-- `arvo` owns numeric primitives + graph / sparse / bitmask / spectral
- / comb algorithms. Vehje consumes.
-- `hilavitkutin` owns pipeline execution. Vehje runtime consumes.
-- Don't reimplement DAG topology, bitmask ops, or pipeline scheduling
- in Vehje. Use the crates.
+- `arvo` owns numeric primitives plus graph / sparse / bitmask / spectral
+ / comb algorithms. The framework consumes (`arvo-graph` for the pass
+ DAG, `arvo-bitmask` for the runtime family/effect bitmask).
+- `hilavitkutin` owns the `AccessSet` typestate (reused for both the
+ family and effect axes), the interner string type, and pipeline
+ execution (the runtime side). The framework consumes; it does not
+ reinvent DAG topology, bitmask ops, the set typestate, or scheduling.
 
-## Dogfood in Vehje
+## Staging is an effect, not a language feature
 
-The Vehje compiler is written in Rust because it has to exist
-before any Vehje code can run. Everything else (deploy tooling,
-content pipelines, orchestration, LSP server eventually) gets
-written IN Vehje. The language earns its design critique by being
-forced to express real tooling.
-
-## Macros are procedural, run at compile time
-
-Vehje macros are proc-only. no `macro_rules!`. They execute as a
-scheduler pass at compile time, using the same grammar primitives
-the parser uses. Macro bodies are Vehje code. typechecked by the
-same typecheck the rest of the code sees.
+The framework does not define macros as a surface feature; a consumer's
+family does. What the framework provides is the staging substrate: the
+`Interp` Core form and the parametrized effect axis (`Reads<E>` /
+`Writes<E>` over build and runtime environments). Build-environment
+effects (constant evaluation, macro expansion, registry queries) are
+reduced away by the Rust compiler before emission; the residual carries
+only runtime-executable effects. Staging is decided by target policy and
+the effect axis, never by probabilistic inference.
 
 ## Generalise, don't exception
 
-Language rules (visibility, attributes, item forms, pattern shapes)
-apply uniformly to every item kind. Exceptions get flagged as
-exceptions with justification in design rounds. If `impl` accepts
-attributes, every item kind accepts attributes the same way.
+Framework rules apply uniformly to every Core form and every family.
+Exceptions get flagged with justification in design rounds. A rule that
+holds for one form holds for all forms of the same kind.
 
-## Compiler crate = do one thing
+## The compile side does one thing
 
-The `vehje` compiler binary produces Vehje IR / codegen output.
-It does not orchestrate builds, manage playsets, fetch art, or
-deploy to games. Those live in Vehje-authored programs (dogfood
-endgame) or target-specific extension repos.
+The compile side lowers a program to a `Checked` residual. It does not
+orchestrate builds, manage playsets, fetch art, or deploy. Those live in
+consumer-authored programs or consumer repos.
 
 ## Runtime is embeddable
 
-The Zig runtime speaks C ABI. Other tools (game engines, mod
-managers, IDEs) can embed it. The runtime does not pull `std` or
-the Rust runtime; no cross-language friction at the embed boundary.
+The Zig runtime speaks C ABI. Other tools (game engines, mod managers,
+IDEs) can embed it. It pulls no `std` and no Rust runtime; no
+cross-language friction at the embed boundary. It executes the residual
+against the runtime environment and never implements build-environment
+semantics.

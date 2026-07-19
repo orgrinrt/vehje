@@ -2,44 +2,66 @@
 
 ## Identity
 
-Vehje is a general-purpose scripting language for game modding and
-embeddable runtimes. Game-agnostic core: compiler + runtime + language
-spec. Anything that names a specific game belongs in a sibling
-extension repo, not here.
+Vehje is the embeddable, multi-input, multi-output IR framework. It is
+not a language. A grammar plugs in on the input side and lowers surface
+syntax into a shared IR; a target plugs in on the output side, declares
+what it supports, and emits. Vehje owns the shared substrate, the Core
+passes, the output machinery, and the runtime ABI, not any one language.
+The rich general-purpose scripting language is one first-party consumer,
+named later, on equal footing with the other consumers. Anything that
+names a specific game, or a specific surface syntax, belongs in a
+consumer repo, not here.
 
-## Two-language strategy
+## Two sides: Rust compile side, Zig runtime side
 
-**Rust compiler + Zig runtime, joined by a C ABI defined and validated
-in Rust.**
+**Rust compile side + Zig runtime side, joined by a C ABI defined and
+validated in Rust.**
 
-- **Compiler** (Rust): lex, parse, resolve, typecheck, transpile,
- codegen, pass scheduler. Runs at dev time. Ships as a single static
- binary per target platform. Cross-compilation is a first-class
- concern.
-- **Runtime** (Zig): executes macros, scratch variables, generative
- pipelines. Small, fast, embeddable. Speaks C ABI. Pulls no `std`,
- no Rust runtime.
-- **Build tooling / deploy / orchestration**: written in Vehje
- itself once the language is usable (rustc/cargo pattern. the
- compiler does one thing; tooling runs on top of what the compiler
- emits).
+- **Compile side** (Rust): lower a program through the consumer's grammar
+ to IR, resolve and check over the shared Core and families, run the
+ family and effect inclusion checks, reduce every build-environment
+ effect away, and emit a `Checked` residual. Constant evaluation and
+ macro expansion happen here (they are build-environment reductions).
+ Runs at dev time. Ships as a single static binary per target platform.
+- **Runtime side** (Zig): execute the residual against the runtime
+ environment. Small, fast, embeddable. Speaks C ABI. Pulls no `std`,
+ no Rust runtime. The residual crosses tier-tagged: a flat serialized
+ IR arena (baseline), an optimized bytecode, or native code (the ideal
+ endgame, where the runtime is env-plumbing around LLVM/cranelift
+ output). The tier is orthogonal to correctness; the effect proof is
+ discharged in Rust before any lowering.
+- **The compile-time / runtime split follows the effect axis**: what is
+ parametrized over the build environment is the compiler's, what is
+ parametrized over the runtime environment is the runtime's. The runtime
+ never implements build-environment semantics, because the effect proof
+ guarantees no such construct survives into the residual.
 
 ## Crates
 
-`mock/crates/` is intentionally empty at seed. The compiler crate
-split is decided by the first four design rounds (R1–R4). Provisional
-targets, not binding:
+The framework crate surface, settled by the extension-point round:
 
-- `vehje-lex`. tokenisation
-- `vehje-syntax`. parser + AST
-- `vehje-resolve`. module resolution, use-tree, visibility
-- `vehje-typecheck`. coherence, bind targets, generics, validator framework
-- `vehje-schedule`. pass DAG (consumes `arvo-graph`)
-- `vehje-codegen`. target-agnostic codegen
-- `vehje`. top-level binary + orchestration
+- `vehje-ir`. The shared representation: Core substrate forms, the
+ `Family` extension trait plus effect classification, the family-set and
+ effect-set typestate (reusing `hilavitkutin-api` `AccessSet`), the node
+ builder, interner integration.
+- `vehje-codegen`. The output machinery: the one generic fold, the
+ `Target` trait (`Supports` family set, `Permits` effect set), the
+ inclusion and effect checks, `Checked` gating, compile-time target
+ composition (no `dyn`).
+- `vehje-schedule`. The pass DAG over `arvo-graph`.
+- `vehje-resolve`. The Core-level resolve pass, generic over the family
+ set, with family-extension hooks.
+- `vehje-check`. The Core-level check pass, generic over the family set,
+ with family-extension hooks.
+- `vehje-runtime-abi`. The tier-tagged C ABI and residual serialization.
+- `vehje-runtime-driver`. Compiler-side dispatch over the ABI and the
+ Zig runtime embedding.
+- `vehje`. The two public contracts, orchestration, and the
+ distribution-composition entry point.
 
-Until R1–R4 lands, crate-level rules and lints are stubs. The
-framework is set; the contents arrive with the crates.
+Offered opt-in, not shipped now: generic front-end scaffolding, extracted
+once a live consumer proves the shared shape. The framework owns no
+front-end and no family.
 
 ## Foundations
 
@@ -59,30 +81,30 @@ ops, sparse storage, or pipeline scheduling in Vehje.
 
 ## Extension pattern
 
-Game-specific targets ship as **separate repos** that extend Vehje:
+Consumers ship as **separate repos**. Each brings a grammar (a front-end
+producing IR), a family (node kinds plus a `Family` impl plus effect
+classification), any family-specific semantic checks, and one or more
+targets (a `Target` impl declaring its `Supports` and `Permits` plus its
+lowering). The known census: the first-party general-purpose language
+(named later), `vehje-jomini` (Clausewitz across five Paradox titles),
+`vehje-w3`, `vehje-ts4`, `vehje-lua`, the native target, polka, ikiuni's
+scripting language, viola's lint-authoring language, and mockspace's
+procedural-documents language.
 
-- `vehje-jomini` (future). Clausewitz (Stellaris / CK3 / HOI4 /
- Vic3 / EU4) grammar, bind targets, codegen to Clausewitz script.
-- `vehje-w3` (future). Witcher 3 target.
-- `vehje-ts4` (future). Sims 4 target.
-- `vehje-lua` (future). generic Lua target.
+Do not inline any consumer's surface syntax, family, or target into this
+repo, and do not inline game-specific vocabulary. It makes the framework
+non-generic and defeats the point.
 
-The extension-point contract is one of the early design rounds. Until
-then, do not inline game-specific vocabulary, types, or codegen into
-this repo. it makes the core extraction harder later.
+## First-party language heritage (not a framework oracle)
 
-## Parity oracle
-
-A Python prototype of Vehje lives at
-`~/Dev/stellar-heritage/tools/vehje/` (~15k lines, 1500+ tests). It
-is the **parity oracle** during the Rust port. run its test corpus
-against the Rust implementation to verify semantic equivalence.
-
-It is **not** a line-by-line translation source. The Rust shape
-differs: tagged enums over Protocol duck-typing, monomorphised trait
-dispatch over `isinstance` checks, `Result` over exceptions, static
-composition over runtime registry lookups. Read the Python for
-semantics; author the Rust from the design docs.
+A Python prototype of the eventual first-party general-purpose language
+lives at `~/Dev/stellar-heritage/tools/vehje/` (~15k lines, 1500+ tests).
+It is **heritage for that one consumer**, consulted when the first-party
+language consumer is designed, not an oracle for the framework. The
+framework's design authority is this round's locked topics and the design
+docs. When the first-party language consumer is built, read the Python for
+that language's semantics; never translate it line by line, and never
+treat it as authority over the framework's own shape.
 
 ## Compiler posture
 
@@ -118,15 +140,17 @@ message`, no parens, no trailing period, under 72 characters.
 
 - Do not edit `.claude/` or `.github/` output. Those are generated
  from `mock/agent/*.tmpl` by `cargo mock`. Edit the template.
-- Do not inline game-specific vocabulary (`clausewitz`, `witcher`,
- `stellaris`, `paradox`, …) into compiler or runtime code. Use an
- extension repo.
-- Do not reimplement graph / DAG / bitmask / sparse / pipeline types.
- Use `arvo` and `hilavitkutin`.
-- Do not translate the Python prototype line-by-line. Use it as a
- parity oracle, not a template.
+- Do not inline any consumer's surface syntax, family, or target, or
+ game-specific vocabulary (`clausewitz`, `witcher`, `stellaris`,
+ `paradox`, …) into framework code. Use a consumer repo.
+- Do not reimplement graph / DAG / bitmask / sparse / pipeline / set-
+ typestate primitives. Use `arvo` and `hilavitkutin` (the `AccessSet`
+ typestate is reused, not reinvented).
+- Do not treat the Python prototype as a framework oracle. It is
+ heritage for the first-party language consumer, read when that
+ consumer is built, never translated line by line.
 - Do not bypass the design-round state machine by renaming changelist
  files manually. Use `cargo mock lock / unlock / deprecate / close`.
-- Do not add crate-specific lints or hooks before R1–R4 decides the
- crate split. Document intent in the skill or framework doc; author
- the enforcement once crates exist.
+- Do not reach for `dyn Trait` / `TypeId` / `std::any` in framework
+ code; dispatch is compile-time composition. The Zig runtime is exempt
+ and may load dynamically.

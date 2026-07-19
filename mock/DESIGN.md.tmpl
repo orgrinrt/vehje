@@ -1,67 +1,141 @@
 # vehje. Architecture Design
 
-> General-purpose scripting language for game modding and embeddable
-> runtimes. Game-agnostic core; game-specific surface ships as
-> extension repos (`vehje-jomini` for Clausewitz, future `vehje-w3`,
-> `vehje-ts4`, etc.).
+> The embeddable, multi-input, multi-output IR framework. A grammar plugs
+> in on the input side and lowers its surface syntax into a shared IR; a
+> target plugs in on the output side, declares what it supports, and emits.
+> vehje owns the shared substrate and the two contracts, not any one
+> language. The rich general-purpose scripting language is one first-party
+> consumer of the framework, named later.
 
-## Status
+## What vehje is
 
-**Initial state.** This repo was extracted from the
-Python-implemented prototype on 2026-04-19. The Python prototype
-(~15k lines, 1500+ tests) remains as a parity oracle.
+vehje is a framework, not a language. Its surface is a shared IR
+representation, the machinery to lower into it and fold out of it, an
+embeddable runtime, and the two contracts by which a grammar plugs into the
+input side and a target plugs into the output side. It ships no first-party
+surface syntax as part of the core.
 
+The design authority for the framework is the extension-point design round
+(topics `202607190650` through `202607192340` under `design_rounds/`), which
+settled the identity, the input and output contracts, the exhaustiveness
+mechanism, the effect model, the crate surface, the Core forms, and the C
+ABI. Those topics are the oracle; this document is their shipping-contract
+summary.
 
+## The two contracts
 
-## Two-language strategy
+A grammar owes the framework well-formed IR: it lowers its surface syntax
+into the shared Core forms plus its own family node kinds. The framework owns
+no front-end and mandates none; it offers opt-in front-end scaffolding, which
+a consumer may reuse or replace with its own lexer and parser.
 
-**Rust compiler + Zig runtime, joined by C ABI defined / validated in Rust.**
+A target declares what it supports, and everything else is a proof obligation
+against that declaration. A target names a type-level `Supports` set of the
+families it handles and a `Permits` set of the effects it allows; emission is
+bounded on the program's families being included in `Supports` and the
+program's effects in `Permits`. The guarantee is inclusion, not coverage: a
+program using a family or effect outside a target's declaration is refused,
+with the construct named, never silently degraded. The machinery is
+`hilavitkutin-api`'s `AccessSet` typestate, reused with vehje's own family and
+effect marker types.
 
-- **Compiler** (Rust): lex, parse, resolve, typecheck, transpile, codegen, scheduler. Runs at dev time. Distribution: single static binary. `#![no_std]` where practical, custom allocations.
-- **Runtime** (Zig): executes macros, scratch variables, generative pipeline. Small, fast, embeddable. Talks to the compiler via C ABIs the Rust side defines + tests for soundness.
-- **Build tooling / deploy / playset orchestration**: dogfood in Vehje itself (via the runtime), consuming the Rust compiler binary. rustc/cargo pattern. the compiler does one thing, the tooling runs on top of what we shipped.
+## Two sides: Rust compile side, Zig runtime side
+
+The framework has a Rust compile side and a Zig runtime side, joined by a C
+ABI defined and validated in Rust.
+
+The compile side lowers a program to a `Checked` residual: it lexes and parses
+through the consumer's grammar, lowers to IR, resolves and checks over the
+shared Core and families, runs the family and effect inclusion checks, and
+reduces every build-environment effect away. Constant evaluation and macro
+expansion happen here, because they are build-environment reductions by
+nature. The output is a residual proven to carry only runtime-executable
+effects. It ships as a single static binary per target platform.
+
+The runtime side executes the residual against the runtime environment. The
+residual crosses the C ABI in a tier-tagged representation: a flat serialized
+IR arena as the baseline (the reference semantics), an optimized bytecode as a
+faster tier, and native machine code (through an LLVM or cranelift backend) as
+the ideal endgame, at which the Zig runtime collapses to environment plumbing
+around native code, the way a Rust binary's runtime is thin plumbing around
+LLVM output. The tier is an optimization axis orthogonal to correctness: the
+effect proof is discharged in Rust before any lowering, so choosing a tier
+changes execution speed, never semantics. The runtime pulls no `std` and no
+Rust runtime.
+
+## The compile-time / runtime split
+
+The split follows the effect axis, not a separate decision. Everything
+parametrized over the build environment is the compiler's; everything
+parametrized over the runtime environment is the runtime's. The compiler is
+the only thing that ever touches the registry, `self`-context, or build
+resources; the runtime never implements build-environment semantics, because
+the effect proof guarantees no build-environment construct survives into the
+residual it receives.
 
 ## Foundations
 
-- `arvo` (sibling repo). numeric primitives + analysis (arvo-graph for pass DAG, arvo-bitmask for artifact read/write sets).
-- `hilavitkutin` (sibling repo). pipeline execution engine. Used by the Vehje *runtime* (morsel-driven execution of macros / scratch / generative), less so by the compiler itself (one-shot DAG walks don't need the frame runtime).
+- `arvo` (sibling repo). Numeric primitives plus analysis. `arvo-graph` backs
+  the pass DAG, `arvo-bitmask` backs the runtime family/effect bitmask checks.
+- `hilavitkutin` (sibling repo). `hilavitkutin-api` provides the `AccessSet`
+  typestate the two axes reuse, and `hilavitkutin-str` provides the interner
+  string type. The Zig runtime uses hilavitkutin's morsel-driven execution;
+  the compiler does single-shot DAG walks and does not need the frame runtime.
 
-## Layers (finalised in first session)
+Reuse arvo and hilavitkutin. Do not reimplement DAG topology, bitmask ops,
+sparse storage, the set typestate, or pipeline scheduling.
 
-The compiler crate split is TBD. Provisional:
+## Framework crate surface
 
-```
-vehje-lex tokenisation
-vehje-syntax parser + AST
-vehje-resolve module resolution, use-tree, visibility
-vehje-typecheck coherence, bind targets, generics, validator framework
-vehje-schedule pass DAG (consumes arvo-graph)
-vehje-codegen target-agnostic codegen
-vehje top-level binary + orchestration
-```
+- `vehje-ir`. The shared representation: the Core substrate forms, the
+  `Family` extension trait plus effect classification, the family-set and
+  effect-set typestate, the node builder, interner integration.
+- `vehje-codegen`. The output machinery: the one generic fold, the `Target`
+  trait, the inclusion and effect checks, `Checked` gating, and compile-time
+  target composition (no `dyn`).
+- `vehje-schedule`. The pass DAG over `arvo-graph`.
+- `vehje-resolve`. The Core-level resolve pass, generic over the family set,
+  with family-extension hooks.
+- `vehje-check`. The Core-level check pass, generic over the family set, with
+  family-extension hooks.
+- `vehje-runtime-abi`. The tier-tagged C ABI and the residual serialization.
+- `vehje-runtime-driver`. Compiler-side dispatch over the ABI and the Zig
+  runtime embedding.
+- `vehje`. The two public contracts, orchestration, and the
+  distribution-composition entry point, with a reference distribution.
 
-Runtime crate split (Zig side, TBD).
+Offered opt-in, not shipped now: generic front-end scaffolding. It is
+extracted once a live consumer proves the shared shape, not designed from
+zero consumers.
 
-## Extension pattern
+## Consumers (separate repos, not this repo)
 
-Game-specific targets land as separate repos that extend Vehje:
-
-- `vehje-jomini`. Clausewitz (Stellaris / CK3 / HOI4 / Vic3 / EU4) grammar, bind targets (Country, Pop, Planet, …), codegen to Clausewitz script.
-- `vehje-w3` (future). Witcher 3 script target.
-- `vehje-ts4` (future). Sims 4 script target.
-- `vehje-lua` (future). generic Lua target.
-
-The extension point contract is TBD (one of the first session's design rounds).
+Grammars and targets are consumers of the framework, each a separate repo
+bringing a grammar (a front-end producing IR), a family (node kinds plus a
+`Family` impl plus effect classification), any family-specific semantic
+checks, and one or more targets (a `Target` impl declaring its `Supports` and
+`Permits` plus its lowering). The known census: the first-party general-purpose
+language (named later), `vehje-jomini` (Clausewitz across five Paradox
+titles), `vehje-w3`, `vehje-ts4`, `vehje-lua`, the native target, polka,
+ikiuni's scripting language, viola's lint-authoring language, and mockspace's
+procedural-documents language.
 
 ## Not in this repo
 
-- Clausewitz-specific code, bind targets, content. out of scope until `vehje-jomini` repo exists.
-- Python reference implementation. out of scope here; the Python prototype is the parity oracle.
-- Stellaris mod crates (std, stellaris, heritage, DLC-specific). they're *programs written in Vehje*, not the language itself.
-- Deploy / playset / artgen orchestration. out of scope here; eventually rewritten in Vehje as dogfood.
+- Any consumer's front-end, family, or targets. Those ship as consumer repos.
+- Game-specific vocabulary, bind targets, or content.
+- The first-party language's surface syntax. It is a consumer, named later; a
+  Python prototype of it lives outside this repo as heritage for when that
+  consumer is built, not as an oracle for the framework.
+
+## Responsible tooling
+
+See `PRINCIPLES.md` for the responsible-tooling notice. Agents are an optional
+configuration surface, not the recommended way to work on this codebase.
 
 ## See also
 
-
-- [`arvo`](https://github.com/orgrinrt/arvo). numeric foundations.
-- [`hilavitkutin`](https://github.com/orgrinrt/hilavitkutin). runtime engine.
+- [`arvo`](https://github.com/orgrinrt/arvo). Numeric foundations plus the
+  graph and bitmask analysis the framework reuses.
+- [`hilavitkutin`](https://github.com/orgrinrt/hilavitkutin). The `AccessSet`
+  typestate and the interner string type, and the runtime execution engine.
