@@ -9,7 +9,13 @@ vehje-ir.workspace = true
 vehje-resolve.workspace = true
 vehje-typecheck.workspace = true
 vehje-codegen.workspace = true
+hilavitkutin-api.workspace = true
+hilavitkutin-str.workspace = true
 notko.workspace = true
+
+[dev-dependencies]
+arvo.workspace = true
+arvo-bits.workspace = true
 
 [build-dependencies]
 mockspace.workspace = true

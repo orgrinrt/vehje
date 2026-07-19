@@ -14,6 +14,7 @@
 
 use core::marker::PhantomData;
 
+use hilavitkutin_api::sink::ByteEmitter;
 use notko::Outcome;
 use vehje_ir::{AccessSet, Arena, ContainsAll, NodeRef, Span};
 
@@ -31,14 +32,18 @@ pub trait Target {
     /// The target name, resolved through the compile-time composition.
     const NAME: &'static str;
 
-    /// Emit a residual this target has been proven to accept.
+    /// Emit a residual this target has been proven to accept, writing
+    /// through a caller-provided byte sink.
     ///
-    /// One generic fold over the Core substrate plus the declared
-    /// families, writing through a caller-provided sink.
-    // FIXME: take a byte sink (hilavitkutin-api ByteEmitter) and perform
-    // the total fold over Core + the declared families. M0 defines the
-    // contract; the fold body is the behavior gate.
-    fn emit(&self, checked: &Checked<'_, Self>) -> Outcome<(), CodegenError>
+    /// A target folds over the Core substrate plus the families it
+    /// declares, total over that declared set. A shared generic fold
+    /// helper over Core is a later refinement; the contract is that a
+    /// target consumes a proven `Checked` and emits.
+    fn emit<S: ByteEmitter>(
+        &self,
+        checked: &Checked<'_, Self>,
+        sink: &mut S,
+    ) -> Outcome<(), CodegenError>
     where
         Self: Sized;
 }
