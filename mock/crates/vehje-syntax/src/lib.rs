@@ -31,8 +31,6 @@ pub mod parser;
 
 pub use ast::{Ast, AstNode, MAX_CHILDREN, MAX_NODES};
 pub use error::{SyntaxError, SyntaxErrorKind};
-pub use parser::{parse, Parser, TokenCursor};
-
-pub use vehje_ir::TokenKind;
-pub use vehje_ir::{AstNodeKind, NodeId, Span};
+pub use parser::{Parser, TokenCursor, parse};
+pub use vehje_ir::{AstNodeKind, NodeId, Span, TokenKind};
 pub use vehje_lex::Token;

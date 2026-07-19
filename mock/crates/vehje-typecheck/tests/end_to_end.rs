@@ -4,10 +4,11 @@
 //! default `Resolved`. Skeleton round: always pushes nothing.
 
 use arvo::USize;
+use hilavitkutin_api::Len;
+use hilavitkutin_api::sink::CountingSink;
 use vehje_ir::Diagnostic;
 use vehje_resolve::Resolved;
 use vehje_typecheck::typecheck;
-use hilavitkutin_api::{sink::CountingSink, Len};
 
 #[test]
 fn typecheck_empty_resolved_returns_empty() {

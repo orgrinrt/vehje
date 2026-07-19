@@ -6,7 +6,7 @@ use arvo::USize;
 use hilavitkutin_api::{Len, Push};
 use vehje_ir::{ByteOffset, FileId, Span, TokenKind};
 use vehje_lex::Token;
-use vehje_syntax::{parse, SyntaxError, SyntaxErrorKind};
+use vehje_syntax::{SyntaxError, SyntaxErrorKind, parse};
 
 fn span(start: u32, end: u32) -> Span {
     Span::new(FileId(0), ByteOffset(start), ByteOffset(end)) // lint:allow(no-bare-numeric) reason: FileId(0) sentinel for single-file tests; tracked: #412
@@ -19,27 +19,31 @@ fn tok(kind: TokenKind, start: u32, end: u32) -> Token {
 /// Bounded sink with capacity 4: enough for skeleton tests that
 /// expect at most one or two errors. The actual stored values let
 /// the test inspect `kind`.
-struct ErrSink<const N: usize> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
-    errs: [core::mem::MaybeUninit<SyntaxError>; N],
+struct ErrSink<const N: usize> {
+    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+    errs:  [core::mem::MaybeUninit<SyntaxError>; N],
     count: usize, // lint:allow(no-bare-numeric) reason: test-internal counter; tracked: #412
 }
 
-impl<const N: usize> ErrSink<N> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+impl<const N: usize> ErrSink<N> {
+    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     const fn new() -> Self {
         Self {
-            errs: [const { core::mem::MaybeUninit::uninit() }; N],
+            errs:  [const { core::mem::MaybeUninit::uninit() }; N],
             count: 0, // lint:allow(no-bare-numeric) reason: counter init; tracked: #412
         }
     }
 
-    fn at(&self, idx: usize) -> &SyntaxError { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: index into MaybeUninit array; tracked: #412
+    fn at(&self, idx: usize) -> &SyntaxError {
+        // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: index into MaybeUninit array; tracked: #412
         assert!(idx < self.count, "index out of bounds");
         // SAFETY: idx < count, count slots are initialised in order.
         unsafe { self.errs[idx].assume_init_ref() }
     }
 }
 
-impl<const N: usize> Push<SyntaxError> for ErrSink<N> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+impl<const N: usize> Push<SyntaxError> for ErrSink<N> {
+    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     fn push(&mut self, e: SyntaxError) {
         assert!(self.count < N, "ErrSink overflow");
         self.errs[self.count].write(e);
@@ -47,7 +51,8 @@ impl<const N: usize> Push<SyntaxError> for ErrSink<N> { // lint:allow(no-bare-nu
     }
 }
 
-impl<const N: usize> Len for ErrSink<N> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
+impl<const N: usize> Len for ErrSink<N> {
+    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: const-generic array size; rust grammar requires usize; tracked: #121
     fn len(&self) -> USize {
         USize(self.count)
     }

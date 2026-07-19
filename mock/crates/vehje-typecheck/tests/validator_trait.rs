@@ -5,12 +5,21 @@
 //! skeleton `validate`.
 
 use arvo::USize;
+use hilavitkutin_api::Len;
+use hilavitkutin_api::sink::CountingSink;
 use vehje_ir::Diagnostic;
 use vehje_resolve::Resolved;
 use vehje_typecheck::{
-    Strict1, Strict2, Strict3, Strict4, Strict5, Strict6, Strict7, Validator, ValidatorCtx,
+    Strict1,
+    Strict2,
+    Strict3,
+    Strict4,
+    Strict5,
+    Strict6,
+    Strict7,
+    Validator,
+    ValidatorCtx,
 };
-use hilavitkutin_api::{sink::CountingSink, Len};
 
 #[test]
 fn strict1_name_matches() {

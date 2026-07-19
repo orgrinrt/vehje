@@ -8,7 +8,6 @@
 //! ABI-version monotonicity guards are all BACKLOG.
 
 use notko::Outcome;
-
 use vehje_runtime_driver::{LoaderError, RuntimeLoader};
 
 /// Attempt a full round-trip against a runtime and return

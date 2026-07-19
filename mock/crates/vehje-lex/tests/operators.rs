@@ -91,8 +91,9 @@ fn longest_match_wins() {
     // Adjacent `>>` is a single `Shr`.
     assert_eq!(kinds(">>"), vec![TokenKind::Shr, TokenKind::Eof]);
     // A space breaks longest-match, two `Gt`s.
-    assert_eq!(
-        kinds("> >"),
-        vec![TokenKind::Gt, TokenKind::Gt, TokenKind::Eof]
-    );
+    assert_eq!(kinds("> >"), vec![
+        TokenKind::Gt,
+        TokenKind::Gt,
+        TokenKind::Eof
+    ]);
 }

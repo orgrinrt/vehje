@@ -26,7 +26,9 @@ pub struct CodegenCtx<'a> {
 impl<'a> CodegenCtx<'a> {
     /// Construct a context around `resolved`.
     pub fn new(resolved: &'a Resolved) -> Self {
-        Self { resolved }
+        Self {
+            resolved,
+        }
     }
 
     /// Borrow the resolver output.

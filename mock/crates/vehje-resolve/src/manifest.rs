@@ -23,8 +23,8 @@ use crate::error::ManifestError;
 /// skeleton only produces the default shape.
 #[derive(Clone, Debug, Default)]
 pub struct Manifest {
-    crate_name: Str,
-    version: Str,
+    crate_name:   Str,
+    version:      Str,
     dependencies: Vec<Str>, // lint:allow(bare_collection) reason: skeleton manifest deps list; re-expressed via #166 (manifest parser) + #131 (scheduler) + #134 (persistence) (see SHAME.md `## Manifest`); tracked: #131
 }
 
@@ -53,7 +53,8 @@ impl Manifest {
 /// - Non-empty input → `Outcome::Err(ManifestError::NotImplemented)`.
 ///
 /// Real TOML parsing lands in a follow-up round.
-pub fn parse_manifest(bytes: &[u8]) -> Outcome<Manifest, ManifestError> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: file-parser byte-slice input, `&[u8]` is the canonical shape crossing the filesystem boundary; TOML bytes are not numeric data; tracked: #166
+pub fn parse_manifest(bytes: &[u8]) -> Outcome<Manifest, ManifestError> {
+    // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: file-parser byte-slice input, `&[u8]` is the canonical shape crossing the filesystem boundary; TOML bytes are not numeric data; tracked: #166
 
     if bytes.is_empty() {
         Outcome::Ok(Manifest::default())

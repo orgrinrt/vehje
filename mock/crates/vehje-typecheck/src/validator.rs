@@ -13,8 +13,8 @@
 //! emission). That retrofit is BACKLOG; it lands once the first
 //! real validator body surfaces the need.
 
-use vehje_ir::Diagnostic;
 use hilavitkutin_api::DiagnosticSink;
+use vehje_ir::Diagnostic;
 
 use crate::ctx::ValidatorCtx;
 
@@ -48,9 +48,5 @@ pub trait Validator: Sync {
     /// `&mut impl` because the trait is stored in the const registry
     /// as `&'static dyn Validator`; dyn methods are object-safe and
     /// must not carry `impl Trait` parameters.
-    fn validate(
-        &self,
-        ctx: &ValidatorCtx,
-        sink: &mut dyn DiagnosticSink<Diagnostic>,
-    );
+    fn validate(&self, ctx: &ValidatorCtx, sink: &mut dyn DiagnosticSink<Diagnostic>);
 }

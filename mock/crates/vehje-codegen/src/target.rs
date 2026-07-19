@@ -17,9 +17,9 @@
 //! That retrofit is BACKLOG; it lands once the first real
 //! target backend surfaces the need.
 
-use vehje_ir::Diagnostic;
 use hilavitkutin_api::{ByteEmitter, DiagnosticSink};
 use notko::Outcome;
+use vehje_ir::Diagnostic;
 
 use crate::artifact::CodegenArtifact;
 use crate::ctx::CodegenCtx;

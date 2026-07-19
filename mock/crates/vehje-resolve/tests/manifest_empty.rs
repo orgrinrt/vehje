@@ -1,8 +1,8 @@
 //! Manifest stub: empty input → default, non-empty → NotImplemented.
 
-use vehje_resolve::{ManifestError, parse_manifest};
 use hilavitkutin_str::Str;
 use notko::Outcome;
+use vehje_resolve::{ManifestError, parse_manifest};
 
 #[test]
 fn parse_empty_returns_default() {

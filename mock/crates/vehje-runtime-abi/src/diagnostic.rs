@@ -24,12 +24,12 @@
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct AbiSpan {
     /// File identifier (matches `vehje_ir::FileId::0`).
-    pub file: u32, // lint:allow(arvo-types-only) tracked: #207 lint:allow(no-bare-numeric) tracked: #207 lint:allow(no-public-raw-field) tracked: #207
+    pub file:  u32, // lint:allow(arvo-types-only) tracked: #207 lint:allow(no-bare-numeric) tracked: #207 lint:allow(no-public-raw-field) tracked: #207
     /// Start byte offset (matches
     /// `vehje_ir::ByteOffset::0`).
     pub start: u32, // lint:allow(arvo-types-only) tracked: #207 lint:allow(no-bare-numeric) tracked: #207 lint:allow(no-public-raw-field) tracked: #207
     /// End byte offset (exclusive).
-    pub end: u32, // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) lint:allow(no-public-raw-field) reason: FFI-wire u32 boundary; tracked: #207
+    pub end:   u32, // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) lint:allow(no-public-raw-field) reason: FFI-wire u32 boundary; tracked: #207
 }
 
 /// Diagnostic kind, mirrors `vehje_ir::Severity` but carries
@@ -39,11 +39,11 @@ pub struct AbiSpan {
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum VehjeDiagnosticKind {
     /// Error, execution fails, result code is non-`Ok`.
-    Error = 0,
+    Error   = 0,
     /// Warning, execution succeeds but emits a notice.
     Warning = 1,
     /// Info, diagnostic has no severity consequence.
-    Info = 2,
+    Info    = 2,
 }
 
 /// Single diagnostic record, `#[repr(C)]` for FFI.
@@ -61,11 +61,11 @@ pub enum VehjeDiagnosticKind {
 #[derive(Copy, Clone, Debug)]
 pub struct VehjeDiagnostic {
     /// Span the diagnostic refers to.
-    pub span: AbiSpan,
+    pub span:        AbiSpan,
     /// Pointer to the message bytes (UTF-8, borrowed).
-    pub message: *const u8, // lint:allow(arvo-types-only) tracked: #207 lint:allow(no-bare-numeric) tracked: #207
+    pub message:     *const u8, // lint:allow(arvo-types-only) tracked: #207 lint:allow(no-bare-numeric) tracked: #207
     /// Length of the message in bytes.
     pub message_len: arvo::USize,
     /// Severity-ish classification.
-    pub kind: VehjeDiagnosticKind,
+    pub kind:        VehjeDiagnosticKind,
 }

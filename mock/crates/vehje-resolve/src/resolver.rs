@@ -9,9 +9,9 @@
 //! `ast.len()`, preserving the downstream shape ("one resolution
 //! slot per AST node") that typecheck and codegen will key off.
 
+use notko::{Maybe, Outcome};
 use vehje_ir::ScopeId;
 use vehje_syntax::Ast;
-use notko::{Maybe, Outcome};
 
 use crate::error::ResolveError;
 use crate::resolved::Resolved;
@@ -23,7 +23,7 @@ use crate::scope::ScopeTree;
 /// current scope. `new()` starts at the root scope.
 #[derive(Clone, Debug)]
 pub struct Resolver {
-    scopes: ScopeTree,
+    scopes:  ScopeTree,
     current: ScopeId,
 }
 
@@ -39,7 +39,10 @@ impl Resolver {
     pub fn new() -> Self {
         let scopes = ScopeTree::new();
         let current = scopes.root();
-        Self { scopes, current }
+        Self {
+            scopes,
+            current,
+        }
     }
 
     /// Borrow the scope tree under construction.

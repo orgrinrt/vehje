@@ -27,7 +27,9 @@ impl RuntimeDriver {
     /// a dylib, resolving symbols, preparing the per-session
     /// arena).
     pub fn new() -> Self {
-        Self { _private: () }
+        Self {
+            _private: (),
+        }
     }
 }
 

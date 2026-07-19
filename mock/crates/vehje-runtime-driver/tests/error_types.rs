@@ -16,16 +16,36 @@ fn loader_error_variants_distinct() {
 #[test]
 fn driver_error_variants_distinct() {
     assert!(DriverError::NotImplemented != DriverError::HandleNull);
-    assert!(DriverError::NotImplemented != DriverError::ExecuteFailed { code: -1 });
-    assert!(DriverError::HandleNull != DriverError::ExecuteFailed { code: -1 });
-    assert!(DriverError::ExecuteFailed { code: -1 } != DriverError::ExecuteFailed { code: -2 });
+    assert!(
+        DriverError::NotImplemented
+            != DriverError::ExecuteFailed {
+                code: -1,
+            }
+    );
+    assert!(
+        DriverError::HandleNull
+            != DriverError::ExecuteFailed {
+                code: -1,
+            }
+    );
+    assert!(
+        DriverError::ExecuteFailed {
+            code: -1,
+        } != DriverError::ExecuteFailed {
+            code: -2,
+        }
+    );
 }
 
 #[test]
 fn driver_error_execute_failed_carries_code() {
-    let err = DriverError::ExecuteFailed { code: -7 };
+    let err = DriverError::ExecuteFailed {
+        code: -7,
+    };
     match err {
-        DriverError::ExecuteFailed { code } => assert_eq!(code, -7),
+        DriverError::ExecuteFailed {
+            code,
+        } => assert_eq!(code, -7),
         _ => panic!("expected ExecuteFailed variant"),
     }
 }
@@ -37,9 +57,8 @@ fn loader_error_construction() {
     let e3 = LoaderError::LoadFailed;
     for err in [e1, e2, e3] {
         match err {
-            LoaderError::NotImplemented
-            | LoaderError::SymbolNotFound
-            | LoaderError::LoadFailed => {}
+            LoaderError::NotImplemented | LoaderError::SymbolNotFound | LoaderError::LoadFailed => {
+            },
         }
     }
 }

@@ -38,17 +38,29 @@ fn artifact_construction() {
 #[test]
 fn codegen_error_variants_construct() {
     let errs = [
-        CodegenError::TargetNotFound { name: "x" },
-        CodegenError::UnsupportedFeature { feature: "y" },
-        CodegenError::LoweringFailed { message: "z" },
+        CodegenError::TargetNotFound {
+            name: "x",
+        },
+        CodegenError::UnsupportedFeature {
+            feature: "y",
+        },
+        CodegenError::LoweringFailed {
+            message: "z",
+        },
         CodegenError::NotImplemented,
     ];
     for err in errs {
         match err {
-            CodegenError::TargetNotFound { name } => assert_eq!(name, "x"),
-            CodegenError::UnsupportedFeature { feature } => assert_eq!(feature, "y"),
-            CodegenError::LoweringFailed { message } => assert_eq!(message, "z"),
-            CodegenError::NotImplemented => {}
+            CodegenError::TargetNotFound {
+                name,
+            } => assert_eq!(name, "x"),
+            CodegenError::UnsupportedFeature {
+                feature,
+            } => assert_eq!(feature, "y"),
+            CodegenError::LoweringFailed {
+                message,
+            } => assert_eq!(message, "z"),
+            CodegenError::NotImplemented => {},
         }
     }
 }

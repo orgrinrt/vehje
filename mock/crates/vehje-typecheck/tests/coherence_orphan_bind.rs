@@ -4,10 +4,11 @@
 //! nothing into a `CountingSink` when run over an empty `Resolved`.
 
 use arvo::USize;
+use hilavitkutin_api::Len;
+use hilavitkutin_api::sink::CountingSink;
 use vehje_ir::Diagnostic;
 use vehje_resolve::Resolved;
 use vehje_typecheck::{BindTargetShape, Coherence, OrphanRule, Validator, ValidatorCtx};
-use hilavitkutin_api::{sink::CountingSink, Len};
 
 #[test]
 fn coherence_name_and_empty() {

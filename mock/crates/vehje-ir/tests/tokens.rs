@@ -160,5 +160,9 @@ fn default_is_unknown() {
 #[test]
 fn roster_is_sized() {
     // Sanity check the roster length; keeps ALL from silently drifting.
-    assert!(ALL.len() >= 100, "roster below expected size: {}", ALL.len());
+    assert!(
+        ALL.len() >= 100,
+        "roster below expected size: {}",
+        ALL.len()
+    );
 }

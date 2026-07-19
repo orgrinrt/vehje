@@ -6,8 +6,8 @@
 //! Skeleton round: `validate` returns `Vec::new()`. Real body is
 //! BACKLOG (one follow-up micro-round).
 
-use vehje_ir::Diagnostic;
 use hilavitkutin_api::DiagnosticSink;
+use vehje_ir::Diagnostic;
 
 use crate::ctx::ValidatorCtx;
 use crate::validator::Validator;
@@ -25,10 +25,5 @@ impl Validator for Strict1 {
         "no-shadow"
     }
 
-    fn validate(
-        &self,
-        _ctx: &ValidatorCtx,
-        _sink: &mut dyn DiagnosticSink<Diagnostic>,
-    ) {
-    }
+    fn validate(&self, _ctx: &ValidatorCtx, _sink: &mut dyn DiagnosticSink<Diagnostic>) {}
 }

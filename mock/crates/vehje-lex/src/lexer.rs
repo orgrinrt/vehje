@@ -20,17 +20,21 @@
 //! The sink interface keeps the lexer `no_std` and alloc-free; the
 //! most common case (no diagnostics) costs nothing.
 
-use vehje_ir::{
-    ByteOffset, DiagPhase, Diagnostic, FileId, Severity, Span, TokenKind,
-};
 use notko::Maybe;
+use vehje_ir::{ByteOffset, DiagPhase, Diagnostic, FileId, Severity, Span, TokenKind};
 
 use crate::cursor::Cursor;
 use crate::token::Token;
 use crate::tokenizers::{
-    is_digit, is_ident_start, is_whitespace, read_block_comment,
-    read_ident_or_keyword, read_int_literal, read_line_comment,
-    read_operator_or_punct, read_whitespace,
+    is_digit,
+    is_ident_start,
+    is_whitespace,
+    read_block_comment,
+    read_ident_or_keyword,
+    read_int_literal,
+    read_line_comment,
+    read_operator_or_punct,
+    read_whitespace,
 };
 use crate::trivia::{Trivia, TriviaKind, TriviaSet};
 
@@ -43,19 +47,24 @@ pub type DiagSink<'a> = &'a mut dyn FnMut(Diagnostic);
 
 /// The lexer.
 pub struct Lexer<'a> {
-    cursor: Cursor<'a>,
-    file: FileId,
-    emitted_eof: bool,  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207 lint:allow(no-public-raw-field) tracked: #207
+    cursor:      Cursor<'a>,
+    file:        FileId,
+    emitted_eof: bool, // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207 lint:allow(no-public-raw-field) tracked: #207
 }
 
 impl<'a> Lexer<'a> {
     /// Construct a lexer over `src` for source file `file`.
     pub fn new(src: &'a [u8], file: FileId) -> Self {
-        Self { cursor: Cursor::new(src), file, emitted_eof: false }
+        Self {
+            cursor: Cursor::new(src),
+            file,
+            emitted_eof: false,
+        }
     }
 
     /// Construct a lexer from a `&str`.
-    pub fn from_str(src: &'a str, file: FileId) -> Self {  // lint:allow(no-bare-string) tracked: #207
+    pub fn from_str(src: &'a str, file: FileId) -> Self {
+        // lint:allow(no-bare-string) tracked: #207
         Self::new(src.as_bytes(), file)
     }
 
@@ -171,11 +180,7 @@ impl<'a> Lexer<'a> {
                     (sink)(Diagnostic::new(
                         DiagPhase::Lex,
                         Severity::Error,
-                        Span::new(
-                            self.file,
-                            ByteOffset(start),
-                            ByteOffset(e),
-                        ),
+                        Span::new(self.file, ByteOffset(start), ByteOffset(e)),
                         "unterminated block comment",
                     ));
                 }
@@ -219,8 +224,8 @@ impl<'a> Lexer<'a> {
                     self.mk_span(start, end),
                 ));
                 // A newline terminates the trailing run.
-                if end > start
-                    && self.cursor.src()[(end - 1) as usize] == b'\n'  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+                if end > start && self.cursor.src()[(end - 1) as usize] == b'\n'
+                // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
                 {
                     return;
                 }
@@ -243,11 +248,7 @@ impl<'a> Lexer<'a> {
                     (sink)(Diagnostic::new(
                         DiagPhase::Lex,
                         Severity::Error,
-                        Span::new(
-                            self.file,
-                            ByteOffset(start),
-                            ByteOffset(e),
-                        ),
+                        Span::new(self.file, ByteOffset(start), ByteOffset(e)),
                         "unterminated block comment",
                     ));
                 }
@@ -258,15 +259,18 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn mk_span(&self, start: u32, end: u32) -> Span {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+    fn mk_span(&self, start: u32, end: u32) -> Span {
+        // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         Span::new(self.file, ByteOffset(start), ByteOffset(end))
     }
 }
 
 /// `true` if the block-comment span ends with the `*/` terminator.
-fn terminated_block(src: &[u8], start: u32, end: u32) -> bool {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
-    let e = end as usize;  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
-    if e < (start as usize) + 4 {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+fn terminated_block(src: &[u8], start: u32, end: u32) -> bool {
+    // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+    let e = end as usize; // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+    if e < (start as usize) + 4 {
+        // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         return false;
     }
     src.get(e - 2) == Some(&b'*') && src.get(e - 1) == Some(&b'/') // lint:allow(bare_option) tracked: #115
