@@ -12,19 +12,19 @@
 
 use arvo::Maybe;
 
-/// A registered compile pass: a name, and the passes it depends on.
+/// A registered compile pass, identified by its type and the passes it
+/// depends on.
 ///
 /// A pass reads and writes the IR; resolve and check are the framework
-/// passes, a consumer's family passes register alongside them. The read
-/// and write sets are a later addition (they drive the `arvo-bitmask`
-/// adjacency); M0 carries the dependency edges by name.
+/// passes, a consumer's family passes register alongside them. Its `Debug`
+/// rendering carries the human-readable name for diagnostics and
+/// dependency reference. The read and write sets are a later addition
+/// (they drive the `arvo-bitmask` adjacency); M0 carries the dependency
+/// edges by identity.
 // FIXME: add the per-pass read/write sets over the IR (arvo-bitmask
 // AccessMask) that let the scheduler prove pass ordering, not just name
 // dependencies. Lands with the real DAG wiring.
-pub trait Pass {
-    /// The pass name, for diagnostics and dependency reference.
-    const NAME: &'static str;
-}
+pub trait Pass: core::fmt::Debug {}
 
 /// A schedule diagnostic.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]

@@ -61,12 +61,12 @@ pub fn run<T: Target>(_target: &T, _arena: &Arena<'_>, _root: NodeRef) -> Outcom
 /// simple textual rendering. It exists to exercise the whole pipeline
 /// (IR to resolve to inclusion check to emit) end to end, not as a
 /// production backend.
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct DebugTarget;
 
 impl Target for DebugTarget {
     type Supports = Cons<Core, Empty>;
     type Permits = Empty;
-    const NAME: &'static str = "debug";
 
     fn emit<S: ByteEmitter>(
         &self,

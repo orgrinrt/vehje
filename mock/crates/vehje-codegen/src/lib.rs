@@ -24,13 +24,11 @@ use vehje_ir::{AccessSet, Arena, ContainsAll, Node, NodeRef, Span};
 /// permits, both type-level sets over the `AccessSet` machinery, and
 /// emits a checked residual. A target is total over the families it
 /// declares.
-pub trait Target {
+pub trait Target: core::fmt::Debug {
     /// The families this target handles.
     type Supports: AccessSet;
     /// The effects this target permits.
     type Permits: AccessSet;
-    /// The target name, resolved through the compile-time composition.
-    const NAME: &'static str;
 
     /// Emit a residual this target has been proven to accept, writing
     /// through a caller-provided byte sink.
@@ -143,11 +141,16 @@ pub fn fold_core<F: FnMut(&Node)>(arena: &Arena<'_>, at: NodeRef, visit: &mut F)
 
 /// A codegen diagnostic.
 ///
-/// Carries the refused construct and the target, not a bare string.
+/// Carries the refused construct's span. The offending target is the
+/// monomorphic `T` the error is returned from (`T: Target` is `Debug`),
+/// so no bare target-name string is stored on the error.
+// FIXME: name the missing family or effect on the variant once the
+// two-stage runtime check builds these (the compile-time path discharges
+// through the `ContainsAll` bounds, so M0 constructs neither variant yet).
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum CodegenError {
     /// A construct outside the target's declared family set.
-    UnsupportedFamily { span: Span, target: &'static str },
+    UnsupportedFamily { span: Span },
     /// An effect outside the target's permitted set.
-    ForbiddenEffect { span: Span, target: &'static str },
+    ForbiddenEffect { span: Span },
 }

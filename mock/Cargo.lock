@@ -463,6 +463,10 @@ checksum = "e6e4313cd5fcd3dad5cafa179702e2b244f760991f45397d14d4ebf38247da75"
 name = "vehje"
 version = "0.1.0"
 dependencies = [
+ "arvo",
+ "arvo-bits",
+ "hilavitkutin-api",
+ "hilavitkutin-str",
  "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
  "vehje-codegen",
