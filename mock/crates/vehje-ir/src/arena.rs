@@ -89,6 +89,14 @@ impl<'a> Arena<'a> {
     pub fn len(&self) -> USize {
         self.node_len
     }
+
+    /// The child-index pool filled so far.
+    ///
+    /// The flat backing every `NodeList` addresses. Serialization writes it
+    /// out whole; `NodeList` start and len index directly into it.
+    pub fn pool(&self) -> &[NodeRef] {
+        &self.pool[..self.pool_len.0]
+    }
 }
 
 #[cfg(test)]

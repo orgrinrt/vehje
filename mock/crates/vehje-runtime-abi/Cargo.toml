@@ -7,6 +7,10 @@ license.workspace = true
 [dependencies]
 arvo.workspace = true
 vehje-ir.workspace = true
+hilavitkutin-str.workspace = true
+
+[dev-dependencies]
+arvo-bits.workspace = true
 
 [build-dependencies]
 mockspace.workspace = true

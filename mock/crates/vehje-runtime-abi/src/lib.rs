@@ -11,7 +11,20 @@
 //! tier-0 serialization introduces when it lands.
 
 #![no_std]
+// const_trait_impl (test-only): WATCH-allowed (unstable-features.md); the
+// blob round-trip test builds interned strings with hilavitkutin-str's
+// `str_const!`, which needs it.
+#![cfg_attr(test, feature(const_trait_impl))]
 #![deny(unused, unreachable_code, unused_must_use, unused_imports, dead_code)]
+
+pub mod encode;
+pub mod wire;
+
+/// Serialize a checked program into a tier-0 residual byte image.
+pub use wire::serialize;
+
+/// The format-agnostic residual encoder contract and node walk.
+pub use encode::{encode, LitTag, NodeTag, ResidualEncoder};
 
 /// The representation a residual crosses the ABI in.
 ///
@@ -30,17 +43,17 @@ pub enum Tier {
     Native,
 }
 
-/// The wire form of a checked residual at a given tier.
+/// A checked residual's crossing descriptor: the tier it was serialized
+/// at.
 ///
-/// M0 names the tier; the tier-0 wire struct (a `#[repr(C)]` node buffer,
-/// the child-index pool, a string blob, and a root id) and the
-/// runtime-environment interface descriptor land with the serialization.
-// FIXME: define the tier-0 `#[repr(C)]` wire struct mirroring the vehje-ir
-// arena layout, plus the runtime-environment interface descriptor and the
-// `extern "C"` entry points. Bare primitives at that boundary carry the
-// documented FFI `lint:allow`. M0 ships the tier tag only.
+/// The tier-0 byte image itself is produced by [`serialize`] (see the
+/// [`wire`] module); this names which representation those bytes are in,
+/// so the driver and runtime agree on how to read them.
+// FIXME: carry the runtime-environment interface descriptor (the host
+// capabilities the residual expects) and the `extern "C"` entry points
+// alongside the tier tag once the driver bindings land (M3 step 3).
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct Residual {
-    /// The representation this residual crosses in.
+    /// The representation the serialized residual crosses in.
     pub tier: Tier,
 }
