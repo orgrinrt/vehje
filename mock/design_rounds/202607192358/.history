@@ -1,0 +1,50 @@
+8adc1a6 chore: lock extension-point src changelist
+2e1e57f docs: record landed status on extension-point src changelist
+ebf022c chore: ignore zig build cache
+554ad1d feat: trait-based tier-0 residual serialization
+8c5ddc1 feat: add per-node span side-table, carry span in resolve errors
+130d771 refactor: carry family/target/pass identity via Debug not NAME const
+53daeba refactor: lift the Core traversal into codegen fold_core
+7f679bc feat: first light, emit a program through the inclusion typestate
+e996370 feat: implement the Core check walk with arena-integrity validation
+9e54407 test: end-to-end resolve test over arena, builder, and scope chain
+e0393ec feat: implement the Core resolve walk over the scope chain
+da1a6d3 feat: author framework crate surface to green build (M0 + M1-M5)
+26fe811 refactor: drop vehje-lex and vehje-syntax crates
+48cd96c refactor: drop vehje-runtime-tests crate
+6141649 docs: open src changelist for framework crate authoring
+874f165 chore: lock doc changelist for framework reframe
+b33125d docs: correct agent rules to no_std everywhere per framework reframe
+362631c docs: reframe surviving crate designs to framework surface
+60608f6 docs: reframe vehje-codegen design to framework output machinery
+7c0e8d4 docs: reframe narrative surfaces to vehje-as-framework
+db438cd docs: open doc changelist for framework reframe
+63ad286 docs: settle vehje framework contract spine
+855e55e docs: open extension-point round, import mockspace arc as reference
+89f5ae3 chore: pin nightly toolchain and enable notko try_trait_v2
+33cca2a chore: add restrict-main-merges workflow
+23e311b test: vehje-codegen test rehab past Round-5d emit() reshape (#34)
+5d185fc test: vehje test rehab past arvo Round D + Maybe surface drift (#33)
+ce2d2c5 test: vehje library adoption — must_use Maybe + arvo Round D facade (#32)
+d6eae20 docs: vehje doc audit round (Tier 1 leakage + drift sweep) (#31)
+1373e66 chore: bump mockspace pin + regen docs (#30)
+6305a09 chore: clean stale clause references after vehje rename (#29)
+6f462c2 docs: rewrite readme (#27)
+f3893bb docs: vocab + leakage + em-dash sweep across templates (#26)
+7e996ce docs: em-dash sweep across live surfaces (#25)
+9e24ef6 docs: extend byline policy to PR titles, descriptions, comments (#24)
+1974cf7 Merge pull request #23 from orgrinrt/feat/dir-rename-clause-to-vehje
+33fa2f9 Merge pull request #22 from orgrinrt/feat/rename-completion-clause-to-vehje
+1e20477 chore: close round 202604250730
+835d1ac chore: lock src CL for 202604250730
+31fb9f0 feat: rename ABI types Clause* to Vehje*
+6099335 docs: open src CL for ABI type rename
+3ada9be chore: lock doc CL for 202604250730
+8ccee52 docs: rename ABI type names in templates (Clause* to Vehje*)
+f482462 docs: open doc CL for ABI type rename round
+b57cae1 chore: close round 202604250700
+7a30d86 chore: lock src CL for 202604250700
+fe1a9d7 chore: regenerate auto files after dir rename
+d8157d2 feat: rename mock/crates/clause-* dirs to vehje-*
+587886f docs: open src CL for dir rename
+8e2962f chore: lock doc CL for 202604250700
