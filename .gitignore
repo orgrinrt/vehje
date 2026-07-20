@@ -14,3 +14,7 @@
 /.github/instructions/
 /.github/skills/
 # === end mockspace-managed ===
+
+# zig build cache
+.zig-cache/
+**/.zig-cache/
