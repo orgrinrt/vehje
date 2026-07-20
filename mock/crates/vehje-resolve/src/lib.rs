@@ -17,7 +17,7 @@
 use arvo::{Maybe, Outcome};
 
 use hilavitkutin_str::Str;
-use vehje_ir::{Arena, Node, NodeRef};
+use vehje_ir::{Arena, Node, NodeRef, Span};
 
 /// A borrowed scope frame: a single binding, chained to its parent.
 ///
@@ -59,15 +59,13 @@ impl<'p> Scope<'p> {
 
 /// A resolve diagnostic.
 ///
-/// M0 keys the diagnostic on the offending name. A source span requires a
-/// per-node span table (nodes carry no span in the arena today); adding
-/// it is a marked follow-up.
-// FIXME: carry a Span once vehje-ir grows a per-node span side-table (a
-// caller-provided region parallel to the node arena). M0 reports the name.
+/// Keys the diagnostic on the offending name and the source span of the
+/// `Var` node that failed to resolve, recovered from the arena's span
+/// side-table.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum ResolveError {
     /// A `Var` names no binding in scope.
-    Unresolved { name: Str },
+    Unresolved { name: Str, span: Span },
 }
 
 /// The Core resolve pass over a program's IR.
@@ -94,9 +92,9 @@ fn walk(arena: &Arena<'_>, at: NodeRef, scope: Maybe<&Scope<'_>>) -> Outcome<(),
         Node::Var(name) => match scope {
             Maybe::Is(s) => match s.resolve(name) {
                 Maybe::Is(_) => Outcome::Ok(()),
-                Maybe::Isnt => Outcome::Err(ResolveError::Unresolved { name }),
+                Maybe::Isnt => Outcome::Err(ResolveError::Unresolved { name, span: arena.span(at) }),
             },
-            Maybe::Isnt => Outcome::Err(ResolveError::Unresolved { name }),
+            Maybe::Isnt => Outcome::Err(ResolveError::Unresolved { name, span: arena.span(at) }),
         },
         Node::Let { name, value, body, .. } => {
             walk(arena, value, scope)?;
@@ -164,14 +162,15 @@ mod tests {
     #[test]
     fn resolves_a_bound_var() {
         let mut nodes = [Node::Lit(Literal::Unit); 8];
+        let mut spans = [Span::default(); 8];
         let mut pool = [NodeRef::new(USize::ZERO); 8];
-        let mut b = Builder::new(Arena::new(&mut nodes, &mut pool));
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
 
         // let x = () in x
         let x = str_const!("x");
-        let unit = expect(b.lit(Literal::Unit));
-        let var = expect(b.var(x));
-        let root = expect(b.let_(Bool::FALSE, x, unit, var));
+        let unit = expect(b.lit(Literal::Unit, Span::default()));
+        let var = expect(b.var(x, Span::default()));
+        let root = expect(b.let_(Bool::FALSE, x, unit, var, Span::default()));
 
         let mut arena = b.into_arena();
         assert!(matches!(resolve(&mut arena, root), Outcome::Ok(())));
@@ -180,12 +179,13 @@ mod tests {
     #[test]
     fn refuses_an_unbound_var() {
         let mut nodes = [Node::Lit(Literal::Unit); 8];
+        let mut spans = [Span::default(); 8];
         let mut pool = [NodeRef::new(USize::ZERO); 8];
-        let mut b = Builder::new(Arena::new(&mut nodes, &mut pool));
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
 
         // a bare, unbound reference to y
         let y = str_const!("y");
-        let root = expect(b.var(y));
+        let root = expect(b.var(y, Span::default()));
 
         let mut arena = b.into_arena();
         assert!(matches!(

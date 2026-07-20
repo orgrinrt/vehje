@@ -103,7 +103,7 @@ mod tests {
     use hilavitkutin_api::capability::{BulkPush, Push};
     use hilavitkutin_str::str_const;
     use vehje_codegen::check_for;
-    use vehje_ir::{Builder, Literal};
+    use vehje_ir::{Builder, Literal, Span};
 
     /// A byte sink that collects into a fixed buffer, for the test.
     struct BufSink {
@@ -136,14 +136,15 @@ mod tests {
     #[test]
     fn first_light_emits_the_program() {
         let mut nodes = [Node::Lit(Literal::Unit); 8];
+        let mut spans = [Span::default(); 8];
         let mut pool = [NodeRef::new(USize::ZERO); 8];
-        let mut b = Builder::new(Arena::new(&mut nodes, &mut pool));
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
 
         // let x = () in x
         let x = str_const!("x");
-        let unit = expect(b.lit(Literal::Unit));
-        let var = expect(b.var(x));
-        let root = expect(b.let_(Bool::FALSE, x, unit, var));
+        let unit = expect(b.lit(Literal::Unit, Span::default()));
+        let var = expect(b.var(x, Span::default()));
+        let root = expect(b.let_(Bool::FALSE, x, unit, var, Span::default()));
         let arena = b.into_arena();
 
         // the program uses only the Core family and no effects, so it is

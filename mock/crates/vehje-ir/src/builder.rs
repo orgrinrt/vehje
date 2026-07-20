@@ -12,6 +12,7 @@ use hilavitkutin_str::Str;
 
 use crate::arena::Arena;
 use crate::node::{FamilyId, Literal, Node, NodeList, NodeRef};
+use crate::span::Span;
 
 /// Builds Core nodes into a caller-provided arena.
 pub struct Builder<'a> {
@@ -35,59 +36,59 @@ impl<'a> Builder<'a> {
     }
 
     /// A literal value.
-    pub fn lit(&mut self, value: Literal) -> Maybe<NodeRef> {
-        self.arena.push(Node::Lit(value))
+    pub fn lit(&mut self, value: Literal, span: Span) -> Maybe<NodeRef> {
+        self.arena.push(Node::Lit(value), span)
     }
 
     /// A reference to a binding by name.
-    pub fn var(&mut self, name: Str) -> Maybe<NodeRef> {
-        self.arena.push(Node::Var(name))
+    pub fn var(&mut self, name: Str, span: Span) -> Maybe<NodeRef> {
+        self.arena.push(Node::Var(name), span)
     }
 
     /// Bind `name` to `value` in scope for `body`.
-    pub fn let_(&mut self, rec: Bool, name: Str, value: NodeRef, body: NodeRef) -> Maybe<NodeRef> {
-        self.arena.push(Node::Let { rec, name, value, body })
+    pub fn let_(&mut self, rec: Bool, name: Str, value: NodeRef, body: NodeRef, span: Span) -> Maybe<NodeRef> {
+        self.arena.push(Node::Let { rec, name, value, body }, span)
     }
 
     /// Abstraction over `param`.
-    pub fn lambda(&mut self, param: Str, body: NodeRef) -> Maybe<NodeRef> {
-        self.arena.push(Node::Lambda { param, body })
+    pub fn lambda(&mut self, param: Str, body: NodeRef, span: Span) -> Maybe<NodeRef> {
+        self.arena.push(Node::Lambda { param, body }, span)
     }
 
     /// Apply `callee` to `args`.
-    pub fn apply(&mut self, callee: NodeRef, args: &[NodeRef]) -> Maybe<NodeRef> {
+    pub fn apply(&mut self, callee: NodeRef, args: &[NodeRef], span: Span) -> Maybe<NodeRef> {
         let args = self.arena.alloc_list(args)?;
-        self.arena.push(Node::Apply { callee, args })
+        self.arena.push(Node::Apply { callee, args }, span)
     }
 
     /// Field, member, or index access.
-    pub fn project(&mut self, base: NodeRef, key: Str) -> Maybe<NodeRef> {
-        self.arena.push(Node::Project { base, key })
+    pub fn project(&mut self, base: NodeRef, key: Str, span: Span) -> Maybe<NodeRef> {
+        self.arena.push(Node::Project { base, key }, span)
     }
 
     /// Conditional.
-    pub fn if_(&mut self, cond: NodeRef, then_branch: NodeRef, else_branch: NodeRef) -> Maybe<NodeRef> {
-        self.arena.push(Node::If { cond, then_branch, else_branch })
+    pub fn if_(&mut self, cond: NodeRef, then_branch: NodeRef, else_branch: NodeRef, span: Span) -> Maybe<NodeRef> {
+        self.arena.push(Node::If { cond, then_branch, else_branch }, span)
     }
 
     /// Pattern match over `scrutinee` with the given arm bodies.
-    pub fn match_(&mut self, scrutinee: NodeRef, arms: &[NodeRef]) -> Maybe<NodeRef> {
+    pub fn match_(&mut self, scrutinee: NodeRef, arms: &[NodeRef], span: Span) -> Maybe<NodeRef> {
         let arms = self.arena.alloc_list(arms)?;
-        self.arena.push(Node::Match { scrutinee, arms })
+        self.arena.push(Node::Match { scrutinee, arms }, span)
     }
 
     /// Iterate `seq`, accumulating `body` monoidally.
-    pub fn iter(&mut self, seq: NodeRef, body: NodeRef) -> Maybe<NodeRef> {
-        self.arena.push(Node::Iter { seq, body })
+    pub fn iter(&mut self, seq: NodeRef, body: NodeRef, span: Span) -> Maybe<NodeRef> {
+        self.arena.push(Node::Iter { seq, body }, span)
     }
 
     /// Interpolate a value into text or content.
-    pub fn interp(&mut self, value: NodeRef) -> Maybe<NodeRef> {
-        self.arena.push(Node::Interp { value })
+    pub fn interp(&mut self, value: NodeRef, span: Span) -> Maybe<NodeRef> {
+        self.arena.push(Node::Interp { value }, span)
     }
 
     /// A family's own construct, attached through the escape hatch.
-    pub fn raw(&mut self, family: FamilyId, payload: NodeList) -> Maybe<NodeRef> {
-        self.arena.push(Node::Raw { family, payload })
+    pub fn raw(&mut self, family: FamilyId, payload: NodeList, span: Span) -> Maybe<NodeRef> {
+        self.arena.push(Node::Raw { family, payload }, span)
     }
 }
