@@ -1,0 +1,94 @@
+# >>> resolve_name_scope (generated)
+[bench.resolve_name_scope]
+title = "Name resolution: flat shadow-stack vs hashed-per-scope vs linear scope-chain walk"
+workload = "realistic"
+master_seed = 0x5eed_a11c_0503_0001
+[bench.resolve_name_scope.normalise]
+baseline = "resolve_flat"
+mode = "subtract"
+[[bench.resolve_name_scope.sizes]]
+n = 64
+variants = ["variants/resolve_flat/target/release/resolve_flat", "variants/resolve_hashed/target/release/resolve_hashed", "variants/resolve_linear/target/release/resolve_linear"]
+[[bench.resolve_name_scope.sizes]]
+n = 256
+variants = ["variants/resolve_flat/target/release/resolve_flat", "variants/resolve_hashed/target/release/resolve_hashed", "variants/resolve_linear/target/release/resolve_linear"]
+[[bench.resolve_name_scope.sizes]]
+n = 1024
+variants = ["variants/resolve_flat/target/release/resolve_flat", "variants/resolve_hashed/target/release/resolve_hashed", "variants/resolve_linear/target/release/resolve_linear"]
+[[bench.resolve_name_scope.sizes]]
+n = 4096
+variants = ["variants/resolve_flat/target/release/resolve_flat", "variants/resolve_hashed/target/release/resolve_hashed", "variants/resolve_linear/target/release/resolve_linear"]
+[[bench.resolve_name_scope.sizes]]
+n = 16384
+variants = ["variants/resolve_flat/target/release/resolve_flat", "variants/resolve_hashed/target/release/resolve_hashed", "variants/resolve_linear/target/release/resolve_linear"]
+
+# >>> interner_intern (generated)
+[bench.interner_intern]
+title = "Interner intern hot path: FNV vs FxHash x load factor 25% vs 75%"
+workload = "realistic"
+master_seed = 0x5eed_1272_0503_0002
+[bench.interner_intern.normalise]
+baseline = "intern_fnv_lf25"
+mode = "subtract"
+[[bench.interner_intern.sizes]]
+n = 64
+variants = ["variants/intern_fnv_lf25/target/release/intern_fnv_lf25", "variants/intern_fx_lf25/target/release/intern_fx_lf25", "variants/intern_fnv_lf75/target/release/intern_fnv_lf75", "variants/intern_fx_lf75/target/release/intern_fx_lf75"]
+[[bench.interner_intern.sizes]]
+n = 256
+variants = ["variants/intern_fnv_lf25/target/release/intern_fnv_lf25", "variants/intern_fx_lf25/target/release/intern_fx_lf25", "variants/intern_fnv_lf75/target/release/intern_fnv_lf75", "variants/intern_fx_lf75/target/release/intern_fx_lf75"]
+[[bench.interner_intern.sizes]]
+n = 1024
+variants = ["variants/intern_fnv_lf25/target/release/intern_fnv_lf25", "variants/intern_fx_lf25/target/release/intern_fx_lf25", "variants/intern_fnv_lf75/target/release/intern_fnv_lf75", "variants/intern_fx_lf75/target/release/intern_fx_lf75"]
+[[bench.interner_intern.sizes]]
+n = 4096
+variants = ["variants/intern_fnv_lf25/target/release/intern_fnv_lf25", "variants/intern_fx_lf25/target/release/intern_fx_lf25", "variants/intern_fnv_lf75/target/release/intern_fnv_lf75", "variants/intern_fx_lf75/target/release/intern_fx_lf75"]
+[[bench.interner_intern.sizes]]
+n = 16384
+variants = ["variants/intern_fnv_lf25/target/release/intern_fnv_lf25", "variants/intern_fx_lf25/target/release/intern_fx_lf25", "variants/intern_fnv_lf75/target/release/intern_fnv_lf75", "variants/intern_fx_lf75/target/release/intern_fx_lf75"]
+
+# >>> project_field_access (generated)
+[bench.project_field_mono]
+title = "Project field access, monomorphic site: direct offset vs inline cache vs hash vs linear"
+workload = "realistic"
+master_seed = 0x5eed_f1e1_0503_0003
+[bench.project_field_mono.normalise]
+baseline = "project_mono_direct"
+mode = "subtract"
+[[bench.project_field_mono.sizes]]
+n = 64
+variants = ["variants/project_mono_direct/target/release/project_mono_direct", "variants/project_mono_linear/target/release/project_mono_linear", "variants/project_mono_hash/target/release/project_mono_hash", "variants/project_mono_ic/target/release/project_mono_ic"]
+[[bench.project_field_mono.sizes]]
+n = 256
+variants = ["variants/project_mono_direct/target/release/project_mono_direct", "variants/project_mono_linear/target/release/project_mono_linear", "variants/project_mono_hash/target/release/project_mono_hash", "variants/project_mono_ic/target/release/project_mono_ic"]
+[[bench.project_field_mono.sizes]]
+n = 1024
+variants = ["variants/project_mono_direct/target/release/project_mono_direct", "variants/project_mono_linear/target/release/project_mono_linear", "variants/project_mono_hash/target/release/project_mono_hash", "variants/project_mono_ic/target/release/project_mono_ic"]
+[[bench.project_field_mono.sizes]]
+n = 4096
+variants = ["variants/project_mono_direct/target/release/project_mono_direct", "variants/project_mono_linear/target/release/project_mono_linear", "variants/project_mono_hash/target/release/project_mono_hash", "variants/project_mono_ic/target/release/project_mono_ic"]
+[[bench.project_field_mono.sizes]]
+n = 16384
+variants = ["variants/project_mono_direct/target/release/project_mono_direct", "variants/project_mono_linear/target/release/project_mono_linear", "variants/project_mono_hash/target/release/project_mono_hash", "variants/project_mono_ic/target/release/project_mono_ic"]
+
+[bench.project_field_poly]
+title = "Project field access, polymorphic site: inline-cache hazard vs hash vs linear"
+workload = "realistic"
+master_seed = 0x5eed_f1e1_0503_0004
+[bench.project_field_poly.normalise]
+baseline = "project_poly_hash"
+mode = "subtract"
+[[bench.project_field_poly.sizes]]
+n = 64
+variants = ["variants/project_poly_linear/target/release/project_poly_linear", "variants/project_poly_hash/target/release/project_poly_hash", "variants/project_poly_ic/target/release/project_poly_ic"]
+[[bench.project_field_poly.sizes]]
+n = 256
+variants = ["variants/project_poly_linear/target/release/project_poly_linear", "variants/project_poly_hash/target/release/project_poly_hash", "variants/project_poly_ic/target/release/project_poly_ic"]
+[[bench.project_field_poly.sizes]]
+n = 1024
+variants = ["variants/project_poly_linear/target/release/project_poly_linear", "variants/project_poly_hash/target/release/project_poly_hash", "variants/project_poly_ic/target/release/project_poly_ic"]
+[[bench.project_field_poly.sizes]]
+n = 4096
+variants = ["variants/project_poly_linear/target/release/project_poly_linear", "variants/project_poly_hash/target/release/project_poly_hash", "variants/project_poly_ic/target/release/project_poly_ic"]
+[[bench.project_field_poly.sizes]]
+n = 16384
+variants = ["variants/project_poly_linear/target/release/project_poly_linear", "variants/project_poly_hash/target/release/project_poly_hash", "variants/project_poly_ic/target/release/project_poly_ic"]

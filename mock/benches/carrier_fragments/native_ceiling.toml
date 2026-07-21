@@ -1,0 +1,22 @@
+[bench.carrier_native_ceiling]
+title = "Native ceiling: switch vs fn-table interp vs shape-specialized native, opaque program (carrier)"
+workload = "realistic"
+master_seed = 0x5eed_ce11_0000_0003
+[bench.carrier_native_ceiling.normalise]
+baseline = "carrier_ceiling_native"
+mode = "subtract"
+[[bench.carrier_native_ceiling.sizes]]
+n = 64
+variants = ["variants/carrier_ceiling_native/target/release/carrier_ceiling_native", "variants/carrier_ceiling_switch/target/release/carrier_ceiling_switch", "variants/carrier_ceiling_fntable/target/release/carrier_ceiling_fntable"]
+[[bench.carrier_native_ceiling.sizes]]
+n = 256
+variants = ["variants/carrier_ceiling_native/target/release/carrier_ceiling_native", "variants/carrier_ceiling_switch/target/release/carrier_ceiling_switch", "variants/carrier_ceiling_fntable/target/release/carrier_ceiling_fntable"]
+[[bench.carrier_native_ceiling.sizes]]
+n = 1024
+variants = ["variants/carrier_ceiling_native/target/release/carrier_ceiling_native", "variants/carrier_ceiling_switch/target/release/carrier_ceiling_switch", "variants/carrier_ceiling_fntable/target/release/carrier_ceiling_fntable"]
+[[bench.carrier_native_ceiling.sizes]]
+n = 4096
+variants = ["variants/carrier_ceiling_native/target/release/carrier_ceiling_native", "variants/carrier_ceiling_switch/target/release/carrier_ceiling_switch", "variants/carrier_ceiling_fntable/target/release/carrier_ceiling_fntable"]
+[[bench.carrier_native_ceiling.sizes]]
+n = 16384
+variants = ["variants/carrier_ceiling_native/target/release/carrier_ceiling_native", "variants/carrier_ceiling_switch/target/release/carrier_ceiling_switch", "variants/carrier_ceiling_fntable/target/release/carrier_ceiling_fntable"]

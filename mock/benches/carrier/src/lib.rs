@@ -27,10 +27,12 @@ pub mod checksum;
 pub mod gen;
 pub mod interp;
 pub mod ir;
+pub mod native;
 
 pub use checksum::Checksum;
 pub use gen::{generate, GenParams, Rng};
 pub use interp::{interpret, interpret_fntable, run_over_input};
+pub use native::{madd_bytes, madd_program, native_madd};
 pub use ir::{
     encode, Decoded, Layout, Node, Program, ALL_LAYOUTS, REC12, REC16, REC20, REC24, REC32,
 };
@@ -109,6 +111,26 @@ mod tests {
         let a = run_over_input(&d, &[1, 2, 3, 4], &mut results);
         let b = run_over_input(&d, &[9, 8, 7, 6], &mut results);
         assert_ne!(a, b);
+    }
+
+    #[test]
+    fn native_madd_matches_interp() {
+        // The shape-specialized native madd loop must fold the identical hash as
+        // the switch interpreter over the same madd program, so the ceiling
+        // bench's interp-vs-native ratio is dispatch overhead and not a
+        // difference in what was computed.
+        let prog = native::madd_program(64);
+        assert!(prog.is_well_formed());
+        let bytes = encode(&prog, &REC24);
+        let d = Decoded::parse(&bytes, REC24).unwrap();
+        let mut r = vec![0u64; prog.nodes.len()];
+        for seed in [0u64, 1, 42, 12345, 999_999] {
+            assert_eq!(
+                interpret(&d, seed, &mut r),
+                native::native_madd(&d, seed),
+                "native diverged from interp at seed {seed}"
+            );
+        }
     }
 
     #[test]
