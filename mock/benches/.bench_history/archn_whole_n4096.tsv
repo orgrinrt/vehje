@@ -1,0 +1,6 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784628514	eb1fec1	archn_whole_n4096	an_whole_pred	4096	warm	68757.9	67612.5	71749.1
+1784628514	eb1fec1	archn_whole_n4096	an_whole_prof	4096	warm	49902.9	49070.9	52766.2
+1784628514	eb1fec1	archn_whole_n4096	an_whole_seq	4096	warm	51660.4	50180.0	57303.6
+1784628514	eb1fec1	archn_whole_n4096	an_whole_table	4096	warm	54556.2	54524.3	59282.9
+1784628514	eb1fec1	archn_whole_n4096	an_whole_tree	4096	warm	46063.7	45880.4	56375.8

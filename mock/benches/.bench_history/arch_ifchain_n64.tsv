@@ -1,0 +1,11 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784625419	eb1fec1	arch_ifchain_n64	ab_ifchain_pred	64	warm	50604.6	49022.9	52648.1
+1784625419	eb1fec1	arch_ifchain_n64	ab_ifchain_prof	64	warm	24305.0	23789.0	25020.7
+1784625419	eb1fec1	arch_ifchain_n64	ab_ifchain_seq	64	warm	23099.6	23080.7	24600.6
+1784625419	eb1fec1	arch_ifchain_n64	ab_ifchain_table	64	warm	22525.4	22512.9	24083.1
+1784625419	eb1fec1	arch_ifchain_n64	ab_ifchain_tree	64	warm	23917.5	23916.5	24323.3
+1784627945	eb1fec1	arch_ifchain_n64	ab_ifchain_pred	64	warm	52577.9	52110.6	53488.8
+1784627945	eb1fec1	arch_ifchain_n64	ab_ifchain_prof	64	warm	23200.8	22265.8	23864.4
+1784627945	eb1fec1	arch_ifchain_n64	ab_ifchain_seq	64	warm	23757.9	23490.4	24489.6
+1784627945	eb1fec1	arch_ifchain_n64	ab_ifchain_table	64	warm	22783.7	22695.4	23778.5
+1784627945	eb1fec1	arch_ifchain_n64	ab_ifchain_tree	64	warm	22510.8	22490.4	23354.8

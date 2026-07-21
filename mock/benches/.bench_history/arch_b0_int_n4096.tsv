@@ -1,0 +1,11 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784624351	eb1fec1	arch_b0_int_n4096	ab_b0_pred_int	4096	warm	946998.3	942297.9	956496.2
+1784624351	eb1fec1	arch_b0_int_n4096	ab_b0_prof_int	4096	warm	701415.4	700306.9	711084.4
+1784624351	eb1fec1	arch_b0_int_n4096	ab_b0_seq_int	4096	warm	701512.9	700528.8	715261.7
+1784624351	eb1fec1	arch_b0_int_n4096	ab_b0_table_int	4096	warm	691647.9	691553.3	699670.4
+1784624351	eb1fec1	arch_b0_int_n4096	ab_b0_tree_int	4096	warm	700034.6	698709.6	712520.4
+1784624481	eb1fec1	arch_b0_int_n4096	ab_b0_pred_int	4096	warm	944012.1	937021.2	956273.3
+1784624481	eb1fec1	arch_b0_int_n4096	ab_b0_prof_int	4096	warm	694818.3	694260.6	699981.0
+1784624481	eb1fec1	arch_b0_int_n4096	ab_b0_seq_int	4096	warm	697286.7	695596.4	701941.9
+1784624481	eb1fec1	arch_b0_int_n4096	ab_b0_table_int	4096	warm	700549.6	699783.3	703212.5
+1784624481	eb1fec1	arch_b0_int_n4096	ab_b0_tree_int	4096	warm	705133.7	699496.0	711971.7

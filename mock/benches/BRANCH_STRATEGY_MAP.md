@@ -177,3 +177,60 @@ bench), arity is structural.
 - Stencil variants that emit the branchless shape (to confirm they match native at scale, closing the
   large-n gap), and a stencil for the multiway jump-table.
 - Larger arity (16-way, 32-way) and a mixed-skew key distribution.
+
+## Per-branch archetype map, INTERP vs NATIVE tier (the tier flips the verdict)
+
+The honest per-branch showdown: ONE shared IR program of 7 branch archetypes (match4-linear,
+match4-nested, match8-linear, match4-blocks, ifchain-linear, ifchain-nested, ifchain-blocks). Each
+archetype gets its own bench that varies ONLY that branch's strategy (rest fixed at `table`), normalised
+against the `table` baseline (mockspace `[bench.*.normalise]`), so the whole-program delta isolates that
+branch. Same program lowered two ways: `interp` (real tree-walking IR interpreter) and `native` (compiled
+Rust, each strategy a native construct). Strategies: seq (if-chain), table (jump/match), tree (binary),
+prof (hot-first), pred (eval-all-then-select). Cross-validated; highlights from the shared detector engine.
+
+### INTERP tier (real tree-walking interpreter)
+
+For every archetype (match and ifchain, every arm shape) the one-arm strategies (seq/table/tree/prof) are
+a statistical DEAD HEAT, and `table` is tied-best everywhere. `pred` (eval-all) is the consistent outlier
+because the interpreter walks every arm's subtree: match4-linear ~tied, match8 40% apart, match4-blocks
+89% apart, whole-program pred is 4.0x the field. The interpreter's per-node dispatch dominates, so the
+dispatch STRATEGY barely matters; only eval-all, which multiplies the arm-walk, separates. Rule under
+interpretation: pick any one-arm strategy (they are equivalent), never eval-all; the arm shape only
+amplifies eval-all's penalty.
+
+### NATIVE tier (compiled) - the reversal
+
+The tier changes the ranking. Under native, dispatch is cheap (LLVM if-converts / jump-tables the one-arm
+strategies, which mostly TIE, often below the noise floor: match4-linear whole field within 1.7%), and
+`pred` (eval-all) FLIPS from worst to best in the regime that suits it: **match8-linear (cheap, many-way):
+`pred` DOMINATES, 35% faster than the next strategy and 26% faster than the `table` baseline, significant.**
+Native eval-all is branchless (compute all arms, select), so on a data-dependent many-way key it avoids the
+mispredict the dispatch strategies pay, and with cheap arms computing all of them is cheaper than a
+mispredicting branch. For heavy arms (blocks) eval-all loses again (computing all the heavy arms costs more
+than the saved mispredict), and there the dispatch strategies tie.
+
+### The cross-tier rule (why tier is a variant of strategy, not a strategy)
+
+The optimal branch strategy is TIER-DEPENDENT:
+
+- **Interpreted:** never eval-all (it multiplies the expensive arm-walk); all one-arm dispatch strategies are
+  equivalent, so pick the simplest (`table`/jump).
+- **Native / copy-and-patch:** for cheap-arm MANY-way branches, eval-all (branchless) can WIN (match8: +26%
+  vs table) by dodging the mispredict; for heavy arms or few-way, the one-arm dispatch strategies tie and
+  eval-all loses. So native should pick eval-all for cheap wide unpredictable branches and a jump/table
+  otherwise.
+
+This is the load-bearing result of the whole branch study: what is worst under interpretation (eval-all) is
+best under native in the right regime, and vice versa. A compiler that picks one strategy globally is wrong
+in one tier; the strategy must be chosen per (tier, predictability, arity, arm-cost). It also sharpens the
+copy-and-patch guidance from the tier bench: the stencil emitter must apply THIS map (emit branchless
+eval-all for cheap wide unpredictable branches, a jump table otherwise), not a fixed shape.
+
+### JIT / copy-and-patch tier
+
+The `branch_tier` bench holds the real copy-and-patch stencil (MAP_JIT aarch64) vs interp vs native on one
+kernel: copy-and-patch scalar native is ~1x-1.2x native at small n but loses to LLVM native at scale
+(no vectorisation / if-conversion). Combined with the native reversal above, the copy-and-patch emitter
+should choose the strategy per this map (branchless for cheap wide unpredictable, jump table otherwise); a
+full archetype-JIT (emitting the whole multi-archetype program) is the deferred stencil-extraction toolchain
+(weeks), so its per-branch strategy ranking is taken to follow the native tier's, which it approximates.

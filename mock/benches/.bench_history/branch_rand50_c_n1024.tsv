@@ -7,3 +7,7 @@
 1784622024	6ab1b5e	branch_rand50_c_n1024	br_lut_c_rand50	1024	warm	2252.1	2102.3	2440.2
 1784622024	6ab1b5e	branch_rand50_c_n1024	br_mask_c_rand50	1024	warm	2581.7	2496.9	2582.7
 1784622024	6ab1b5e	branch_rand50_c_n1024	br_predicate_c_rand50	1024	warm	2122.1	2046.2	2269.6
+1784627229	eb1fec1	branch_rand50_c_n1024	br_branch_c_rand50	1024	warm	2236.2	2068.9	2274.6
+1784627229	eb1fec1	branch_rand50_c_n1024	br_lut_c_rand50	1024	warm	2671.2	2558.1	2675.4
+1784627229	eb1fec1	branch_rand50_c_n1024	br_mask_c_rand50	1024	warm	2995.0	2901.1	3071.9
+1784627229	eb1fec1	branch_rand50_c_n1024	br_predicate_c_rand50	1024	warm	2667.1	2569.6	2860.0

@@ -1,0 +1,6 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784624587	eb1fec1	arch_b3_int_n1024	ab_b3_pred_int	1024	warm	471565.4	470276.8	476771.8
+1784624587	eb1fec1	arch_b3_int_n1024	ab_b3_prof_int	1024	warm	178681.2	177317.0	187197.0
+1784624587	eb1fec1	arch_b3_int_n1024	ab_b3_seq_int	1024	warm	177621.2	176451.7	184327.7
+1784624587	eb1fec1	arch_b3_int_n1024	ab_b3_table_int	1024	warm	174041.7	173975.5	181149.8
+1784624587	eb1fec1	arch_b3_int_n1024	ab_b3_tree_int	1024	warm	175358.3	174452.7	184239.0

@@ -467,3 +467,488 @@ variants = ["variants/ir_branch_int/target/release/ir_branch_int", "variants/ir_
 [[bench.ir_match.sizes]]
 n = 16384
 variants = ["variants/ir_branch_int/target/release/ir_branch_int", "variants/ir_branch_nat/target/release/ir_branch_nat", "variants/ir_chain_rev_int/target/release/ir_chain_rev_int", "variants/ir_chain_rev_nat/target/release/ir_chain_rev_nat", "variants/ir_profiled_int/target/release/ir_profiled_int", "variants/ir_profiled_nat/target/release/ir_profiled_nat", "variants/ir_jumptable_int/target/release/ir_jumptable_int", "variants/ir_jumptable_nat/target/release/ir_jumptable_nat", "variants/ir_bintree_int/target/release/ir_bintree_int", "variants/ir_bintree_nat/target/release/ir_bintree_nat", "variants/ir_predicate_int/target/release/ir_predicate_int", "variants/ir_predicate_nat/target/release/ir_predicate_nat"]
+
+
+
+
+
+
+[bench.arch_b0]
+title = "Per-branch strategy: archetype 0 (match4_linear), interp tier"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[bench.arch_b0.normalise]
+baseline = "ab_b0_table"
+mode = "subtract"
+[[bench.arch_b0.sizes]]
+n = 64
+variants = ["variants/ab_b0_seq/target/release/ab_b0_seq", "variants/ab_b0_pred/target/release/ab_b0_pred", "variants/ab_b0_table/target/release/ab_b0_table", "variants/ab_b0_tree/target/release/ab_b0_tree", "variants/ab_b0_prof/target/release/ab_b0_prof"]
+[[bench.arch_b0.sizes]]
+n = 256
+variants = ["variants/ab_b0_seq/target/release/ab_b0_seq", "variants/ab_b0_pred/target/release/ab_b0_pred", "variants/ab_b0_table/target/release/ab_b0_table", "variants/ab_b0_tree/target/release/ab_b0_tree", "variants/ab_b0_prof/target/release/ab_b0_prof"]
+[[bench.arch_b0.sizes]]
+n = 1024
+variants = ["variants/ab_b0_seq/target/release/ab_b0_seq", "variants/ab_b0_pred/target/release/ab_b0_pred", "variants/ab_b0_table/target/release/ab_b0_table", "variants/ab_b0_tree/target/release/ab_b0_tree", "variants/ab_b0_prof/target/release/ab_b0_prof"]
+[[bench.arch_b0.sizes]]
+n = 4096
+variants = ["variants/ab_b0_seq/target/release/ab_b0_seq", "variants/ab_b0_pred/target/release/ab_b0_pred", "variants/ab_b0_table/target/release/ab_b0_table", "variants/ab_b0_tree/target/release/ab_b0_tree", "variants/ab_b0_prof/target/release/ab_b0_prof"]
+[[bench.arch_b0.sizes]]
+n = 16384
+variants = ["variants/ab_b0_seq/target/release/ab_b0_seq", "variants/ab_b0_pred/target/release/ab_b0_pred", "variants/ab_b0_table/target/release/ab_b0_table", "variants/ab_b0_tree/target/release/ab_b0_tree", "variants/ab_b0_prof/target/release/ab_b0_prof"]
+
+[bench.arch_b1]
+title = "Per-branch strategy: archetype 1 (match4_nested), interp tier"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[bench.arch_b1.normalise]
+baseline = "ab_b1_table"
+mode = "subtract"
+[[bench.arch_b1.sizes]]
+n = 64
+variants = ["variants/ab_b1_seq/target/release/ab_b1_seq", "variants/ab_b1_pred/target/release/ab_b1_pred", "variants/ab_b1_table/target/release/ab_b1_table", "variants/ab_b1_tree/target/release/ab_b1_tree", "variants/ab_b1_prof/target/release/ab_b1_prof"]
+[[bench.arch_b1.sizes]]
+n = 256
+variants = ["variants/ab_b1_seq/target/release/ab_b1_seq", "variants/ab_b1_pred/target/release/ab_b1_pred", "variants/ab_b1_table/target/release/ab_b1_table", "variants/ab_b1_tree/target/release/ab_b1_tree", "variants/ab_b1_prof/target/release/ab_b1_prof"]
+[[bench.arch_b1.sizes]]
+n = 1024
+variants = ["variants/ab_b1_seq/target/release/ab_b1_seq", "variants/ab_b1_pred/target/release/ab_b1_pred", "variants/ab_b1_table/target/release/ab_b1_table", "variants/ab_b1_tree/target/release/ab_b1_tree", "variants/ab_b1_prof/target/release/ab_b1_prof"]
+[[bench.arch_b1.sizes]]
+n = 4096
+variants = ["variants/ab_b1_seq/target/release/ab_b1_seq", "variants/ab_b1_pred/target/release/ab_b1_pred", "variants/ab_b1_table/target/release/ab_b1_table", "variants/ab_b1_tree/target/release/ab_b1_tree", "variants/ab_b1_prof/target/release/ab_b1_prof"]
+[[bench.arch_b1.sizes]]
+n = 16384
+variants = ["variants/ab_b1_seq/target/release/ab_b1_seq", "variants/ab_b1_pred/target/release/ab_b1_pred", "variants/ab_b1_table/target/release/ab_b1_table", "variants/ab_b1_tree/target/release/ab_b1_tree", "variants/ab_b1_prof/target/release/ab_b1_prof"]
+
+[bench.arch_b2]
+title = "Per-branch strategy: archetype 2 (match8_linear), interp tier"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[bench.arch_b2.normalise]
+baseline = "ab_b2_table"
+mode = "subtract"
+[[bench.arch_b2.sizes]]
+n = 64
+variants = ["variants/ab_b2_seq/target/release/ab_b2_seq", "variants/ab_b2_pred/target/release/ab_b2_pred", "variants/ab_b2_table/target/release/ab_b2_table", "variants/ab_b2_tree/target/release/ab_b2_tree", "variants/ab_b2_prof/target/release/ab_b2_prof"]
+[[bench.arch_b2.sizes]]
+n = 256
+variants = ["variants/ab_b2_seq/target/release/ab_b2_seq", "variants/ab_b2_pred/target/release/ab_b2_pred", "variants/ab_b2_table/target/release/ab_b2_table", "variants/ab_b2_tree/target/release/ab_b2_tree", "variants/ab_b2_prof/target/release/ab_b2_prof"]
+[[bench.arch_b2.sizes]]
+n = 1024
+variants = ["variants/ab_b2_seq/target/release/ab_b2_seq", "variants/ab_b2_pred/target/release/ab_b2_pred", "variants/ab_b2_table/target/release/ab_b2_table", "variants/ab_b2_tree/target/release/ab_b2_tree", "variants/ab_b2_prof/target/release/ab_b2_prof"]
+[[bench.arch_b2.sizes]]
+n = 4096
+variants = ["variants/ab_b2_seq/target/release/ab_b2_seq", "variants/ab_b2_pred/target/release/ab_b2_pred", "variants/ab_b2_table/target/release/ab_b2_table", "variants/ab_b2_tree/target/release/ab_b2_tree", "variants/ab_b2_prof/target/release/ab_b2_prof"]
+[[bench.arch_b2.sizes]]
+n = 16384
+variants = ["variants/ab_b2_seq/target/release/ab_b2_seq", "variants/ab_b2_pred/target/release/ab_b2_pred", "variants/ab_b2_table/target/release/ab_b2_table", "variants/ab_b2_tree/target/release/ab_b2_tree", "variants/ab_b2_prof/target/release/ab_b2_prof"]
+
+[bench.arch_b3]
+title = "Per-branch strategy: archetype 3 (match4_blocks), interp tier"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[bench.arch_b3.normalise]
+baseline = "ab_b3_table"
+mode = "subtract"
+[[bench.arch_b3.sizes]]
+n = 64
+variants = ["variants/ab_b3_seq/target/release/ab_b3_seq", "variants/ab_b3_pred/target/release/ab_b3_pred", "variants/ab_b3_table/target/release/ab_b3_table", "variants/ab_b3_tree/target/release/ab_b3_tree", "variants/ab_b3_prof/target/release/ab_b3_prof"]
+[[bench.arch_b3.sizes]]
+n = 256
+variants = ["variants/ab_b3_seq/target/release/ab_b3_seq", "variants/ab_b3_pred/target/release/ab_b3_pred", "variants/ab_b3_table/target/release/ab_b3_table", "variants/ab_b3_tree/target/release/ab_b3_tree", "variants/ab_b3_prof/target/release/ab_b3_prof"]
+[[bench.arch_b3.sizes]]
+n = 1024
+variants = ["variants/ab_b3_seq/target/release/ab_b3_seq", "variants/ab_b3_pred/target/release/ab_b3_pred", "variants/ab_b3_table/target/release/ab_b3_table", "variants/ab_b3_tree/target/release/ab_b3_tree", "variants/ab_b3_prof/target/release/ab_b3_prof"]
+[[bench.arch_b3.sizes]]
+n = 4096
+variants = ["variants/ab_b3_seq/target/release/ab_b3_seq", "variants/ab_b3_pred/target/release/ab_b3_pred", "variants/ab_b3_table/target/release/ab_b3_table", "variants/ab_b3_tree/target/release/ab_b3_tree", "variants/ab_b3_prof/target/release/ab_b3_prof"]
+[[bench.arch_b3.sizes]]
+n = 16384
+variants = ["variants/ab_b3_seq/target/release/ab_b3_seq", "variants/ab_b3_pred/target/release/ab_b3_pred", "variants/ab_b3_table/target/release/ab_b3_table", "variants/ab_b3_tree/target/release/ab_b3_tree", "variants/ab_b3_prof/target/release/ab_b3_prof"]
+
+[bench.arch_b4]
+title = "Per-branch strategy: archetype 4 (ifchain4_linear), interp tier"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[bench.arch_b4.normalise]
+baseline = "ab_b4_table"
+mode = "subtract"
+[[bench.arch_b4.sizes]]
+n = 64
+variants = ["variants/ab_b4_seq/target/release/ab_b4_seq", "variants/ab_b4_pred/target/release/ab_b4_pred", "variants/ab_b4_table/target/release/ab_b4_table", "variants/ab_b4_tree/target/release/ab_b4_tree", "variants/ab_b4_prof/target/release/ab_b4_prof"]
+[[bench.arch_b4.sizes]]
+n = 256
+variants = ["variants/ab_b4_seq/target/release/ab_b4_seq", "variants/ab_b4_pred/target/release/ab_b4_pred", "variants/ab_b4_table/target/release/ab_b4_table", "variants/ab_b4_tree/target/release/ab_b4_tree", "variants/ab_b4_prof/target/release/ab_b4_prof"]
+[[bench.arch_b4.sizes]]
+n = 1024
+variants = ["variants/ab_b4_seq/target/release/ab_b4_seq", "variants/ab_b4_pred/target/release/ab_b4_pred", "variants/ab_b4_table/target/release/ab_b4_table", "variants/ab_b4_tree/target/release/ab_b4_tree", "variants/ab_b4_prof/target/release/ab_b4_prof"]
+[[bench.arch_b4.sizes]]
+n = 4096
+variants = ["variants/ab_b4_seq/target/release/ab_b4_seq", "variants/ab_b4_pred/target/release/ab_b4_pred", "variants/ab_b4_table/target/release/ab_b4_table", "variants/ab_b4_tree/target/release/ab_b4_tree", "variants/ab_b4_prof/target/release/ab_b4_prof"]
+[[bench.arch_b4.sizes]]
+n = 16384
+variants = ["variants/ab_b4_seq/target/release/ab_b4_seq", "variants/ab_b4_pred/target/release/ab_b4_pred", "variants/ab_b4_table/target/release/ab_b4_table", "variants/ab_b4_tree/target/release/ab_b4_tree", "variants/ab_b4_prof/target/release/ab_b4_prof"]
+
+[bench.arch_b5]
+title = "Per-branch strategy: archetype 5 (ifchain4_nested), interp tier"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[bench.arch_b5.normalise]
+baseline = "ab_b5_table"
+mode = "subtract"
+[[bench.arch_b5.sizes]]
+n = 64
+variants = ["variants/ab_b5_seq/target/release/ab_b5_seq", "variants/ab_b5_pred/target/release/ab_b5_pred", "variants/ab_b5_table/target/release/ab_b5_table", "variants/ab_b5_tree/target/release/ab_b5_tree", "variants/ab_b5_prof/target/release/ab_b5_prof"]
+[[bench.arch_b5.sizes]]
+n = 256
+variants = ["variants/ab_b5_seq/target/release/ab_b5_seq", "variants/ab_b5_pred/target/release/ab_b5_pred", "variants/ab_b5_table/target/release/ab_b5_table", "variants/ab_b5_tree/target/release/ab_b5_tree", "variants/ab_b5_prof/target/release/ab_b5_prof"]
+[[bench.arch_b5.sizes]]
+n = 1024
+variants = ["variants/ab_b5_seq/target/release/ab_b5_seq", "variants/ab_b5_pred/target/release/ab_b5_pred", "variants/ab_b5_table/target/release/ab_b5_table", "variants/ab_b5_tree/target/release/ab_b5_tree", "variants/ab_b5_prof/target/release/ab_b5_prof"]
+[[bench.arch_b5.sizes]]
+n = 4096
+variants = ["variants/ab_b5_seq/target/release/ab_b5_seq", "variants/ab_b5_pred/target/release/ab_b5_pred", "variants/ab_b5_table/target/release/ab_b5_table", "variants/ab_b5_tree/target/release/ab_b5_tree", "variants/ab_b5_prof/target/release/ab_b5_prof"]
+[[bench.arch_b5.sizes]]
+n = 16384
+variants = ["variants/ab_b5_seq/target/release/ab_b5_seq", "variants/ab_b5_pred/target/release/ab_b5_pred", "variants/ab_b5_table/target/release/ab_b5_table", "variants/ab_b5_tree/target/release/ab_b5_tree", "variants/ab_b5_prof/target/release/ab_b5_prof"]
+
+[bench.arch_b6]
+title = "Per-branch strategy: archetype 6 (ifchain4_blocks), interp tier"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[bench.arch_b6.normalise]
+baseline = "ab_b6_table"
+mode = "subtract"
+[[bench.arch_b6.sizes]]
+n = 64
+variants = ["variants/ab_b6_seq/target/release/ab_b6_seq", "variants/ab_b6_pred/target/release/ab_b6_pred", "variants/ab_b6_table/target/release/ab_b6_table", "variants/ab_b6_tree/target/release/ab_b6_tree", "variants/ab_b6_prof/target/release/ab_b6_prof"]
+[[bench.arch_b6.sizes]]
+n = 256
+variants = ["variants/ab_b6_seq/target/release/ab_b6_seq", "variants/ab_b6_pred/target/release/ab_b6_pred", "variants/ab_b6_table/target/release/ab_b6_table", "variants/ab_b6_tree/target/release/ab_b6_tree", "variants/ab_b6_prof/target/release/ab_b6_prof"]
+[[bench.arch_b6.sizes]]
+n = 1024
+variants = ["variants/ab_b6_seq/target/release/ab_b6_seq", "variants/ab_b6_pred/target/release/ab_b6_pred", "variants/ab_b6_table/target/release/ab_b6_table", "variants/ab_b6_tree/target/release/ab_b6_tree", "variants/ab_b6_prof/target/release/ab_b6_prof"]
+[[bench.arch_b6.sizes]]
+n = 4096
+variants = ["variants/ab_b6_seq/target/release/ab_b6_seq", "variants/ab_b6_pred/target/release/ab_b6_pred", "variants/ab_b6_table/target/release/ab_b6_table", "variants/ab_b6_tree/target/release/ab_b6_tree", "variants/ab_b6_prof/target/release/ab_b6_prof"]
+[[bench.arch_b6.sizes]]
+n = 16384
+variants = ["variants/ab_b6_seq/target/release/ab_b6_seq", "variants/ab_b6_pred/target/release/ab_b6_pred", "variants/ab_b6_table/target/release/ab_b6_table", "variants/ab_b6_tree/target/release/ab_b6_tree", "variants/ab_b6_prof/target/release/ab_b6_prof"]
+
+[bench.arch_match]
+title = "Per-type strategy: all match branches one strategy, interp tier"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[bench.arch_match.normalise]
+baseline = "ab_match_table"
+mode = "subtract"
+[[bench.arch_match.sizes]]
+n = 64
+variants = ["variants/ab_match_seq/target/release/ab_match_seq", "variants/ab_match_pred/target/release/ab_match_pred", "variants/ab_match_table/target/release/ab_match_table", "variants/ab_match_tree/target/release/ab_match_tree", "variants/ab_match_prof/target/release/ab_match_prof"]
+[[bench.arch_match.sizes]]
+n = 256
+variants = ["variants/ab_match_seq/target/release/ab_match_seq", "variants/ab_match_pred/target/release/ab_match_pred", "variants/ab_match_table/target/release/ab_match_table", "variants/ab_match_tree/target/release/ab_match_tree", "variants/ab_match_prof/target/release/ab_match_prof"]
+[[bench.arch_match.sizes]]
+n = 1024
+variants = ["variants/ab_match_seq/target/release/ab_match_seq", "variants/ab_match_pred/target/release/ab_match_pred", "variants/ab_match_table/target/release/ab_match_table", "variants/ab_match_tree/target/release/ab_match_tree", "variants/ab_match_prof/target/release/ab_match_prof"]
+[[bench.arch_match.sizes]]
+n = 4096
+variants = ["variants/ab_match_seq/target/release/ab_match_seq", "variants/ab_match_pred/target/release/ab_match_pred", "variants/ab_match_table/target/release/ab_match_table", "variants/ab_match_tree/target/release/ab_match_tree", "variants/ab_match_prof/target/release/ab_match_prof"]
+[[bench.arch_match.sizes]]
+n = 16384
+variants = ["variants/ab_match_seq/target/release/ab_match_seq", "variants/ab_match_pred/target/release/ab_match_pred", "variants/ab_match_table/target/release/ab_match_table", "variants/ab_match_tree/target/release/ab_match_tree", "variants/ab_match_prof/target/release/ab_match_prof"]
+
+[bench.arch_ifchain]
+title = "Per-type strategy: all ifchain branches one strategy, interp tier"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[bench.arch_ifchain.normalise]
+baseline = "ab_ifchain_table"
+mode = "subtract"
+[[bench.arch_ifchain.sizes]]
+n = 64
+variants = ["variants/ab_ifchain_seq/target/release/ab_ifchain_seq", "variants/ab_ifchain_pred/target/release/ab_ifchain_pred", "variants/ab_ifchain_table/target/release/ab_ifchain_table", "variants/ab_ifchain_tree/target/release/ab_ifchain_tree", "variants/ab_ifchain_prof/target/release/ab_ifchain_prof"]
+[[bench.arch_ifchain.sizes]]
+n = 256
+variants = ["variants/ab_ifchain_seq/target/release/ab_ifchain_seq", "variants/ab_ifchain_pred/target/release/ab_ifchain_pred", "variants/ab_ifchain_table/target/release/ab_ifchain_table", "variants/ab_ifchain_tree/target/release/ab_ifchain_tree", "variants/ab_ifchain_prof/target/release/ab_ifchain_prof"]
+[[bench.arch_ifchain.sizes]]
+n = 1024
+variants = ["variants/ab_ifchain_seq/target/release/ab_ifchain_seq", "variants/ab_ifchain_pred/target/release/ab_ifchain_pred", "variants/ab_ifchain_table/target/release/ab_ifchain_table", "variants/ab_ifchain_tree/target/release/ab_ifchain_tree", "variants/ab_ifchain_prof/target/release/ab_ifchain_prof"]
+[[bench.arch_ifchain.sizes]]
+n = 4096
+variants = ["variants/ab_ifchain_seq/target/release/ab_ifchain_seq", "variants/ab_ifchain_pred/target/release/ab_ifchain_pred", "variants/ab_ifchain_table/target/release/ab_ifchain_table", "variants/ab_ifchain_tree/target/release/ab_ifchain_tree", "variants/ab_ifchain_prof/target/release/ab_ifchain_prof"]
+[[bench.arch_ifchain.sizes]]
+n = 16384
+variants = ["variants/ab_ifchain_seq/target/release/ab_ifchain_seq", "variants/ab_ifchain_pred/target/release/ab_ifchain_pred", "variants/ab_ifchain_table/target/release/ab_ifchain_table", "variants/ab_ifchain_tree/target/release/ab_ifchain_tree", "variants/ab_ifchain_prof/target/release/ab_ifchain_prof"]
+
+[bench.arch_whole]
+title = "Whole-program single strategy (all branches), interp tier"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[bench.arch_whole.normalise]
+baseline = "ab_whole_table"
+mode = "subtract"
+[[bench.arch_whole.sizes]]
+n = 64
+variants = ["variants/ab_whole_seq/target/release/ab_whole_seq", "variants/ab_whole_pred/target/release/ab_whole_pred", "variants/ab_whole_table/target/release/ab_whole_table", "variants/ab_whole_tree/target/release/ab_whole_tree", "variants/ab_whole_prof/target/release/ab_whole_prof"]
+[[bench.arch_whole.sizes]]
+n = 256
+variants = ["variants/ab_whole_seq/target/release/ab_whole_seq", "variants/ab_whole_pred/target/release/ab_whole_pred", "variants/ab_whole_table/target/release/ab_whole_table", "variants/ab_whole_tree/target/release/ab_whole_tree", "variants/ab_whole_prof/target/release/ab_whole_prof"]
+[[bench.arch_whole.sizes]]
+n = 1024
+variants = ["variants/ab_whole_seq/target/release/ab_whole_seq", "variants/ab_whole_pred/target/release/ab_whole_pred", "variants/ab_whole_table/target/release/ab_whole_table", "variants/ab_whole_tree/target/release/ab_whole_tree", "variants/ab_whole_prof/target/release/ab_whole_prof"]
+[[bench.arch_whole.sizes]]
+n = 4096
+variants = ["variants/ab_whole_seq/target/release/ab_whole_seq", "variants/ab_whole_pred/target/release/ab_whole_pred", "variants/ab_whole_table/target/release/ab_whole_table", "variants/ab_whole_tree/target/release/ab_whole_tree", "variants/ab_whole_prof/target/release/ab_whole_prof"]
+[[bench.arch_whole.sizes]]
+n = 16384
+variants = ["variants/ab_whole_seq/target/release/ab_whole_seq", "variants/ab_whole_pred/target/release/ab_whole_pred", "variants/ab_whole_table/target/release/ab_whole_table", "variants/ab_whole_tree/target/release/ab_whole_tree", "variants/ab_whole_prof/target/release/ab_whole_prof"]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[bench.archn_b0]
+title="Per-branch strategy (NATIVE tier): archetype 0"
+workload="realistic"
+master_seed=0x7654_3210_fedc_ba98
+[bench.archn_b0.normalise]
+baseline="an_b0_table"
+mode="subtract"
+[[bench.archn_b0.sizes]]
+n=64
+variants=["variants/an_b0_seq/target/release/an_b0_seq", "variants/an_b0_pred/target/release/an_b0_pred", "variants/an_b0_table/target/release/an_b0_table", "variants/an_b0_tree/target/release/an_b0_tree", "variants/an_b0_prof/target/release/an_b0_prof"]
+[[bench.archn_b0.sizes]]
+n=256
+variants=["variants/an_b0_seq/target/release/an_b0_seq", "variants/an_b0_pred/target/release/an_b0_pred", "variants/an_b0_table/target/release/an_b0_table", "variants/an_b0_tree/target/release/an_b0_tree", "variants/an_b0_prof/target/release/an_b0_prof"]
+[[bench.archn_b0.sizes]]
+n=1024
+variants=["variants/an_b0_seq/target/release/an_b0_seq", "variants/an_b0_pred/target/release/an_b0_pred", "variants/an_b0_table/target/release/an_b0_table", "variants/an_b0_tree/target/release/an_b0_tree", "variants/an_b0_prof/target/release/an_b0_prof"]
+[[bench.archn_b0.sizes]]
+n=4096
+variants=["variants/an_b0_seq/target/release/an_b0_seq", "variants/an_b0_pred/target/release/an_b0_pred", "variants/an_b0_table/target/release/an_b0_table", "variants/an_b0_tree/target/release/an_b0_tree", "variants/an_b0_prof/target/release/an_b0_prof"]
+[[bench.archn_b0.sizes]]
+n=16384
+variants=["variants/an_b0_seq/target/release/an_b0_seq", "variants/an_b0_pred/target/release/an_b0_pred", "variants/an_b0_table/target/release/an_b0_table", "variants/an_b0_tree/target/release/an_b0_tree", "variants/an_b0_prof/target/release/an_b0_prof"]
+
+[bench.archn_b1]
+title="Per-branch strategy (NATIVE tier): archetype 1"
+workload="realistic"
+master_seed=0x7654_3210_fedc_ba98
+[bench.archn_b1.normalise]
+baseline="an_b1_table"
+mode="subtract"
+[[bench.archn_b1.sizes]]
+n=64
+variants=["variants/an_b1_seq/target/release/an_b1_seq", "variants/an_b1_pred/target/release/an_b1_pred", "variants/an_b1_table/target/release/an_b1_table", "variants/an_b1_tree/target/release/an_b1_tree", "variants/an_b1_prof/target/release/an_b1_prof"]
+[[bench.archn_b1.sizes]]
+n=256
+variants=["variants/an_b1_seq/target/release/an_b1_seq", "variants/an_b1_pred/target/release/an_b1_pred", "variants/an_b1_table/target/release/an_b1_table", "variants/an_b1_tree/target/release/an_b1_tree", "variants/an_b1_prof/target/release/an_b1_prof"]
+[[bench.archn_b1.sizes]]
+n=1024
+variants=["variants/an_b1_seq/target/release/an_b1_seq", "variants/an_b1_pred/target/release/an_b1_pred", "variants/an_b1_table/target/release/an_b1_table", "variants/an_b1_tree/target/release/an_b1_tree", "variants/an_b1_prof/target/release/an_b1_prof"]
+[[bench.archn_b1.sizes]]
+n=4096
+variants=["variants/an_b1_seq/target/release/an_b1_seq", "variants/an_b1_pred/target/release/an_b1_pred", "variants/an_b1_table/target/release/an_b1_table", "variants/an_b1_tree/target/release/an_b1_tree", "variants/an_b1_prof/target/release/an_b1_prof"]
+[[bench.archn_b1.sizes]]
+n=16384
+variants=["variants/an_b1_seq/target/release/an_b1_seq", "variants/an_b1_pred/target/release/an_b1_pred", "variants/an_b1_table/target/release/an_b1_table", "variants/an_b1_tree/target/release/an_b1_tree", "variants/an_b1_prof/target/release/an_b1_prof"]
+
+[bench.archn_b2]
+title="Per-branch strategy (NATIVE tier): archetype 2"
+workload="realistic"
+master_seed=0x7654_3210_fedc_ba98
+[bench.archn_b2.normalise]
+baseline="an_b2_table"
+mode="subtract"
+[[bench.archn_b2.sizes]]
+n=64
+variants=["variants/an_b2_seq/target/release/an_b2_seq", "variants/an_b2_pred/target/release/an_b2_pred", "variants/an_b2_table/target/release/an_b2_table", "variants/an_b2_tree/target/release/an_b2_tree", "variants/an_b2_prof/target/release/an_b2_prof"]
+[[bench.archn_b2.sizes]]
+n=256
+variants=["variants/an_b2_seq/target/release/an_b2_seq", "variants/an_b2_pred/target/release/an_b2_pred", "variants/an_b2_table/target/release/an_b2_table", "variants/an_b2_tree/target/release/an_b2_tree", "variants/an_b2_prof/target/release/an_b2_prof"]
+[[bench.archn_b2.sizes]]
+n=1024
+variants=["variants/an_b2_seq/target/release/an_b2_seq", "variants/an_b2_pred/target/release/an_b2_pred", "variants/an_b2_table/target/release/an_b2_table", "variants/an_b2_tree/target/release/an_b2_tree", "variants/an_b2_prof/target/release/an_b2_prof"]
+[[bench.archn_b2.sizes]]
+n=4096
+variants=["variants/an_b2_seq/target/release/an_b2_seq", "variants/an_b2_pred/target/release/an_b2_pred", "variants/an_b2_table/target/release/an_b2_table", "variants/an_b2_tree/target/release/an_b2_tree", "variants/an_b2_prof/target/release/an_b2_prof"]
+[[bench.archn_b2.sizes]]
+n=16384
+variants=["variants/an_b2_seq/target/release/an_b2_seq", "variants/an_b2_pred/target/release/an_b2_pred", "variants/an_b2_table/target/release/an_b2_table", "variants/an_b2_tree/target/release/an_b2_tree", "variants/an_b2_prof/target/release/an_b2_prof"]
+
+[bench.archn_b3]
+title="Per-branch strategy (NATIVE tier): archetype 3"
+workload="realistic"
+master_seed=0x7654_3210_fedc_ba98
+[bench.archn_b3.normalise]
+baseline="an_b3_table"
+mode="subtract"
+[[bench.archn_b3.sizes]]
+n=64
+variants=["variants/an_b3_seq/target/release/an_b3_seq", "variants/an_b3_pred/target/release/an_b3_pred", "variants/an_b3_table/target/release/an_b3_table", "variants/an_b3_tree/target/release/an_b3_tree", "variants/an_b3_prof/target/release/an_b3_prof"]
+[[bench.archn_b3.sizes]]
+n=256
+variants=["variants/an_b3_seq/target/release/an_b3_seq", "variants/an_b3_pred/target/release/an_b3_pred", "variants/an_b3_table/target/release/an_b3_table", "variants/an_b3_tree/target/release/an_b3_tree", "variants/an_b3_prof/target/release/an_b3_prof"]
+[[bench.archn_b3.sizes]]
+n=1024
+variants=["variants/an_b3_seq/target/release/an_b3_seq", "variants/an_b3_pred/target/release/an_b3_pred", "variants/an_b3_table/target/release/an_b3_table", "variants/an_b3_tree/target/release/an_b3_tree", "variants/an_b3_prof/target/release/an_b3_prof"]
+[[bench.archn_b3.sizes]]
+n=4096
+variants=["variants/an_b3_seq/target/release/an_b3_seq", "variants/an_b3_pred/target/release/an_b3_pred", "variants/an_b3_table/target/release/an_b3_table", "variants/an_b3_tree/target/release/an_b3_tree", "variants/an_b3_prof/target/release/an_b3_prof"]
+[[bench.archn_b3.sizes]]
+n=16384
+variants=["variants/an_b3_seq/target/release/an_b3_seq", "variants/an_b3_pred/target/release/an_b3_pred", "variants/an_b3_table/target/release/an_b3_table", "variants/an_b3_tree/target/release/an_b3_tree", "variants/an_b3_prof/target/release/an_b3_prof"]
+
+[bench.archn_b4]
+title="Per-branch strategy (NATIVE tier): archetype 4"
+workload="realistic"
+master_seed=0x7654_3210_fedc_ba98
+[bench.archn_b4.normalise]
+baseline="an_b4_table"
+mode="subtract"
+[[bench.archn_b4.sizes]]
+n=64
+variants=["variants/an_b4_seq/target/release/an_b4_seq", "variants/an_b4_pred/target/release/an_b4_pred", "variants/an_b4_table/target/release/an_b4_table", "variants/an_b4_tree/target/release/an_b4_tree", "variants/an_b4_prof/target/release/an_b4_prof"]
+[[bench.archn_b4.sizes]]
+n=256
+variants=["variants/an_b4_seq/target/release/an_b4_seq", "variants/an_b4_pred/target/release/an_b4_pred", "variants/an_b4_table/target/release/an_b4_table", "variants/an_b4_tree/target/release/an_b4_tree", "variants/an_b4_prof/target/release/an_b4_prof"]
+[[bench.archn_b4.sizes]]
+n=1024
+variants=["variants/an_b4_seq/target/release/an_b4_seq", "variants/an_b4_pred/target/release/an_b4_pred", "variants/an_b4_table/target/release/an_b4_table", "variants/an_b4_tree/target/release/an_b4_tree", "variants/an_b4_prof/target/release/an_b4_prof"]
+[[bench.archn_b4.sizes]]
+n=4096
+variants=["variants/an_b4_seq/target/release/an_b4_seq", "variants/an_b4_pred/target/release/an_b4_pred", "variants/an_b4_table/target/release/an_b4_table", "variants/an_b4_tree/target/release/an_b4_tree", "variants/an_b4_prof/target/release/an_b4_prof"]
+[[bench.archn_b4.sizes]]
+n=16384
+variants=["variants/an_b4_seq/target/release/an_b4_seq", "variants/an_b4_pred/target/release/an_b4_pred", "variants/an_b4_table/target/release/an_b4_table", "variants/an_b4_tree/target/release/an_b4_tree", "variants/an_b4_prof/target/release/an_b4_prof"]
+
+[bench.archn_b5]
+title="Per-branch strategy (NATIVE tier): archetype 5"
+workload="realistic"
+master_seed=0x7654_3210_fedc_ba98
+[bench.archn_b5.normalise]
+baseline="an_b5_table"
+mode="subtract"
+[[bench.archn_b5.sizes]]
+n=64
+variants=["variants/an_b5_seq/target/release/an_b5_seq", "variants/an_b5_pred/target/release/an_b5_pred", "variants/an_b5_table/target/release/an_b5_table", "variants/an_b5_tree/target/release/an_b5_tree", "variants/an_b5_prof/target/release/an_b5_prof"]
+[[bench.archn_b5.sizes]]
+n=256
+variants=["variants/an_b5_seq/target/release/an_b5_seq", "variants/an_b5_pred/target/release/an_b5_pred", "variants/an_b5_table/target/release/an_b5_table", "variants/an_b5_tree/target/release/an_b5_tree", "variants/an_b5_prof/target/release/an_b5_prof"]
+[[bench.archn_b5.sizes]]
+n=1024
+variants=["variants/an_b5_seq/target/release/an_b5_seq", "variants/an_b5_pred/target/release/an_b5_pred", "variants/an_b5_table/target/release/an_b5_table", "variants/an_b5_tree/target/release/an_b5_tree", "variants/an_b5_prof/target/release/an_b5_prof"]
+[[bench.archn_b5.sizes]]
+n=4096
+variants=["variants/an_b5_seq/target/release/an_b5_seq", "variants/an_b5_pred/target/release/an_b5_pred", "variants/an_b5_table/target/release/an_b5_table", "variants/an_b5_tree/target/release/an_b5_tree", "variants/an_b5_prof/target/release/an_b5_prof"]
+[[bench.archn_b5.sizes]]
+n=16384
+variants=["variants/an_b5_seq/target/release/an_b5_seq", "variants/an_b5_pred/target/release/an_b5_pred", "variants/an_b5_table/target/release/an_b5_table", "variants/an_b5_tree/target/release/an_b5_tree", "variants/an_b5_prof/target/release/an_b5_prof"]
+
+[bench.archn_b6]
+title="Per-branch strategy (NATIVE tier): archetype 6"
+workload="realistic"
+master_seed=0x7654_3210_fedc_ba98
+[bench.archn_b6.normalise]
+baseline="an_b6_table"
+mode="subtract"
+[[bench.archn_b6.sizes]]
+n=64
+variants=["variants/an_b6_seq/target/release/an_b6_seq", "variants/an_b6_pred/target/release/an_b6_pred", "variants/an_b6_table/target/release/an_b6_table", "variants/an_b6_tree/target/release/an_b6_tree", "variants/an_b6_prof/target/release/an_b6_prof"]
+[[bench.archn_b6.sizes]]
+n=256
+variants=["variants/an_b6_seq/target/release/an_b6_seq", "variants/an_b6_pred/target/release/an_b6_pred", "variants/an_b6_table/target/release/an_b6_table", "variants/an_b6_tree/target/release/an_b6_tree", "variants/an_b6_prof/target/release/an_b6_prof"]
+[[bench.archn_b6.sizes]]
+n=1024
+variants=["variants/an_b6_seq/target/release/an_b6_seq", "variants/an_b6_pred/target/release/an_b6_pred", "variants/an_b6_table/target/release/an_b6_table", "variants/an_b6_tree/target/release/an_b6_tree", "variants/an_b6_prof/target/release/an_b6_prof"]
+[[bench.archn_b6.sizes]]
+n=4096
+variants=["variants/an_b6_seq/target/release/an_b6_seq", "variants/an_b6_pred/target/release/an_b6_pred", "variants/an_b6_table/target/release/an_b6_table", "variants/an_b6_tree/target/release/an_b6_tree", "variants/an_b6_prof/target/release/an_b6_prof"]
+[[bench.archn_b6.sizes]]
+n=16384
+variants=["variants/an_b6_seq/target/release/an_b6_seq", "variants/an_b6_pred/target/release/an_b6_pred", "variants/an_b6_table/target/release/an_b6_table", "variants/an_b6_tree/target/release/an_b6_tree", "variants/an_b6_prof/target/release/an_b6_prof"]
+
+[bench.archn_match]
+title="Per-type strategy (NATIVE tier): all match"
+workload="realistic"
+master_seed=0x7654_3210_fedc_ba98
+[bench.archn_match.normalise]
+baseline="an_match_table"
+mode="subtract"
+[[bench.archn_match.sizes]]
+n=64
+variants=["variants/an_match_seq/target/release/an_match_seq", "variants/an_match_pred/target/release/an_match_pred", "variants/an_match_table/target/release/an_match_table", "variants/an_match_tree/target/release/an_match_tree", "variants/an_match_prof/target/release/an_match_prof"]
+[[bench.archn_match.sizes]]
+n=256
+variants=["variants/an_match_seq/target/release/an_match_seq", "variants/an_match_pred/target/release/an_match_pred", "variants/an_match_table/target/release/an_match_table", "variants/an_match_tree/target/release/an_match_tree", "variants/an_match_prof/target/release/an_match_prof"]
+[[bench.archn_match.sizes]]
+n=1024
+variants=["variants/an_match_seq/target/release/an_match_seq", "variants/an_match_pred/target/release/an_match_pred", "variants/an_match_table/target/release/an_match_table", "variants/an_match_tree/target/release/an_match_tree", "variants/an_match_prof/target/release/an_match_prof"]
+[[bench.archn_match.sizes]]
+n=4096
+variants=["variants/an_match_seq/target/release/an_match_seq", "variants/an_match_pred/target/release/an_match_pred", "variants/an_match_table/target/release/an_match_table", "variants/an_match_tree/target/release/an_match_tree", "variants/an_match_prof/target/release/an_match_prof"]
+[[bench.archn_match.sizes]]
+n=16384
+variants=["variants/an_match_seq/target/release/an_match_seq", "variants/an_match_pred/target/release/an_match_pred", "variants/an_match_table/target/release/an_match_table", "variants/an_match_tree/target/release/an_match_tree", "variants/an_match_prof/target/release/an_match_prof"]
+
+[bench.archn_ifchain]
+title="Per-type strategy (NATIVE tier): all ifchain"
+workload="realistic"
+master_seed=0x7654_3210_fedc_ba98
+[bench.archn_ifchain.normalise]
+baseline="an_ifchain_table"
+mode="subtract"
+[[bench.archn_ifchain.sizes]]
+n=64
+variants=["variants/an_ifchain_seq/target/release/an_ifchain_seq", "variants/an_ifchain_pred/target/release/an_ifchain_pred", "variants/an_ifchain_table/target/release/an_ifchain_table", "variants/an_ifchain_tree/target/release/an_ifchain_tree", "variants/an_ifchain_prof/target/release/an_ifchain_prof"]
+[[bench.archn_ifchain.sizes]]
+n=256
+variants=["variants/an_ifchain_seq/target/release/an_ifchain_seq", "variants/an_ifchain_pred/target/release/an_ifchain_pred", "variants/an_ifchain_table/target/release/an_ifchain_table", "variants/an_ifchain_tree/target/release/an_ifchain_tree", "variants/an_ifchain_prof/target/release/an_ifchain_prof"]
+[[bench.archn_ifchain.sizes]]
+n=1024
+variants=["variants/an_ifchain_seq/target/release/an_ifchain_seq", "variants/an_ifchain_pred/target/release/an_ifchain_pred", "variants/an_ifchain_table/target/release/an_ifchain_table", "variants/an_ifchain_tree/target/release/an_ifchain_tree", "variants/an_ifchain_prof/target/release/an_ifchain_prof"]
+[[bench.archn_ifchain.sizes]]
+n=4096
+variants=["variants/an_ifchain_seq/target/release/an_ifchain_seq", "variants/an_ifchain_pred/target/release/an_ifchain_pred", "variants/an_ifchain_table/target/release/an_ifchain_table", "variants/an_ifchain_tree/target/release/an_ifchain_tree", "variants/an_ifchain_prof/target/release/an_ifchain_prof"]
+[[bench.archn_ifchain.sizes]]
+n=16384
+variants=["variants/an_ifchain_seq/target/release/an_ifchain_seq", "variants/an_ifchain_pred/target/release/an_ifchain_pred", "variants/an_ifchain_table/target/release/an_ifchain_table", "variants/an_ifchain_tree/target/release/an_ifchain_tree", "variants/an_ifchain_prof/target/release/an_ifchain_prof"]
+
+[bench.archn_whole]
+title="Whole-program single strategy (NATIVE tier)"
+workload="realistic"
+master_seed=0x7654_3210_fedc_ba98
+[bench.archn_whole.normalise]
+baseline="an_whole_table"
+mode="subtract"
+[[bench.archn_whole.sizes]]
+n=64
+variants=["variants/an_whole_seq/target/release/an_whole_seq", "variants/an_whole_pred/target/release/an_whole_pred", "variants/an_whole_table/target/release/an_whole_table", "variants/an_whole_tree/target/release/an_whole_tree", "variants/an_whole_prof/target/release/an_whole_prof"]
+[[bench.archn_whole.sizes]]
+n=256
+variants=["variants/an_whole_seq/target/release/an_whole_seq", "variants/an_whole_pred/target/release/an_whole_pred", "variants/an_whole_table/target/release/an_whole_table", "variants/an_whole_tree/target/release/an_whole_tree", "variants/an_whole_prof/target/release/an_whole_prof"]
+[[bench.archn_whole.sizes]]
+n=1024
+variants=["variants/an_whole_seq/target/release/an_whole_seq", "variants/an_whole_pred/target/release/an_whole_pred", "variants/an_whole_table/target/release/an_whole_table", "variants/an_whole_tree/target/release/an_whole_tree", "variants/an_whole_prof/target/release/an_whole_prof"]
+[[bench.archn_whole.sizes]]
+n=4096
+variants=["variants/an_whole_seq/target/release/an_whole_seq", "variants/an_whole_pred/target/release/an_whole_pred", "variants/an_whole_table/target/release/an_whole_table", "variants/an_whole_tree/target/release/an_whole_tree", "variants/an_whole_prof/target/release/an_whole_prof"]
+[[bench.archn_whole.sizes]]
+n=16384
+variants=["variants/an_whole_seq/target/release/an_whole_seq", "variants/an_whole_pred/target/release/an_whole_pred", "variants/an_whole_table/target/release/an_whole_table", "variants/an_whole_tree/target/release/an_whole_tree", "variants/an_whole_prof/target/release/an_whole_prof"]

@@ -1,0 +1,6 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784628508	eb1fec1	archn_ifchain_n16384	an_ifchain_pred	16384	warm	427854.2	426664.4	431680.4
+1784628508	eb1fec1	archn_ifchain_n16384	an_ifchain_prof	16384	warm	307520.0	305635.6	319026.5
+1784628508	eb1fec1	archn_ifchain_n16384	an_ifchain_seq	16384	warm	315324.6	313609.4	321512.5
+1784628508	eb1fec1	archn_ifchain_n16384	an_ifchain_table	16384	warm	341426.7	339579.2	343879.4
+1784628508	eb1fec1	archn_ifchain_n16384	an_ifchain_tree	16384	warm	328983.3	328104.8	332992.1
