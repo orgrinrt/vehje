@@ -15,24 +15,64 @@ fn validate(nodes: []const Node, pool: []const u32, blob_len: usize, depth_cap: 
     for (nodes, 0..) |n, i| { if (n.kind != 2) { dbuf[i]=1; continue; } var m:u32=0; for (pool[n.a..n.a+n.b]) |ci| m=@max(m,dbuf[ci]); dbuf[i]=m+1; if (dbuf[i] > depth_cap) return false; }
     return true;
 }
-pub fn main() void {
-    const al = std.heap.page_allocator;
-    const dbuf = al.alloc(u32, 1024) catch unreachable;
-    // build a valid base arena, then corrupt it 5 ways.
-    var nodes = [_]Node{ .{.kind=0,.a=1,.b=0}, .{.kind=0,.a=2,.b=0}, .{.kind=2,.a=0,.b=2} };
-    var pool = [_]u32{ 0, 1 };
-    std.debug.print("valid arena: {} (expect true)\n", .{validate(&nodes, &pool, 0, 16, dbuf)});
-    // ATTACK 1: forward child (cycle)
-    { var p2 = [_]u32{ 0, 5 }; std.debug.print("attack cycle/forward-child: {} (expect false)\n", .{validate(&nodes, &p2, 0, 16, dbuf)}); }
-    // ATTACK 2: pool span out of range
-    { var n2 = nodes; n2[2].a = 9999; std.debug.print("attack pool-span OOB: {} (expect false)\n", .{validate(&n2, &pool, 0, 16, dbuf)}); }
-    // ATTACK 3: blob ref overrun (+ INTEGER OVERFLOW attempt: a=huge, b=huge)
-    { var n3 = [_]Node{ .{.kind=1,.a=0xFFFF_FFFF,.b=0xFFFF_FFFF} }; std.debug.print("attack blob-overrun + index-overflow: {} (expect false, u64 math avoids wrap)\n", .{validate(&n3, &pool, 4, 16, dbuf)}); }
-    // ATTACK 4: unknown kind
-    { var n4 = [_]Node{ .{.kind=99,.a=0,.b=0} }; std.debug.print("attack unknown-kind: {} (expect false)\n", .{validate(&n4, &pool, 0, 16, dbuf)}); }
-    // ATTACK 5: over-deep (a valid backward chain deeper than the cap)
-    { const D=200; const nn = al.alloc(Node, D) catch unreachable; const pp = al.alloc(u32, D) catch unreachable;
-      nn[0]=.{.kind=0,.a=0,.b=0}; for (1..D)|i|{ pp[i]=@intCast(i-1); nn[i]=.{.kind=2,.a=@intCast(i),.b=1}; }
-      std.debug.print("attack over-deep (depth {d} > cap 16): {} (expect false)\n", .{D, validate(nn, pp, 0, 16, al.alloc(u32,D) catch unreachable)}); }
-    std.debug.print("=> every attack REJECTED, no crash. untrusted load boundary robust.\n", .{});
+// The load-verifier is the security boundary for arriving mods, so its robustness
+// is an executable gate, not a print-and-eyeball demo (per the audit's C6 and the
+// catalogue-edge-cases-as-tests discipline). `zig test adversarial.zig` fails the
+// build if any attack stops being rejected or the verifier crashes.
+const expect = std.testing.expect;
+
+test "valid arena is accepted" {
+    var dbuf: [1024]u32 = undefined;
+    const nodes = [_]Node{ .{ .kind = 0, .a = 1, .b = 0 }, .{ .kind = 0, .a = 2, .b = 0 }, .{ .kind = 2, .a = 0, .b = 2 } };
+    const pool = [_]u32{ 0, 1 };
+    try expect(validate(&nodes, &pool, 0, 16, &dbuf) == true);
+}
+
+test "attack: forward-child (cycle) is rejected" {
+    var dbuf: [1024]u32 = undefined;
+    const nodes = [_]Node{ .{ .kind = 0, .a = 1, .b = 0 }, .{ .kind = 0, .a = 2, .b = 0 }, .{ .kind = 2, .a = 0, .b = 2 } };
+    const p2 = [_]u32{ 0, 5 }; // pool entry 5 references a node index >= the referrer
+    try expect(validate(&nodes, &p2, 0, 16, &dbuf) == false);
+}
+
+test "attack: pool-span out of range is rejected" {
+    var dbuf: [1024]u32 = undefined;
+    var nodes = [_]Node{ .{ .kind = 0, .a = 1, .b = 0 }, .{ .kind = 0, .a = 2, .b = 0 }, .{ .kind = 2, .a = 0, .b = 2 } };
+    const pool = [_]u32{ 0, 1 };
+    nodes[2].a = 9999; // pool span [9999, 9999+2) is out of bounds
+    try expect(validate(&nodes, &pool, 0, 16, &dbuf) == false);
+}
+
+test "attack: blob overrun with index-overflow attempt is rejected" {
+    var dbuf: [1024]u32 = undefined;
+    const pool = [_]u32{ 0, 1 };
+    // a=0xFFFFFFFF, b=0xFFFFFFFF: u64 math (a+b) avoids the wrap that u32 would suffer,
+    // so the blob-in-range check catches it instead of overflowing to a small value.
+    const n3 = [_]Node{ .{ .kind = 1, .a = 0xFFFF_FFFF, .b = 0xFFFF_FFFF } };
+    try expect(validate(&n3, &pool, 4, 16, &dbuf) == false);
+}
+
+test "attack: unknown kind is rejected" {
+    var dbuf: [1024]u32 = undefined;
+    const pool = [_]u32{ 0, 1 };
+    const n4 = [_]Node{ .{ .kind = 99, .a = 0, .b = 0 } };
+    try expect(validate(&n4, &pool, 0, 16, &dbuf) == false);
+}
+
+test "attack: over-deep backward chain is rejected" {
+    const al = std.testing.allocator;
+    const D = 200;
+    const nn = try al.alloc(Node, D);
+    defer al.free(nn);
+    const pp = try al.alloc(u32, D);
+    defer al.free(pp);
+    const db = try al.alloc(u32, D);
+    defer al.free(db);
+    nn[0] = .{ .kind = 0, .a = 0, .b = 0 };
+    for (1..D) |i| {
+        pp[i] = @intCast(i - 1);
+        nn[i] = .{ .kind = 2, .a = @intCast(i), .b = 1 };
+    }
+    // a valid acyclic chain of depth 200, deeper than the cap of 16.
+    try expect(validate(nn, pp, 0, 16, db) == false);
 }
