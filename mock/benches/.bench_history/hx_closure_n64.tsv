@@ -1,0 +1,5 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784629128	98f70c9	hx_closure_n64	hx_closure__flat	64	warm	71.7	68.6	73.2
+1784629128	98f70c9	hx_closure_n64	hx_closure__linked	64	warm	68.3	68.1	68.8
+1784629303	98f70c9	hx_closure_n64	hx_closure__flat	64	warm	60.0	60.0	63.1
+1784629303	98f70c9	hx_closure_n64	hx_closure__linked	64	warm	57.5	56.9	64.4

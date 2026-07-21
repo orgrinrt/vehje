@@ -1,0 +1,3 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784629317	98f70c9	hx_cheaplower_n1024	hx_cheaplower__fold	1024	warm	867.5	857.1	934.2
+1784629317	98f70c9	hx_cheaplower_n1024	hx_cheaplower__recompute	1024	warm	352.1	346.1	377.8

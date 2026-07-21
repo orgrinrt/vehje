@@ -1,0 +1,5 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784629117	98f70c9	hx_reuse_n256	hx_reuse__copy	256	warm	182.1	181.2	201.4
+1784629117	98f70c9	hx_reuse_n256	hx_reuse__reuse	256	warm	335.8	332.9	385.4
+1784629297	98f70c9	hx_reuse_n256	hx_reuse__copy	256	warm	172.1	168.8	180.0
+1784629297	98f70c9	hx_reuse_n256	hx_reuse__reuse	256	warm	188.3	187.5	192.9

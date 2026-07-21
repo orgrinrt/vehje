@@ -1,0 +1,7 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784628951	98f70c9	hx_dispatch_n64	hx_dispatch__fnptr	64	warm	177.5	173.1	218.8
+1784628951	98f70c9	hx_dispatch_n64	hx_dispatch__switch	64	warm	239.6	215.2	254.1
+1784629111	98f70c9	hx_dispatch_n64	hx_dispatch__fnptr	64	warm	174.6	171.4	200.8
+1784629111	98f70c9	hx_dispatch_n64	hx_dispatch__switch	64	warm	182.5	182.5	241.4
+1784629292	98f70c9	hx_dispatch_n64	hx_dispatch__fnptr	64	warm	170.8	170.6	201.1
+1784629292	98f70c9	hx_dispatch_n64	hx_dispatch__switch	64	warm	191.7	190.6	256.9

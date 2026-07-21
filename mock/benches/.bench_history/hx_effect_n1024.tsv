@@ -1,0 +1,5 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784629121	98f70c9	hx_effect_n1024	hx_effect__branchmax	1024	warm	1046.2	1039.3	1129.6
+1784629121	98f70c9	hx_effect_n1024	hx_effect__thermo	1024	warm	1155.8	1154.8	1256.2
+1784629300	98f70c9	hx_effect_n1024	hx_effect__branchmax	1024	warm	1037.1	1029.2	1050.2
+1784629300	98f70c9	hx_effect_n1024	hx_effect__thermo	1024	warm	1162.5	1159.3	1216.7
