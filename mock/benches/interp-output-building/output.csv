@@ -1,0 +1,4 @@
+strategy,ns_per_template,mb_per_s,bytes_per_template
+format-to-temp-then-copy,20.58,1538,33
+format-in-place,13.54,2337,33
+span-list-interpreted,30.45,1039,33

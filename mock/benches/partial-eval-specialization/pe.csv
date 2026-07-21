@@ -1,0 +1,8 @@
+program_shape,static_pct,orig_nodes,residual_nodes,reduction_x,pe_us
+random_mix,30,1777982,1490727,1.2,14995
+random_mix,50,1777982,1239448,1.4,10999
+random_mix,70,1777982,943716,1.9,8619
+random_mix,90,1777982,619795,2.9,5913
+block_structured,50,949858,250012,3.8,
+block_structured,70,1207531,230191,5.2,
+block_structured,90,1468675,210103,7.0,

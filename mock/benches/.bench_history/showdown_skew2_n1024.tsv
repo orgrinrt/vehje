@@ -1,0 +1,13 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784622920	6ab1b5e	showdown_skew2_n1024	sd_bintree_int_skew2	1024	warm	10446.7	10359.4	11383.4
+1784622920	6ab1b5e	showdown_skew2_n1024	sd_bintree_nat_skew2	1024	warm	1722.9	1701.7	1954.1
+1784622920	6ab1b5e	showdown_skew2_n1024	sd_chain_int_skew2	1024	warm	11169.2	10824.0	12058.5
+1784622920	6ab1b5e	showdown_skew2_n1024	sd_chain_nat_skew2	1024	warm	1618.3	1564.3	1755.8
+1784622920	6ab1b5e	showdown_skew2_n1024	sd_chain_rev_int_skew2	1024	warm	10255.0	10118.1	10704.5
+1784622920	6ab1b5e	showdown_skew2_n1024	sd_chain_rev_nat_skew2	1024	warm	1664.2	1630.2	1804.2
+1784622920	6ab1b5e	showdown_skew2_n1024	sd_evalall_int_skew2	1024	warm	6125.8	6026.6	6492.3
+1784622920	6ab1b5e	showdown_skew2_n1024	sd_evalall_nat_skew2	1024	warm	6217.9	6169.8	6574.4
+1784622920	6ab1b5e	showdown_skew2_n1024	sd_jumptable_int_skew2	1024	warm	1661.7	1613.8	1723.3
+1784622920	6ab1b5e	showdown_skew2_n1024	sd_jumptable_nat_skew2	1024	warm	1638.7	1631.5	1717.9
+1784622920	6ab1b5e	showdown_skew2_n1024	sd_profiled_int_skew2	1024	warm	9631.7	9489.4	9781.0
+1784622920	6ab1b5e	showdown_skew2_n1024	sd_profiled_nat_skew2	1024	warm	1745.0	1625.6	1812.7

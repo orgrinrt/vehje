@@ -1,0 +1,4 @@
+shared_pct,copy_ns_per_upd,reuse_ns_per_upd,reuse_copies_pct,mutable_ceiling_ns,reuse_speedup_x
+0,5.19,0.53,0,0.53,9.72
+20,5.05,1.52,21,0.60,3.32
+60,5.05,3.37,59,0.58,1.50

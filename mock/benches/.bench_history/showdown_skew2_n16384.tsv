@@ -1,0 +1,13 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784622926	6ab1b5e	showdown_skew2_n16384	sd_bintree_int_skew2	16384	warm	145896.2	145078.7	147554.4
+1784622926	6ab1b5e	showdown_skew2_n16384	sd_bintree_nat_skew2	16384	warm	63223.3	62478.8	65022.1
+1784622926	6ab1b5e	showdown_skew2_n16384	sd_chain_int_skew2	16384	warm	179535.4	178294.3	189193.0
+1784622926	6ab1b5e	showdown_skew2_n16384	sd_chain_nat_skew2	16384	warm	46400.4	45167.7	46816.6
+1784622926	6ab1b5e	showdown_skew2_n16384	sd_chain_rev_int_skew2	16384	warm	157864.2	154770.0	159469.5
+1784622926	6ab1b5e	showdown_skew2_n16384	sd_chain_rev_nat_skew2	16384	warm	43747.5	43696.4	44160.4
+1784622926	6ab1b5e	showdown_skew2_n16384	sd_evalall_int_skew2	16384	warm	92352.5	92180.0	99313.9
+1784622926	6ab1b5e	showdown_skew2_n16384	sd_evalall_nat_skew2	16384	warm	91424.2	91422.5	94121.1
+1784622926	6ab1b5e	showdown_skew2_n16384	sd_jumptable_int_skew2	16384	warm	45493.7	45389.6	46792.8
+1784622926	6ab1b5e	showdown_skew2_n16384	sd_jumptable_nat_skew2	16384	warm	44817.9	44427.9	48500.0
+1784622926	6ab1b5e	showdown_skew2_n16384	sd_profiled_int_skew2	16384	warm	147355.0	147095.0	152187.9
+1784622926	6ab1b5e	showdown_skew2_n16384	sd_profiled_nat_skew2	16384	warm	44324.2	44235.8	48499.6

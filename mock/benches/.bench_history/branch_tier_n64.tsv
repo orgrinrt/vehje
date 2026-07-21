@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784622216	6ab1b5e	branch_tier_n64	bt_interp_dispatch	64	warm	754.6	713.4	937.3
+1784622216	6ab1b5e	branch_tier_n64	bt_native_direct	64	warm	90.4	86.5	124.0
+1784622216	6ab1b5e	branch_tier_n64	bt_stencil_jit	64	warm	87.9	85.6	97.9

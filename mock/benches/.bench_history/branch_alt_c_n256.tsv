@@ -1,0 +1,9 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784621502	6ab1b5e	branch_alt_c_n256	br_branch_c_alt	256	warm	356.7	355.2	415.4
+1784621502	6ab1b5e	branch_alt_c_n256	br_lut_c_alt	256	warm	590.4	569.1	666.0
+1784621502	6ab1b5e	branch_alt_c_n256	br_mask_c_alt	256	warm	711.7	688.8	774.0
+1784621502	6ab1b5e	branch_alt_c_n256	br_predicate_c_alt	256	warm	591.7	545.2	665.5
+1784621992	6ab1b5e	branch_alt_c_n256	br_branch_c_alt	256	warm	350.0	349.6	351.9
+1784621992	6ab1b5e	branch_alt_c_n256	br_lut_c_alt	256	warm	583.8	545.8	586.0
+1784621992	6ab1b5e	branch_alt_c_n256	br_mask_c_alt	256	warm	650.4	631.5	651.2
+1784621992	6ab1b5e	branch_alt_c_n256	br_predicate_c_alt	256	warm	551.2	535.4	586.5

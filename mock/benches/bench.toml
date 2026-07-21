@@ -1,0 +1,449 @@
+[docgen]
+enabled = true
+
+[timing]
+passes = 6
+runs_per_pass = 100
+batch_size = 100
+harness_runs = 1
+cooldowns_ms = [0]
+
+[bench.branch_rand50_c]
+title = "Branch strategies, cheap-arm, rand50: ~50% taken, UNPREDICTABLE (b&1)"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[[bench.branch_rand50_c.sizes]]
+n = 64
+variants = ["variants/br_branch_c_rand50/target/release/br_branch_c_rand50", "variants/br_predicate_c_rand50/target/release/br_predicate_c_rand50", "variants/br_mask_c_rand50/target/release/br_mask_c_rand50", "variants/br_lut_c_rand50/target/release/br_lut_c_rand50"]
+[[bench.branch_rand50_c.sizes]]
+n = 256
+variants = ["variants/br_branch_c_rand50/target/release/br_branch_c_rand50", "variants/br_predicate_c_rand50/target/release/br_predicate_c_rand50", "variants/br_mask_c_rand50/target/release/br_mask_c_rand50", "variants/br_lut_c_rand50/target/release/br_lut_c_rand50"]
+[[bench.branch_rand50_c.sizes]]
+n = 1024
+variants = ["variants/br_branch_c_rand50/target/release/br_branch_c_rand50", "variants/br_predicate_c_rand50/target/release/br_predicate_c_rand50", "variants/br_mask_c_rand50/target/release/br_mask_c_rand50", "variants/br_lut_c_rand50/target/release/br_lut_c_rand50"]
+[[bench.branch_rand50_c.sizes]]
+n = 4096
+variants = ["variants/br_branch_c_rand50/target/release/br_branch_c_rand50", "variants/br_predicate_c_rand50/target/release/br_predicate_c_rand50", "variants/br_mask_c_rand50/target/release/br_mask_c_rand50", "variants/br_lut_c_rand50/target/release/br_lut_c_rand50"]
+[[bench.branch_rand50_c.sizes]]
+n = 16384
+variants = ["variants/br_branch_c_rand50/target/release/br_branch_c_rand50", "variants/br_predicate_c_rand50/target/release/br_predicate_c_rand50", "variants/br_mask_c_rand50/target/release/br_mask_c_rand50", "variants/br_lut_c_rand50/target/release/br_lut_c_rand50"]
+
+[bench.branch_pred95_c]
+title = "Branch strategies, cheap-arm, pred95: ~95% taken, predictable (b<243)"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[[bench.branch_pred95_c.sizes]]
+n = 64
+variants = ["variants/br_branch_c_pred95/target/release/br_branch_c_pred95", "variants/br_predicate_c_pred95/target/release/br_predicate_c_pred95", "variants/br_mask_c_pred95/target/release/br_mask_c_pred95", "variants/br_lut_c_pred95/target/release/br_lut_c_pred95", "variants/br_profiled_hot_c_pred95/target/release/br_profiled_hot_c_pred95"]
+[[bench.branch_pred95_c.sizes]]
+n = 256
+variants = ["variants/br_branch_c_pred95/target/release/br_branch_c_pred95", "variants/br_predicate_c_pred95/target/release/br_predicate_c_pred95", "variants/br_mask_c_pred95/target/release/br_mask_c_pred95", "variants/br_lut_c_pred95/target/release/br_lut_c_pred95", "variants/br_profiled_hot_c_pred95/target/release/br_profiled_hot_c_pred95"]
+[[bench.branch_pred95_c.sizes]]
+n = 1024
+variants = ["variants/br_branch_c_pred95/target/release/br_branch_c_pred95", "variants/br_predicate_c_pred95/target/release/br_predicate_c_pred95", "variants/br_mask_c_pred95/target/release/br_mask_c_pred95", "variants/br_lut_c_pred95/target/release/br_lut_c_pred95", "variants/br_profiled_hot_c_pred95/target/release/br_profiled_hot_c_pred95"]
+[[bench.branch_pred95_c.sizes]]
+n = 4096
+variants = ["variants/br_branch_c_pred95/target/release/br_branch_c_pred95", "variants/br_predicate_c_pred95/target/release/br_predicate_c_pred95", "variants/br_mask_c_pred95/target/release/br_mask_c_pred95", "variants/br_lut_c_pred95/target/release/br_lut_c_pred95", "variants/br_profiled_hot_c_pred95/target/release/br_profiled_hot_c_pred95"]
+[[bench.branch_pred95_c.sizes]]
+n = 16384
+variants = ["variants/br_branch_c_pred95/target/release/br_branch_c_pred95", "variants/br_predicate_c_pred95/target/release/br_predicate_c_pred95", "variants/br_mask_c_pred95/target/release/br_mask_c_pred95", "variants/br_lut_c_pred95/target/release/br_lut_c_pred95", "variants/br_profiled_hot_c_pred95/target/release/br_profiled_hot_c_pred95"]
+
+[bench.branch_pred05_c]
+title = "Branch strategies, cheap-arm, pred05: ~5% taken, predictable (b<13)"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[[bench.branch_pred05_c.sizes]]
+n = 64
+variants = ["variants/br_branch_c_pred05/target/release/br_branch_c_pred05", "variants/br_predicate_c_pred05/target/release/br_predicate_c_pred05", "variants/br_mask_c_pred05/target/release/br_mask_c_pred05", "variants/br_lut_c_pred05/target/release/br_lut_c_pred05", "variants/br_profiled_hot_c_pred05/target/release/br_profiled_hot_c_pred05"]
+[[bench.branch_pred05_c.sizes]]
+n = 256
+variants = ["variants/br_branch_c_pred05/target/release/br_branch_c_pred05", "variants/br_predicate_c_pred05/target/release/br_predicate_c_pred05", "variants/br_mask_c_pred05/target/release/br_mask_c_pred05", "variants/br_lut_c_pred05/target/release/br_lut_c_pred05", "variants/br_profiled_hot_c_pred05/target/release/br_profiled_hot_c_pred05"]
+[[bench.branch_pred05_c.sizes]]
+n = 1024
+variants = ["variants/br_branch_c_pred05/target/release/br_branch_c_pred05", "variants/br_predicate_c_pred05/target/release/br_predicate_c_pred05", "variants/br_mask_c_pred05/target/release/br_mask_c_pred05", "variants/br_lut_c_pred05/target/release/br_lut_c_pred05", "variants/br_profiled_hot_c_pred05/target/release/br_profiled_hot_c_pred05"]
+[[bench.branch_pred05_c.sizes]]
+n = 4096
+variants = ["variants/br_branch_c_pred05/target/release/br_branch_c_pred05", "variants/br_predicate_c_pred05/target/release/br_predicate_c_pred05", "variants/br_mask_c_pred05/target/release/br_mask_c_pred05", "variants/br_lut_c_pred05/target/release/br_lut_c_pred05", "variants/br_profiled_hot_c_pred05/target/release/br_profiled_hot_c_pred05"]
+[[bench.branch_pred05_c.sizes]]
+n = 16384
+variants = ["variants/br_branch_c_pred05/target/release/br_branch_c_pred05", "variants/br_predicate_c_pred05/target/release/br_predicate_c_pred05", "variants/br_mask_c_pred05/target/release/br_mask_c_pred05", "variants/br_lut_c_pred05/target/release/br_lut_c_pred05", "variants/br_profiled_hot_c_pred05/target/release/br_profiled_hot_c_pred05"]
+
+[bench.branch_biased25_c]
+title = "Branch strategies, cheap-arm, biased25: ~25% taken (b<64)"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[[bench.branch_biased25_c.sizes]]
+n = 64
+variants = ["variants/br_branch_c_biased25/target/release/br_branch_c_biased25", "variants/br_predicate_c_biased25/target/release/br_predicate_c_biased25", "variants/br_mask_c_biased25/target/release/br_mask_c_biased25", "variants/br_lut_c_biased25/target/release/br_lut_c_biased25", "variants/br_profiled_hot_c_biased25/target/release/br_profiled_hot_c_biased25"]
+[[bench.branch_biased25_c.sizes]]
+n = 256
+variants = ["variants/br_branch_c_biased25/target/release/br_branch_c_biased25", "variants/br_predicate_c_biased25/target/release/br_predicate_c_biased25", "variants/br_mask_c_biased25/target/release/br_mask_c_biased25", "variants/br_lut_c_biased25/target/release/br_lut_c_biased25", "variants/br_profiled_hot_c_biased25/target/release/br_profiled_hot_c_biased25"]
+[[bench.branch_biased25_c.sizes]]
+n = 1024
+variants = ["variants/br_branch_c_biased25/target/release/br_branch_c_biased25", "variants/br_predicate_c_biased25/target/release/br_predicate_c_biased25", "variants/br_mask_c_biased25/target/release/br_mask_c_biased25", "variants/br_lut_c_biased25/target/release/br_lut_c_biased25", "variants/br_profiled_hot_c_biased25/target/release/br_profiled_hot_c_biased25"]
+[[bench.branch_biased25_c.sizes]]
+n = 4096
+variants = ["variants/br_branch_c_biased25/target/release/br_branch_c_biased25", "variants/br_predicate_c_biased25/target/release/br_predicate_c_biased25", "variants/br_mask_c_biased25/target/release/br_mask_c_biased25", "variants/br_lut_c_biased25/target/release/br_lut_c_biased25", "variants/br_profiled_hot_c_biased25/target/release/br_profiled_hot_c_biased25"]
+[[bench.branch_biased25_c.sizes]]
+n = 16384
+variants = ["variants/br_branch_c_biased25/target/release/br_branch_c_biased25", "variants/br_predicate_c_biased25/target/release/br_predicate_c_biased25", "variants/br_mask_c_biased25/target/release/br_mask_c_biased25", "variants/br_lut_c_biased25/target/release/br_lut_c_biased25", "variants/br_profiled_hot_c_biased25/target/release/br_profiled_hot_c_biased25"]
+
+[bench.branch_runs_c]
+title = "Branch strategies, cheap-arm, runs: correlated long runs (flip when b<24)"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[[bench.branch_runs_c.sizes]]
+n = 64
+variants = ["variants/br_branch_c_runs/target/release/br_branch_c_runs", "variants/br_predicate_c_runs/target/release/br_predicate_c_runs", "variants/br_mask_c_runs/target/release/br_mask_c_runs", "variants/br_lut_c_runs/target/release/br_lut_c_runs"]
+[[bench.branch_runs_c.sizes]]
+n = 256
+variants = ["variants/br_branch_c_runs/target/release/br_branch_c_runs", "variants/br_predicate_c_runs/target/release/br_predicate_c_runs", "variants/br_mask_c_runs/target/release/br_mask_c_runs", "variants/br_lut_c_runs/target/release/br_lut_c_runs"]
+[[bench.branch_runs_c.sizes]]
+n = 1024
+variants = ["variants/br_branch_c_runs/target/release/br_branch_c_runs", "variants/br_predicate_c_runs/target/release/br_predicate_c_runs", "variants/br_mask_c_runs/target/release/br_mask_c_runs", "variants/br_lut_c_runs/target/release/br_lut_c_runs"]
+[[bench.branch_runs_c.sizes]]
+n = 4096
+variants = ["variants/br_branch_c_runs/target/release/br_branch_c_runs", "variants/br_predicate_c_runs/target/release/br_predicate_c_runs", "variants/br_mask_c_runs/target/release/br_mask_c_runs", "variants/br_lut_c_runs/target/release/br_lut_c_runs"]
+[[bench.branch_runs_c.sizes]]
+n = 16384
+variants = ["variants/br_branch_c_runs/target/release/br_branch_c_runs", "variants/br_predicate_c_runs/target/release/br_predicate_c_runs", "variants/br_mask_c_runs/target/release/br_mask_c_runs", "variants/br_lut_c_runs/target/release/br_lut_c_runs"]
+
+[bench.branch_alt_c]
+title = "Branch strategies, cheap-arm, alt: strict alternation (i&1)"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[[bench.branch_alt_c.sizes]]
+n = 64
+variants = ["variants/br_branch_c_alt/target/release/br_branch_c_alt", "variants/br_predicate_c_alt/target/release/br_predicate_c_alt", "variants/br_mask_c_alt/target/release/br_mask_c_alt", "variants/br_lut_c_alt/target/release/br_lut_c_alt"]
+[[bench.branch_alt_c.sizes]]
+n = 256
+variants = ["variants/br_branch_c_alt/target/release/br_branch_c_alt", "variants/br_predicate_c_alt/target/release/br_predicate_c_alt", "variants/br_mask_c_alt/target/release/br_mask_c_alt", "variants/br_lut_c_alt/target/release/br_lut_c_alt"]
+[[bench.branch_alt_c.sizes]]
+n = 1024
+variants = ["variants/br_branch_c_alt/target/release/br_branch_c_alt", "variants/br_predicate_c_alt/target/release/br_predicate_c_alt", "variants/br_mask_c_alt/target/release/br_mask_c_alt", "variants/br_lut_c_alt/target/release/br_lut_c_alt"]
+[[bench.branch_alt_c.sizes]]
+n = 4096
+variants = ["variants/br_branch_c_alt/target/release/br_branch_c_alt", "variants/br_predicate_c_alt/target/release/br_predicate_c_alt", "variants/br_mask_c_alt/target/release/br_mask_c_alt", "variants/br_lut_c_alt/target/release/br_lut_c_alt"]
+[[bench.branch_alt_c.sizes]]
+n = 16384
+variants = ["variants/br_branch_c_alt/target/release/br_branch_c_alt", "variants/br_predicate_c_alt/target/release/br_predicate_c_alt", "variants/br_mask_c_alt/target/release/br_mask_c_alt", "variants/br_lut_c_alt/target/release/br_lut_c_alt"]
+
+[bench.branch_rand50_h]
+title = "Branch strategies, heavy-arm, rand50: ~50% taken, UNPREDICTABLE (b&1)"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[[bench.branch_rand50_h.sizes]]
+n = 64
+variants = ["variants/br_branch_h_rand50/target/release/br_branch_h_rand50", "variants/br_predicate_h_rand50/target/release/br_predicate_h_rand50"]
+[[bench.branch_rand50_h.sizes]]
+n = 256
+variants = ["variants/br_branch_h_rand50/target/release/br_branch_h_rand50", "variants/br_predicate_h_rand50/target/release/br_predicate_h_rand50"]
+[[bench.branch_rand50_h.sizes]]
+n = 1024
+variants = ["variants/br_branch_h_rand50/target/release/br_branch_h_rand50", "variants/br_predicate_h_rand50/target/release/br_predicate_h_rand50"]
+[[bench.branch_rand50_h.sizes]]
+n = 4096
+variants = ["variants/br_branch_h_rand50/target/release/br_branch_h_rand50", "variants/br_predicate_h_rand50/target/release/br_predicate_h_rand50"]
+[[bench.branch_rand50_h.sizes]]
+n = 16384
+variants = ["variants/br_branch_h_rand50/target/release/br_branch_h_rand50", "variants/br_predicate_h_rand50/target/release/br_predicate_h_rand50"]
+
+[bench.branch_pred95_h]
+title = "Branch strategies, heavy-arm, pred95: ~95% taken, predictable (b<243)"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[[bench.branch_pred95_h.sizes]]
+n = 64
+variants = ["variants/br_branch_h_pred95/target/release/br_branch_h_pred95", "variants/br_predicate_h_pred95/target/release/br_predicate_h_pred95", "variants/br_profiled_hot_h_pred95/target/release/br_profiled_hot_h_pred95"]
+[[bench.branch_pred95_h.sizes]]
+n = 256
+variants = ["variants/br_branch_h_pred95/target/release/br_branch_h_pred95", "variants/br_predicate_h_pred95/target/release/br_predicate_h_pred95", "variants/br_profiled_hot_h_pred95/target/release/br_profiled_hot_h_pred95"]
+[[bench.branch_pred95_h.sizes]]
+n = 1024
+variants = ["variants/br_branch_h_pred95/target/release/br_branch_h_pred95", "variants/br_predicate_h_pred95/target/release/br_predicate_h_pred95", "variants/br_profiled_hot_h_pred95/target/release/br_profiled_hot_h_pred95"]
+[[bench.branch_pred95_h.sizes]]
+n = 4096
+variants = ["variants/br_branch_h_pred95/target/release/br_branch_h_pred95", "variants/br_predicate_h_pred95/target/release/br_predicate_h_pred95", "variants/br_profiled_hot_h_pred95/target/release/br_profiled_hot_h_pred95"]
+[[bench.branch_pred95_h.sizes]]
+n = 16384
+variants = ["variants/br_branch_h_pred95/target/release/br_branch_h_pred95", "variants/br_predicate_h_pred95/target/release/br_predicate_h_pred95", "variants/br_profiled_hot_h_pred95/target/release/br_profiled_hot_h_pred95"]
+
+[bench.branch_pred05_h]
+title = "Branch strategies, heavy-arm, pred05: ~5% taken, predictable (b<13)"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[[bench.branch_pred05_h.sizes]]
+n = 64
+variants = ["variants/br_branch_h_pred05/target/release/br_branch_h_pred05", "variants/br_predicate_h_pred05/target/release/br_predicate_h_pred05", "variants/br_profiled_hot_h_pred05/target/release/br_profiled_hot_h_pred05"]
+[[bench.branch_pred05_h.sizes]]
+n = 256
+variants = ["variants/br_branch_h_pred05/target/release/br_branch_h_pred05", "variants/br_predicate_h_pred05/target/release/br_predicate_h_pred05", "variants/br_profiled_hot_h_pred05/target/release/br_profiled_hot_h_pred05"]
+[[bench.branch_pred05_h.sizes]]
+n = 1024
+variants = ["variants/br_branch_h_pred05/target/release/br_branch_h_pred05", "variants/br_predicate_h_pred05/target/release/br_predicate_h_pred05", "variants/br_profiled_hot_h_pred05/target/release/br_profiled_hot_h_pred05"]
+[[bench.branch_pred05_h.sizes]]
+n = 4096
+variants = ["variants/br_branch_h_pred05/target/release/br_branch_h_pred05", "variants/br_predicate_h_pred05/target/release/br_predicate_h_pred05", "variants/br_profiled_hot_h_pred05/target/release/br_profiled_hot_h_pred05"]
+[[bench.branch_pred05_h.sizes]]
+n = 16384
+variants = ["variants/br_branch_h_pred05/target/release/br_branch_h_pred05", "variants/br_predicate_h_pred05/target/release/br_predicate_h_pred05", "variants/br_profiled_hot_h_pred05/target/release/br_profiled_hot_h_pred05"]
+
+[bench.branch_biased25_h]
+title = "Branch strategies, heavy-arm, biased25: ~25% taken (b<64)"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[[bench.branch_biased25_h.sizes]]
+n = 64
+variants = ["variants/br_branch_h_biased25/target/release/br_branch_h_biased25", "variants/br_predicate_h_biased25/target/release/br_predicate_h_biased25", "variants/br_profiled_hot_h_biased25/target/release/br_profiled_hot_h_biased25"]
+[[bench.branch_biased25_h.sizes]]
+n = 256
+variants = ["variants/br_branch_h_biased25/target/release/br_branch_h_biased25", "variants/br_predicate_h_biased25/target/release/br_predicate_h_biased25", "variants/br_profiled_hot_h_biased25/target/release/br_profiled_hot_h_biased25"]
+[[bench.branch_biased25_h.sizes]]
+n = 1024
+variants = ["variants/br_branch_h_biased25/target/release/br_branch_h_biased25", "variants/br_predicate_h_biased25/target/release/br_predicate_h_biased25", "variants/br_profiled_hot_h_biased25/target/release/br_profiled_hot_h_biased25"]
+[[bench.branch_biased25_h.sizes]]
+n = 4096
+variants = ["variants/br_branch_h_biased25/target/release/br_branch_h_biased25", "variants/br_predicate_h_biased25/target/release/br_predicate_h_biased25", "variants/br_profiled_hot_h_biased25/target/release/br_profiled_hot_h_biased25"]
+[[bench.branch_biased25_h.sizes]]
+n = 16384
+variants = ["variants/br_branch_h_biased25/target/release/br_branch_h_biased25", "variants/br_predicate_h_biased25/target/release/br_predicate_h_biased25", "variants/br_profiled_hot_h_biased25/target/release/br_profiled_hot_h_biased25"]
+
+[bench.branch_runs_h]
+title = "Branch strategies, heavy-arm, runs: correlated long runs (flip when b<24)"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[[bench.branch_runs_h.sizes]]
+n = 64
+variants = ["variants/br_branch_h_runs/target/release/br_branch_h_runs", "variants/br_predicate_h_runs/target/release/br_predicate_h_runs"]
+[[bench.branch_runs_h.sizes]]
+n = 256
+variants = ["variants/br_branch_h_runs/target/release/br_branch_h_runs", "variants/br_predicate_h_runs/target/release/br_predicate_h_runs"]
+[[bench.branch_runs_h.sizes]]
+n = 1024
+variants = ["variants/br_branch_h_runs/target/release/br_branch_h_runs", "variants/br_predicate_h_runs/target/release/br_predicate_h_runs"]
+[[bench.branch_runs_h.sizes]]
+n = 4096
+variants = ["variants/br_branch_h_runs/target/release/br_branch_h_runs", "variants/br_predicate_h_runs/target/release/br_predicate_h_runs"]
+[[bench.branch_runs_h.sizes]]
+n = 16384
+variants = ["variants/br_branch_h_runs/target/release/br_branch_h_runs", "variants/br_predicate_h_runs/target/release/br_predicate_h_runs"]
+
+[bench.branch_alt_h]
+title = "Branch strategies, heavy-arm, alt: strict alternation (i&1)"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[[bench.branch_alt_h.sizes]]
+n = 64
+variants = ["variants/br_branch_h_alt/target/release/br_branch_h_alt", "variants/br_predicate_h_alt/target/release/br_predicate_h_alt"]
+[[bench.branch_alt_h.sizes]]
+n = 256
+variants = ["variants/br_branch_h_alt/target/release/br_branch_h_alt", "variants/br_predicate_h_alt/target/release/br_predicate_h_alt"]
+[[bench.branch_alt_h.sizes]]
+n = 1024
+variants = ["variants/br_branch_h_alt/target/release/br_branch_h_alt", "variants/br_predicate_h_alt/target/release/br_predicate_h_alt"]
+[[bench.branch_alt_h.sizes]]
+n = 4096
+variants = ["variants/br_branch_h_alt/target/release/br_branch_h_alt", "variants/br_predicate_h_alt/target/release/br_predicate_h_alt"]
+[[bench.branch_alt_h.sizes]]
+n = 16384
+variants = ["variants/br_branch_h_alt/target/release/br_branch_h_alt", "variants/br_predicate_h_alt/target/release/br_predicate_h_alt"]
+
+[bench.multiway_mw3_uni_c]
+title = "Multiway branch strategies, cheap-arm, mw3_uni: 3-way, uniform key"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[[bench.multiway_mw3_uni_c.sizes]]
+n = 64
+variants = ["variants/mw_chain_c_mw3_uni/target/release/mw_chain_c_mw3_uni", "variants/mw_chain_rev_c_mw3_uni/target/release/mw_chain_rev_c_mw3_uni", "variants/mw_jumptable_c_mw3_uni/target/release/mw_jumptable_c_mw3_uni", "variants/mw_bintree_c_mw3_uni/target/release/mw_bintree_c_mw3_uni", "variants/mw_predicate_all_c_mw3_uni/target/release/mw_predicate_all_c_mw3_uni"]
+[[bench.multiway_mw3_uni_c.sizes]]
+n = 256
+variants = ["variants/mw_chain_c_mw3_uni/target/release/mw_chain_c_mw3_uni", "variants/mw_chain_rev_c_mw3_uni/target/release/mw_chain_rev_c_mw3_uni", "variants/mw_jumptable_c_mw3_uni/target/release/mw_jumptable_c_mw3_uni", "variants/mw_bintree_c_mw3_uni/target/release/mw_bintree_c_mw3_uni", "variants/mw_predicate_all_c_mw3_uni/target/release/mw_predicate_all_c_mw3_uni"]
+[[bench.multiway_mw3_uni_c.sizes]]
+n = 1024
+variants = ["variants/mw_chain_c_mw3_uni/target/release/mw_chain_c_mw3_uni", "variants/mw_chain_rev_c_mw3_uni/target/release/mw_chain_rev_c_mw3_uni", "variants/mw_jumptable_c_mw3_uni/target/release/mw_jumptable_c_mw3_uni", "variants/mw_bintree_c_mw3_uni/target/release/mw_bintree_c_mw3_uni", "variants/mw_predicate_all_c_mw3_uni/target/release/mw_predicate_all_c_mw3_uni"]
+[[bench.multiway_mw3_uni_c.sizes]]
+n = 4096
+variants = ["variants/mw_chain_c_mw3_uni/target/release/mw_chain_c_mw3_uni", "variants/mw_chain_rev_c_mw3_uni/target/release/mw_chain_rev_c_mw3_uni", "variants/mw_jumptable_c_mw3_uni/target/release/mw_jumptable_c_mw3_uni", "variants/mw_bintree_c_mw3_uni/target/release/mw_bintree_c_mw3_uni", "variants/mw_predicate_all_c_mw3_uni/target/release/mw_predicate_all_c_mw3_uni"]
+[[bench.multiway_mw3_uni_c.sizes]]
+n = 16384
+variants = ["variants/mw_chain_c_mw3_uni/target/release/mw_chain_c_mw3_uni", "variants/mw_chain_rev_c_mw3_uni/target/release/mw_chain_rev_c_mw3_uni", "variants/mw_jumptable_c_mw3_uni/target/release/mw_jumptable_c_mw3_uni", "variants/mw_bintree_c_mw3_uni/target/release/mw_bintree_c_mw3_uni", "variants/mw_predicate_all_c_mw3_uni/target/release/mw_predicate_all_c_mw3_uni"]
+
+[bench.multiway_mw3_skew_c]
+title = "Multiway branch strategies, cheap-arm, mw3_skew: 3-way, skewed to arm 0 (~80%)"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[[bench.multiway_mw3_skew_c.sizes]]
+n = 64
+variants = ["variants/mw_chain_c_mw3_skew/target/release/mw_chain_c_mw3_skew", "variants/mw_chain_rev_c_mw3_skew/target/release/mw_chain_rev_c_mw3_skew", "variants/mw_jumptable_c_mw3_skew/target/release/mw_jumptable_c_mw3_skew", "variants/mw_bintree_c_mw3_skew/target/release/mw_bintree_c_mw3_skew", "variants/mw_predicate_all_c_mw3_skew/target/release/mw_predicate_all_c_mw3_skew"]
+[[bench.multiway_mw3_skew_c.sizes]]
+n = 256
+variants = ["variants/mw_chain_c_mw3_skew/target/release/mw_chain_c_mw3_skew", "variants/mw_chain_rev_c_mw3_skew/target/release/mw_chain_rev_c_mw3_skew", "variants/mw_jumptable_c_mw3_skew/target/release/mw_jumptable_c_mw3_skew", "variants/mw_bintree_c_mw3_skew/target/release/mw_bintree_c_mw3_skew", "variants/mw_predicate_all_c_mw3_skew/target/release/mw_predicate_all_c_mw3_skew"]
+[[bench.multiway_mw3_skew_c.sizes]]
+n = 1024
+variants = ["variants/mw_chain_c_mw3_skew/target/release/mw_chain_c_mw3_skew", "variants/mw_chain_rev_c_mw3_skew/target/release/mw_chain_rev_c_mw3_skew", "variants/mw_jumptable_c_mw3_skew/target/release/mw_jumptable_c_mw3_skew", "variants/mw_bintree_c_mw3_skew/target/release/mw_bintree_c_mw3_skew", "variants/mw_predicate_all_c_mw3_skew/target/release/mw_predicate_all_c_mw3_skew"]
+[[bench.multiway_mw3_skew_c.sizes]]
+n = 4096
+variants = ["variants/mw_chain_c_mw3_skew/target/release/mw_chain_c_mw3_skew", "variants/mw_chain_rev_c_mw3_skew/target/release/mw_chain_rev_c_mw3_skew", "variants/mw_jumptable_c_mw3_skew/target/release/mw_jumptable_c_mw3_skew", "variants/mw_bintree_c_mw3_skew/target/release/mw_bintree_c_mw3_skew", "variants/mw_predicate_all_c_mw3_skew/target/release/mw_predicate_all_c_mw3_skew"]
+[[bench.multiway_mw3_skew_c.sizes]]
+n = 16384
+variants = ["variants/mw_chain_c_mw3_skew/target/release/mw_chain_c_mw3_skew", "variants/mw_chain_rev_c_mw3_skew/target/release/mw_chain_rev_c_mw3_skew", "variants/mw_jumptable_c_mw3_skew/target/release/mw_jumptable_c_mw3_skew", "variants/mw_bintree_c_mw3_skew/target/release/mw_bintree_c_mw3_skew", "variants/mw_predicate_all_c_mw3_skew/target/release/mw_predicate_all_c_mw3_skew"]
+
+[bench.multiway_mw8_uni_c]
+title = "Multiway branch strategies, cheap-arm, mw8_uni: 8-way, uniform key"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[[bench.multiway_mw8_uni_c.sizes]]
+n = 64
+variants = ["variants/mw_chain_c_mw8_uni/target/release/mw_chain_c_mw8_uni", "variants/mw_chain_rev_c_mw8_uni/target/release/mw_chain_rev_c_mw8_uni", "variants/mw_jumptable_c_mw8_uni/target/release/mw_jumptable_c_mw8_uni", "variants/mw_bintree_c_mw8_uni/target/release/mw_bintree_c_mw8_uni", "variants/mw_predicate_all_c_mw8_uni/target/release/mw_predicate_all_c_mw8_uni"]
+[[bench.multiway_mw8_uni_c.sizes]]
+n = 256
+variants = ["variants/mw_chain_c_mw8_uni/target/release/mw_chain_c_mw8_uni", "variants/mw_chain_rev_c_mw8_uni/target/release/mw_chain_rev_c_mw8_uni", "variants/mw_jumptable_c_mw8_uni/target/release/mw_jumptable_c_mw8_uni", "variants/mw_bintree_c_mw8_uni/target/release/mw_bintree_c_mw8_uni", "variants/mw_predicate_all_c_mw8_uni/target/release/mw_predicate_all_c_mw8_uni"]
+[[bench.multiway_mw8_uni_c.sizes]]
+n = 1024
+variants = ["variants/mw_chain_c_mw8_uni/target/release/mw_chain_c_mw8_uni", "variants/mw_chain_rev_c_mw8_uni/target/release/mw_chain_rev_c_mw8_uni", "variants/mw_jumptable_c_mw8_uni/target/release/mw_jumptable_c_mw8_uni", "variants/mw_bintree_c_mw8_uni/target/release/mw_bintree_c_mw8_uni", "variants/mw_predicate_all_c_mw8_uni/target/release/mw_predicate_all_c_mw8_uni"]
+[[bench.multiway_mw8_uni_c.sizes]]
+n = 4096
+variants = ["variants/mw_chain_c_mw8_uni/target/release/mw_chain_c_mw8_uni", "variants/mw_chain_rev_c_mw8_uni/target/release/mw_chain_rev_c_mw8_uni", "variants/mw_jumptable_c_mw8_uni/target/release/mw_jumptable_c_mw8_uni", "variants/mw_bintree_c_mw8_uni/target/release/mw_bintree_c_mw8_uni", "variants/mw_predicate_all_c_mw8_uni/target/release/mw_predicate_all_c_mw8_uni"]
+[[bench.multiway_mw8_uni_c.sizes]]
+n = 16384
+variants = ["variants/mw_chain_c_mw8_uni/target/release/mw_chain_c_mw8_uni", "variants/mw_chain_rev_c_mw8_uni/target/release/mw_chain_rev_c_mw8_uni", "variants/mw_jumptable_c_mw8_uni/target/release/mw_jumptable_c_mw8_uni", "variants/mw_bintree_c_mw8_uni/target/release/mw_bintree_c_mw8_uni", "variants/mw_predicate_all_c_mw8_uni/target/release/mw_predicate_all_c_mw8_uni"]
+
+[bench.multiway_mw8_skew_c]
+title = "Multiway branch strategies, cheap-arm, mw8_skew: 8-way, skewed to arm 0 (~70%)"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[[bench.multiway_mw8_skew_c.sizes]]
+n = 64
+variants = ["variants/mw_chain_c_mw8_skew/target/release/mw_chain_c_mw8_skew", "variants/mw_chain_rev_c_mw8_skew/target/release/mw_chain_rev_c_mw8_skew", "variants/mw_jumptable_c_mw8_skew/target/release/mw_jumptable_c_mw8_skew", "variants/mw_bintree_c_mw8_skew/target/release/mw_bintree_c_mw8_skew", "variants/mw_predicate_all_c_mw8_skew/target/release/mw_predicate_all_c_mw8_skew"]
+[[bench.multiway_mw8_skew_c.sizes]]
+n = 256
+variants = ["variants/mw_chain_c_mw8_skew/target/release/mw_chain_c_mw8_skew", "variants/mw_chain_rev_c_mw8_skew/target/release/mw_chain_rev_c_mw8_skew", "variants/mw_jumptable_c_mw8_skew/target/release/mw_jumptable_c_mw8_skew", "variants/mw_bintree_c_mw8_skew/target/release/mw_bintree_c_mw8_skew", "variants/mw_predicate_all_c_mw8_skew/target/release/mw_predicate_all_c_mw8_skew"]
+[[bench.multiway_mw8_skew_c.sizes]]
+n = 1024
+variants = ["variants/mw_chain_c_mw8_skew/target/release/mw_chain_c_mw8_skew", "variants/mw_chain_rev_c_mw8_skew/target/release/mw_chain_rev_c_mw8_skew", "variants/mw_jumptable_c_mw8_skew/target/release/mw_jumptable_c_mw8_skew", "variants/mw_bintree_c_mw8_skew/target/release/mw_bintree_c_mw8_skew", "variants/mw_predicate_all_c_mw8_skew/target/release/mw_predicate_all_c_mw8_skew"]
+[[bench.multiway_mw8_skew_c.sizes]]
+n = 4096
+variants = ["variants/mw_chain_c_mw8_skew/target/release/mw_chain_c_mw8_skew", "variants/mw_chain_rev_c_mw8_skew/target/release/mw_chain_rev_c_mw8_skew", "variants/mw_jumptable_c_mw8_skew/target/release/mw_jumptable_c_mw8_skew", "variants/mw_bintree_c_mw8_skew/target/release/mw_bintree_c_mw8_skew", "variants/mw_predicate_all_c_mw8_skew/target/release/mw_predicate_all_c_mw8_skew"]
+[[bench.multiway_mw8_skew_c.sizes]]
+n = 16384
+variants = ["variants/mw_chain_c_mw8_skew/target/release/mw_chain_c_mw8_skew", "variants/mw_chain_rev_c_mw8_skew/target/release/mw_chain_rev_c_mw8_skew", "variants/mw_jumptable_c_mw8_skew/target/release/mw_jumptable_c_mw8_skew", "variants/mw_bintree_c_mw8_skew/target/release/mw_bintree_c_mw8_skew", "variants/mw_predicate_all_c_mw8_skew/target/release/mw_predicate_all_c_mw8_skew"]
+
+[bench.multiway_mw3_uni_h]
+title = "Multiway branch strategies, heavy-arm, mw3_uni: 3-way, uniform key"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[[bench.multiway_mw3_uni_h.sizes]]
+n = 64
+variants = ["variants/mw_chain_h_mw3_uni/target/release/mw_chain_h_mw3_uni", "variants/mw_chain_rev_h_mw3_uni/target/release/mw_chain_rev_h_mw3_uni", "variants/mw_jumptable_h_mw3_uni/target/release/mw_jumptable_h_mw3_uni", "variants/mw_bintree_h_mw3_uni/target/release/mw_bintree_h_mw3_uni"]
+[[bench.multiway_mw3_uni_h.sizes]]
+n = 256
+variants = ["variants/mw_chain_h_mw3_uni/target/release/mw_chain_h_mw3_uni", "variants/mw_chain_rev_h_mw3_uni/target/release/mw_chain_rev_h_mw3_uni", "variants/mw_jumptable_h_mw3_uni/target/release/mw_jumptable_h_mw3_uni", "variants/mw_bintree_h_mw3_uni/target/release/mw_bintree_h_mw3_uni"]
+[[bench.multiway_mw3_uni_h.sizes]]
+n = 1024
+variants = ["variants/mw_chain_h_mw3_uni/target/release/mw_chain_h_mw3_uni", "variants/mw_chain_rev_h_mw3_uni/target/release/mw_chain_rev_h_mw3_uni", "variants/mw_jumptable_h_mw3_uni/target/release/mw_jumptable_h_mw3_uni", "variants/mw_bintree_h_mw3_uni/target/release/mw_bintree_h_mw3_uni"]
+[[bench.multiway_mw3_uni_h.sizes]]
+n = 4096
+variants = ["variants/mw_chain_h_mw3_uni/target/release/mw_chain_h_mw3_uni", "variants/mw_chain_rev_h_mw3_uni/target/release/mw_chain_rev_h_mw3_uni", "variants/mw_jumptable_h_mw3_uni/target/release/mw_jumptable_h_mw3_uni", "variants/mw_bintree_h_mw3_uni/target/release/mw_bintree_h_mw3_uni"]
+[[bench.multiway_mw3_uni_h.sizes]]
+n = 16384
+variants = ["variants/mw_chain_h_mw3_uni/target/release/mw_chain_h_mw3_uni", "variants/mw_chain_rev_h_mw3_uni/target/release/mw_chain_rev_h_mw3_uni", "variants/mw_jumptable_h_mw3_uni/target/release/mw_jumptable_h_mw3_uni", "variants/mw_bintree_h_mw3_uni/target/release/mw_bintree_h_mw3_uni"]
+
+[bench.multiway_mw3_skew_h]
+title = "Multiway branch strategies, heavy-arm, mw3_skew: 3-way, skewed to arm 0 (~80%)"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[[bench.multiway_mw3_skew_h.sizes]]
+n = 64
+variants = ["variants/mw_chain_h_mw3_skew/target/release/mw_chain_h_mw3_skew", "variants/mw_chain_rev_h_mw3_skew/target/release/mw_chain_rev_h_mw3_skew", "variants/mw_jumptable_h_mw3_skew/target/release/mw_jumptable_h_mw3_skew", "variants/mw_bintree_h_mw3_skew/target/release/mw_bintree_h_mw3_skew"]
+[[bench.multiway_mw3_skew_h.sizes]]
+n = 256
+variants = ["variants/mw_chain_h_mw3_skew/target/release/mw_chain_h_mw3_skew", "variants/mw_chain_rev_h_mw3_skew/target/release/mw_chain_rev_h_mw3_skew", "variants/mw_jumptable_h_mw3_skew/target/release/mw_jumptable_h_mw3_skew", "variants/mw_bintree_h_mw3_skew/target/release/mw_bintree_h_mw3_skew"]
+[[bench.multiway_mw3_skew_h.sizes]]
+n = 1024
+variants = ["variants/mw_chain_h_mw3_skew/target/release/mw_chain_h_mw3_skew", "variants/mw_chain_rev_h_mw3_skew/target/release/mw_chain_rev_h_mw3_skew", "variants/mw_jumptable_h_mw3_skew/target/release/mw_jumptable_h_mw3_skew", "variants/mw_bintree_h_mw3_skew/target/release/mw_bintree_h_mw3_skew"]
+[[bench.multiway_mw3_skew_h.sizes]]
+n = 4096
+variants = ["variants/mw_chain_h_mw3_skew/target/release/mw_chain_h_mw3_skew", "variants/mw_chain_rev_h_mw3_skew/target/release/mw_chain_rev_h_mw3_skew", "variants/mw_jumptable_h_mw3_skew/target/release/mw_jumptable_h_mw3_skew", "variants/mw_bintree_h_mw3_skew/target/release/mw_bintree_h_mw3_skew"]
+[[bench.multiway_mw3_skew_h.sizes]]
+n = 16384
+variants = ["variants/mw_chain_h_mw3_skew/target/release/mw_chain_h_mw3_skew", "variants/mw_chain_rev_h_mw3_skew/target/release/mw_chain_rev_h_mw3_skew", "variants/mw_jumptable_h_mw3_skew/target/release/mw_jumptable_h_mw3_skew", "variants/mw_bintree_h_mw3_skew/target/release/mw_bintree_h_mw3_skew"]
+
+[bench.multiway_mw8_uni_h]
+title = "Multiway branch strategies, heavy-arm, mw8_uni: 8-way, uniform key"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[[bench.multiway_mw8_uni_h.sizes]]
+n = 64
+variants = ["variants/mw_chain_h_mw8_uni/target/release/mw_chain_h_mw8_uni", "variants/mw_chain_rev_h_mw8_uni/target/release/mw_chain_rev_h_mw8_uni", "variants/mw_jumptable_h_mw8_uni/target/release/mw_jumptable_h_mw8_uni", "variants/mw_bintree_h_mw8_uni/target/release/mw_bintree_h_mw8_uni"]
+[[bench.multiway_mw8_uni_h.sizes]]
+n = 256
+variants = ["variants/mw_chain_h_mw8_uni/target/release/mw_chain_h_mw8_uni", "variants/mw_chain_rev_h_mw8_uni/target/release/mw_chain_rev_h_mw8_uni", "variants/mw_jumptable_h_mw8_uni/target/release/mw_jumptable_h_mw8_uni", "variants/mw_bintree_h_mw8_uni/target/release/mw_bintree_h_mw8_uni"]
+[[bench.multiway_mw8_uni_h.sizes]]
+n = 1024
+variants = ["variants/mw_chain_h_mw8_uni/target/release/mw_chain_h_mw8_uni", "variants/mw_chain_rev_h_mw8_uni/target/release/mw_chain_rev_h_mw8_uni", "variants/mw_jumptable_h_mw8_uni/target/release/mw_jumptable_h_mw8_uni", "variants/mw_bintree_h_mw8_uni/target/release/mw_bintree_h_mw8_uni"]
+[[bench.multiway_mw8_uni_h.sizes]]
+n = 4096
+variants = ["variants/mw_chain_h_mw8_uni/target/release/mw_chain_h_mw8_uni", "variants/mw_chain_rev_h_mw8_uni/target/release/mw_chain_rev_h_mw8_uni", "variants/mw_jumptable_h_mw8_uni/target/release/mw_jumptable_h_mw8_uni", "variants/mw_bintree_h_mw8_uni/target/release/mw_bintree_h_mw8_uni"]
+[[bench.multiway_mw8_uni_h.sizes]]
+n = 16384
+variants = ["variants/mw_chain_h_mw8_uni/target/release/mw_chain_h_mw8_uni", "variants/mw_chain_rev_h_mw8_uni/target/release/mw_chain_rev_h_mw8_uni", "variants/mw_jumptable_h_mw8_uni/target/release/mw_jumptable_h_mw8_uni", "variants/mw_bintree_h_mw8_uni/target/release/mw_bintree_h_mw8_uni"]
+
+[bench.multiway_mw8_skew_h]
+title = "Multiway branch strategies, heavy-arm, mw8_skew: 8-way, skewed to arm 0 (~70%)"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[[bench.multiway_mw8_skew_h.sizes]]
+n = 64
+variants = ["variants/mw_chain_h_mw8_skew/target/release/mw_chain_h_mw8_skew", "variants/mw_chain_rev_h_mw8_skew/target/release/mw_chain_rev_h_mw8_skew", "variants/mw_jumptable_h_mw8_skew/target/release/mw_jumptable_h_mw8_skew", "variants/mw_bintree_h_mw8_skew/target/release/mw_bintree_h_mw8_skew"]
+[[bench.multiway_mw8_skew_h.sizes]]
+n = 256
+variants = ["variants/mw_chain_h_mw8_skew/target/release/mw_chain_h_mw8_skew", "variants/mw_chain_rev_h_mw8_skew/target/release/mw_chain_rev_h_mw8_skew", "variants/mw_jumptable_h_mw8_skew/target/release/mw_jumptable_h_mw8_skew", "variants/mw_bintree_h_mw8_skew/target/release/mw_bintree_h_mw8_skew"]
+[[bench.multiway_mw8_skew_h.sizes]]
+n = 1024
+variants = ["variants/mw_chain_h_mw8_skew/target/release/mw_chain_h_mw8_skew", "variants/mw_chain_rev_h_mw8_skew/target/release/mw_chain_rev_h_mw8_skew", "variants/mw_jumptable_h_mw8_skew/target/release/mw_jumptable_h_mw8_skew", "variants/mw_bintree_h_mw8_skew/target/release/mw_bintree_h_mw8_skew"]
+[[bench.multiway_mw8_skew_h.sizes]]
+n = 4096
+variants = ["variants/mw_chain_h_mw8_skew/target/release/mw_chain_h_mw8_skew", "variants/mw_chain_rev_h_mw8_skew/target/release/mw_chain_rev_h_mw8_skew", "variants/mw_jumptable_h_mw8_skew/target/release/mw_jumptable_h_mw8_skew", "variants/mw_bintree_h_mw8_skew/target/release/mw_bintree_h_mw8_skew"]
+[[bench.multiway_mw8_skew_h.sizes]]
+n = 16384
+variants = ["variants/mw_chain_h_mw8_skew/target/release/mw_chain_h_mw8_skew", "variants/mw_chain_rev_h_mw8_skew/target/release/mw_chain_rev_h_mw8_skew", "variants/mw_jumptable_h_mw8_skew/target/release/mw_jumptable_h_mw8_skew", "variants/mw_bintree_h_mw8_skew/target/release/mw_bintree_h_mw8_skew"]
+
+[bench.showdown_skew2]
+title = "Strategy showdown (skew2): all strategies x tiers (native/interp) same footing"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[[bench.showdown_skew2.sizes]]
+n = 64
+variants = ["variants/sd_chain_nat_skew2/target/release/sd_chain_nat_skew2", "variants/sd_chain_int_skew2/target/release/sd_chain_int_skew2", "variants/sd_chain_rev_nat_skew2/target/release/sd_chain_rev_nat_skew2", "variants/sd_chain_rev_int_skew2/target/release/sd_chain_rev_int_skew2", "variants/sd_profiled_nat_skew2/target/release/sd_profiled_nat_skew2", "variants/sd_profiled_int_skew2/target/release/sd_profiled_int_skew2", "variants/sd_jumptable_nat_skew2/target/release/sd_jumptable_nat_skew2", "variants/sd_jumptable_int_skew2/target/release/sd_jumptable_int_skew2", "variants/sd_bintree_nat_skew2/target/release/sd_bintree_nat_skew2", "variants/sd_bintree_int_skew2/target/release/sd_bintree_int_skew2", "variants/sd_evalall_nat_skew2/target/release/sd_evalall_nat_skew2", "variants/sd_evalall_int_skew2/target/release/sd_evalall_int_skew2"]
+[[bench.showdown_skew2.sizes]]
+n = 256
+variants = ["variants/sd_chain_nat_skew2/target/release/sd_chain_nat_skew2", "variants/sd_chain_int_skew2/target/release/sd_chain_int_skew2", "variants/sd_chain_rev_nat_skew2/target/release/sd_chain_rev_nat_skew2", "variants/sd_chain_rev_int_skew2/target/release/sd_chain_rev_int_skew2", "variants/sd_profiled_nat_skew2/target/release/sd_profiled_nat_skew2", "variants/sd_profiled_int_skew2/target/release/sd_profiled_int_skew2", "variants/sd_jumptable_nat_skew2/target/release/sd_jumptable_nat_skew2", "variants/sd_jumptable_int_skew2/target/release/sd_jumptable_int_skew2", "variants/sd_bintree_nat_skew2/target/release/sd_bintree_nat_skew2", "variants/sd_bintree_int_skew2/target/release/sd_bintree_int_skew2", "variants/sd_evalall_nat_skew2/target/release/sd_evalall_nat_skew2", "variants/sd_evalall_int_skew2/target/release/sd_evalall_int_skew2"]
+[[bench.showdown_skew2.sizes]]
+n = 1024
+variants = ["variants/sd_chain_nat_skew2/target/release/sd_chain_nat_skew2", "variants/sd_chain_int_skew2/target/release/sd_chain_int_skew2", "variants/sd_chain_rev_nat_skew2/target/release/sd_chain_rev_nat_skew2", "variants/sd_chain_rev_int_skew2/target/release/sd_chain_rev_int_skew2", "variants/sd_profiled_nat_skew2/target/release/sd_profiled_nat_skew2", "variants/sd_profiled_int_skew2/target/release/sd_profiled_int_skew2", "variants/sd_jumptable_nat_skew2/target/release/sd_jumptable_nat_skew2", "variants/sd_jumptable_int_skew2/target/release/sd_jumptable_int_skew2", "variants/sd_bintree_nat_skew2/target/release/sd_bintree_nat_skew2", "variants/sd_bintree_int_skew2/target/release/sd_bintree_int_skew2", "variants/sd_evalall_nat_skew2/target/release/sd_evalall_nat_skew2", "variants/sd_evalall_int_skew2/target/release/sd_evalall_int_skew2"]
+[[bench.showdown_skew2.sizes]]
+n = 4096
+variants = ["variants/sd_chain_nat_skew2/target/release/sd_chain_nat_skew2", "variants/sd_chain_int_skew2/target/release/sd_chain_int_skew2", "variants/sd_chain_rev_nat_skew2/target/release/sd_chain_rev_nat_skew2", "variants/sd_chain_rev_int_skew2/target/release/sd_chain_rev_int_skew2", "variants/sd_profiled_nat_skew2/target/release/sd_profiled_nat_skew2", "variants/sd_profiled_int_skew2/target/release/sd_profiled_int_skew2", "variants/sd_jumptable_nat_skew2/target/release/sd_jumptable_nat_skew2", "variants/sd_jumptable_int_skew2/target/release/sd_jumptable_int_skew2", "variants/sd_bintree_nat_skew2/target/release/sd_bintree_nat_skew2", "variants/sd_bintree_int_skew2/target/release/sd_bintree_int_skew2", "variants/sd_evalall_nat_skew2/target/release/sd_evalall_nat_skew2", "variants/sd_evalall_int_skew2/target/release/sd_evalall_int_skew2"]
+[[bench.showdown_skew2.sizes]]
+n = 16384
+variants = ["variants/sd_chain_nat_skew2/target/release/sd_chain_nat_skew2", "variants/sd_chain_int_skew2/target/release/sd_chain_int_skew2", "variants/sd_chain_rev_nat_skew2/target/release/sd_chain_rev_nat_skew2", "variants/sd_chain_rev_int_skew2/target/release/sd_chain_rev_int_skew2", "variants/sd_profiled_nat_skew2/target/release/sd_profiled_nat_skew2", "variants/sd_profiled_int_skew2/target/release/sd_profiled_int_skew2", "variants/sd_jumptable_nat_skew2/target/release/sd_jumptable_nat_skew2", "variants/sd_jumptable_int_skew2/target/release/sd_jumptable_int_skew2", "variants/sd_bintree_nat_skew2/target/release/sd_bintree_nat_skew2", "variants/sd_bintree_int_skew2/target/release/sd_bintree_int_skew2", "variants/sd_evalall_nat_skew2/target/release/sd_evalall_nat_skew2", "variants/sd_evalall_int_skew2/target/release/sd_evalall_int_skew2"]
+
+[bench.branch_tier]
+title = "Branch tier: interpreter dispatch vs native-direct vs copy-and-patch stencil JIT"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[[bench.branch_tier.sizes]]
+n = 64
+variants = ["variants/bt_interp_dispatch/target/release/bt_interp_dispatch", "variants/bt_native_direct/target/release/bt_native_direct", "variants/bt_stencil_jit/target/release/bt_stencil_jit"]
+[[bench.branch_tier.sizes]]
+n = 256
+variants = ["variants/bt_interp_dispatch/target/release/bt_interp_dispatch", "variants/bt_native_direct/target/release/bt_native_direct", "variants/bt_stencil_jit/target/release/bt_stencil_jit"]
+[[bench.branch_tier.sizes]]
+n = 1024
+variants = ["variants/bt_interp_dispatch/target/release/bt_interp_dispatch", "variants/bt_native_direct/target/release/bt_native_direct", "variants/bt_stencil_jit/target/release/bt_stencil_jit"]
+[[bench.branch_tier.sizes]]
+n = 4096
+variants = ["variants/bt_interp_dispatch/target/release/bt_interp_dispatch", "variants/bt_native_direct/target/release/bt_native_direct", "variants/bt_stencil_jit/target/release/bt_stencil_jit"]
+[[bench.branch_tier.sizes]]
+n = 16384
+variants = ["variants/bt_interp_dispatch/target/release/bt_interp_dispatch", "variants/bt_native_direct/target/release/bt_native_direct", "variants/bt_stencil_jit/target/release/bt_stencil_jit"]

@@ -1,0 +1,7 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784621518	6ab1b5e	branch_biased25_h_n16384	br_branch_h_biased25	16384	warm	124220.8	124173.3	131161.2
+1784621518	6ab1b5e	branch_biased25_h_n16384	br_predicate_h_biased25	16384	warm	265138.8	265121.0	270344.0
+1784621518	6ab1b5e	branch_biased25_h_n16384	br_profiled_hot_h_biased25	16384	warm	149398.3	148946.5	154405.6
+1784622005	6ab1b5e	branch_biased25_h_n16384	br_branch_h_biased25	16384	warm	126537.5	126063.6	127165.0
+1784622005	6ab1b5e	branch_biased25_h_n16384	br_predicate_h_biased25	16384	warm	262992.9	262892.3	266658.5
+1784622005	6ab1b5e	branch_biased25_h_n16384	br_profiled_hot_h_biased25	16384	warm	147462.1	147461.0	153087.1

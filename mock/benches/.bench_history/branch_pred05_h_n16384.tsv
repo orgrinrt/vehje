@@ -1,0 +1,7 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784621529	6ab1b5e	branch_pred05_h_n16384	br_branch_h_pred05	16384	warm	108738.8	106422.3	112845.4
+1784621529	6ab1b5e	branch_pred05_h_n16384	br_predicate_h_pred05	16384	warm	267377.5	265677.1	269729.5
+1784621529	6ab1b5e	branch_pred05_h_n16384	br_profiled_hot_h_pred05	16384	warm	108697.9	108423.4	113039.6
+1784622013	6ab1b5e	branch_pred05_h_n16384	br_branch_h_pred05	16384	warm	103329.2	103235.2	106542.9
+1784622013	6ab1b5e	branch_pred05_h_n16384	br_predicate_h_pred05	16384	warm	270033.3	269349.8	271184.3
+1784622013	6ab1b5e	branch_pred05_h_n16384	br_profiled_hot_h_pred05	16384	warm	114870.4	112653.3	116570.6

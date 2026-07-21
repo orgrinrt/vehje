@@ -1,0 +1,3 @@
+operation,ns_per_node,m_node_per_s,note
+effect_join_bitwise_or,6.14,163,memory-bound DAG child gather; op is one OR
+inclusion_subset_test,0.39,2557,sequential scan; one AND-NOT+cmp per node

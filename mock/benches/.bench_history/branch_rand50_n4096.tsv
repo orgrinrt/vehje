@@ -1,0 +1,5 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784621232	6ab1b5e	branch_rand50_n4096	br_cmov_rand50	4096	warm	2605.0	2403.9	2720.8
+1784621232	6ab1b5e	branch_rand50_n4096	br_if_rand50	4096	warm	2610.0	2609.4	2724.6
+1784621232	6ab1b5e	branch_rand50_n4096	br_lut_rand50	4096	warm	2602.1	2517.5	2715.8
+1784621232	6ab1b5e	branch_rand50_n4096	br_mask_rand50	4096	warm	3591.2	3510.4	3850.0

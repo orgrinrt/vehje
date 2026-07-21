@@ -1,0 +1,5 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784622060	6ab1b5e	multiway_mw3_uni_h_n16384	mw_bintree_h_mw3_uni	16384	warm	295926.7	295381.1	299759.3
+1784622060	6ab1b5e	multiway_mw3_uni_h_n16384	mw_chain_h_mw3_uni	16384	warm	294577.9	294430.0	296807.1
+1784622060	6ab1b5e	multiway_mw3_uni_h_n16384	mw_chain_rev_h_mw3_uni	16384	warm	292721.7	291936.7	295191.0
+1784622060	6ab1b5e	multiway_mw3_uni_h_n16384	mw_jumptable_h_mw3_uni	16384	warm	293583.3	292125.4	297043.1

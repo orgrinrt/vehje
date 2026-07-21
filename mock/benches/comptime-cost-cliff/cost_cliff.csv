@@ -1,0 +1,15 @@
+workload,n,comptime_ms
+table,100,703
+table,500,812
+table,2000,2165
+table,8000,7762
+table,20000,19054
+contentN,100,404
+contentN,500,357
+contentN,2000,380
+contentN,8000,502
+contentN,20000,918
+contentNsq,100,366
+contentNsq,500,844
+contentNsq,1000,2473
+contentNsq,2000,9730

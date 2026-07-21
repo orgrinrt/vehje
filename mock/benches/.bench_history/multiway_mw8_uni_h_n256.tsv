@@ -1,0 +1,5 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784622082	6ab1b5e	multiway_mw8_uni_h_n256	mw_bintree_h_mw8_uni	256	warm	5752.9	5751.6	5754.2
+1784622082	6ab1b5e	multiway_mw8_uni_h_n256	mw_chain_h_mw8_uni	256	warm	5290.8	5082.1	5315.6
+1784622082	6ab1b5e	multiway_mw8_uni_h_n256	mw_chain_rev_h_mw8_uni	256	warm	5274.2	4755.4	5288.4
+1784622082	6ab1b5e	multiway_mw8_uni_h_n256	mw_jumptable_h_mw8_uni	256	warm	5288.3	5288.1	5364.8

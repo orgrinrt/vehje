@@ -1,0 +1,4 @@
+strategy,ns_per_ref,m_ref_per_s,complexity
+linear_scope_chain,13.05,77,O(depth*width)
+hashed_scopes,5.43,184,O(depth)
+flat_shadow_stack,0.91,1104,O(1)

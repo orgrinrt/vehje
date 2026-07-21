@@ -1,0 +1,9 @@
+# build artifacts (per-variant and bench-bin target dirs)
+target/
+variants/*/target/
+# run logs and inflight (transient)
+*.log
+results/.inflight/
+# per-variant lockfiles are noise; the results are the durable record
+variants/*/Cargo.lock
+Cargo.lock

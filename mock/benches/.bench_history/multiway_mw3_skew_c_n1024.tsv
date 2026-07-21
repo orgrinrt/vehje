@@ -1,0 +1,6 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784622038	6ab1b5e	multiway_mw3_skew_c_n1024	mw_bintree_c_mw3_skew	1024	warm	1702.9	1586.5	1784.8
+1784622038	6ab1b5e	multiway_mw3_skew_c_n1024	mw_chain_c_mw3_skew	1024	warm	1704.6	1639.8	1705.0
+1784622038	6ab1b5e	multiway_mw3_skew_c_n1024	mw_chain_rev_c_mw3_skew	1024	warm	1705.4	1639.2	1720.7
+1784622038	6ab1b5e	multiway_mw3_skew_c_n1024	mw_jumptable_c_mw3_skew	1024	warm	1702.1	1586.7	1704.4
+1784622038	6ab1b5e	multiway_mw3_skew_c_n1024	mw_predicate_all_c_mw3_skew	1024	warm	3800.4	3797.9	3980.2

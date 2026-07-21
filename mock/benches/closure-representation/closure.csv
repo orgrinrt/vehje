@@ -1,0 +1,11 @@
+pattern,representation,param,ns_per_call
+create_once_call_many,flat,K8,0.53
+create_once_call_many,linked,depth1,0.45
+create_once_call_many,linked,depth4,1.95
+create_once_call_many,linked,depth7,2.84
+create_many_call_once,flat,K1,2.50
+create_many_call_once,linked,K1,1.42
+create_many_call_once,flat,K4,4.13
+create_many_call_once,linked,K4,1.42
+create_many_call_once,flat,K8,2.93
+create_many_call_once,linked,K8,1.43

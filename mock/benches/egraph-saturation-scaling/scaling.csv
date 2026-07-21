@@ -1,0 +1,5 @@
+depth,init_nodes,uncapped_nodes,uncapped_classes,rounds,uncapped_ms,cap4096_nodes,cap4096_ms,growth_x
+2,31,156,71,4,0.0,156,0.02,5.03
+3,127,652,295,4,0.1,652,0.05,5.13
+4,511,2636,1191,4,0.2,2636,0.21,5.16
+5,2047,10572,4775,4,1.9,4102,0.26,5.16

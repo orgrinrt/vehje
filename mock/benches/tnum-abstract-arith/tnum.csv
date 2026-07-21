@@ -1,0 +1,8 @@
+op,ns_per_op,x_concrete
+concrete_u64_add,0.68,1.0
+tnum_add,0.95,1.40
+tnum_and,0.87,1.28
+tnum_or,0.68,1.00
+tnum_shl,0.69,1.01
+tnum_mul_bitloop,149.76,220
+tnum_mul_fastpath_80pct_known,30.56,45

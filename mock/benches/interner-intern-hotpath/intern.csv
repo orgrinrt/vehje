@@ -1,0 +1,7 @@
+load_factor,hash,ns_per_intern,m_per_s
+25pct,FxHash,19.55,51
+25pct,FNV,18.79,53
+50pct,FxHash,19.67,51
+50pct,FNV,18.20,55
+75pct,FxHash,20.25,49
+75pct,FNV,18.10,55

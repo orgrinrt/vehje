@@ -1,0 +1,9 @@
+site,strategy,ns_per_access,valid
+monomorphic,direct-offset,0.54,yes
+monomorphic,linear-scan,1.57,yes
+monomorphic,hash-lookup,1.27,yes
+monomorphic,inline-cache,0.61,yes
+polymorphic,direct-offset,0.54,no
+polymorphic,linear-scan,1.57,yes
+polymorphic,hash-lookup,1.27,yes
+polymorphic,inline-cache,1.89,yes

@@ -1,0 +1,6 @@
+pipeline,strategy,ns_per_elem,m_elem_per_s
+2stage,materialized,3.43,291
+2stage,pull_fused,3.21,311
+2stage,push_fused,3.20,312
+3stage,materialized,3.61,277
+3stage,push_fused,3.23,310

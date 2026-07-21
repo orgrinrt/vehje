@@ -1,0 +1,17 @@
+[workspace]
+[package]
+name = "sd_evalall_int_skew2"
+version = "0.0.0"
+edition = "2021"
+publish = false
+[lib]
+name = "sd_evalall_int_skew2"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+[dependencies]
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev", features = ["std"] }
+mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev" }
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
