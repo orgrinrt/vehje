@@ -1,0 +1,24 @@
+# vehje-bench-carrier: the shared IR + generators + reference interpreter that
+# every vehje bench varies one axis of. Not a shipping crate; bench infra only,
+# so it uses plain std Rust like the vehje-benches bin, not the arvo stack.
+#
+# The program format and checksum are language-neutral (bytes in, checksum out)
+# so a Zig cdylib variant can consume identical program bytes for the few
+# questions where the shipped language is load-bearing (dispatch shape, the real
+# runtime, wire-format differential). Everything else is Rust-default.
+# Standalone workspace so it is not swept into the vehje-benches workspace; the
+# variant cdylibs and the bench bin path-depend on it explicitly.
+[workspace]
+
+[package]
+name = "vehje-bench-carrier"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+# none by design: a seeded generator with no external RNG keeps runs
+# byte-reproducible and free of any supply-chain surface.
