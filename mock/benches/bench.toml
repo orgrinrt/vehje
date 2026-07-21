@@ -2008,3 +2008,146 @@ variants = ["variants/project_poly_linear/target/release/project_poly_linear", "
 [[bench.project_field_poly.sizes]]
 n = 16384
 variants = ["variants/project_poly_linear/target/release/project_poly_linear", "variants/project_poly_hash/target/release/project_poly_hash", "variants/project_poly_ic/target/release/project_poly_ic"]
+# >>> reach_chain8 (generated)
+[bench.reach_chain8]
+title = "Reachability fixpoint: whole-column vs real semi-naive (chain8)"
+workload = "realistic"
+master_seed = 0x5eed_9eac_0000_0008
+[bench.reach_chain8.normalise]
+baseline = "r_chain8_whole"
+mode = "subtract"
+[[bench.reach_chain8.sizes]]
+n = 64
+variants = ["variants/r_chain8_whole/target/release/r_chain8_whole", "variants/r_chain8_semi/target/release/r_chain8_semi"]
+[[bench.reach_chain8.sizes]]
+n = 256
+variants = ["variants/r_chain8_whole/target/release/r_chain8_whole", "variants/r_chain8_semi/target/release/r_chain8_semi"]
+[[bench.reach_chain8.sizes]]
+n = 1024
+variants = ["variants/r_chain8_whole/target/release/r_chain8_whole", "variants/r_chain8_semi/target/release/r_chain8_semi"]
+[[bench.reach_chain8.sizes]]
+n = 4096
+variants = ["variants/r_chain8_whole/target/release/r_chain8_whole", "variants/r_chain8_semi/target/release/r_chain8_semi"]
+[[bench.reach_chain8.sizes]]
+n = 16384
+variants = ["variants/r_chain8_whole/target/release/r_chain8_whole", "variants/r_chain8_semi/target/release/r_chain8_semi"]
+
+# >>> reach_chain32 (generated)
+[bench.reach_chain32]
+title = "Reachability fixpoint: whole-column vs real semi-naive (chain32)"
+workload = "realistic"
+master_seed = 0x5eed_9eac_0000_0032
+[bench.reach_chain32.normalise]
+baseline = "r_chain32_whole"
+mode = "subtract"
+[[bench.reach_chain32.sizes]]
+n = 64
+variants = ["variants/r_chain32_whole/target/release/r_chain32_whole", "variants/r_chain32_semi/target/release/r_chain32_semi"]
+[[bench.reach_chain32.sizes]]
+n = 256
+variants = ["variants/r_chain32_whole/target/release/r_chain32_whole", "variants/r_chain32_semi/target/release/r_chain32_semi"]
+[[bench.reach_chain32.sizes]]
+n = 1024
+variants = ["variants/r_chain32_whole/target/release/r_chain32_whole", "variants/r_chain32_semi/target/release/r_chain32_semi"]
+[[bench.reach_chain32.sizes]]
+n = 4096
+variants = ["variants/r_chain32_whole/target/release/r_chain32_whole", "variants/r_chain32_semi/target/release/r_chain32_semi"]
+[[bench.reach_chain32.sizes]]
+n = 16384
+variants = ["variants/r_chain32_whole/target/release/r_chain32_whole", "variants/r_chain32_semi/target/release/r_chain32_semi"]
+
+# >>> reach_chain128 (generated)
+[bench.reach_chain128]
+title = "Reachability fixpoint: whole-column vs real semi-naive (chain128)"
+workload = "realistic"
+master_seed = 0x5eed_9eac_0000_0128
+[bench.reach_chain128.normalise]
+baseline = "r_chain128_whole"
+mode = "subtract"
+[[bench.reach_chain128.sizes]]
+n = 64
+variants = ["variants/r_chain128_whole/target/release/r_chain128_whole", "variants/r_chain128_semi/target/release/r_chain128_semi"]
+[[bench.reach_chain128.sizes]]
+n = 256
+variants = ["variants/r_chain128_whole/target/release/r_chain128_whole", "variants/r_chain128_semi/target/release/r_chain128_semi"]
+[[bench.reach_chain128.sizes]]
+n = 1024
+variants = ["variants/r_chain128_whole/target/release/r_chain128_whole", "variants/r_chain128_semi/target/release/r_chain128_semi"]
+[[bench.reach_chain128.sizes]]
+n = 4096
+variants = ["variants/r_chain128_whole/target/release/r_chain128_whole", "variants/r_chain128_semi/target/release/r_chain128_semi"]
+[[bench.reach_chain128.sizes]]
+n = 16384
+variants = ["variants/r_chain128_whole/target/release/r_chain128_whole", "variants/r_chain128_semi/target/release/r_chain128_semi"]
+
+# >>> reach_fanin (generated)
+[bench.reach_fanin]
+title = "Reachability fixpoint: whole-column vs real semi-naive (fanin)"
+workload = "realistic"
+master_seed = 0x5eed_9eac_0000_0f01
+[bench.reach_fanin.normalise]
+baseline = "r_fanin_whole"
+mode = "subtract"
+[[bench.reach_fanin.sizes]]
+n = 64
+variants = ["variants/r_fanin_whole/target/release/r_fanin_whole", "variants/r_fanin_semi/target/release/r_fanin_semi"]
+[[bench.reach_fanin.sizes]]
+n = 256
+variants = ["variants/r_fanin_whole/target/release/r_fanin_whole", "variants/r_fanin_semi/target/release/r_fanin_semi"]
+[[bench.reach_fanin.sizes]]
+n = 1024
+variants = ["variants/r_fanin_whole/target/release/r_fanin_whole", "variants/r_fanin_semi/target/release/r_fanin_semi"]
+[[bench.reach_fanin.sizes]]
+n = 4096
+variants = ["variants/r_fanin_whole/target/release/r_fanin_whole", "variants/r_fanin_semi/target/release/r_fanin_semi"]
+[[bench.reach_fanin.sizes]]
+n = 16384
+variants = ["variants/r_fanin_whole/target/release/r_fanin_whole", "variants/r_fanin_semi/target/release/r_fanin_semi"]
+
+# >>> reach_randomdag (generated)
+[bench.reach_randomdag]
+title = "Reachability fixpoint: whole-column vs real semi-naive (randomdag)"
+workload = "realistic"
+master_seed = 0x5eed_9eac_0000_0d00
+[bench.reach_randomdag.normalise]
+baseline = "r_randomdag_whole"
+mode = "subtract"
+[[bench.reach_randomdag.sizes]]
+n = 64
+variants = ["variants/r_randomdag_whole/target/release/r_randomdag_whole", "variants/r_randomdag_semi/target/release/r_randomdag_semi"]
+[[bench.reach_randomdag.sizes]]
+n = 256
+variants = ["variants/r_randomdag_whole/target/release/r_randomdag_whole", "variants/r_randomdag_semi/target/release/r_randomdag_semi"]
+[[bench.reach_randomdag.sizes]]
+n = 1024
+variants = ["variants/r_randomdag_whole/target/release/r_randomdag_whole", "variants/r_randomdag_semi/target/release/r_randomdag_semi"]
+[[bench.reach_randomdag.sizes]]
+n = 4096
+variants = ["variants/r_randomdag_whole/target/release/r_randomdag_whole", "variants/r_randomdag_semi/target/release/r_randomdag_semi"]
+[[bench.reach_randomdag.sizes]]
+n = 16384
+variants = ["variants/r_randomdag_whole/target/release/r_randomdag_whole", "variants/r_randomdag_semi/target/release/r_randomdag_semi"]
+
+# >>> incr_reload (generated)
+[bench.incr_reload]
+title = "Incremental compilation: cold rebuild vs warm content-addressed reload after one edit"
+workload = "realistic"
+master_seed = 0x5eed_1c04_0000_0001
+[bench.incr_reload.normalise]
+baseline = "incr_cold"
+mode = "subtract"
+[[bench.incr_reload.sizes]]
+n = 64
+variants = ["variants/incr_cold/target/release/incr_cold", "variants/incr_warm/target/release/incr_warm"]
+[[bench.incr_reload.sizes]]
+n = 256
+variants = ["variants/incr_cold/target/release/incr_cold", "variants/incr_warm/target/release/incr_warm"]
+[[bench.incr_reload.sizes]]
+n = 1024
+variants = ["variants/incr_cold/target/release/incr_cold", "variants/incr_warm/target/release/incr_warm"]
+[[bench.incr_reload.sizes]]
+n = 4096
+variants = ["variants/incr_cold/target/release/incr_cold", "variants/incr_warm/target/release/incr_warm"]
+[[bench.incr_reload.sizes]]
+n = 16384
+variants = ["variants/incr_cold/target/release/incr_cold", "variants/incr_warm/target/release/incr_warm"]

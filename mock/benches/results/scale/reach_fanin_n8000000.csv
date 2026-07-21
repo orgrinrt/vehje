@@ -1,0 +1,11 @@
+shape,n,edges,strategy,run,ns,rounds,checksum
+fanin,8000000,7999999,whole,0,16371791.7,1,0xffffdfffffffffbd
+fanin,8000000,7999999,whole,1,11335416.7,1,0xffffdfffffffffbd
+fanin,8000000,7999999,whole,2,11258041.7,1,0xffffdfffffffffbd
+fanin,8000000,7999999,whole,3,11174250.0,1,0xffffdfffffffffbd
+fanin,8000000,7999999,whole,4,6716791.7,1,0xffffdfffffffffbd
+fanin,8000000,7999999,semi,0,3154125.0,1,0xffffdfffffffffbd
+fanin,8000000,7999999,semi,1,3155541.7,1,0xffffdfffffffffbd
+fanin,8000000,7999999,semi,2,3741500.0,1,0xffffdfffffffffbd
+fanin,8000000,7999999,semi,3,4034208.3,1,0xffffdfffffffffbd
+fanin,8000000,7999999,semi,4,3624291.7,1,0xffffdfffffffffbd

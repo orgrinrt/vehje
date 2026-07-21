@@ -25,9 +25,11 @@
 
 pub mod checksum;
 pub mod gen;
+pub mod incr;
 pub mod interp;
 pub mod ir;
 pub mod native;
+pub mod reach;
 
 pub use checksum::Checksum;
 pub use gen::{generate, GenParams, Rng};
