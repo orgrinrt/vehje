@@ -16,6 +16,7 @@ use std::path::Path;
 
 use mockspace_bench_core::counter::{read_counter, ticks_to_ns};
 use vehje_bench_carrier::eqsat::{build_chain, Op};
+use vehje_bench_carrier::incr::{compile_module, gen_modules};
 use vehje_bench_carrier::reach::{
     gen_fanin, gen_layered, gen_random_dag, reach_checksum, reset_reach, solve_semi, solve_whole,
     Graph,
@@ -236,6 +237,115 @@ fn run_eqsat(out_dir: &Path, runs: usize) {
     println!("  (bounded stays near 512 e-nodes; unbounded explodes: ~79k at K=12, >2M at K>=18)");
 }
 
+/// C4b: a real threaded level-sync DAG loader. A synthetic module DAG of `levels`
+/// levels x `width` modules; a level cannot start until the previous finishes
+/// (the barrier is `thread::scope` join). Within a level the modules compile in
+/// parallel across `threads` OS threads via static chunking, each a real
+/// `compile_module` call (not the old frictionless ceil(width/8) model). Returns
+/// (median_ns, fold) so the fold cross-validates across thread counts.
+fn time_threaded_dag(
+    modules: &[Vec<u8>],
+    levels: usize,
+    width: usize,
+    threads: usize,
+    runs: usize,
+) -> (f64, u64) {
+    use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+    use std::sync::Barrier;
+    let mut ns = Vec::with_capacity(runs);
+    let mut fold = 0u64;
+    for _ in 0..runs {
+        // A persistent pool: T worker threads spawned once and reused across
+        // every level via a barrier, so the measurement is the parallel compile
+        // and the per-level barrier, NOT thread-spawn churn (spawning per level
+        // dominated the earlier attempt). Within a level, workers pull modules
+        // by an atomic cursor (work-stealing); the barrier is the level-sync.
+        let end = AtomicUsize::new(0);
+        let cursor = AtomicUsize::new(0);
+        let done = AtomicBool::new(false);
+        let barrier = Barrier::new(threads + 1);
+        let elapsed = std::thread::scope(|s| {
+            let mut handles = Vec::new();
+            for _ in 0..threads {
+                handles.push(s.spawn(|| {
+                    let mut scratch = vec![0u64; 32];
+                    let mut f = 0u64;
+                    loop {
+                        barrier.wait(); // level start (or shutdown)
+                        if done.load(Ordering::Acquire) {
+                            break;
+                        }
+                        let e = end.load(Ordering::Relaxed);
+                        loop {
+                            let i = cursor.fetch_add(1, Ordering::Relaxed);
+                            if i >= e {
+                                break;
+                            }
+                            f ^= compile_module(&modules[i], &mut scratch);
+                        }
+                        barrier.wait(); // level end
+                    }
+                    f
+                }));
+            }
+            let t0 = read_counter();
+            for l in 0..levels {
+                let b = l * width;
+                end.store((b + width).min(modules.len()), Ordering::Relaxed);
+                cursor.store(b, Ordering::Relaxed);
+                barrier.wait(); // release workers into the level
+                barrier.wait(); // wait for the level to finish
+            }
+            done.store(true, Ordering::Release);
+            barrier.wait(); // release workers to observe shutdown and exit
+            let t1 = read_counter();
+            let ns = ticks_to_ns(t1.wrapping_sub(t0));
+            let combined = handles.into_iter().fold(0u64, |a, h| a ^ h.join().unwrap());
+            (ns, combined)
+        });
+        ns.push(elapsed.0);
+        fold = elapsed.1;
+    }
+    let _ = width;
+    (median(ns), fold)
+}
+
+fn run_threaded_dag(out_dir: &Path, runs: usize) {
+    println!("\n== C4b threaded level-sync DAG: parallel compile speedup (real threads) ==");
+    let levels = 64usize;
+    let width = 512usize;
+    let n = levels * width;
+    let modules = gen_modules(n, 0x4b_0000_0001);
+    let cores = std::thread::available_parallelism().map(|c| c.get()).unwrap_or(8);
+    println!(
+        "  {} modules ({} levels x {} wide), {} logical cores; compile = 8-pass interp per module",
+        n, levels, width, cores
+    );
+    let mut csv = String::from("levels,width,threads,ns,speedup,efficiency\n");
+    let (base_ns, base_fold) = time_threaded_dag(&modules, levels, width, 1, runs);
+    println!("  {:>2} thread : {:>9.1} ms  (1.00x)", 1, base_ns / 1e6);
+    csv.push_str(&format!("{},{},1,{:.1},1.00,1.00\n", levels, width, base_ns));
+    for &t in &[2usize, 4, 8] {
+        let (t_ns, fold) = time_threaded_dag(&modules, levels, width, t, runs);
+        if fold != base_fold {
+            eprintln!("  !! CROSS-VAL FAIL threads={t}: fold 0x{fold:x} != serial 0x{base_fold:x}");
+            std::process::exit(2);
+        }
+        let speedup = base_ns / t_ns;
+        let eff = speedup / t as f64;
+        println!(
+            "  {:>2} threads: {:>9.1} ms  ({:.2}x, {:.0}% efficiency)",
+            t,
+            t_ns / 1e6,
+            speedup,
+            eff * 100.0
+        );
+        csv.push_str(&format!("{},{},{},{:.1},{:.2},{:.2}\n", levels, width, t, t_ns, speedup, eff));
+    }
+    fs::write(out_dir.join("threaded_dag.csv"), csv)
+        .expect("scale-runner refuses to conclude without writing its CSV");
+}
+
 fn main() {
     let out_dir = Path::new("results/scale");
     fs::create_dir_all(out_dir).expect("create results/scale");
@@ -256,9 +366,14 @@ fn main() {
     println!("timing: CNTVCT_EL0 (24 MHz), {} runs, median reported\n", runs);
     let args: Vec<String> = std::env::args().skip(1).collect();
 
-    // eqsat is its own experiment; `scale-runner eqsat` runs only it.
+    // single-experiment gates.
     if args.first().map(String::as_str) == Some("eqsat") {
         run_eqsat(out_dir, 3);
+        println!("\nscale CSVs written to results/scale/");
+        return;
+    }
+    if args.first().map(String::as_str) == Some("threads") {
+        run_threaded_dag(out_dir, 5);
         println!("\nscale CSVs written to results/scale/");
         return;
     }
@@ -277,9 +392,11 @@ fn main() {
         }
     }
 
-    // eqsat runs by default too (after reach), unless a reach-shape filter was given.
+    // eqsat + threaded-dag run by default too (after reach), unless a reach-shape
+    // filter was given.
     if args.is_empty() {
         run_eqsat(out_dir, 3);
+        run_threaded_dag(out_dir, 5);
     }
     println!("\nscale CSVs written to results/scale/");
 }
