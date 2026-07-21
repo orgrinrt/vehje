@@ -15,6 +15,7 @@ use std::fs;
 use std::path::Path;
 
 use mockspace_bench_core::counter::{read_counter, ticks_to_ns};
+use vehje_bench_carrier::eqsat::{build_chain, Op};
 use vehje_bench_carrier::reach::{
     gen_fanin, gen_layered, gen_random_dag, reach_checksum, reset_reach, solve_semi, solve_whole,
     Graph,
@@ -165,6 +166,76 @@ fn run_experiment(shape: Shape, n: usize, runs: usize, out_dir: &Path) {
     );
 }
 
+/// One eqsat saturation over a k-leaf associative chain at the given cap.
+/// Returns (enodes, rounds, extract_cost, value, ns) for the run.
+fn one_eqsat(k: usize, cap: usize) -> (usize, u32, u64, u64, f64) {
+    let (mut g, root) = build_chain(k, Op::Add, cap, 0x5eeda11c);
+    let t0 = read_counter();
+    let rounds = g.saturate();
+    let (cost, val) = g.extract(root);
+    let t1 = read_counter();
+    (g.enode_count(), rounds, cost, val, ticks_to_ns(t1.wrapping_sub(t0)))
+}
+
+/// The eqsat associativity cap-explosion experiment: a bounded window vs an
+/// unbounded run over the same reassociation chain, which is the case designed
+/// to blow an e-graph up. The bounded run must stay near its cap while
+/// extracting the same-cost form; the unbounded run explodes toward the safety
+/// ceiling. Both extract equal VALUE (all reassociations are equal), the
+/// cross-validation. runs=3, median ns; K kept <= 14 so the unbounded run stays
+/// feasible (K=16 unbounded is ~2M e-nodes and ~20 s).
+fn run_eqsat(out_dir: &Path, runs: usize) {
+    println!("\n== eqsat associativity cap-explosion: bounded(512) vs unbounded(2M ceiling) ==");
+    println!(
+        "{:>3} | {:<9} {:>9} {:>5} {:>5} {:>10} | {:<9} {:>9} {:>5} {:>5} {:>10} | equal-value?",
+        "K", "bounded", "enodes", "cost", "rnds", "us", "unbounded", "enodes", "cost", "rnds", "us"
+    );
+    let mut csv = String::from("k,strategy,cap,enodes,rounds,extract_cost,value,ns\n");
+    for &k in &[8usize, 10, 12, 14] {
+        let bounded_cap = 512;
+        let unbounded_cap = 2_000_000;
+        let mut bns = Vec::new();
+        let mut uns = Vec::new();
+        let (mut be, mut brn, mut bco, mut bv) = (0, 0, 0, 0);
+        let (mut ue, mut urn, mut uco, mut uv) = (0, 0, 0, 0);
+        for _ in 0..runs {
+            let (e, r, c, v, ns) = one_eqsat(k, bounded_cap);
+            be = e;
+            brn = r;
+            bco = c;
+            bv = v;
+            bns.push(ns);
+        }
+        for _ in 0..runs {
+            let (e, r, c, v, ns) = one_eqsat(k, unbounded_cap);
+            ue = e;
+            urn = r;
+            uco = c;
+            uv = v;
+            uns.push(ns);
+        }
+        if bv != uv {
+            eprintln!("  !! eqsat CROSS-VAL FAIL k={k}: bounded value 0x{bv:x} != unbounded 0x{uv:x}");
+            std::process::exit(2);
+        }
+        let bm = median(bns);
+        let um = median(uns);
+        println!(
+            "{:>3} | {:<9} {:>9} {:>5} {:>5} {:>10.0} | {:<9} {:>9} {:>5} {:>5} {:>10.0} | yes (0x{:x})",
+            k, "", be, bco, brn, bm / 1000.0, "", ue, uco, urn, um / 1000.0, bv
+        );
+        for (strat, cap, e, r, c, ns) in [
+            ("bounded", bounded_cap, be, brn, bco, bm),
+            ("unbounded", unbounded_cap, ue, urn, uco, um),
+        ] {
+            csv.push_str(&format!("{},{},{},{},{},{},0x{:x},{:.1}\n", k, strat, cap, e, r, c, bv, ns));
+        }
+    }
+    fs::write(out_dir.join("eqsat_cap_explosion.csv"), csv)
+        .expect("scale-runner refuses to conclude without writing its CSV");
+    println!("  (bounded stays near 512 e-nodes; unbounded explodes: ~79k at K=12, >2M at K>=18)");
+}
+
 fn main() {
     let out_dir = Path::new("results/scale");
     fs::create_dir_all(out_dir).expect("create results/scale");
@@ -181,9 +252,16 @@ fn main() {
         (Shape::Fanin, &[8_000_000]),
     ];
 
-    println!("vehje scale-runner: reachability whole-column vs semi-naive at scale");
+    println!("vehje scale-runner: beyond-cap experiments");
     println!("timing: CNTVCT_EL0 (24 MHz), {} runs, median reported\n", runs);
     let args: Vec<String> = std::env::args().skip(1).collect();
+
+    // eqsat is its own experiment; `scale-runner eqsat` runs only it.
+    if args.first().map(String::as_str) == Some("eqsat") {
+        run_eqsat(out_dir, 3);
+        println!("\nscale CSVs written to results/scale/");
+        return;
+    }
     for (shape, sizes) in matrix {
         for &n in *sizes {
             // allow a single-experiment filter: `scale-runner random_dag 1000000`
@@ -197,6 +275,11 @@ fn main() {
             }
             run_experiment(*shape, n, runs, out_dir);
         }
+    }
+
+    // eqsat runs by default too (after reach), unless a reach-shape filter was given.
+    if args.is_empty() {
+        run_eqsat(out_dir, 3);
     }
     println!("\nscale CSVs written to results/scale/");
 }

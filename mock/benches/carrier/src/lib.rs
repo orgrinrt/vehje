@@ -24,6 +24,7 @@
 //! wire-format differential); every other bench is Rust-default.
 
 pub mod checksum;
+pub mod eqsat;
 pub mod gen;
 pub mod incr;
 pub mod interp;
