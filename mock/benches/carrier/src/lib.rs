@@ -35,6 +35,18 @@ pub use ir::{
     encode, Decoded, Layout, Node, Program, ALL_LAYOUTS, REC12, REC16, REC20, REC24, REC32,
 };
 
+/// Build the wire bytes for a program of `node_count` nodes at `layout`, from
+/// the default operating point. A variant calls this once per process (the
+/// orchestrator gives each variant process a single size) to get the program it
+/// interprets. Every record-width variant generates the same program and only
+/// changes the layout, so their checksums must agree; the cross-validation in
+/// the harness enforces exactly that.
+pub fn program_at(node_count: usize, layout: Layout) -> Vec<u8> {
+    let mut p = GenParams::default_point();
+    p.node_count = node_count;
+    encode(&generate(&p), &layout)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

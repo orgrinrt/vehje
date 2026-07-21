@@ -1,0 +1,18 @@
+[workspace]
+[package]
+name = "carrier_rec20"
+version = "0.0.0"
+edition = "2021"
+publish = false
+[lib]
+name = "carrier_rec20"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+[dependencies]
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev", features = ["std"] }
+mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", branch = "dev" }
+vehje-bench-carrier = { path = "../../carrier" }
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

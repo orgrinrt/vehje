@@ -1364,3 +1364,27 @@ variants=["variants/hx_resolve__linear/target/release/hx_resolve__linear", "vari
 [[bench.hx_resolve.sizes]]
 n=16384
 variants=["variants/hx_resolve__linear/target/release/hx_resolve__linear", "variants/hx_resolve__flat/target/release/hx_resolve__flat"]
+
+# >>> carrier_record_width (generated)
+[bench.carrier_record_width]
+title = "Record width: wire-format stride and inline-vs-pool decode cost (carrier)"
+workload = "realistic"
+master_seed = 0x5eed_ca55_e77e_0001
+[bench.carrier_record_width.normalise]
+baseline = "carrier_rec24"
+mode = "subtract"
+[[bench.carrier_record_width.sizes]]
+n = 64
+variants = ["variants/carrier_rec12/target/release/carrier_rec12", "variants/carrier_rec16/target/release/carrier_rec16", "variants/carrier_rec20/target/release/carrier_rec20", "variants/carrier_rec24/target/release/carrier_rec24", "variants/carrier_rec32/target/release/carrier_rec32"]
+[[bench.carrier_record_width.sizes]]
+n = 256
+variants = ["variants/carrier_rec12/target/release/carrier_rec12", "variants/carrier_rec16/target/release/carrier_rec16", "variants/carrier_rec20/target/release/carrier_rec20", "variants/carrier_rec24/target/release/carrier_rec24", "variants/carrier_rec32/target/release/carrier_rec32"]
+[[bench.carrier_record_width.sizes]]
+n = 1024
+variants = ["variants/carrier_rec12/target/release/carrier_rec12", "variants/carrier_rec16/target/release/carrier_rec16", "variants/carrier_rec20/target/release/carrier_rec20", "variants/carrier_rec24/target/release/carrier_rec24", "variants/carrier_rec32/target/release/carrier_rec32"]
+[[bench.carrier_record_width.sizes]]
+n = 4096
+variants = ["variants/carrier_rec12/target/release/carrier_rec12", "variants/carrier_rec16/target/release/carrier_rec16", "variants/carrier_rec20/target/release/carrier_rec20", "variants/carrier_rec24/target/release/carrier_rec24", "variants/carrier_rec32/target/release/carrier_rec32"]
+[[bench.carrier_record_width.sizes]]
+n = 16384
+variants = ["variants/carrier_rec12/target/release/carrier_rec12", "variants/carrier_rec16/target/release/carrier_rec16", "variants/carrier_rec20/target/release/carrier_rec20", "variants/carrier_rec24/target/release/carrier_rec24", "variants/carrier_rec32/target/release/carrier_rec32"]

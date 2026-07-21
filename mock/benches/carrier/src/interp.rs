@@ -6,16 +6,21 @@
 //! everything else identical. Either way the program crosses into the routine
 //! as wire bytes, so the interpretation can never be partially evaluated away.
 
-use crate::checksum::Checksum;
 use crate::ir::{op, Decoded};
 
 /// Interpret the decoded program once with the given per-call input seed,
-/// folding every node result into a checksum which is returned. `results` is a
-/// caller-owned scratch buffer of length at least `d.node_count`, so the hot
-/// loop never allocates. Switch dispatch on the opcode.
+/// returning a cheap order-sensitive rolling hash of every node result.
+///
+/// `results` is a caller-owned scratch buffer of length at least `d.node_count`,
+/// so the hot loop never allocates. Switch dispatch on the opcode. The hash is a
+/// two-op xor-rotate per node, deliberately cheap: its only jobs are to keep the
+/// result array live (so the interpretation cannot be dead-code-eliminated) and
+/// to let the harness cross-validate that variants agree. It must not dominate
+/// the per-node decode-and-dispatch cost the bench is trying to measure, which a
+/// full FNV fold per node would.
 #[inline]
 pub fn interpret(d: &Decoded, input_seed: u64, results: &mut [u64]) -> u64 {
-    let mut cs = Checksum::new();
+    let mut hash: u64 = 0;
     for i in 0..d.node_count {
         let opcode = d.op_at(i);
         let v = match opcode {
@@ -54,9 +59,9 @@ pub fn interpret(d: &Decoded, input_seed: u64, results: &mut [u64]) -> u64 {
             }
         };
         results[i] = v;
-        cs.fold(v);
+        hash = hash.rotate_left(7) ^ v;
     }
-    cs.0
+    hash
 }
 
 /// Drive the interpreter over a stream of input bytes, folding each per-byte
