@@ -7,137 +7,144 @@ Baseline: **hx_reuse__reuse**
 
 Baseline for all deltas below: **hx_reuse__reuse**. (Deltas are paired `variant - baseline` medians; `*` marks a CI that excludes zero.)
 
-### Baseline (hx_reuse__reuse) is the SLOWEST variant; every rival beats it
+### hx_reuse__reuse dominates: 34% faster than the next best (hx_reuse__copy)
 
-The declared/defaulted baseline hx_reuse__reuse has the worst median (2.30 us). Every delta is therefore measured against the worst performer, which flatters all rivals and compresses the differences that matter among them (e.g. fastest hx_reuse__copy at 2.30 us).
+hx_reuse__reuse (1.98 us) leads hx_reuse__copy (2.65 us) by 34%, a clear separation rather than a photo finish. CV 2.4%.
 
-_Why it matters:_ A baseline picked by accident (often the first variant to run / sort) silently skews every comparison. Re-baseline via `[bench.<name>.normalise]` on a representative variant.
+_Why it matters:_ A dominant, well-separated winner is a safe default pick for this workload shape.
 
-### Whole-field spread is below the measurement noise floor
+### hx_reuse__copy shows alternating (throttle bounce) (autocorr -0.51)
 
-The fastest-to-slowest gap (1 ns) is smaller than the fastest variant's own run-to-run std-dev (110 ns); the ranking is inside the noise.
+hx_reuse__copy's per-pass series has lag-1 autocorrelation -0.51, indicating alternating (throttle bounce). Its timing may not be at steady state.
 
-_Why it matters:_ When the spread is below resolution, any apparent ordering is likely noise; increase work per call before trusting a winner.
+_Why it matters:_ Autocorrelated samples violate the independence the CIs assume; the interval is optimistic until the drift is warmed out or cooled down.
+
+### No variant beats the baseline (hx_reuse__reuse)
+
+The baseline hx_reuse__reuse is the fastest (1.98 us median); no rival improves on it (all deltas are >= 0).
+
+_Why it matters:_ When nothing beats the baseline, the current choice stands; the contenders cost speed for whatever else they buy.
 
 ## Key findings
 
-- **Fastest: hx_reuse__copy** at 2297.9 ns median (-0.0% vs baseline)
-- Spread: 1.00x (fastest 2297.9 ns, slowest 2298.8 ns)
+- **Baseline (hx_reuse__reuse) is the fastest** at 1981.8 ns median
+- 1 variant significantly slower than baseline
+- Spread: 1.34x (fastest 1981.8 ns, slowest 2647.1 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| hx_reuse__copy | 4921ns | 4881ns | 4564ns | 4855ns | 5199ns | +1.80% |
-| hx_reuse__reuse | 4834ns | 4883ns | 4020ns | 4881ns | 5171ns | base |
+| hx_reuse__copy | 4837ns | 4828ns | 4759ns | 4823ns | 4896ns | +15.17% |
+| hx_reuse__reuse | 4200ns | 4214ns | 4027ns | 4169ns | 4332ns | base |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| hx_reuse__copy | 2315ns | 2150ns | 2445ns | +1.74% | 1.770 |
-| hx_reuse__reuse | 2275ns | 1890ns | 2436ns | base | 1.800 |
+| hx_reuse__copy | 2647ns | 2595ns | 2690ns | +34.77% | 1.547 |
+| hx_reuse__reuse | 1964ns | 1888ns | 2009ns | base | 2.085 |
 
 ## Performance model
 
-- Peak throughput: **2.167 Gops/s** (hx_reuse__reuse; best 20% batches)
+- Peak throughput: **2.169 Gops/s** (hx_reuse__reuse; best 20% batches)
 - Ops per call: 4096
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| hx_reuse__copy | 1.782 | 82.2% |
-| hx_reuse__reuse | 1.782 | 82.2% |
+| hx_reuse__copy | 1.547 | 71.3% |
+| hx_reuse__reuse | 2.067 | 95.3% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| hx_reuse__copy | 4921ns | 4921ns | +1.80% |
-| hx_reuse__reuse | 4834ns | 4834ns | base |
+| hx_reuse__copy | 4837ns | 4837ns | +15.17% |
+| hx_reuse__reuse | 4200ns | 4200ns | base |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| hx_reuse__reuse | 2299ns | base | --- | [2090, 2436] | --- | --- | --- | --- |
-| hx_reuse__copy | 2298ns | no significant difference | [-126, +199]ns | [2201, 2445] | no | 1.0000 | 1.0000 | 0 |
+| hx_reuse__reuse | 1982ns | base | --- | [1902, 2009] | --- | --- | --- | --- |
+| hx_reuse__copy | 2647ns | +669.2ns (+33.8%) | [+602, +778]ns | [2606, 2690] | YES | 0.0313 | 0.0313 | 0 |
 
 ## Per-pass consistency (nonstop e2e, Δ vs baseline)
 
 | Pass | hx_reuse__reuse | hx_reuse__copy |
 |---|---|---|
-| 1 | 1890ns | +13.8% |
-| 2 | 2298ns | -0.1% |
-| 3 | 2366ns | +5.8% |
-| 4 | 2506ns | -8.2% |
-| 5 | 2299ns | -2.0% |
-| 6 | 2290ns | +4.1% |
+| 1 | 1888ns | +43.8% |
+| 2 | 2000ns | +29.7% |
+| 3 | 2011ns | +32.4% |
+| 4 | 1963ns | +34.9% |
+| 5 | 2006ns | +30.4% |
+| 6 | 1917ns | +38.0% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| hx_reuse__copy | -0.092 | ok |
-| hx_reuse__reuse | 0.095 | ok |
+| hx_reuse__copy | -0.507 | HIGH- (thermal bounce) |
+| hx_reuse__reuse | -0.236 | moderate- |
 
 **Consistency summary:**
 
-- **hx_reuse__copy**: won 3/6, lost 3/6
+- **hx_reuse__copy**: won 0/6, lost 6/6
 
 ## Bridge overhead per variant
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| hx_reuse__copy | 2.8ns | 2314.5ns | 0.1% |  |
-| hx_reuse__reuse | 3.7ns | 2275.0ns | 0.2% |  |
+| hx_reuse__copy | 2.4ns | 2647.4ns | 0.1% |  |
+| hx_reuse__reuse | 2.8ns | 1964.4ns | 0.1% |  |
 
 ## Distribution (algo ns)
 
 ```
-hx_reuse__copy (n=6, range 2150.0-2444.6 ns)
-   2150.0 |########################################
-   2164.7 |
-   2179.5 |
-   2194.2 |
-   2208.9 |
-   2223.7 |
-   2238.4 |########################################
-   2253.1 |
-   2267.8 |
-   2282.6 |########################################
-   2297.3 |########################################
-   2312.0 |
-   2326.8 |
-   2341.5 |
-   2356.2 |
-   2371.0 |########################################
-   2385.7 |
-   2400.4 |
-   2415.1 |
-   2429.9 |
+hx_reuse__copy (n=6, range 2595.0-2689.6 ns)
+   2595.0 |########################################
+   2599.7 |
+   2604.5 |
+   2609.2 |
+   2613.9 |########################################
+   2618.7 |
+   2623.4 |
+   2628.1 |
+   2632.8 |
+   2637.6 |
+   2642.3 |########################################
+   2647.0 |########################################
+   2651.8 |
+   2656.5 |
+   2661.2 |########################################
+   2666.0 |
+   2670.7 |
+   2675.4 |
+   2680.1 |
+   2684.9 |
   (0 below, 1 above range)
 
-hx_reuse__reuse (n=6, range 1890.0-2436.0 ns)
-   1890.0 |#############
-   1917.3 |
-   1944.6 |
-   1971.9 |
-   1999.2 |
-   2026.5 |
-   2053.8 |
-   2081.1 |
-   2108.4 |
-   2135.7 |
-   2163.0 |
-   2190.3 |
-   2217.6 |
-   2244.9 |
-   2272.2 |########################################
-   2299.5 |
-   2326.8 |
-   2354.1 |#############
-   2381.4 |
-   2408.7 |
+hx_reuse__reuse (n=6, range 1888.3-2008.7 ns)
+   1888.3 |########################################
+   1894.3 |
+   1900.3 |
+   1906.4 |
+   1912.4 |########################################
+   1918.4 |
+   1924.4 |
+   1930.4 |
+   1936.5 |
+   1942.5 |
+   1948.5 |
+   1954.5 |
+   1960.5 |########################################
+   1966.6 |
+   1972.6 |
+   1978.6 |
+   1984.6 |
+   1990.6 |
+   1996.7 |########################################
+   2002.7 |########################################
   (0 below, 1 above range)
 
 ```

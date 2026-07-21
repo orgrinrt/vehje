@@ -3,3 +3,7 @@
 1784629118	98f70c9	hx_reuse_n1024	hx_reuse__reuse	1024	warm	1714.2	1712.7	1719.3
 1784629298	98f70c9	hx_reuse_n1024	hx_reuse__copy	1024	warm	646.7	630.7	685.6
 1784629298	98f70c9	hx_reuse_n1024	hx_reuse__reuse	1024	warm	650.0	647.5	659.8
+1784629610	bddf417	hx_reuse_n1024	hx_reuse__copy	1024	warm	807.1	806.0	825.2
+1784629610	bddf417	hx_reuse_n1024	hx_reuse__reuse	1024	warm	570.0	567.9	604.4
+1784629612	bddf417	hx_reuse_n1024	hx_reuse__copy	1024	warm	807.5	806.9	822.9
+1784629612	bddf417	hx_reuse_n1024	hx_reuse__reuse	1024	warm	603.3	600.6	625.0

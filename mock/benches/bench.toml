@@ -989,6 +989,36 @@ variants=["variants/an_whole_seq/target/release/an_whole_seq", "variants/an_whol
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 [bench.hx_dispatch]
 title="Interpreter dispatch shapes: switch vs fnptr-table vs computed"
 workload="realistic"

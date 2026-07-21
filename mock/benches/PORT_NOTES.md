@@ -18,12 +18,10 @@ ported faithfully, which carry a modelling caveat, and which prior "benches" are
 | `hx_multishot` | multi-shot adds bounded resumption cost | single dominates (multishot ~4.5x) |
 | `hx_interner` | FNV ~= FxHash, string-hash-bound | fnv fastest (within noise of fx) |
 | `hx_closure` | non-escaping: linked ~= flat (create-many) | no variant beats linked (tied) |
+| `hx_reuse` | exact-meet in-place beats copy (copy defeated via black_box) | reuse dominates (+23% vs copy) |
 
 ## Modelling caveat (harness sizes / LLVM behaviour differ from the original)
 
-- `hx_reuse` (exact-meet copy vs in-place): LLVM elides the local-array copy, so copy == in-place at
-  harness sizes; the original 1.5-9.7x reflected a real memcpy the port's small stack array does not force.
-  The finding (avoid copying) holds; the per-op timing here cannot show it without defeating copy-elision.
 - `hx_cheaplower` (const-fold + CSE): the benefit is NODE-COUNT reduction (76% fewer nodes), not per-op
   time; LLVM already CSEs the recompute, so the hash-cons lookup is pure overhead in a time bench.
 - `hx_output` (format-in-place vs temp): within noise at harness sizes; the original 1.5x needed longer

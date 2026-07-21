@@ -24,7 +24,7 @@ SPECS = {
  }),
  # record-update reuse: always-copy vs in-place-when-unique. commutative fold.
  "hx_reuse": ("Record update: always-copy vs in-place-when-unique (exact-meet)", "reuse", False, {
-   "copy": '''let mut rec=[0u64;32]; for &b in input.iter(){ let mut nr=rec; let s=(b&31) as usize; nr[s]=nr[s].wrapping_add(b as u64).wrapping_mul(3); rec=nr; acc^=rec[s]; }''',
+   "copy": '''let mut rec=[0u64;32]; for &b in input.iter(){ let mut nr=core::hint::black_box(rec); let s=(b&31) as usize; nr[s]=nr[s].wrapping_add(b as u64).wrapping_mul(3); rec=nr; acc^=rec[s]; }''',
    "reuse": '''let mut rec=[0u64;32]; for &b in input.iter(){ let shared=(b&3)==0; let s=(b&31) as usize; if shared { let mut nr=rec; nr[s]=nr[s].wrapping_add(b as u64).wrapping_mul(3); rec=nr; } else { rec[s]=rec[s].wrapping_add(b as u64).wrapping_mul(3); } acc^=rec[s]; }''',
  }),
  # effect lattice inference: thermometer OR join vs (wrong) binary max via branch. both compute the OR-fold.
