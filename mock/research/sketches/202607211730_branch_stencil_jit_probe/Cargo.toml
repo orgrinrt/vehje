@@ -1,0 +1,11 @@
+[workspace]
+
+[package]
+name = "stencil_probe"
+version = "0.0.0"
+edition = "2021"
+[[bin]]
+name = "stencil_probe"
+path = "main.rs"
+[profile.release]
+opt-level = 3

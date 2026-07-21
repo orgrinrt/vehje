@@ -1,0 +1,5 @@
+TRANSPILE IR -> C:
+long prog(void){ long v0 = (3 + 4); return (v0 * 2); }
+TRANSPILE IR -> Lua:
+local v0 = (3 + 4)
+return v0 * 2
