@@ -30,7 +30,7 @@ pub mod ir;
 
 pub use checksum::Checksum;
 pub use gen::{generate, GenParams, Rng};
-pub use interp::{interpret, run_over_input};
+pub use interp::{interpret, interpret_fntable, run_over_input};
 pub use ir::{
     encode, Decoded, Layout, Node, Program, ALL_LAYOUTS, REC12, REC16, REC20, REC24, REC32,
 };
@@ -44,6 +44,16 @@ pub use ir::{
 pub fn program_at(node_count: usize, layout: Layout) -> Vec<u8> {
     let mut p = GenParams::default_point();
     p.node_count = node_count;
+    encode(&generate(&p), &layout)
+}
+
+/// Like [`program_at`] but with a chosen op-vocabulary size, for the dispatch
+/// bench that sweeps how the switch's prediction advantage depends on how many
+/// distinct ops the stream draws from.
+pub fn program_vocab(node_count: usize, op_vocab: u8, layout: Layout) -> Vec<u8> {
+    let mut p = GenParams::default_point();
+    p.node_count = node_count;
+    p.op_vocab = op_vocab;
     encode(&generate(&p), &layout)
 }
 
@@ -99,6 +109,26 @@ mod tests {
         let a = run_over_input(&d, &[1, 2, 3, 4], &mut results);
         let b = run_over_input(&d, &[9, 8, 7, 6], &mut results);
         assert_ne!(a, b);
+    }
+
+    #[test]
+    fn dispatch_shapes_agree() {
+        // The switch interpreter and the function-pointer-table interpreter must
+        // compute identical results, so the dispatch bench measures dispatch
+        // cost and nothing else.
+        let prog = generate(&GenParams {
+            node_count: 400,
+            ..GenParams::default_point()
+        });
+        let bytes = encode(&prog, &REC24);
+        let d = Decoded::parse(&bytes, REC24).unwrap();
+        let mut r = vec![0u64; prog.nodes.len()];
+        for seed in [0u64, 1, 42, 255, 1000] {
+            assert_eq!(
+                interpret(&d, seed, &mut r),
+                interpret_fntable(&d, seed, &mut r)
+            );
+        }
     }
 
     #[test]

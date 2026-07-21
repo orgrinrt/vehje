@@ -1388,3 +1388,50 @@ variants = ["variants/carrier_rec12/target/release/carrier_rec12", "variants/car
 [[bench.carrier_record_width.sizes]]
 n = 16384
 variants = ["variants/carrier_rec12/target/release/carrier_rec12", "variants/carrier_rec16/target/release/carrier_rec16", "variants/carrier_rec20/target/release/carrier_rec20", "variants/carrier_rec24/target/release/carrier_rec24", "variants/carrier_rec32/target/release/carrier_rec32"]
+
+# >>> carrier_dispatch (generated)
+[bench.carrier_dispatch_v4]
+title = "Dispatch shape: switch vs fn-pointer table, op vocab v4 (carrier)"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_dispatch_v4.normalise]
+baseline = "carrier_disp_switch_v4"
+mode = "subtract"
+[[bench.carrier_dispatch_v4.sizes]]
+n = 64
+variants = ["variants/carrier_disp_switch_v4/target/release/carrier_disp_switch_v4", "variants/carrier_disp_fntable_v4/target/release/carrier_disp_fntable_v4"]
+[[bench.carrier_dispatch_v4.sizes]]
+n = 256
+variants = ["variants/carrier_disp_switch_v4/target/release/carrier_disp_switch_v4", "variants/carrier_disp_fntable_v4/target/release/carrier_disp_fntable_v4"]
+[[bench.carrier_dispatch_v4.sizes]]
+n = 1024
+variants = ["variants/carrier_disp_switch_v4/target/release/carrier_disp_switch_v4", "variants/carrier_disp_fntable_v4/target/release/carrier_disp_fntable_v4"]
+[[bench.carrier_dispatch_v4.sizes]]
+n = 4096
+variants = ["variants/carrier_disp_switch_v4/target/release/carrier_disp_switch_v4", "variants/carrier_disp_fntable_v4/target/release/carrier_disp_fntable_v4"]
+[[bench.carrier_dispatch_v4.sizes]]
+n = 16384
+variants = ["variants/carrier_disp_switch_v4/target/release/carrier_disp_switch_v4", "variants/carrier_disp_fntable_v4/target/release/carrier_disp_fntable_v4"]
+
+[bench.carrier_dispatch_v17]
+title = "Dispatch shape: switch vs fn-pointer table, op vocab v17 (carrier)"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_dispatch_v17.normalise]
+baseline = "carrier_disp_switch_v17"
+mode = "subtract"
+[[bench.carrier_dispatch_v17.sizes]]
+n = 64
+variants = ["variants/carrier_disp_switch_v17/target/release/carrier_disp_switch_v17", "variants/carrier_disp_fntable_v17/target/release/carrier_disp_fntable_v17"]
+[[bench.carrier_dispatch_v17.sizes]]
+n = 256
+variants = ["variants/carrier_disp_switch_v17/target/release/carrier_disp_switch_v17", "variants/carrier_disp_fntable_v17/target/release/carrier_disp_fntable_v17"]
+[[bench.carrier_dispatch_v17.sizes]]
+n = 1024
+variants = ["variants/carrier_disp_switch_v17/target/release/carrier_disp_switch_v17", "variants/carrier_disp_fntable_v17/target/release/carrier_disp_fntable_v17"]
+[[bench.carrier_dispatch_v17.sizes]]
+n = 4096
+variants = ["variants/carrier_disp_switch_v17/target/release/carrier_disp_switch_v17", "variants/carrier_disp_fntable_v17/target/release/carrier_disp_fntable_v17"]
+[[bench.carrier_dispatch_v17.sizes]]
+n = 16384
+variants = ["variants/carrier_disp_switch_v17/target/release/carrier_disp_switch_v17", "variants/carrier_disp_fntable_v17/target/release/carrier_disp_fntable_v17"]

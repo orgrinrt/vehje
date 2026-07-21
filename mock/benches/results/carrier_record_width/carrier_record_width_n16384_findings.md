@@ -7,231 +7,242 @@ Baseline: **carrier_rec24**
 
 Baseline for all deltas below: **carrier_rec24**. (Deltas are paired `variant - baseline` medians; `*` marks a CI that excludes zero.)
 
-### No variant beats the baseline (carrier_rec24)
+### carrier_rec32 shows alternating (throttle bounce) (autocorr -0.61)
 
-The baseline carrier_rec24 is the fastest (1.79 ms median); no rival improves on it (all deltas are >= 0).
+carrier_rec32's per-pass series has lag-1 autocorrelation -0.61, indicating alternating (throttle bounce). Its timing may not be at steady state.
 
-_Why it matters:_ When nothing beats the baseline, the current choice stands; the contenders cost speed for whatever else they buy.
+_Why it matters:_ Autocorrelated samples violate the independence the CIs assume; the interval is optimistic until the drift is warmed out or cooled down.
 
-### Whole field within 3.6% of the fastest
+### Whole-field spread is below the measurement noise floor
 
-All 5 variants sit between 1.79 ms and 1.85 ms - a 3.6% band - though some paired differences are still significant.
+The fastest-to-slowest gap (7.57 us) is smaller than the fastest variant's own run-to-run std-dev (13.38 us); the ranking is inside the noise.
+
+_Why it matters:_ When the spread is below resolution, any apparent ordering is likely noise; increase work per call before trusting a winner.
+
+### Whole field within 0.3% of the fastest
+
+All 5 variants sit between 2.51 ms and 2.52 ms - a 0.3% band - though some paired differences are still significant.
 
 _Why it matters:_ Small but real gaps: worth taking only where this path is hot enough that a few percent compounds.
 
+### carrier_rec20's edge over baseline is significant but tiny (37 ns, 0.00%)
+
+carrier_rec20 differs from baseline carrier_rec24 by 37 ns (0.00%) - statistically real (CI excludes zero) but small enough to be practically irrelevant.
+
+_Why it matters:_ Statistical significance is not practical significance: a measurable-but-tiny gap should not drive a decision.
+
 ## Key findings
 
-- **Baseline (carrier_rec24) is the fastest** at 1785806.2 ns median
-- 1 variant significantly slower than baseline
-- Spread: 1.04x (fastest 1785806.2 ns, slowest 1849955.4 ns)
+- **Fastest: carrier_rec20** at 2512377.0 ns median (-0.2% vs baseline)
+- Spread: 1.00x (fastest 2512377.0 ns, slowest 2519946.5 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| carrier_rec12 | 1854004ns | 1853588ns | 1810568ns | 1843830ns | 1890983ns | +3.85% |
-| carrier_rec16 | 1822047ns | 1828022ns | 1791454ns | 1817098ns | 1844768ns | +2.06% |
-| carrier_rec20 | 1838737ns | 1830671ns | 1792477ns | 1819498ns | 1890726ns | +2.99% |
-| carrier_rec24 | 1785288ns | 1789439ns | 1709219ns | 1780828ns | 1830013ns | base |
-| carrier_rec32 | 1830224ns | 1827492ns | 1800554ns | 1820230ns | 1860049ns | +2.52% |
+| carrier_rec12 | 2530282ns | 2523497ns | 2511026ns | 2520405ns | 2554725ns | +0.49% |
+| carrier_rec16 | 2524758ns | 2519321ns | 2489622ns | 2514715ns | 2557391ns | +0.27% |
+| carrier_rec20 | 2520595ns | 2515887ns | 2506944ns | 2513122ns | 2538629ns | +0.11% |
+| carrier_rec24 | 2517928ns | 2520756ns | 2491150ns | 2519590ns | 2528823ns | base |
+| carrier_rec32 | 2526436ns | 2517876ns | 2504103ns | 2513626ns | 2556817ns | +0.34% |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| carrier_rec12 | 1850300ns | 1807004ns | 1887170ns | +3.85% | 0.009 |
-| carrier_rec16 | 1818229ns | 1787542ns | 1841075ns | +2.05% | 0.009 |
-| carrier_rec20 | 1835222ns | 1788912ns | 1886942ns | +3.00% | 0.009 |
-| carrier_rec24 | 1781738ns | 1706434ns | 1826304ns | base | 0.009 |
-| carrier_rec32 | 1826596ns | 1796777ns | 1856683ns | +2.52% | 0.009 |
+| carrier_rec12 | 2526584ns | 2507340ns | 2550871ns | +0.49% | 0.006 |
+| carrier_rec16 | 2521337ns | 2485789ns | 2554290ns | +0.28% | 0.006 |
+| carrier_rec20 | 2517030ns | 2503441ns | 2534997ns | +0.11% | 0.007 |
+| carrier_rec24 | 2514337ns | 2487416ns | 2525246ns | base | 0.007 |
+| carrier_rec32 | 2522904ns | 2500365ns | 2553662ns | +0.34% | 0.006 |
 
 ## Performance model
 
-- Peak throughput: **0.010 Gops/s** (carrier_rec24; best 20% batches)
+- Peak throughput: **0.007 Gops/s** (carrier_rec16; best 20% batches)
 - Ops per call: 16384
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| carrier_rec12 | 0.009 | 92.2% |
-| carrier_rec16 | 0.009 | 93.5% |
-| carrier_rec20 | 0.009 | 93.4% |
-| carrier_rec24 | 0.009 | 95.6% |
-| carrier_rec32 | 0.009 | 93.6% |
+| carrier_rec12 | 0.007 | 98.6% |
+| carrier_rec16 | 0.007 | 98.8% |
+| carrier_rec20 | 0.007 | 98.9% |
+| carrier_rec24 | 0.007 | 98.8% |
+| carrier_rec32 | 0.007 | 98.9% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| carrier_rec12 | 1854004ns | 1854004ns | +3.85% |
-| carrier_rec16 | 1822047ns | 1822047ns | +2.06% |
-| carrier_rec20 | 1838737ns | 1838737ns | +2.99% |
-| carrier_rec24 | 1785288ns | 1785288ns | base |
-| carrier_rec32 | 1830224ns | 1830224ns | +2.52% |
+| carrier_rec12 | 2530282ns | 2530282ns | +0.49% |
+| carrier_rec16 | 2524758ns | 2524758ns | +0.27% |
+| carrier_rec20 | 2520595ns | 2520595ns | +0.11% |
+| carrier_rec24 | 2517928ns | 2517928ns | base |
+| carrier_rec32 | 2526436ns | 2526436ns | +0.34% |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| carrier_rec24 | 1785806ns | base | --- | [1733103, 1826304] | --- | --- | --- | --- |
-| carrier_rec12 | 1849955ns | +50145.6ns (+2.8%) | [+5154, +150386]ns | [1813773, 1887170] | YES (adj: no) | 0.2917 | 0.2188 | 0 |
-| carrier_rec16 | 1824146ns | no significant difference | [-16506, +76410]ns | [1789465, 1841075] | no | 0.6875 | 0.6875 | 0 |
-| carrier_rec20 | 1827174ns | no significant difference | [-8304, +88767]ns | [1791549, 1886942] | no | 0.2917 | 0.2188 | 0 |
-| carrier_rec32 | 1823716ns | no significant difference | [-2588, +101227]ns | [1799390, 1856683] | no | 0.2917 | 0.2188 | 0 |
+| carrier_rec24 | 2516969ns | base | --- | [2500795, 2525246] | --- | --- | --- | --- |
+| carrier_rec12 | 2519946ns | no significant difference | [-5420, +25941]ns | [2508934, 2550871] | no | 1.0000 | 0.6875 | 0 |
+| carrier_rec16 | 2515900ns | no significant difference | [-22212, +46223]ns | [2493822, 2554290] | no | 1.0000 | 1.0000 | 0 |
+| carrier_rec20 | 2512377ns | no significant difference | [-13251, +21296]ns | [2503718, 2534997] | no | 1.0000 | 1.0000 | 0 |
+| carrier_rec32 | 2514192ns | no significant difference | [-24387, +36693]ns | [2500859, 2553662] | no | 1.0000 | 0.6875 | 0 |
 
 ## Per-pass consistency (nonstop e2e, Δ vs baseline)
 
 | Pass | carrier_rec24 | carrier_rec12 | carrier_rec16 | carrier_rec20 | carrier_rec32 |
 |---|---|---|---|---|---|
-| 1 | 1839847ns | +1.4% | -1.1% | +4.3% | -0.7% |
-| 2 | 1759772ns | +4.2% | +4.1% | +5.4% | +2.1% |
-| 3 | 1812762ns | -0.3% | +2.1% | -1.0% | +0.4% |
-| 4 | 1804477ns | +0.9% | -0.7% | +0.1% | +2.9% |
-| 5 | 1706434ns | +11.2% | +4.8% | +4.8% | +8.8% |
-| 6 | 1767135ns | +6.2% | +3.5% | +4.6% | +2.0% |
+| 1 | 2487416ns | +0.8% | +3.6% | +0.8% | +0.8% |
+| 2 | 2516043ns | -0.2% | -0.3% | -0.5% | +2.0% |
+| 3 | 2519541ns | +1.3% | +0.1% | -0.1% | -0.8% |
+| 4 | 2517895ns | -0.2% | -1.3% | -0.6% | +0.9% |
+| 5 | 2514174ns | +0.5% | -0.5% | +0.9% | +0.3% |
+| 6 | 2530951ns | +0.8% | +0.1% | +0.1% | -1.2% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| carrier_rec12 | 0.261 | moderate+ |
-| carrier_rec16 | 0.031 | ok |
-| carrier_rec20 | 0.226 | moderate+ |
-| carrier_rec24 | -0.166 | ok |
-| carrier_rec32 | 0.039 | ok |
+| carrier_rec12 | -0.216 | moderate- |
+| carrier_rec16 | -0.064 | ok |
+| carrier_rec20 | 0.201 | moderate+ |
+| carrier_rec24 | -0.021 | ok |
+| carrier_rec32 | -0.606 | HIGH- (thermal bounce) |
 
 **Consistency summary:**
 
-- **carrier_rec12**: won 1/6, lost 5/6
-- **carrier_rec16**: won 2/6, lost 4/6
-- **carrier_rec20**: won 1/6, lost 5/6
-- **carrier_rec32**: won 1/6, lost 5/6
+- **carrier_rec12**: won 2/6, lost 4/6
+- **carrier_rec16**: won 3/6, lost 2/6
+- **carrier_rec20**: won 3/6, lost 3/6
+- **carrier_rec32**: won 2/6, lost 4/6
 
 ## Bridge overhead per variant
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| carrier_rec12 | 1901.1ns | 1850299.6ns | 0.1% |  |
-| carrier_rec16 | 2037.2ns | 1818228.6ns | 0.1% |  |
-| carrier_rec20 | 2196.1ns | 1835221.5ns | 0.1% |  |
-| carrier_rec24 | 1654.1ns | 1781738.0ns | 0.1% |  |
-| carrier_rec32 | 1706.6ns | 1826596.3ns | 0.1% |  |
+| carrier_rec12 | 2243.9ns | 2526584.0ns | 0.1% |  |
+| carrier_rec16 | 2299.2ns | 2521337.4ns | 0.1% |  |
+| carrier_rec20 | 1953.4ns | 2517030.5ns | 0.1% |  |
+| carrier_rec24 | 2250.6ns | 2514336.6ns | 0.1% |  |
+| carrier_rec32 | 2134.3ns | 2522904.3ns | 0.1% |  |
 
 ## Distribution (algo ns)
 
 ```
-carrier_rec12 (n=6, range 1807004.2-1887170.4 ns)
-  1807004.2 |########################################
-  1811012.5 |
-  1815020.8 |
-  1819029.1 |########################################
-  1823037.4 |
-  1827045.8 |
-  1831054.1 |########################################
-  1835062.4 |
-  1839070.7 |
-  1843079.0 |
-  1847087.3 |
-  1851095.6 |
-  1855103.9 |
-  1859112.2 |
-  1863120.5 |########################################
-  1867128.8 |
-  1871137.2 |
-  1875145.5 |########################################
-  1879153.8 |
-  1883162.1 |
+carrier_rec12 (n=6, range 2507340.4-2550871.3 ns)
+  2507340.4 |########################################
+  2509516.9 |########################################
+  2511693.5 |########################################
+  2513870.0 |
+  2516046.6 |
+  2518223.1 |
+  2520399.7 |
+  2522576.2 |
+  2524752.8 |
+  2526929.3 |########################################
+  2529105.8 |
+  2531282.4 |
+  2533458.9 |
+  2535635.5 |
+  2537812.0 |
+  2539988.6 |
+  2542165.1 |
+  2544341.7 |
+  2546518.2 |
+  2548694.8 |########################################
   (0 below, 1 above range)
 
-carrier_rec16 (n=6, range 1787541.7-1841074.8 ns)
-  1787541.7 |########################################
-  1790218.4 |########################################
-  1792895.0 |
-  1795571.7 |
-  1798248.3 |
-  1800925.0 |
-  1803601.6 |
-  1806278.3 |
-  1808954.9 |
-  1811631.6 |
-  1814308.2 |
-  1816984.9 |
-  1819661.6 |########################################
-  1822338.2 |
-  1825014.9 |
-  1827691.5 |########################################
-  1830368.2 |########################################
-  1833044.8 |
-  1835721.5 |
-  1838398.1 |
+carrier_rec16 (n=6, range 2485788.8-2554289.5 ns)
+  2485788.8 |########################################
+  2489213.8 |
+  2492638.9 |
+  2496063.9 |
+  2499488.9 |########################################
+  2502914.0 |
+  2506339.0 |########################################
+  2509764.1 |
+  2513189.1 |
+  2516614.1 |
+  2520039.2 |########################################
+  2523464.2 |
+  2526889.2 |
+  2530314.3 |########################################
+  2533739.3 |
+  2537164.4 |
+  2540589.4 |
+  2544014.4 |
+  2547439.5 |
+  2550864.5 |
   (0 below, 1 above range)
 
-carrier_rec20 (n=6, range 1788912.1-1886941.6 ns)
-  1788912.1 |########################################
-  1793813.6 |########################################
-  1798715.1 |
-  1803616.5 |########################################
-  1808518.0 |
-  1813419.5 |
-  1818321.0 |
-  1823222.4 |
-  1828123.9 |
-  1833025.4 |
-  1837926.9 |
-  1842828.4 |
-  1847729.8 |########################################
-  1852631.3 |########################################
-  1857532.8 |
-  1862434.3 |
-  1867335.7 |
-  1872237.2 |
-  1877138.7 |
-  1882040.2 |
+carrier_rec20 (n=6, range 2503441.2-2534996.7 ns)
+  2503441.2 |########################################
+  2505019.0 |
+  2506596.7 |
+  2508174.5 |####################
+  2509752.3 |
+  2511330.1 |
+  2512907.8 |
+  2514485.6 |
+  2516063.4 |####################
+  2517641.2 |
+  2519218.9 |
+  2520796.7 |
+  2522374.5 |
+  2523952.2 |
+  2525530.0 |
+  2527107.8 |
+  2528685.6 |
+  2530263.3 |
+  2531841.1 |
+  2533418.9 |####################
   (0 below, 1 above range)
 
-carrier_rec24 (n=6, range 1706434.2-1826304.4 ns)
-  1706434.2 |########################################
-  1712427.7 |
-  1718421.2 |
-  1724414.7 |
-  1730408.2 |
-  1736401.8 |
-  1742395.3 |
-  1748388.8 |
-  1754382.3 |########################################
-  1760375.8 |
-  1766369.3 |########################################
-  1772362.8 |
-  1778356.3 |
-  1784349.8 |
-  1790343.3 |
-  1796336.8 |
-  1802330.4 |########################################
-  1808323.9 |########################################
-  1814317.4 |
-  1820310.9 |
+carrier_rec24 (n=6, range 2487415.8-2525246.0 ns)
+  2487415.8 |####################
+  2489307.3 |
+  2491198.8 |
+  2493090.3 |
+  2494981.8 |
+  2496873.3 |
+  2498764.9 |
+  2500656.4 |
+  2502547.9 |
+  2504439.4 |
+  2506330.9 |
+  2508222.4 |
+  2510113.9 |
+  2512005.4 |
+  2513896.9 |####################
+  2515788.5 |####################
+  2517680.0 |########################################
+  2519571.5 |
+  2521463.0 |
+  2523354.5 |
   (0 below, 1 above range)
 
-carrier_rec32 (n=6, range 1796777.1-1856682.7 ns)
-  1796777.1 |########################################
-  1799772.4 |########################################
-  1802767.7 |
-  1805762.9 |
-  1808758.2 |
-  1811753.5 |
-  1814748.8 |
-  1817744.1 |########################################
-  1820739.3 |
-  1823734.6 |
-  1826729.9 |########################################
-  1829725.2 |
-  1832720.5 |
-  1835715.7 |
-  1838711.0 |
-  1841706.3 |
-  1844701.6 |
-  1847696.9 |
-  1850692.1 |
-  1853687.4 |########################################
+carrier_rec32 (n=6, range 2500365.4-2553661.9 ns)
+  2500365.4 |########################################
+  2503030.2 |
+  2505695.0 |####################
+  2508359.9 |
+  2511024.7 |
+  2513689.5 |
+  2516354.3 |
+  2519019.2 |
+  2521684.0 |####################
+  2524348.8 |
+  2527013.6 |
+  2529678.4 |
+  2532343.3 |
+  2535008.1 |
+  2537672.9 |
+  2540337.7 |####################
+  2543002.6 |
+  2545667.4 |
+  2548332.2 |
+  2550997.0 |
   (0 below, 1 above range)
 
 ```
