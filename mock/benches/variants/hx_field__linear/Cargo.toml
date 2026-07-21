@@ -9,8 +9,8 @@ name="hx_field__linear"
 path="src/lib.rs"
 crate-type=["cdylib"]
 [dependencies]
-mockspace-bench-core={ git="https://github.com/hiisi-digital/mockspace", branch="dev", features=["std"] }
-mockspace-bench-macro={ git="https://github.com/hiisi-digital/mockspace", branch="dev" }
+mockspace-bench-core={ git="https://github.com/hiisi-digital/mockspace", rev="70fb75b500c8af22ddc18c5e0fb7d2467ab7dfc6", features=["std"] }
+mockspace-bench-macro={ git="https://github.com/hiisi-digital/mockspace", rev="70fb75b500c8af22ddc18c5e0fb7d2467ab7dfc6" }
 [profile.release]
 opt-level=3
 lto="fat"
