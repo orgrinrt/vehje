@@ -2151,3 +2151,26 @@ variants = ["variants/incr_cold/target/release/incr_cold", "variants/incr_warm/t
 [[bench.incr_reload.sizes]]
 n = 16384
 variants = ["variants/incr_cold/target/release/incr_cold", "variants/incr_warm/target/release/incr_warm"]
+# >>> zig_dispatch (generated)
+[bench.zig_dispatch]
+title = "Zig dispatch: switch vs tail-threaded @call(.always_tail) (the Deegen question)"
+workload = "realistic"
+master_seed = 0x5eed_21c0_0000_0001
+[bench.zig_dispatch.normalise]
+baseline = "zig_switch"
+mode = "subtract"
+[[bench.zig_dispatch.sizes]]
+n = 64
+variants = ["variants/zig_switch/target/release/zig_switch", "variants/zig_tail/target/release/zig_tail"]
+[[bench.zig_dispatch.sizes]]
+n = 256
+variants = ["variants/zig_switch/target/release/zig_switch", "variants/zig_tail/target/release/zig_tail"]
+[[bench.zig_dispatch.sizes]]
+n = 1024
+variants = ["variants/zig_switch/target/release/zig_switch", "variants/zig_tail/target/release/zig_tail"]
+[[bench.zig_dispatch.sizes]]
+n = 4096
+variants = ["variants/zig_switch/target/release/zig_switch", "variants/zig_tail/target/release/zig_tail"]
+[[bench.zig_dispatch.sizes]]
+n = 16384
+variants = ["variants/zig_switch/target/release/zig_switch", "variants/zig_tail/target/release/zig_tail"]
