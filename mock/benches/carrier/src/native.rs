@@ -73,23 +73,30 @@ pub fn native_madd(d: &Decoded, input_seed: u64) -> u64 {
     // node 0: INPUT
     hash = hash.rotate_left(7) ^ input_seed;
 
-    // nodes 1..=nconst: CONST. Read each const value from the wire the way the
-    // interpreter would (via the CONST node's pool index) and fold it.
-    let mut cvals: Vec<u64> = Vec::with_capacity(nconst);
+    // nodes 1..=nconst: CONST. Fold each const value in node order (parity with
+    // the interpreter, which folds every CONST node before any chain node). No
+    // heap: a real compiled madd would hold these as immediates. Folding from the
+    // wire directly is the strongest honest native shape, and it avoids the
+    // per-call Vec alloc + nconst stores that were penalising the baseline and
+    // understating the interp/native ratio.
     for i in 1..=nconst {
         let v = d.const_at(d.operand(i, 0, 1) as usize);
-        cvals.push(v);
         hash = hash.rotate_left(7) ^ v;
     }
 
-    // the chain, run as a straight native scalar loop with no dispatch. black_box
-    // the seed so the optimizer cannot fold the whole chain to a constant even if
-    // it somehow saw the consts.
+    // the chain, run as a straight native scalar loop with no dispatch. Each
+    // step reads its two consts inline from the wire (const node 1+2s and
+    // 1+2s+1; operand 0 is the pool index), exactly the indexed load the
+    // interpreter's CONST handler does, so no register-vs-heap asymmetry remains.
+    // black_box the seed so the optimizer cannot fold the whole chain to a
+    // constant even if it somehow saw the consts.
     let mut acc = core::hint::black_box(input_seed);
     for s in 0..steps {
-        let mul = acc.wrapping_mul(cvals[2 * s]);
+        let mul_c = d.const_at(d.operand(1 + 2 * s, 0, 1) as usize);
+        let add_c = d.const_at(d.operand(1 + 2 * s + 1, 0, 1) as usize);
+        let mul = acc.wrapping_mul(mul_c);
         hash = hash.rotate_left(7) ^ mul;
-        let add = mul.wrapping_add(cvals[2 * s + 1]);
+        let add = mul.wrapping_add(add_c);
         hash = hash.rotate_left(7) ^ add;
         acc = add;
     }
