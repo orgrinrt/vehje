@@ -17,6 +17,7 @@ use std::path::Path;
 use mockspace_bench_core::counter::{read_counter, ticks_to_ns};
 use vehje_bench_carrier::eqsat::{build_chain, Op};
 use vehje_bench_carrier::incr::{compile_module, gen_modules};
+use vehje_bench_carrier::{interpret, program_at, Decoded, Layout, REC12, REC16, REC24, REC32};
 use vehje_bench_carrier::reach::{
     gen_fanin, gen_layered, gen_random_dag, reach_checksum, reset_reach, solve_semi, solve_whole,
     Graph,
@@ -346,6 +347,59 @@ fn run_threaded_dag(out_dir: &Path, runs: usize) {
         .expect("scale-runner refuses to conclude without writing its CSV");
 }
 
+/// Record-width bandwidth past L2: interpret a multi-million-node program at each
+/// wire layout and see whether the wider strides lose to memory bandwidth once
+/// the wire exceeds cache. In the harness (L1/L2-resident) all layouts tied and
+/// 16B was a live contender; this is the one regime the cap excluded. All
+/// layouts interpret the identical program and must fold the identical checksum
+/// (cross-validation), so any gap is the streamed-bytes-per-node difference.
+fn run_record_width(out_dir: &Path, runs: usize) {
+    println!("\n== record-width bandwidth past L2: interp a large program at each wire layout ==");
+    let layouts: [(Layout, usize); 4] = [(REC12, 12), (REC16, 16), (REC24, 24), (REC32, 32)];
+    let mut csv = String::from("n,layout,stride,wire_mb,ns,ns_per_node,gib_per_s,checksum\n");
+    for &n in &[1_000_000usize, 4_000_000] {
+        println!("  n={} nodes:", n);
+        let mut reference: Option<u64> = None;
+        for (layout, stride) in layouts {
+            let bytes = program_at(n, layout);
+            let wire_mb = bytes.len() as f64 / 1e6;
+            let d = Decoded::parse(&bytes, layout).expect("wire parses");
+            let mut results = vec![0u64; d.node_count];
+            let mut ns = Vec::with_capacity(runs);
+            let mut cs = 0u64;
+            for _ in 0..runs {
+                let t0 = read_counter();
+                cs = interpret(&d, 0x1234_5678, &mut results);
+                let t1 = read_counter();
+                ns.push(ticks_to_ns(t1.wrapping_sub(t0)));
+            }
+            match reference {
+                None => reference = Some(cs),
+                Some(r) => {
+                    if r != cs {
+                        eprintln!("  !! record-width CROSS-VAL FAIL {}: 0x{cs:x} != 0x{r:x}", layout.name);
+                        std::process::exit(2);
+                    }
+                }
+            }
+            let m = median(ns.clone());
+            let ns_per_node = m / n as f64;
+            // effective streamed bandwidth: the wire is read once per interp.
+            let gib_s = (bytes.len() as f64) / (m / 1e9) / (1024.0 * 1024.0 * 1024.0);
+            println!(
+                "    {:<8} stride={:>2}B  wire={:>6.1} MB  {:>8.1} ms  {:>5.2} ns/node  {:>6.1} GiB/s",
+                layout.name, stride, wire_mb, m / 1e6, ns_per_node, gib_s
+            );
+            csv.push_str(&format!(
+                "{},{},{},{:.1},{:.1},{:.3},{:.1},0x{:x}\n",
+                n, layout.name, stride, wire_mb, m, ns_per_node, gib_s, cs
+            ));
+        }
+    }
+    fs::write(out_dir.join("record_width_scale.csv"), csv)
+        .expect("scale-runner refuses to conclude without writing its CSV");
+}
+
 fn main() {
     let out_dir = Path::new("results/scale");
     fs::create_dir_all(out_dir).expect("create results/scale");
@@ -377,6 +431,11 @@ fn main() {
         println!("\nscale CSVs written to results/scale/");
         return;
     }
+    if args.first().map(String::as_str) == Some("recwidth") {
+        run_record_width(out_dir, 5);
+        println!("\nscale CSVs written to results/scale/");
+        return;
+    }
     for (shape, sizes) in matrix {
         for &n in *sizes {
             // allow a single-experiment filter: `scale-runner random_dag 1000000`
@@ -397,6 +456,7 @@ fn main() {
     if args.is_empty() {
         run_eqsat(out_dir, 3);
         run_threaded_dag(out_dir, 5);
+        run_record_width(out_dir, 5);
     }
     println!("\nscale CSVs written to results/scale/");
 }
