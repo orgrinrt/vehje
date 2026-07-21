@@ -447,3 +447,23 @@ variants = ["variants/bt_interp_dispatch/target/release/bt_interp_dispatch", "va
 [[bench.branch_tier.sizes]]
 n = 16384
 variants = ["variants/bt_interp_dispatch/target/release/bt_interp_dispatch", "variants/bt_native_direct/target/release/bt_native_direct", "variants/bt_stencil_jit/target/release/bt_stencil_jit"]
+
+[bench.ir_match]
+title = "IR match scenario: interp vs native, all match strategies, same mockup IR"
+workload = "realistic"
+master_seed = 0x7654_3210_fedc_ba98
+[[bench.ir_match.sizes]]
+n = 64
+variants = ["variants/ir_branch_int/target/release/ir_branch_int", "variants/ir_branch_nat/target/release/ir_branch_nat", "variants/ir_chain_rev_int/target/release/ir_chain_rev_int", "variants/ir_chain_rev_nat/target/release/ir_chain_rev_nat", "variants/ir_profiled_int/target/release/ir_profiled_int", "variants/ir_profiled_nat/target/release/ir_profiled_nat", "variants/ir_jumptable_int/target/release/ir_jumptable_int", "variants/ir_jumptable_nat/target/release/ir_jumptable_nat", "variants/ir_bintree_int/target/release/ir_bintree_int", "variants/ir_bintree_nat/target/release/ir_bintree_nat", "variants/ir_predicate_int/target/release/ir_predicate_int", "variants/ir_predicate_nat/target/release/ir_predicate_nat"]
+[[bench.ir_match.sizes]]
+n = 256
+variants = ["variants/ir_branch_int/target/release/ir_branch_int", "variants/ir_branch_nat/target/release/ir_branch_nat", "variants/ir_chain_rev_int/target/release/ir_chain_rev_int", "variants/ir_chain_rev_nat/target/release/ir_chain_rev_nat", "variants/ir_profiled_int/target/release/ir_profiled_int", "variants/ir_profiled_nat/target/release/ir_profiled_nat", "variants/ir_jumptable_int/target/release/ir_jumptable_int", "variants/ir_jumptable_nat/target/release/ir_jumptable_nat", "variants/ir_bintree_int/target/release/ir_bintree_int", "variants/ir_bintree_nat/target/release/ir_bintree_nat", "variants/ir_predicate_int/target/release/ir_predicate_int", "variants/ir_predicate_nat/target/release/ir_predicate_nat"]
+[[bench.ir_match.sizes]]
+n = 1024
+variants = ["variants/ir_branch_int/target/release/ir_branch_int", "variants/ir_branch_nat/target/release/ir_branch_nat", "variants/ir_chain_rev_int/target/release/ir_chain_rev_int", "variants/ir_chain_rev_nat/target/release/ir_chain_rev_nat", "variants/ir_profiled_int/target/release/ir_profiled_int", "variants/ir_profiled_nat/target/release/ir_profiled_nat", "variants/ir_jumptable_int/target/release/ir_jumptable_int", "variants/ir_jumptable_nat/target/release/ir_jumptable_nat", "variants/ir_bintree_int/target/release/ir_bintree_int", "variants/ir_bintree_nat/target/release/ir_bintree_nat", "variants/ir_predicate_int/target/release/ir_predicate_int", "variants/ir_predicate_nat/target/release/ir_predicate_nat"]
+[[bench.ir_match.sizes]]
+n = 4096
+variants = ["variants/ir_branch_int/target/release/ir_branch_int", "variants/ir_branch_nat/target/release/ir_branch_nat", "variants/ir_chain_rev_int/target/release/ir_chain_rev_int", "variants/ir_chain_rev_nat/target/release/ir_chain_rev_nat", "variants/ir_profiled_int/target/release/ir_profiled_int", "variants/ir_profiled_nat/target/release/ir_profiled_nat", "variants/ir_jumptable_int/target/release/ir_jumptable_int", "variants/ir_jumptable_nat/target/release/ir_jumptable_nat", "variants/ir_bintree_int/target/release/ir_bintree_int", "variants/ir_bintree_nat/target/release/ir_bintree_nat", "variants/ir_predicate_int/target/release/ir_predicate_int", "variants/ir_predicate_nat/target/release/ir_predicate_nat"]
+[[bench.ir_match.sizes]]
+n = 16384
+variants = ["variants/ir_branch_int/target/release/ir_branch_int", "variants/ir_branch_nat/target/release/ir_branch_nat", "variants/ir_chain_rev_int/target/release/ir_chain_rev_int", "variants/ir_chain_rev_nat/target/release/ir_chain_rev_nat", "variants/ir_profiled_int/target/release/ir_profiled_int", "variants/ir_profiled_nat/target/release/ir_profiled_nat", "variants/ir_jumptable_int/target/release/ir_jumptable_int", "variants/ir_jumptable_nat/target/release/ir_jumptable_nat", "variants/ir_bintree_int/target/release/ir_bintree_int", "variants/ir_bintree_nat/target/release/ir_bintree_nat", "variants/ir_predicate_int/target/release/ir_predicate_int", "variants/ir_predicate_nat/target/release/ir_predicate_nat"]

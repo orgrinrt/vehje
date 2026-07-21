@@ -1,0 +1,13 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784623539	3e24c64	ir_showdown_n1024	ir_bintree_int	1024	warm	26641.7	26357.1	27449.2
+1784623539	3e24c64	ir_showdown_n1024	ir_bintree_nat	1024	warm	972.5	946.6	990.8
+1784623539	3e24c64	ir_showdown_n1024	ir_branch_int	1024	warm	26743.8	26110.4	26973.5
+1784623539	3e24c64	ir_showdown_n1024	ir_branch_nat	1024	warm	930.4	869.8	935.2
+1784623539	3e24c64	ir_showdown_n1024	ir_chain_rev_int	1024	warm	27279.6	27127.9	27410.0
+1784623539	3e24c64	ir_showdown_n1024	ir_chain_rev_nat	1024	warm	965.4	941.5	1006.2
+1784623539	3e24c64	ir_showdown_n1024	ir_jumptable_int	1024	warm	24146.2	23548.5	25945.8
+1784623539	3e24c64	ir_showdown_n1024	ir_jumptable_nat	1024	warm	851.2	844.4	905.2
+1784623539	3e24c64	ir_showdown_n1024	ir_predicate_int	1024	warm	73897.9	72867.0	74146.4
+1784623539	3e24c64	ir_showdown_n1024	ir_predicate_nat	1024	warm	1652.5	1652.3	1740.2
+1784623539	3e24c64	ir_showdown_n1024	ir_profiled_int	1024	warm	27352.1	26282.1	27719.4
+1784623539	3e24c64	ir_showdown_n1024	ir_profiled_nat	1024	warm	931.2	927.0	945.5
