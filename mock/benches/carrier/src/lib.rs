@@ -31,6 +31,7 @@ pub mod interp;
 pub mod ir;
 pub mod native;
 pub mod reach;
+pub mod thermo;
 
 pub use checksum::Checksum;
 pub use gen::{generate, GenParams, Rng};

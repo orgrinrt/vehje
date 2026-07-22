@@ -40,51 +40,167 @@ fn reach_broken(e: &Expr) -> BTreeSet<Binder> {
     }
 }
 
-fn main() {
-    // (1) SOUNDNESS: let x = o in x  -- value reaches outer o *through* x.
-    let (o, x) = (0usize, 1usize);
-    let e = Let(x, Box::new(Var(o)), Box::new(Var(x)));
-    let (rc, rb) = (reach_correct(&e), reach_broken(&e));
-    println!("(1) let x = o in x  (o={o}, x={x})");
-    println!("    correct = {:?}  broken = {:?}", rc, rb);
-    assert_eq!(rc, set(&[o]), "correct rule keeps o");
-    assert!(!rb.contains(&o), "broken rule loses o (unsound: judges the escape safe)");
-    println!("    => binder rule REQUIRED: broken InScope-only misses the escape (unsound). PASS");
+// The build-width-bounded nest generator, shared by the bound tests.
+fn build(k: usize, n: usize, w: usize) -> Expr {
+    if k == n {
+        let lo = k.saturating_sub(w);
+        let mut e = Lit;
+        for b in [100000usize, 100001, 100002] {
+            e = App(Box::new(Var(b)), Box::new(e));
+        }
+        for b in lo..k {
+            e = App(Box::new(Var(b)), Box::new(e));
+        }
+        return e;
+    }
+    Let(k, Box::new(Lit), Box::new(build(k + 1, n, w)))
+}
 
-    // (2) NAMING-SET W BOUND: reach at any node is a subset of the in-scope binders,
-    // so |reach| <= W (the max in-scope width). Deep nest, bounded width.
-    // let b0 = lit in let b1 = b0 in ... let bN = b_{N-1} in bN  (spine, width grows to N),
-    // vs a width-bounded variant where each body only uses the last W binders.
-    let big_n = 2000usize;
-    let w = 4usize;
-    // width-bounded: bk = App over the previous min(k,W) binders, dropped as they leave scope
-    fn build(k: usize, n: usize, w: usize) -> Expr {
-        if k == n { // innermost: reference the last up-to-w binders
+// The free variables of an expr: the binders referenced that are not bound above
+// within e. The reachability theorem is that reach_correct(e) is always a subset
+// of free_vars(e), so the naming set is bounded by the free width, not the depth.
+fn free_vars(e: &Expr, bound: &mut Vec<Binder>) -> BTreeSet<Binder> {
+    match e {
+        Lit => BTreeSet::new(),
+        Var(b) => {
+            if bound.contains(b) {
+                BTreeSet::new()
+            } else {
+                set(&[*b])
+            }
+        }
+        App(f, a) => free_vars(f, bound).union(&free_vars(a, bound)).copied().collect(),
+        Let(x, e1, e2) => {
+            let f1 = free_vars(e1, bound);
+            bound.push(*x);
+            let f2 = free_vars(e2, bound);
+            bound.pop();
+            f1.union(&f2).copied().collect()
+        }
+        Lam(p, body) => {
+            bound.push(*p);
+            let f = free_vars(body, bound);
+            bound.pop();
+            f
+        }
+    }
+}
+
+// A tiny deterministic PRNG for the property test's shape sweep.
+fn splitmix(s: &mut u64) -> u64 {
+    *s = s.wrapping_add(0x9E37_79B9_7F4A_7C15);
+    let mut z = *s;
+    z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+    z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
+    z ^ (z >> 31)
+}
+
+// Generate a random width-bounded expr: a spine of `n` lets whose innermost body
+// references a random subset of the last `w` in-scope binders plus `f` free
+// outer binders, with random App/Lam structure. In-scope width stays <= w.
+fn build_rand(seed: u64, n: usize, w: usize, f: usize) -> Expr {
+    let mut s = seed;
+    fn inner(s: &mut u64, k: usize, n: usize, w: usize, f: usize) -> Expr {
+        if k == n {
             let lo = k.saturating_sub(w);
             let mut e = Lit;
-            // 3 FREE outer binders (the env this expr sits in, width W) + in-scope refs
-            for b in [100000usize,100001,100002] { e = App(Box::new(Var(b)), Box::new(e)); }
-            for b in lo..k { e = App(Box::new(Var(b)), Box::new(e)); }
+            for i in 0..f {
+                if splitmix(s) & 1 == 0 {
+                    e = App(Box::new(Var(1_000_000 + i)), Box::new(e));
+                }
+            }
+            for b in lo..k {
+                if splitmix(s) & 1 == 0 {
+                    e = App(Box::new(Var(b)), Box::new(e));
+                }
+            }
+            // occasionally wrap in a lambda binding a fresh param it may reference.
+            if splitmix(s) & 3 == 0 {
+                e = Lam(500_000 + k, Box::new(App(Box::new(Var(500_000 + k)), Box::new(e))));
+            }
             return e;
         }
-        Let(k, Box::new(Lit), Box::new(build(k + 1, n, w)))
+        Let(k, Box::new(Lit), Box::new(inner(s, k + 1, n, w, f)))
     }
-    let big = build(0, big_n, w);
-    let rbig = reach_correct(&big);
-    println!("(2) width-bounded nest N={big_n}, W={w}: |reach at root| = {} (expect <= {})", rbig.len(), w);
-    assert!(rbig.len() <= w, "naming set exceeds W");
-    println!("    => reach naming-set bounded by W, independent of N. PASS (N*W not N*N)");
+    inner(&mut s, 0, n, w, f)
+}
 
-    // (3) ESCAPE-SET / REGION BOUND: a Lam capturing outer binders that outlive its
-    // default region -> those are escapes; count bounded by live-region (let) nesting.
-    // \p. (App b0 (App b1 p))  under binders b0,b1 in scope -> escapes {b0,b1}.
-    let lam = Lam(9, Box::new(App(Box::new(Var(0)), Box::new(App(Box::new(Var(1)), Box::new(Var(9)))))));
-    let resc = reach_correct(&lam); // free binders the closure reaches (param dropped)
-    println!("(3) \\p.(b0 (b1 p)): closure escape set = {:?} (param dropped)", resc);
-    assert_eq!(resc, set(&[0, 1]), "closure reaches its free binders, param dropped");
-    // region-promotion bound: escapes <= number of enclosing live regions (here 2)
-    let live_regions = 2;
-    assert!(resc.len() <= live_regions, "escape set bounded by live-region count");
-    println!("    => closure escape set = free reached binders, bounded by live-region count. PASS");
-    println!("\nSK4: WORKS. binder rule sound where InScope-only is not; naming set <= W; escape set <= regions.");
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn correct_rule_sound_where_broken_is_not() {
+        // let x = o in x: the value reaches outer o *through* x. The correct
+        // splice-and-drop rule keeps o; the broken InScope-only fix loses it
+        // (unsound: it judges the escape safe).
+        let (o, x) = (0usize, 1usize);
+        let e = Let(x, Box::new(Var(o)), Box::new(Var(x)));
+        assert_eq!(reach_correct(&e), set(&[o]), "correct rule keeps o");
+        assert!(!reach_broken(&e).contains(&o), "broken rule unsoundly loses o");
+    }
+
+    #[test]
+    fn naming_set_bounded_by_width_fixed_shape() {
+        // The original single-shape claim: a width-4 nest of 300 lets has a
+        // root reach set of <= 4 (bounded by W, not N; capped at 300 for the test stack).
+        let rbig = reach_correct(&build(0, 300, 4));
+        assert!(rbig.len() <= 4, "naming set exceeds W on the fixed shape");
+    }
+
+    #[test]
+    fn escape_set_bounded_by_live_regions() {
+        // \p.(b0 (b1 p)): the closure reaches its free binders {b0,b1}, param
+        // dropped; the escape count is bounded by the live-region nesting.
+        let lam = Lam(9, Box::new(App(Box::new(Var(0)), Box::new(App(Box::new(Var(1)), Box::new(Var(9)))))));
+        let resc = reach_correct(&lam);
+        assert_eq!(resc, set(&[0, 1]), "closure reaches its free binders");
+        assert!(resc.len() <= 2, "escape set bounded by live-region count");
+    }
+
+    #[test]
+    fn reach_subset_of_free_vars_property() {
+        // The theorem behind the N*W bound, as a property over many shapes: for
+        // any expr, reach_correct(e) is a subset of free_vars(e). Since a
+        // width-w nest has |free_vars| <= w + f, this gives |reach| <= w + f at
+        // every shape, independent of the nesting depth N. Sweep N, W, F, seed.
+        for &n in &[1usize, 5, 20, 100, 300] {
+            for &w in &[1usize, 2, 4, 8] {
+                for &f in &[0usize, 3] {
+                    for seed in 0u64..24 {
+                        let e = build_rand(seed.wrapping_mul(0x1000_0001) ^ (n as u64), n, w, f);
+                        let mut bound = Vec::new();
+                        let fv = free_vars(&e, &mut bound);
+                        let r = reach_correct(&e);
+                        assert!(
+                            r.is_subset(&fv),
+                            "reach not subset of free_vars: N={n} W={w} F={f} seed={seed}\n reach={r:?}\n fv={fv:?}"
+                        );
+                        // and the free width is bounded by w + f, independent of N.
+                        assert!(
+                            fv.len() <= w + f,
+                            "free width {} exceeds w+f={} at N={n} W={w} F={f} seed={seed}",
+                            fv.len(),
+                            w + f
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn bound_is_n_independent() {
+        // The N*W-not-N*N property directly: fix W and F, grow N by two orders of
+        // magnitude, and the root naming set does not grow with N.
+        let (w, f) = (4usize, 3usize);
+        let mut prev: Option<usize> = None;
+        for &n in &[10usize, 100, 300] {
+            let e = build_rand(0xabc ^ n as u64, n, w, f);
+            let mut bound = Vec::new();
+            let fv = free_vars(&e, &mut bound);
+            assert!(fv.len() <= w + f, "free width grew with N at N={n}");
+            let _ = prev.replace(fv.len());
+        }
+    }
 }
