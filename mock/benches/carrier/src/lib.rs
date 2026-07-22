@@ -105,6 +105,39 @@ mod tests {
     }
 
     #[test]
+    fn profiles_well_formed_distinct_and_agree() {
+        // Each designed profile generates a well-formed program; the profiles are
+        // genuinely distinct (distinct checksums, so they are not accidentally the
+        // same program); and within a profile every wire dispatch shape agrees on
+        // the checksum (the cross-validation the matrix rests on).
+        let names = ["real", "madd", "tight", "scatter", "wideselect", "leaf"];
+        let mut seen: Vec<u64> = Vec::new();
+        for name in names {
+            let mut gp = GenParams::profile(name).expect("profile exists");
+            gp.node_count = 600;
+            let prog = generate(&gp);
+            assert!(prog.is_well_formed(), "profile {name} ill-formed");
+            let bytes = encode(&prog, &REC24);
+            let d = Decoded::parse(&bytes, REC24).unwrap();
+            let mut r = vec![0u64; prog.nodes.len()];
+            interpret(&d, 12345, &mut r);
+            let sw = checksum(&r);
+            let shapes: [fn(&Decoded, u64, &mut [u64]); 4] = [
+                interpret_fntable,
+                interpret_ifchain,
+                interpret_ifchain_ascending,
+                interpret_bittree,
+            ];
+            for f in shapes {
+                f(&d, 12345, &mut r);
+                assert_eq!(sw, checksum(&r), "profile {name}: a dispatch shape diverged");
+            }
+            assert!(!seen.contains(&sw), "profile {name} is not distinct from an earlier profile");
+            seen.push(sw);
+        }
+    }
+
+    #[test]
     fn cross_layout_identical_checksum() {
         // The cross-validation contract: one program run through every record
         // layout must produce a byte-identical checksum. Only the stride and the

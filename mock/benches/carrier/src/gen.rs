@@ -58,11 +58,32 @@ pub struct GenParams {
     pub locality_window: usize,
     /// Size of the const pool the leaf CONST nodes draw from.
     pub const_count: usize,
+    /// Per-op sampling weights, indexed by opcode. A mid-stream op is drawn from
+    /// `0..op_vocab` proportional to its weight, so arity mix, leaf fraction, and
+    /// heavy-op fraction are all controllable by reweighting the vocabulary. All
+    /// weights equal reproduces uniform-over-vocab; a weight of zero excludes an
+    /// op. This subsumes `op_vocab` (a vocab of size k is weights zero past k),
+    /// which stays as a convenience clamp.
+    pub op_weights: [u16; op::COUNT as usize],
+}
+
+/// Build a weight array from `(opcode, weight)` pairs, zero elsewhere.
+pub fn weights(pairs: &[(u8, u16)]) -> [u16; op::COUNT as usize] {
+    let mut w = [0u16; op::COUNT as usize];
+    for &(o, x) in pairs {
+        w[o as usize] = x;
+    }
+    w
+}
+
+/// Uniform weights over every op (the balanced default).
+pub const fn uniform_weights() -> [u16; op::COUNT as usize] {
+    [1u16; op::COUNT as usize]
 }
 
 impl GenParams {
     /// The shipped-runtime default operating point. Every axis bench is a delta
-    /// from this.
+    /// from this. Identical to `p_real`.
     pub fn default_point() -> Self {
         GenParams {
             seed: 0x5eed_1234_abcd_0001,
@@ -71,8 +92,130 @@ impl GenParams {
             op_correlation: 0,
             locality_window: 64,
             const_count: 32,
+            op_weights: uniform_weights(),
         }
     }
+
+    /// P_real: the balanced "typical program" and the matrix centre.
+    pub fn p_real() -> Self {
+        Self::default_point()
+    }
+
+    /// P_madd: a single repeated multiply-add motif, tight locality. The clean
+    /// native-anchor and the maximally-predictable dispatch case.
+    pub fn p_madd() -> Self {
+        GenParams {
+            op_correlation: 900,
+            locality_window: 4,
+            op_weights: weights(&[(op::CONST, 1), (op::ADD, 4), (op::MUL, 4)]),
+            ..Self::default_point()
+        }
+    }
+
+    /// P_tight: predictable and local. Correlated stream, small window, the
+    /// hot-loop-body case (threaded/if-chain should shine on dispatch).
+    pub fn p_tight() -> Self {
+        GenParams {
+            op_correlation: 900,
+            locality_window: 8,
+            op_weights: weights(&[
+                (op::CONST, 1),
+                (op::ADD, 1),
+                (op::SUB, 1),
+                (op::MUL, 1),
+                (op::AND, 1),
+                (op::OR, 1),
+                (op::XOR, 1),
+            ]),
+            ..Self::default_point()
+        }
+    }
+
+    /// P_scatter: unpredictable and cache-hostile. i.i.d. stream, full vocab,
+    /// operands drawn from the whole prefix (the adversarial case).
+    pub fn p_scatter() -> Self {
+        GenParams {
+            op_correlation: 0,
+            locality_window: usize::MAX,
+            op_weights: weights(&[
+                (op::CONST, 1),
+                (op::ADD, 1),
+                (op::SUB, 1),
+                (op::MUL, 1),
+                (op::AND, 1),
+                (op::OR, 1),
+                (op::XOR, 1),
+                (op::SHL, 1),
+                (op::SHR, 1),
+                (op::MIN, 1),
+                (op::MAX, 1),
+                (op::EQ, 1),
+                (op::LT, 1),
+                (op::SELECT, 1),
+                (op::NEG, 1),
+                (op::NOT, 1),
+            ]),
+            ..Self::default_point()
+        }
+    }
+
+    /// P_wideselect: arity-heavy, weighted toward ternary SELECT plus a
+    /// condition producer, to stress record width and the spill path.
+    pub fn p_wideselect() -> Self {
+        GenParams {
+            op_weights: weights(&[
+                (op::CONST, 2),
+                (op::ADD, 2),
+                (op::MUL, 2),
+                (op::LT, 2),
+                (op::SELECT, 6),
+            ]),
+            ..Self::default_point()
+        }
+    }
+
+    /// P_leaf: decode-bound, weighted heavily toward CONST leaves, so dispatch
+    /// is light and form (decode cost) dominates.
+    pub fn p_leaf() -> Self {
+        GenParams {
+            op_weights: weights(&[(op::CONST, 8), (op::ADD, 1), (op::MUL, 1)]),
+            ..Self::default_point()
+        }
+    }
+
+    /// The six designed profiles, by stable name, for the matrix generator.
+    pub fn profile(name: &str) -> Option<Self> {
+        Some(match name {
+            "real" => Self::p_real(),
+            "madd" => Self::p_madd(),
+            "tight" => Self::p_tight(),
+            "scatter" => Self::p_scatter(),
+            "wideselect" => Self::p_wideselect(),
+            "leaf" => Self::p_leaf(),
+            _ => return None,
+        })
+    }
+}
+
+/// Draw an op from `0..vocab` proportional to `weights`. Falls back to uniform
+/// if the visible weights sum to zero. One `next_u64` draw, so generation stays
+/// deterministic and cheap.
+#[inline]
+fn weighted_op(rng: &mut Rng, weights: &[u16; op::COUNT as usize], vocab: usize) -> u8 {
+    let vis = &weights[..vocab.min(op::COUNT as usize)];
+    let total: u32 = vis.iter().map(|&w| w as u32).sum();
+    if total == 0 {
+        return rng.below(vocab) as u8;
+    }
+    let mut r = (rng.next_u64() % total as u64) as u32;
+    for (i, &w) in vis.iter().enumerate() {
+        let w = w as u32;
+        if r < w {
+            return i as u8;
+        }
+        r -= w;
+    }
+    (vocab - 1) as u8
 }
 
 /// Generate a well-formed program from the params. The first `LEAF_SEED` nodes
@@ -106,7 +249,7 @@ pub fn generate(p: &GenParams) -> Program {
         {
             prev_op
         } else {
-            (rng.below(vocab as usize)) as u8
+            weighted_op(&mut rng, &p.op_weights, vocab as usize)
         };
 
         let node = if op_code == op::INPUT {
