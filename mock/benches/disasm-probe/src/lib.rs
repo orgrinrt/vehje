@@ -103,7 +103,7 @@ pub extern "C" fn di_cfg_fntable(seed: u64, outer: u64, inner: u64, out: *mut u6
 
 #[no_mangle]
 pub extern "C" fn di_cfg_threaded(seed: u64, outer: u64, inner: u64, out: *mut u64) {
-    use vehje_bench_carrier::cfg::{build_nested_loop, threaded};
+    use vehje_bench_carrier::cfg::build_nested_loop; use vehje_bench_carrier::cfg_threaded as threaded;
     let blocks = build_nested_loop(outer, inner);
     let code = threaded::flatten(&blocks);
     let (r, _, _) = threaded::interp_flat(&code, seed, u64::MAX);

@@ -99,14 +99,30 @@ a measured cell).
   (dispatch amortised over W) is the real property under test, not an artefact; cross-validated per lane.
 - regcache: uses the shared access primitive; its per-operand compare (cache hit test) is a real cost of
   the technique, faithfully represented.
+- Trace / superblock (`trace`): a control-flow structure transform (linearize the hot self-loop into a
+  guarded superblock), not a dispatch shape. Its fairness is that it walks the same path as the base CFG
+  interpreter, verified by cross-validation on the full `(result, ninstr, nterm)` triple (identical instr and
+  terminator counts prove the same back-edges and branches), plus the shared access primitive in both. There
+  is no dispatch-label question: the win it measures (dropping the per-iteration block index and terminator
+  match on the hot path) is a real property of linearization, not an artefact.
+- Copy-and-patch (`copypatch`): native machine-code generation. There is no dispatch at all (that is the
+  point), so there is no dispatch-label or check-vs-no-check question. The fairness contract is purely
+  semantic: the generated aarch64 code fills the identical `results` array as the interpreter, verified
+  byte-exact against the switch interpreter across all six profiles and many seeds (the profiles draw the
+  full opcode vocabulary, so every op's stencil is exercised; a wrong encoding on any op would diverge the
+  checksum). The cost it measures is the honest one: a large codegen `S` term (one emit pass per node) buys a
+  near-zero-dispatch native `I` term. The imm12 window (nodes and consts below 4096) is a stated scope of
+  this realization, and `emit` declines rather than miscompiles above it.
 
 ## Not yet built / flagged
 
 - perfect-hash dispatch: degenerate to the fn-pointer table for the dense contiguous opcode set (0..16); a
   representative perfect-hash cell needs a sparse opcode design decision (panel / op). A degenerate cell
   would misrepresent the technique, so it is not built.
-- Later dispatch cells (Zig computed-goto, copy-and-patch stencils, trace dispatch) get the same ISA
-  confirmation appended here as they land.
+- Zig computed-goto dispatch: the one dispatch shape Rust cannot express (label-address threading via
+  `goto`), built as a Zig cdylib consuming identical program bytes. It gets the same ISA confirmation
+  appended here (its threaded loop should show the computed-goto indirect branch, no per-op call) once the
+  Zig toolchain path lands.
 
 ## Reproduce
 

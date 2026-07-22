@@ -26,6 +26,10 @@ path = "src/lib.rs"
 threaded = []
 # opt-in vertical/SoA data-parallel SIMD interpretation (portable_simd).
 vertical = []
+# opt-in copy-and-patch native codegen (the machine-code tier). aarch64 + macOS
+# only (the module is cfg-gated); pulls no deps, declaring the MAP_JIT externs
+# directly. Off the default build since it emits and runs native code.
+jit = []
 
 [dependencies]
 # none by design: a seeded generator with no external RNG keeps runs

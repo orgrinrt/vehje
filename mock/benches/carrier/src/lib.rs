@@ -35,7 +35,11 @@
 
 pub mod access;
 pub mod cfg;
+#[cfg(feature = "threaded")]
+pub mod cfg_threaded;
 pub mod checksum;
+#[cfg(all(feature = "jit", target_arch = "aarch64", target_os = "macos"))]
+pub mod copypatch;
 pub mod eqsat;
 pub mod fusion;
 pub mod gen;
