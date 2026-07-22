@@ -73,6 +73,16 @@ Design implication (op's call): the shallow-regime whole-column choice is vindic
 many-target lease graphs; semi-naive is clearly better for deep narrow ones. The answer is shape-dependent,
 which the old bench could not show.
 
+### Retraction. Recompute vs counted differential on delete (audit-catalogue item)
+
+`scale-runner retract` (`carrier::retract`): the owed non-additive-edit bench. Single-target reach-to-sink;
+delete propagates a counted (DBSP-style) retraction cascade vs a from-scratch backward BFS, cross-validated
+identical. Clean crossover, governed by how many nodes actually stop reaching the sink (not the delete count):
+counted wins 100-5000x for localised retractions, recompute wins for catastrophic ones (most nodes drop, so
+the cascade visits everything while recompute rebuilds over a shrunken graph). Dense graphs barely retract, so
+counted is nearly free. Implication (op's call): maintain counts and cascade on delete by default; fall back to
+recompute when the expected drop count approaches the graph size.
+
 ### C4b. Threaded level-sync compile: real number replaces the frictionless model
 
 `scale-runner threads`: persistent thread pool, per-level barriers, real compile per module, atomic
