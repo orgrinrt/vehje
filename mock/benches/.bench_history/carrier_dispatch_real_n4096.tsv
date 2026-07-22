@@ -1,0 +1,9 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784751983	56cd450	carrier_dispatch_real_n4096	carrier_disp_bittree_real	4096	warm	262362.1	257518.3	270988.1
+1784751983	56cd450	carrier_dispatch_real_n4096	carrier_disp_fntable_real	4096	warm	539282.9	537900.9	553436.7
+1784751983	56cd450	carrier_dispatch_real_n4096	carrier_disp_ifchain_real	4096	warm	605888.3	604553.9	615797.1
+1784751983	56cd450	carrier_dispatch_real_n4096	carrier_disp_ifchainasc_real	4096	warm	594490.0	585530.0	613815.6
+1784751983	56cd450	carrier_dispatch_real_n4096	carrier_disp_ifchainlin_real	4096	warm	507366.2	499721.5	577269.6
+1784751983	56cd450	carrier_dispatch_real_n4096	carrier_disp_nullfloor_real	4096	warm	120234.6	116692.7	122817.7
+1784751983	56cd450	carrier_dispatch_real_n4096	carrier_disp_switch_real	4096	warm	593440.4	590008.6	607594.8
+1784751983	56cd450	carrier_dispatch_real_n4096	carrier_disp_threaded_real	4096	warm	674805.8	662021.7	678773.9
