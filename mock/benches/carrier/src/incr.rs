@@ -70,7 +70,8 @@ pub fn compile_module(bytes: &[u8], scratch: &mut [u64]) -> u64 {
     let d = Decoded::parse(bytes, REC24).expect("module parses");
     let mut cs = 0u64;
     for p in 0..COMPILE_PASSES {
-        cs = cs.rotate_left(9) ^ interpret(&d, 0x1234_5678 ^ p as u64, scratch);
+        interpret(&d, 0x1234_5678 ^ p as u64, scratch);
+        cs = cs.rotate_left(9) ^ crate::access::checksum(scratch);
     }
     cs
 }

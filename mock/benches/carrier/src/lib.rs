@@ -30,6 +30,7 @@
 #![cfg_attr(feature = "threaded", feature(explicit_tail_calls, rust_preserve_none_cc))]
 #![cfg_attr(feature = "threaded", allow(incomplete_features))]
 
+pub mod access;
 pub mod cfg;
 pub mod checksum;
 pub mod eqsat;
@@ -49,7 +50,15 @@ pub mod valrepr;
 
 pub use checksum::Checksum;
 pub use gen::{generate, GenParams, Rng};
-pub use interp::{interpret, interpret_fntable, run_over_input};
+pub use access::checksum;
+pub use interp::{
+    interpret, interpret_bittree, interpret_fntable, interpret_ifchain, interpret_ifchain_ascending,
+    interpret_nulldispatch, run_over_input,
+};
+pub use predecode::{
+    interpret_predecoded, interpret_predecoded_fntable, interpret_predecoded_nulldispatch, predecode,
+    Predecoded,
+};
 #[cfg(feature = "threaded")]
 pub use interp_threaded::interpret_threaded;
 pub use native::{madd_bytes, madd_program, native_madd};
@@ -145,8 +154,9 @@ mod tests {
         let d = Decoded::parse(&bytes, REC24).unwrap();
         let mut r = vec![0u64; prog.nodes.len()];
         for seed in [0u64, 1, 42, 12345, 999_999] {
+            interpret(&d, seed, &mut r);
             assert_eq!(
-                interpret(&d, seed, &mut r),
+                checksum(&r),
                 native::native_madd(&d, seed),
                 "native diverged from interp at seed {seed}"
             );
@@ -166,10 +176,18 @@ mod tests {
         let d = Decoded::parse(&bytes, REC24).unwrap();
         let mut r = vec![0u64; prog.nodes.len()];
         for seed in [0u64, 1, 42, 255, 1000] {
-            assert_eq!(
-                interpret(&d, seed, &mut r),
-                interpret_fntable(&d, seed, &mut r)
-            );
+            interpret(&d, seed, &mut r);
+            let sw = checksum(&r);
+            let shapes: [fn(&Decoded, u64, &mut [u64]); 4] = [
+                interpret_fntable,
+                interpret_ifchain,
+                interpret_ifchain_ascending,
+                interpret_bittree,
+            ];
+            for f in shapes {
+                f(&d, seed, &mut r);
+                assert_eq!(sw, checksum(&r), "a wire dispatch shape diverged at seed {seed}");
+            }
         }
     }
 
