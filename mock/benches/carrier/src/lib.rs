@@ -49,6 +49,7 @@ pub mod native;
 pub mod optimize;
 pub mod predecode;
 pub mod reach;
+pub mod stackbc;
 #[cfg(feature = "vertical")]
 pub mod vertical;
 pub mod retract;
