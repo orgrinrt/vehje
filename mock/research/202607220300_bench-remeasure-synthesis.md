@@ -73,6 +73,16 @@ Design implication (op's call): the shallow-regime whole-column choice is vindic
 many-target lease graphs; semi-naive is clearly better for deep narrow ones. The answer is shape-dependent,
 which the old bench could not show.
 
+### Sharded interner merge (audit-catalogue lever)
+
+`scale-runner intern` (`carrier::sharded_intern`): real byte-hashing interner, single-threaded vs sharded
+parallel intern + sequential merge tail, cross-validated on the canonical first-occurrence signature. Finding:
+sharding pays but the merge tail caps it, and the dedup rate sets the tail size. High dedup (few distinct) ->
+tiny constant tail -> 3.6x at S=8; med/low dedup -> tail GROWS with shard count (each shard rediscovers more
+vocabulary) -> only 1.4-1.75x, cancelling the parallel gain at S=2 med. Implication (op's call): shard the
+high-dedup identifier stream, keep low-dedup literals single-threaded or on a shared table; >4 threads earns
+little on M1 (big.LITTLE + growing tail).
+
 ### Retraction. Recompute vs counted differential on delete (audit-catalogue item)
 
 `scale-runner retract` (`carrier::retract`): the owed non-additive-edit bench. Single-target reach-to-sink;
