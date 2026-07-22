@@ -90,11 +90,13 @@ macro_rules! op_handler {
     };
 }
 
+// the register-VM arithmetic defers to the single ops::binop_body definition
+// (SET is CFG-specific); the four ops are a subset of it.
 op_handler!(h_set, |imm, _a, _b| imm);
-op_handler!(h_add, |_i, a, b| a.wrapping_add(b));
-op_handler!(h_sub, |_i, a, b| a.wrapping_sub(b));
-op_handler!(h_mul, |_i, a, b| a.wrapping_mul(b));
-op_handler!(h_and, |_i, a, b| a & b);
+op_handler!(h_add, |_i, a, b| crate::ops::binop_body!(ADD, a, b));
+op_handler!(h_sub, |_i, a, b| crate::ops::binop_body!(SUB, a, b));
+op_handler!(h_mul, |_i, a, b| crate::ops::binop_body!(MUL, a, b));
+op_handler!(h_and, |_i, a, b| crate::ops::binop_body!(AND, a, b));
 
 extern "rust-preserve-none" fn h_jmp(
     idx: usize,

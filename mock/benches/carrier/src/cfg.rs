@@ -68,12 +68,14 @@ pub fn interp(blocks: &[Block], seed: u64, cap: u64) -> (u64, u64, u64) {
         let b = &blocks[pc as usize];
         for ins in &b.instrs {
             let v = unsafe {
+                // the register VM's arithmetic defers to the single ops::binop_body
+                // definition (SET is CFG-specific); the four ops are a subset of it.
                 match ins.op {
                     op::SET => ins.imm,
-                    op::ADD => rload(rp, ins.a as u32).wrapping_add(rload(rp, ins.b as u32)),
-                    op::SUB => rload(rp, ins.a as u32).wrapping_sub(rload(rp, ins.b as u32)),
-                    op::AND => rload(rp, ins.a as u32) & rload(rp, ins.b as u32),
-                    _ => rload(rp, ins.a as u32).wrapping_mul(rload(rp, ins.b as u32)),
+                    op::ADD => crate::ops::binop_body!(ADD, rload(rp, ins.a as u32), rload(rp, ins.b as u32)),
+                    op::SUB => crate::ops::binop_body!(SUB, rload(rp, ins.a as u32), rload(rp, ins.b as u32)),
+                    op::AND => crate::ops::binop_body!(AND, rload(rp, ins.a as u32), rload(rp, ins.b as u32)),
+                    _ => crate::ops::binop_body!(MUL, rload(rp, ins.a as u32), rload(rp, ins.b as u32)),
                 }
             };
             unsafe { rstore(rp, ins.dst as usize, v) };
@@ -108,16 +110,16 @@ fn c_set(ins: &Instr, _rp: *const u64) -> u64 {
     ins.imm
 }
 fn c_add(ins: &Instr, rp: *const u64) -> u64 {
-    unsafe { crate::access::rload(rp, ins.a as u32).wrapping_add(crate::access::rload(rp, ins.b as u32)) }
+    unsafe { crate::ops::binop_body!(ADD, crate::access::rload(rp, ins.a as u32), crate::access::rload(rp, ins.b as u32)) }
 }
 fn c_sub(ins: &Instr, rp: *const u64) -> u64 {
-    unsafe { crate::access::rload(rp, ins.a as u32).wrapping_sub(crate::access::rload(rp, ins.b as u32)) }
+    unsafe { crate::ops::binop_body!(SUB, crate::access::rload(rp, ins.a as u32), crate::access::rload(rp, ins.b as u32)) }
 }
 fn c_mul(ins: &Instr, rp: *const u64) -> u64 {
-    unsafe { crate::access::rload(rp, ins.a as u32).wrapping_mul(crate::access::rload(rp, ins.b as u32)) }
+    unsafe { crate::ops::binop_body!(MUL, crate::access::rload(rp, ins.a as u32), crate::access::rload(rp, ins.b as u32)) }
 }
 fn c_and(ins: &Instr, rp: *const u64) -> u64 {
-    unsafe { crate::access::rload(rp, ins.a as u32) & crate::access::rload(rp, ins.b as u32) }
+    unsafe { crate::ops::binop_body!(AND, crate::access::rload(rp, ins.a as u32), crate::access::rload(rp, ins.b as u32)) }
 }
 static CTABLE: [CFn; 5] = [c_set, c_add, c_sub, c_mul, c_and];
 

@@ -86,11 +86,33 @@ pub fn interpret_vertical<const W: usize>(
 #[inline]
 pub fn interpret_vertical_checksum<const W: usize>(p: &Predecoded, seeds: &[u64; W]) -> u64 {
     let mut results = vec![Simd::<u64, W>::splat(0); p.nodes.len()];
-    interpret_vertical::<W>(p, seeds, &mut results);
+    interpret_vertical_checksum_into::<W>(p, seeds, &mut results)
+}
+
+/// Allocate a zeroed SoA scratch of `n` lanes-vectors, for a bench to hold in
+/// setup and reuse across timed iterations. Exists so a consumer (a bench variant
+/// crate) can size the scratch without enabling `portable_simd` or naming `Simd`.
+pub fn make_scratch<const W: usize>(n: usize) -> Vec<Simd<u64, W>> {
+    vec![Simd::<u64, W>::splat(0); n]
+}
+
+/// Non-allocating twin of [`interpret_vertical_checksum`]: fill the caller-owned
+/// `results` SoA scratch and reduce to one scalar checksum, without allocating.
+/// A bench pre-allocates `results` once in setup (outside the timed region) and
+/// reuses it, so the SoA allocation is NOT charged to the measured time (the
+/// scalar baseline reuses its `results` buffer the same way; allocating inside
+/// the timed loop would load the vertical cell with allocator latency the
+/// baseline never pays). `results` must have length `p.nodes.len()`.
+#[inline]
+pub fn interpret_vertical_checksum_into<const W: usize>(
+    p: &Predecoded,
+    seeds: &[u64; W],
+    results: &mut [Simd<u64, W>],
+) -> u64 {
+    interpret_vertical::<W>(p, seeds, results);
     let mut h = 0u64;
-    for v in &results {
-        let arr = v.as_array();
-        for &lane in arr {
+    for v in results.iter() {
+        for &lane in v.as_array() {
             h = h.rotate_left(7) ^ lane;
         }
     }

@@ -1065,101 +1065,6 @@ variants=["variants/hx_cfg__treewalk/target/release/hx_cfg__treewalk", "variants
 n=16384
 variants=["variants/hx_cfg__treewalk/target/release/hx_cfg__treewalk", "variants/hx_cfg__cfgblock/target/release/hx_cfg__cfgblock"]
 
-# >>> carrier_record_width (generated)
-[bench.carrier_record_width]
-title = "Record width: wire-format stride and inline-vs-pool decode cost (carrier)"
-workload = "realistic"
-master_seed = 0x5eed_ca55_e77e_0001
-[bench.carrier_record_width.normalise]
-baseline = "carrier_rec24"
-mode = "subtract"
-[[bench.carrier_record_width.sizes]]
-n = 64
-variants = ["variants/carrier_rec12/target/release/carrier_rec12", "variants/carrier_rec16/target/release/carrier_rec16", "variants/carrier_rec20/target/release/carrier_rec20", "variants/carrier_rec24/target/release/carrier_rec24", "variants/carrier_rec32/target/release/carrier_rec32"]
-[[bench.carrier_record_width.sizes]]
-n = 256
-variants = ["variants/carrier_rec12/target/release/carrier_rec12", "variants/carrier_rec16/target/release/carrier_rec16", "variants/carrier_rec20/target/release/carrier_rec20", "variants/carrier_rec24/target/release/carrier_rec24", "variants/carrier_rec32/target/release/carrier_rec32"]
-[[bench.carrier_record_width.sizes]]
-n = 1024
-variants = ["variants/carrier_rec12/target/release/carrier_rec12", "variants/carrier_rec16/target/release/carrier_rec16", "variants/carrier_rec20/target/release/carrier_rec20", "variants/carrier_rec24/target/release/carrier_rec24", "variants/carrier_rec32/target/release/carrier_rec32"]
-[[bench.carrier_record_width.sizes]]
-n = 4096
-variants = ["variants/carrier_rec12/target/release/carrier_rec12", "variants/carrier_rec16/target/release/carrier_rec16", "variants/carrier_rec20/target/release/carrier_rec20", "variants/carrier_rec24/target/release/carrier_rec24", "variants/carrier_rec32/target/release/carrier_rec32"]
-[[bench.carrier_record_width.sizes]]
-n = 16384
-variants = ["variants/carrier_rec12/target/release/carrier_rec12", "variants/carrier_rec16/target/release/carrier_rec16", "variants/carrier_rec20/target/release/carrier_rec20", "variants/carrier_rec24/target/release/carrier_rec24", "variants/carrier_rec32/target/release/carrier_rec32"]
-
-# >>> carrier_dispatch (generated)
-[bench.carrier_dispatch_v4]
-title = "Dispatch shape: switch vs fn-pointer table, op vocab v4 (carrier)"
-workload = "realistic"
-master_seed = 0x5eed_d15b_a7c4_0002
-[bench.carrier_dispatch_v4.normalise]
-baseline = "carrier_disp_switch_v4"
-mode = "subtract"
-[[bench.carrier_dispatch_v4.sizes]]
-n = 64
-variants = ["variants/carrier_disp_switch_v4/target/release/carrier_disp_switch_v4", "variants/carrier_disp_fntable_v4/target/release/carrier_disp_fntable_v4", "variants/carrier_disp_threaded_v4/target/release/carrier_disp_threaded_v4"]
-[[bench.carrier_dispatch_v4.sizes]]
-n = 256
-variants = ["variants/carrier_disp_switch_v4/target/release/carrier_disp_switch_v4", "variants/carrier_disp_fntable_v4/target/release/carrier_disp_fntable_v4", "variants/carrier_disp_threaded_v4/target/release/carrier_disp_threaded_v4"]
-[[bench.carrier_dispatch_v4.sizes]]
-n = 1024
-variants = ["variants/carrier_disp_switch_v4/target/release/carrier_disp_switch_v4", "variants/carrier_disp_fntable_v4/target/release/carrier_disp_fntable_v4", "variants/carrier_disp_threaded_v4/target/release/carrier_disp_threaded_v4"]
-[[bench.carrier_dispatch_v4.sizes]]
-n = 4096
-variants = ["variants/carrier_disp_switch_v4/target/release/carrier_disp_switch_v4", "variants/carrier_disp_fntable_v4/target/release/carrier_disp_fntable_v4", "variants/carrier_disp_threaded_v4/target/release/carrier_disp_threaded_v4"]
-[[bench.carrier_dispatch_v4.sizes]]
-n = 16384
-variants = ["variants/carrier_disp_switch_v4/target/release/carrier_disp_switch_v4", "variants/carrier_disp_fntable_v4/target/release/carrier_disp_fntable_v4", "variants/carrier_disp_threaded_v4/target/release/carrier_disp_threaded_v4"]
-
-[bench.carrier_dispatch_v17]
-title = "Dispatch shape: switch vs fn-pointer table, op vocab v17 (carrier)"
-workload = "realistic"
-master_seed = 0x5eed_d15b_a7c4_0002
-[bench.carrier_dispatch_v17.normalise]
-baseline = "carrier_disp_switch_v17"
-mode = "subtract"
-[[bench.carrier_dispatch_v17.sizes]]
-n = 64
-variants = ["variants/carrier_disp_switch_v17/target/release/carrier_disp_switch_v17", "variants/carrier_disp_fntable_v17/target/release/carrier_disp_fntable_v17", "variants/carrier_disp_threaded_v17/target/release/carrier_disp_threaded_v17"]
-[[bench.carrier_dispatch_v17.sizes]]
-n = 256
-variants = ["variants/carrier_disp_switch_v17/target/release/carrier_disp_switch_v17", "variants/carrier_disp_fntable_v17/target/release/carrier_disp_fntable_v17", "variants/carrier_disp_threaded_v17/target/release/carrier_disp_threaded_v17"]
-[[bench.carrier_dispatch_v17.sizes]]
-n = 1024
-variants = ["variants/carrier_disp_switch_v17/target/release/carrier_disp_switch_v17", "variants/carrier_disp_fntable_v17/target/release/carrier_disp_fntable_v17", "variants/carrier_disp_threaded_v17/target/release/carrier_disp_threaded_v17"]
-[[bench.carrier_dispatch_v17.sizes]]
-n = 4096
-variants = ["variants/carrier_disp_switch_v17/target/release/carrier_disp_switch_v17", "variants/carrier_disp_fntable_v17/target/release/carrier_disp_fntable_v17", "variants/carrier_disp_threaded_v17/target/release/carrier_disp_threaded_v17"]
-[[bench.carrier_dispatch_v17.sizes]]
-n = 16384
-variants = ["variants/carrier_disp_switch_v17/target/release/carrier_disp_switch_v17", "variants/carrier_disp_fntable_v17/target/release/carrier_disp_fntable_v17", "variants/carrier_disp_threaded_v17/target/release/carrier_disp_threaded_v17"]
-
-# >>> carrier_predecode (generated)
-[bench.carrier_predecode]
-title = "Predecode: zero-copy wire decode vs flat predecoded form (carrier)"
-workload = "realistic"
-master_seed = 0x5eed_d15b_a7c4_0007
-[bench.carrier_predecode.normalise]
-baseline = "carrier_predec_wire"
-mode = "subtract"
-[[bench.carrier_predecode.sizes]]
-n = 64
-variants = ["variants/carrier_predec_wire/target/release/carrier_predec_wire", "variants/carrier_predec_flat/target/release/carrier_predec_flat", "variants/carrier_predec_flatthread/target/release/carrier_predec_flatthread"]
-[[bench.carrier_predecode.sizes]]
-n = 256
-variants = ["variants/carrier_predec_wire/target/release/carrier_predec_wire", "variants/carrier_predec_flat/target/release/carrier_predec_flat", "variants/carrier_predec_flatthread/target/release/carrier_predec_flatthread"]
-[[bench.carrier_predecode.sizes]]
-n = 1024
-variants = ["variants/carrier_predec_wire/target/release/carrier_predec_wire", "variants/carrier_predec_flat/target/release/carrier_predec_flat", "variants/carrier_predec_flatthread/target/release/carrier_predec_flatthread"]
-[[bench.carrier_predecode.sizes]]
-n = 4096
-variants = ["variants/carrier_predec_wire/target/release/carrier_predec_wire", "variants/carrier_predec_flat/target/release/carrier_predec_flat", "variants/carrier_predec_flatthread/target/release/carrier_predec_flatthread"]
-[[bench.carrier_predecode.sizes]]
-n = 16384
-variants = ["variants/carrier_predec_wire/target/release/carrier_predec_wire", "variants/carrier_predec_flat/target/release/carrier_predec_flat", "variants/carrier_predec_flatthread/target/release/carrier_predec_flatthread"]
-
 # >>> carrier_matrix (generated by gen_matrix)
 [bench.carrier_dispatch_real]
 title = "Dispatch shape over the wire form, real profile (carrier)"
@@ -1898,7 +1803,7 @@ n = 16384
 variants = ["variants/carrier_opt_leaf_none/target/release/carrier_opt_leaf_none", "variants/carrier_opt_leaf_cse/target/release/carrier_opt_leaf_cse", "variants/carrier_opt_leaf_fold/target/release/carrier_opt_leaf_fold", "variants/carrier_opt_leaf_dce/target/release/carrier_opt_leaf_dce", "variants/carrier_opt_leaf_eqsat/target/release/carrier_opt_leaf_eqsat", "variants/carrier_opt_leaf_cseeqsat/target/release/carrier_opt_leaf_cseeqsat", "variants/carrier_opt_leaf_all/target/release/carrier_opt_leaf_all"]
 
 [bench.carrier_native_real]
-title = "Near-native tier: interp vs direct codegen vs copy-and-patch stencil, real profile"
+title = "Near-native tier: interp vs direct codegen vs copy-and-patch stencil, real profile (JIT window caps sizes at 1024)"
 workload = "realistic"
 master_seed = 0x5eed_d15b_a7c4_0002
 [bench.carrier_native_real.normalise]
@@ -1913,15 +1818,9 @@ variants = ["variants/carrier_nat_real_interp/target/release/carrier_nat_real_in
 [[bench.carrier_native_real.sizes]]
 n = 1024
 variants = ["variants/carrier_nat_real_interp/target/release/carrier_nat_real_interp", "variants/carrier_nat_real_copypatch/target/release/carrier_nat_real_copypatch", "variants/carrier_nat_real_stencil/target/release/carrier_nat_real_stencil"]
-[[bench.carrier_native_real.sizes]]
-n = 4096
-variants = ["variants/carrier_nat_real_interp/target/release/carrier_nat_real_interp", "variants/carrier_nat_real_copypatch/target/release/carrier_nat_real_copypatch", "variants/carrier_nat_real_stencil/target/release/carrier_nat_real_stencil"]
-[[bench.carrier_native_real.sizes]]
-n = 16384
-variants = ["variants/carrier_nat_real_interp/target/release/carrier_nat_real_interp", "variants/carrier_nat_real_copypatch/target/release/carrier_nat_real_copypatch", "variants/carrier_nat_real_stencil/target/release/carrier_nat_real_stencil"]
 
 [bench.carrier_native_madd]
-title = "Near-native tier: interp vs direct codegen vs copy-and-patch stencil, madd profile"
+title = "Near-native tier: interp vs direct codegen vs copy-and-patch stencil, madd profile (JIT window caps sizes at 1024)"
 workload = "realistic"
 master_seed = 0x5eed_d15b_a7c4_0002
 [bench.carrier_native_madd.normalise]
@@ -1936,15 +1835,9 @@ variants = ["variants/carrier_nat_madd_interp/target/release/carrier_nat_madd_in
 [[bench.carrier_native_madd.sizes]]
 n = 1024
 variants = ["variants/carrier_nat_madd_interp/target/release/carrier_nat_madd_interp", "variants/carrier_nat_madd_copypatch/target/release/carrier_nat_madd_copypatch", "variants/carrier_nat_madd_stencil/target/release/carrier_nat_madd_stencil"]
-[[bench.carrier_native_madd.sizes]]
-n = 4096
-variants = ["variants/carrier_nat_madd_interp/target/release/carrier_nat_madd_interp", "variants/carrier_nat_madd_copypatch/target/release/carrier_nat_madd_copypatch", "variants/carrier_nat_madd_stencil/target/release/carrier_nat_madd_stencil"]
-[[bench.carrier_native_madd.sizes]]
-n = 16384
-variants = ["variants/carrier_nat_madd_interp/target/release/carrier_nat_madd_interp", "variants/carrier_nat_madd_copypatch/target/release/carrier_nat_madd_copypatch", "variants/carrier_nat_madd_stencil/target/release/carrier_nat_madd_stencil"]
 
 [bench.carrier_native_tight]
-title = "Near-native tier: interp vs direct codegen vs copy-and-patch stencil, tight profile"
+title = "Near-native tier: interp vs direct codegen vs copy-and-patch stencil, tight profile (JIT window caps sizes at 1024)"
 workload = "realistic"
 master_seed = 0x5eed_d15b_a7c4_0002
 [bench.carrier_native_tight.normalise]
@@ -1959,15 +1852,9 @@ variants = ["variants/carrier_nat_tight_interp/target/release/carrier_nat_tight_
 [[bench.carrier_native_tight.sizes]]
 n = 1024
 variants = ["variants/carrier_nat_tight_interp/target/release/carrier_nat_tight_interp", "variants/carrier_nat_tight_copypatch/target/release/carrier_nat_tight_copypatch", "variants/carrier_nat_tight_stencil/target/release/carrier_nat_tight_stencil"]
-[[bench.carrier_native_tight.sizes]]
-n = 4096
-variants = ["variants/carrier_nat_tight_interp/target/release/carrier_nat_tight_interp", "variants/carrier_nat_tight_copypatch/target/release/carrier_nat_tight_copypatch", "variants/carrier_nat_tight_stencil/target/release/carrier_nat_tight_stencil"]
-[[bench.carrier_native_tight.sizes]]
-n = 16384
-variants = ["variants/carrier_nat_tight_interp/target/release/carrier_nat_tight_interp", "variants/carrier_nat_tight_copypatch/target/release/carrier_nat_tight_copypatch", "variants/carrier_nat_tight_stencil/target/release/carrier_nat_tight_stencil"]
 
 [bench.carrier_native_scatter]
-title = "Near-native tier: interp vs direct codegen vs copy-and-patch stencil, scatter profile"
+title = "Near-native tier: interp vs direct codegen vs copy-and-patch stencil, scatter profile (JIT window caps sizes at 1024)"
 workload = "realistic"
 master_seed = 0x5eed_d15b_a7c4_0002
 [bench.carrier_native_scatter.normalise]
@@ -1982,15 +1869,9 @@ variants = ["variants/carrier_nat_scatter_interp/target/release/carrier_nat_scat
 [[bench.carrier_native_scatter.sizes]]
 n = 1024
 variants = ["variants/carrier_nat_scatter_interp/target/release/carrier_nat_scatter_interp", "variants/carrier_nat_scatter_copypatch/target/release/carrier_nat_scatter_copypatch", "variants/carrier_nat_scatter_stencil/target/release/carrier_nat_scatter_stencil"]
-[[bench.carrier_native_scatter.sizes]]
-n = 4096
-variants = ["variants/carrier_nat_scatter_interp/target/release/carrier_nat_scatter_interp", "variants/carrier_nat_scatter_copypatch/target/release/carrier_nat_scatter_copypatch", "variants/carrier_nat_scatter_stencil/target/release/carrier_nat_scatter_stencil"]
-[[bench.carrier_native_scatter.sizes]]
-n = 16384
-variants = ["variants/carrier_nat_scatter_interp/target/release/carrier_nat_scatter_interp", "variants/carrier_nat_scatter_copypatch/target/release/carrier_nat_scatter_copypatch", "variants/carrier_nat_scatter_stencil/target/release/carrier_nat_scatter_stencil"]
 
 [bench.carrier_native_wideselect]
-title = "Near-native tier: interp vs direct codegen vs copy-and-patch stencil, wideselect profile"
+title = "Near-native tier: interp vs direct codegen vs copy-and-patch stencil, wideselect profile (JIT window caps sizes at 1024)"
 workload = "realistic"
 master_seed = 0x5eed_d15b_a7c4_0002
 [bench.carrier_native_wideselect.normalise]
@@ -2005,15 +1886,9 @@ variants = ["variants/carrier_nat_wideselect_interp/target/release/carrier_nat_w
 [[bench.carrier_native_wideselect.sizes]]
 n = 1024
 variants = ["variants/carrier_nat_wideselect_interp/target/release/carrier_nat_wideselect_interp", "variants/carrier_nat_wideselect_copypatch/target/release/carrier_nat_wideselect_copypatch", "variants/carrier_nat_wideselect_stencil/target/release/carrier_nat_wideselect_stencil"]
-[[bench.carrier_native_wideselect.sizes]]
-n = 4096
-variants = ["variants/carrier_nat_wideselect_interp/target/release/carrier_nat_wideselect_interp", "variants/carrier_nat_wideselect_copypatch/target/release/carrier_nat_wideselect_copypatch", "variants/carrier_nat_wideselect_stencil/target/release/carrier_nat_wideselect_stencil"]
-[[bench.carrier_native_wideselect.sizes]]
-n = 16384
-variants = ["variants/carrier_nat_wideselect_interp/target/release/carrier_nat_wideselect_interp", "variants/carrier_nat_wideselect_copypatch/target/release/carrier_nat_wideselect_copypatch", "variants/carrier_nat_wideselect_stencil/target/release/carrier_nat_wideselect_stencil"]
 
 [bench.carrier_native_leaf]
-title = "Near-native tier: interp vs direct codegen vs copy-and-patch stencil, leaf profile"
+title = "Near-native tier: interp vs direct codegen vs copy-and-patch stencil, leaf profile (JIT window caps sizes at 1024)"
 workload = "realistic"
 master_seed = 0x5eed_d15b_a7c4_0002
 [bench.carrier_native_leaf.normalise]
@@ -2028,15 +1903,9 @@ variants = ["variants/carrier_nat_leaf_interp/target/release/carrier_nat_leaf_in
 [[bench.carrier_native_leaf.sizes]]
 n = 1024
 variants = ["variants/carrier_nat_leaf_interp/target/release/carrier_nat_leaf_interp", "variants/carrier_nat_leaf_copypatch/target/release/carrier_nat_leaf_copypatch", "variants/carrier_nat_leaf_stencil/target/release/carrier_nat_leaf_stencil"]
-[[bench.carrier_native_leaf.sizes]]
-n = 4096
-variants = ["variants/carrier_nat_leaf_interp/target/release/carrier_nat_leaf_interp", "variants/carrier_nat_leaf_copypatch/target/release/carrier_nat_leaf_copypatch", "variants/carrier_nat_leaf_stencil/target/release/carrier_nat_leaf_stencil"]
-[[bench.carrier_native_leaf.sizes]]
-n = 16384
-variants = ["variants/carrier_nat_leaf_interp/target/release/carrier_nat_leaf_interp", "variants/carrier_nat_leaf_copypatch/target/release/carrier_nat_leaf_copypatch", "variants/carrier_nat_leaf_stencil/target/release/carrier_nat_leaf_stencil"]
 
 [bench.carrier_vertical_real]
-title = "Vertical/SoA SIMD (scalar 1-input vs vertical W-input, per-input = time/W), real profile"
+title = "Vertical/SoA SIMD, 8 inputs per call for every cell (scalar 8x1 vs vert4 2x4 vs vert8 1x8; directly comparable), real profile"
 workload = "realistic"
 master_seed = 0x5eed_d15b_a7c4_0002
 [bench.carrier_vertical_real.normalise]
@@ -2059,7 +1928,7 @@ n = 16384
 variants = ["variants/carrier_vert_real_scalar/target/release/carrier_vert_real_scalar", "variants/carrier_vert_real_vert4/target/release/carrier_vert_real_vert4", "variants/carrier_vert_real_vert8/target/release/carrier_vert_real_vert8"]
 
 [bench.carrier_vertical_madd]
-title = "Vertical/SoA SIMD (scalar 1-input vs vertical W-input, per-input = time/W), madd profile"
+title = "Vertical/SoA SIMD, 8 inputs per call for every cell (scalar 8x1 vs vert4 2x4 vs vert8 1x8; directly comparable), madd profile"
 workload = "realistic"
 master_seed = 0x5eed_d15b_a7c4_0002
 [bench.carrier_vertical_madd.normalise]
@@ -2082,7 +1951,7 @@ n = 16384
 variants = ["variants/carrier_vert_madd_scalar/target/release/carrier_vert_madd_scalar", "variants/carrier_vert_madd_vert4/target/release/carrier_vert_madd_vert4", "variants/carrier_vert_madd_vert8/target/release/carrier_vert_madd_vert8"]
 
 [bench.carrier_vertical_tight]
-title = "Vertical/SoA SIMD (scalar 1-input vs vertical W-input, per-input = time/W), tight profile"
+title = "Vertical/SoA SIMD, 8 inputs per call for every cell (scalar 8x1 vs vert4 2x4 vs vert8 1x8; directly comparable), tight profile"
 workload = "realistic"
 master_seed = 0x5eed_d15b_a7c4_0002
 [bench.carrier_vertical_tight.normalise]
@@ -2105,7 +1974,7 @@ n = 16384
 variants = ["variants/carrier_vert_tight_scalar/target/release/carrier_vert_tight_scalar", "variants/carrier_vert_tight_vert4/target/release/carrier_vert_tight_vert4", "variants/carrier_vert_tight_vert8/target/release/carrier_vert_tight_vert8"]
 
 [bench.carrier_vertical_scatter]
-title = "Vertical/SoA SIMD (scalar 1-input vs vertical W-input, per-input = time/W), scatter profile"
+title = "Vertical/SoA SIMD, 8 inputs per call for every cell (scalar 8x1 vs vert4 2x4 vs vert8 1x8; directly comparable), scatter profile"
 workload = "realistic"
 master_seed = 0x5eed_d15b_a7c4_0002
 [bench.carrier_vertical_scatter.normalise]
@@ -2128,7 +1997,7 @@ n = 16384
 variants = ["variants/carrier_vert_scatter_scalar/target/release/carrier_vert_scatter_scalar", "variants/carrier_vert_scatter_vert4/target/release/carrier_vert_scatter_vert4", "variants/carrier_vert_scatter_vert8/target/release/carrier_vert_scatter_vert8"]
 
 [bench.carrier_vertical_wideselect]
-title = "Vertical/SoA SIMD (scalar 1-input vs vertical W-input, per-input = time/W), wideselect profile"
+title = "Vertical/SoA SIMD, 8 inputs per call for every cell (scalar 8x1 vs vert4 2x4 vs vert8 1x8; directly comparable), wideselect profile"
 workload = "realistic"
 master_seed = 0x5eed_d15b_a7c4_0002
 [bench.carrier_vertical_wideselect.normalise]
@@ -2151,7 +2020,7 @@ n = 16384
 variants = ["variants/carrier_vert_wideselect_scalar/target/release/carrier_vert_wideselect_scalar", "variants/carrier_vert_wideselect_vert4/target/release/carrier_vert_wideselect_vert4", "variants/carrier_vert_wideselect_vert8/target/release/carrier_vert_wideselect_vert8"]
 
 [bench.carrier_vertical_leaf]
-title = "Vertical/SoA SIMD (scalar 1-input vs vertical W-input, per-input = time/W), leaf profile"
+title = "Vertical/SoA SIMD, 8 inputs per call for every cell (scalar 8x1 vs vert4 2x4 vs vert8 1x8; directly comparable), leaf profile"
 workload = "realistic"
 master_seed = 0x5eed_d15b_a7c4_0002
 [bench.carrier_vertical_leaf.normalise]
@@ -2174,7 +2043,7 @@ n = 16384
 variants = ["variants/carrier_vert_leaf_scalar/target/release/carrier_vert_leaf_scalar", "variants/carrier_vert_leaf_vert4/target/release/carrier_vert_leaf_vert4", "variants/carrier_vert_leaf_vert8/target/release/carrier_vert_leaf_vert8"]
 
 [bench.carrier_native_ceiling]
-title = "Native ceiling: interpreter vs shape-specialized native madd loop"
+title = "Native ceiling: interpreter vs shape-specialized native madd loop (THROUGHPUT over a byte stream, O(N^2), not comparable to sibling per-execution numbers)"
 workload = "realistic"
 master_seed = 0x5eed_d15b_a7c4_0002
 [bench.carrier_native_ceiling.normalise]
@@ -2191,8 +2060,5 @@ n = 1024
 variants = ["variants/carrier_ceil_interp/target/release/carrier_ceil_interp", "variants/carrier_ceil_native/target/release/carrier_ceil_native"]
 [[bench.carrier_native_ceiling.sizes]]
 n = 4096
-variants = ["variants/carrier_ceil_interp/target/release/carrier_ceil_interp", "variants/carrier_ceil_native/target/release/carrier_ceil_native"]
-[[bench.carrier_native_ceiling.sizes]]
-n = 16384
 variants = ["variants/carrier_ceil_interp/target/release/carrier_ceil_interp", "variants/carrier_ceil_native/target/release/carrier_ceil_native"]
 
