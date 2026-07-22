@@ -28,6 +28,7 @@ use vehje_bench_carrier::retract::{
 use vehje_bench_carrier::sharded_intern::{
     canonical_checksum, gen_corpus, intern_shard, intern_single, merge_shards, Interner, ShardResult,
 };
+use vehje_bench_carrier::cfg::{build_nested_loop, interp as cfg_interp, oracle_nested_loop};
 use vehje_bench_carrier::reach::{
     gen_fanin, gen_layered, gen_random_dag, reach_checksum, reset_reach, solve_semi, solve_whole,
     Graph,
@@ -697,6 +698,49 @@ fn run_value_arena(out_dir: &Path, runs: usize) {
         .expect("scale-runner refuses to conclude without writing its CSV");
 }
 
+/// CFG interpreter throughput: control-flow-heavy per-instruction cost. A nested
+/// loop kernel run through the register-CFG interp, cross-validated against the
+/// oracle. Reports ns/instr, ns/step (instr + terminator), and the control-flow
+/// fraction, since branches are the interp's hard-to-predict work.
+fn run_cfg_interp(out_dir: &Path, runs: usize) {
+    println!("\n== CFG interp throughput: control-flow-heavy nested-loop kernel ==");
+    let (outer, inner) = (2000u64, 16000u64);
+    let seed = 3u64;
+    let blocks = build_nested_loop(outer, inner);
+    // cross-validate against the oracle.
+    let (r, ni, nt) = cfg_interp(&blocks, seed, u64::MAX);
+    if r != oracle_nested_loop(seed, outer, inner) {
+        eprintln!("  !! cfg CROSS-VAL FAIL: 0x{r:x} != oracle");
+        std::process::exit(2);
+    }
+    let mut ns = Vec::with_capacity(runs);
+    for _ in 0..runs {
+        let t0 = read_counter();
+        let _ = cfg_interp(&blocks, seed, u64::MAX);
+        let t1 = read_counter();
+        ns.push(ticks_to_ns(t1.wrapping_sub(t0)));
+    }
+    let m = median(ns);
+    let steps = ni + nt;
+    let ns_step = m / steps as f64;
+    let ns_instr = m / ni as f64;
+    let cf = nt as f64 / steps as f64 * 100.0;
+    println!(
+        "  {} outer x {} inner: {} instrs + {} terminators = {} steps in {:.1} ms",
+        outer, inner, ni, nt, steps, m / 1e6
+    );
+    println!(
+        "  {:.3} ns/step ({:.2} cyc), {:.3} ns/instr, control-flow {:.0}% of steps",
+        ns_step, ns_step * 3.2, ns_instr, cf
+    );
+    let csv = format!(
+        "outer,inner,instrs,terminators,steps,ns,ns_per_step,cyc_per_step,ns_per_instr,cf_pct\n{},{},{},{},{},{:.1},{:.4},{:.2},{:.4},{:.1}\n",
+        outer, inner, ni, nt, steps, m, ns_step, ns_step * 3.2, ns_instr, cf
+    );
+    fs::write(out_dir.join("cfg_interp.csv"), csv)
+        .expect("scale-runner refuses to conclude without writing its CSV");
+}
+
 fn main() {
     let out_dir = Path::new("results/scale");
     fs::create_dir_all(out_dir).expect("create results/scale");
@@ -748,6 +792,11 @@ fn main() {
         println!("\nscale CSVs written to results/scale/");
         return;
     }
+    if args.first().map(String::as_str) == Some("cfg") {
+        run_cfg_interp(out_dir, 5);
+        println!("\nscale CSVs written to results/scale/");
+        return;
+    }
     if args.first().map(String::as_str) == Some("recwidth") {
         run_record_width(out_dir, 5);
         println!("\nscale CSVs written to results/scale/");
@@ -778,6 +827,7 @@ fn main() {
         run_intern(out_dir, 5);
         run_arena_locality(out_dir, 5);
         run_value_arena(out_dir, 5);
+        run_cfg_interp(out_dir, 5);
     }
     println!("\nscale CSVs written to results/scale/");
 }

@@ -23,6 +23,7 @@
 //! shipped language is load-bearing (dispatch shape, the real runtime, and
 //! wire-format differential); every other bench is Rust-default.
 
+pub mod cfg;
 pub mod checksum;
 pub mod eqsat;
 pub mod gen;
