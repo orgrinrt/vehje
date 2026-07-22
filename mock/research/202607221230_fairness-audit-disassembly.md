@@ -134,13 +134,51 @@ cross-language cell is load-bearing rather than a curiosity. Its operand access 
 the Rust switch (both index the REC24 record inline), so the cross-language comparison is dispatch plus the
 Zig-vs-Rust codegen difference, faithfully what a Zig runtime would pay.
 
+## Review-driven additions and corrections (2026-07-22)
+
+An independent machinery review (`202607221930_carrier-machinery-review-haoran-xu.md`) re-derived the ISA
+evidence and found asymmetries the whole-symbol classifier above structurally could not catch. The corrections
+that landed, with their own ISA evidence:
+
+- **CFG fn-table dispatch paid two dead operand loads per SET.** The old `CFn = fn(u64, u64, u64)` forced the
+  fntable call site to load `regs[a]`/`regs[b]` for every instruction including SET (which ignores them),
+  because the indirect call could not prove the callee discards them. `di_cfg_fntable` showed two unconditional
+  `ldr` before the `blr`; switch and threaded paid none. Fixed: `CFn = fn(&Instr, *const u64)` so each op loads
+  only what it needs, mirroring the straight-line fntable.
+- **The if-chain axis was never ISA-checked, and it collapses to a jump table.** `di_ifchain` shows the
+  SimplifyCFG lowering (`ldrb w0, [x12, x16]` byte-index table load, then `br x17`), an O(1) computed jump like
+  switch, so on the natural cell the frequency-ordering is moot. Added `interpret_ifchain_linear` (each `opcode
+  == k` behind a `black_box` barrier): `di_ifchain_linear` has **0** computed `br xN` and **63** `cmp`/`b.eq`
+  cascade branches, a genuine linear scan where frequency-ordering carries weight. Both are kept: the natural
+  cell answers "what a source if-chain actually costs once compiled," the linear cell "what the textbook
+  technique costs in isolation."
+- **Vertical/SoA SIMD had zero ISA confirmation** and is the cell most weight rests on. Added `di_vertical4` /
+  `di_vertical8`. Both show genuine packed NEON in the dispatch loop (`add.2d`, `sub.2d`, `cmhi.2d`, `cmeq.2d`,
+  `ushl.2d`, `neg.2d`, `bsl.16b`, `bif.16b`; W=8 doubles W=4's op counts), not W duplicated scalar sequences.
+  The auto-vectorizer did not silently scalarize it, so its "SIMD win" number is real.
+- **The native ceiling folded its checksum inline** (`native_madd`, two rotate-xor per chain step) while every
+  interpreter had moved its fold post-pass, loading the denominator every ratio normalizes against with
+  overhead the numerators no longer paid. Fixed: `native_madd` writes `results[]` with no fold, a driver folds
+  once, matching the interpreter cost shape exactly. Not an ISA question, a cost-shape parity one.
+- **Copy-and-patch was direct instruction-selecting codegen, not the stencil mechanism it cited.** The old cell
+  is relabelled `copypatch` (direct native codegen, per-node isel, the near-native comparator). The real
+  copy-and-patch is now `stencil.rs`: toolchain-assembled per-op stencils, extracted via linker labels, copied
+  and hole-patched per node with no isel. Byte-exact against the interpreter and the direct cell across every
+  opcode. The cost-shape difference (copy+patch vs isel per node) is what the two cells now measure apart.
+
+Per-opcode note: the reproduce script below classifies whole symbols (`stp`/`br`/`blr` counts). It cannot see a
+per-opcode load-count asymmetry inside an otherwise-fine symbol (the CFG SET finding) or a cascade that became a
+jump table (the if-chain finding, whose `br=1` reads the same as a real jump table). A stronger audit diffs the
+per-opcode instruction schedule across cells; the two findings above were found by reading the specific opcode
+paths by hand, and that generalization is the recommended next audit method.
+
 ## Not yet built / flagged
 
 - perfect-hash dispatch: degenerate to the fn-pointer table for the dense contiguous opcode set (0..16); a
   representative perfect-hash cell needs a sparse opcode design decision (panel / op). A degenerate cell
   would misrepresent the technique, so it is not built.
-- copy-and-patch stencils above the imm12 window (nodes/consts >= 4096): a register-materialized base
-  address is the labelled refinement; the current cell declines rather than miscompiles.
+- copy-and-patch / stencil above the imm12 window (nodes/consts >= 4096): a register-materialized base address
+  is the labelled refinement; both native cells decline rather than miscompile.
 
 ## Reproduce
 
