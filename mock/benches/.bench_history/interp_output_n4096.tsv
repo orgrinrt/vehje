@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784673869	304e23d	interp_output_n4096	interp_out_inplace	4096	warm	809067.1	808402.5	820331.5
+1784673869	304e23d	interp_output_n4096	interp_out_spanlist	4096	warm	860738.3	858736.9	865186.2
+1784673869	304e23d	interp_output_n4096	interp_out_temp	4096	warm	1010205.4	1006823.1	1021680.4

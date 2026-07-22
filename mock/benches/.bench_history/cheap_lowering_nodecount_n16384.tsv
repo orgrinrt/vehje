@@ -1,0 +1,3 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784673819	304e23d	cheap_lowering_nodecount_n16384	cl_foldcse	16384	warm	154003.3	153391.6	160834.8
+1784673819	304e23d	cheap_lowering_nodecount_n16384	cl_foldonly	16384	warm	93953.7	91708.8	94997.1

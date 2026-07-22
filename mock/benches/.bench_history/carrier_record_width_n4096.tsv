@@ -1,0 +1,16 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784645748	340b67b	carrier_record_width_n4096	carrier_rec12	4096	warm	694147.9	693320.6	705572.1
+1784645748	340b67b	carrier_record_width_n4096	carrier_rec16	4096	warm	704628.3	699087.7	714452.7
+1784645748	340b67b	carrier_record_width_n4096	carrier_rec20	4096	warm	703045.4	702941.7	707962.1
+1784645748	340b67b	carrier_record_width_n4096	carrier_rec24	4096	warm	705968.8	700482.8	715581.2
+1784645748	340b67b	carrier_record_width_n4096	carrier_rec32	4096	warm	694550.4	692692.3	723481.5
+1784645908	340b67b	carrier_record_width_n4096	carrier_rec12	4096	warm	382464.6	381823.5	387986.8
+1784645908	340b67b	carrier_record_width_n4096	carrier_rec16	4096	warm	379707.1	379161.9	380798.9
+1784645908	340b67b	carrier_record_width_n4096	carrier_rec20	4096	warm	380366.2	380211.5	389317.9
+1784645908	340b67b	carrier_record_width_n4096	carrier_rec24	4096	warm	386005.0	384174.4	386450.0
+1784645908	340b67b	carrier_record_width_n4096	carrier_rec32	4096	warm	384503.3	383430.6	387553.8
+1784646460	7895369	carrier_record_width_n4096	carrier_rec12	4096	warm	564577.9	558051.7	593368.4
+1784646460	7895369	carrier_record_width_n4096	carrier_rec16	4096	warm	538064.6	537883.8	581415.6
+1784646460	7895369	carrier_record_width_n4096	carrier_rec20	4096	warm	570288.8	551836.7	600003.9
+1784646460	7895369	carrier_record_width_n4096	carrier_rec24	4096	warm	592654.6	591459.8	595935.0
+1784646460	7895369	carrier_record_width_n4096	carrier_rec32	4096	warm	583597.9	560732.1	598591.1

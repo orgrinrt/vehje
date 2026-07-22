@@ -1,0 +1,5 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784677082	97b52eb	zig_dispatch_n4096	zig_switch	4096	warm	153995.8	148105.0	158509.2
+1784677082	97b52eb	zig_dispatch_n4096	zig_tail	4096	warm	431300.0	429981.2	441235.6
+1784679006	96acda9	zig_dispatch_n4096	zig_switch	4096	warm	131739.6	130202.3	157255.8
+1784679006	96acda9	zig_dispatch_n4096	zig_tail	4096	warm	448234.2	446291.2	458439.0

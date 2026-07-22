@@ -1,0 +1,6 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784674062	304e23d	tnum_linear_n64	tl_add	64	warm	1005.0	1004.6	1046.2
+1784674063	304e23d	tnum_linear_n64	tl_and	64	warm	1017.5	1016.0	1075.7
+1784674063	304e23d	tnum_linear_n64	tl_concrete	64	warm	816.7	814.2	881.6
+1784674063	304e23d	tnum_linear_n64	tl_or	64	warm	816.7	816.7	819.5
+1784674063	304e23d	tnum_linear_n64	tl_shl	64	warm	413.7	413.1	449.6

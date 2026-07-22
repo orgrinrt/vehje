@@ -1,0 +1,3 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784673827	304e23d	closure_call_many_n16384	closure_call_many_flat	16384	warm	675971.7	671133.3	683383.9
+1784673827	304e23d	closure_call_many_n16384	closure_call_many_linked	16384	warm	2043785.4	2032425.0	2056786.6

@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784674055	304e23d	resolve_name_scope_n64	resolve_flat	64	warm	96.7	94.4	100.8
+1784674055	304e23d	resolve_name_scope_n64	resolve_hashed	64	warm	460.4	449.8	499.0
+1784674055	304e23d	resolve_name_scope_n64	resolve_linear	64	warm	400.8	400.2	433.4

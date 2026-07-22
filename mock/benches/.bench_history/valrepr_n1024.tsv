@@ -1,0 +1,10 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784683915	e2788e3	valrepr_n1024	valrepr_nanbox	1024	warm	33025.0	33020.8	34574.6
+1784683915	e2788e3	valrepr_n1024	valrepr_static	1024	warm	33257.5	32943.2	34684.3
+1784683915	e2788e3	valrepr_n1024	valrepr_tagged	1024	warm	35527.5	35386.1	37586.3
+1784684004	e2788e3	valrepr_n1024	valrepr_nanbox	1024	warm	32105.8	32066.2	34578.3
+1784684004	e2788e3	valrepr_n1024	valrepr_static	1024	warm	32682.5	32571.8	35928.3
+1784684004	e2788e3	valrepr_n1024	valrepr_tagged	1024	warm	35123.3	34986.4	38445.4
+1784684016	e2788e3	valrepr_n1024	valrepr_nanbox	1024	warm	36072.1	35931.2	36296.7
+1784684016	e2788e3	valrepr_n1024	valrepr_static	1024	warm	36179.2	36064.6	36415.2
+1784684016	e2788e3	valrepr_n1024	valrepr_tagged	1024	warm	38027.1	38016.1	38252.5

@@ -1,0 +1,3 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784675585	ebb6ee8	reach_randomdag_n1024	r_randomdag_semi	1024	warm	185428.3	183784.0	217326.0
+1784675585	ebb6ee8	reach_randomdag_n1024	r_randomdag_whole	1024	warm	864742.1	851370.0	907246.1

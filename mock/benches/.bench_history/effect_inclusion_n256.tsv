@@ -1,0 +1,3 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784673840	304e23d	effect_inclusion_n256	eg_branchmax	256	warm	16244.6	16241.9	16326.0
+1784673840	304e23d	effect_inclusion_n256	eg_thermo	256	warm	456.7	456.7	459.1

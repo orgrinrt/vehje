@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784679152	96acda9	iter_fusion_d2_n3072	iterfuse_mat2	3072	warm	50587.9	50571.9	52286.1
+1784679152	96acda9	iter_fusion_d2_n3072	iterfuse_pull2	3072	warm	36185.0	36052.9	44072.3
+1784679152	96acda9	iter_fusion_d2_n3072	iterfuse_push2	3072	warm	136660.0	135435.0	140804.2

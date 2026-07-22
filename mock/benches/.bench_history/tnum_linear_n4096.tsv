@@ -1,0 +1,6 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784674066	304e23d	tnum_linear_n4096	tl_add	4096	warm	54710.8	54314.6	57833.3
+1784674066	304e23d	tnum_linear_n4096	tl_and	4096	warm	55128.3	54096.4	59704.2
+1784674066	304e23d	tnum_linear_n4096	tl_concrete	4096	warm	44545.0	44323.1	46380.8
+1784674066	304e23d	tnum_linear_n4096	tl_or	4096	warm	46694.2	45091.5	47856.4
+1784674066	304e23d	tnum_linear_n4096	tl_shl	4096	warm	22552.9	22045.4	23925.2

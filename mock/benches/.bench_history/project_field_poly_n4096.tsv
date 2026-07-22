@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784674036	304e23d	project_field_poly_n4096	project_poly_hash	4096	warm	11213.3	11079.8	11790.2
+1784674036	304e23d	project_field_poly_n4096	project_poly_ic	4096	warm	12826.2	12825.4	14048.4
+1784674036	304e23d	project_field_poly_n4096	project_poly_linear	4096	warm	23251.7	22834.4	25139.3

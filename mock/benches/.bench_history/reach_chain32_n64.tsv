@@ -1,0 +1,3 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784674902	ebb6ee8	reach_chain32_n64	r_chain32_semi	64	warm	19447.5	19381.5	22542.7
+1784674902	ebb6ee8	reach_chain32_n64	r_chain32_whole	64	warm	49182.1	48917.5	51273.3

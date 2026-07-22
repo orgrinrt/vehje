@@ -1,0 +1,5 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784673936	304e23d	match_hot_k64_n16384	ml_hotfirst_h64	16384	warm	1012090.4	1011119.2	1021416.1
+1784673936	304e23d	match_hot_k64_n16384	ml_ifchain_h64	16384	warm	1014871.2	1012233.3	1025104.8
+1784673936	304e23d	match_hot_k64_n16384	ml_jumptable_h64	16384	warm	1018897.9	1017461.9	1024630.0
+1784673936	304e23d	match_hot_k64_n16384	ml_tree_h64	16384	warm	7755737.1	7750590.2	7770199.4

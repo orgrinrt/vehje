@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784674008	304e23d	pe_structured_n64	pe_struct_sf50	64	warm	7718.8	7596.5	8085.6
+1784674008	304e23d	pe_structured_n64	pe_struct_sf70	64	warm	7100.0	7091.4	7138.9
+1784674008	304e23d	pe_structured_n64	pe_struct_sf90	64	warm	6490.0	6481.6	6760.6

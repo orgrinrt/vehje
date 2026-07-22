@@ -1,0 +1,7 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784672872	304e23d	carrier_native_ceiling_n16384	carrier_ceiling_fntable	16384	warm	586239.6	585958.3	593015.8
+1784672872	304e23d	carrier_native_ceiling_n16384	carrier_ceiling_native	16384	warm	297600.0	290477.5	299125.0
+1784672872	304e23d	carrier_native_ceiling_n16384	carrier_ceiling_switch	16384	warm	544260.8	542062.7	547999.6
+1784673071	304e23d	carrier_native_ceiling_n16384	carrier_ceiling_fntable	16384	warm	584491.2	584327.7	637308.3
+1784673071	304e23d	carrier_native_ceiling_n16384	carrier_ceiling_native	16384	warm	265229.2	263406.9	281778.8
+1784673071	304e23d	carrier_native_ceiling_n16384	carrier_ceiling_switch	16384	warm	539729.2	537794.8	557395.0

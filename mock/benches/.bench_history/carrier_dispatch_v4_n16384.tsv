@@ -1,0 +1,8 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784646252	7895369	carrier_dispatch_v4_n16384	carrier_disp_fntable_v4	16384	warm	1826105.4	1823125.0	1833341.4
+1784646252	7895369	carrier_dispatch_v4_n16384	carrier_disp_switch_v4	16384	warm	1621843.3	1618334.4	1623213.3
+1784646394	7895369	carrier_dispatch_v4_n16384	carrier_disp_fntable_v4	16384	warm	1908906.7	1897569.4	2113582.5
+1784646394	7895369	carrier_dispatch_v4_n16384	carrier_disp_switch_v4	16384	warm	2180385.0	2180272.3	2311317.1
+1784706421	cb1c205	carrier_dispatch_v4_n16384	carrier_disp_fntable_v4	16384	warm	1832242.9	1831042.0	1847163.8
+1784706421	cb1c205	carrier_dispatch_v4_n16384	carrier_disp_switch_v4	16384	warm	2126702.5	2124361.6	2140592.3
+1784706421	cb1c205	carrier_dispatch_v4_n16384	carrier_disp_threaded_v4	16384	warm	2345748.8	2344009.0	2359647.3

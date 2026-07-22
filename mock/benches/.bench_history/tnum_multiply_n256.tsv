@@ -1,0 +1,3 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784674070	304e23d	tnum_multiply_n256	tm_fastpath	256	warm	35289.2	34999.8	53023.8
+1784674070	304e23d	tnum_multiply_n256	tm_loop	256	warm	89926.2	89426.9	99440.0

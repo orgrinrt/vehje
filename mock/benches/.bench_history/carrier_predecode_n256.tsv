@@ -1,0 +1,15 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784706694	94d9f93	carrier_predecode_n256	carrier_predec_flat	256	warm	9189.2	9188.8	9318.5
+1784706694	94d9f93	carrier_predecode_n256	carrier_predec_wire	256	warm	10112.5	9841.2	10810.0
+1784706891	c3b0ca7	carrier_predecode_n256	carrier_predec_flat	256	warm	7997.5	7866.1	17348.1
+1784706891	c3b0ca7	carrier_predecode_n256	carrier_predec_flatthread	256	warm	6500.4	6497.9	10631.9
+1784706891	c3b0ca7	carrier_predecode_n256	carrier_predec_wire	256	warm	9163.3	9141.0	10295.2
+1784706937	c3b0ca7	carrier_predecode_n256	carrier_predec_flat	256	warm	8005.0	7997.1	9414.8
+1784706937	c3b0ca7	carrier_predecode_n256	carrier_predec_flatthread	256	warm	6997.1	6631.9	7671.2
+1784706937	c3b0ca7	carrier_predecode_n256	carrier_predec_wire	256	warm	10535.4	9938.3	10547.7
+1784706953	c3b0ca7	carrier_predecode_n256	carrier_predec_flat	256	warm	8602.1	8160.2	9189.6
+1784706953	c3b0ca7	carrier_predecode_n256	carrier_predec_flatthread	256	warm	7488.7	7296.4	7593.1
+1784706953	c3b0ca7	carrier_predecode_n256	carrier_predec_wire	256	warm	10603.8	9888.0	10896.2
+1784706969	c3b0ca7	carrier_predecode_n256	carrier_predec_flat	256	warm	9190.4	9189.8	9241.2
+1784706969	c3b0ca7	carrier_predecode_n256	carrier_predec_flatthread	256	warm	7470.8	7460.4	7493.0
+1784706969	c3b0ca7	carrier_predecode_n256	carrier_predec_wire	256	warm	10855.8	10823.1	10969.0

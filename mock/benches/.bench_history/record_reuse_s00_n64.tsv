@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784674039	304e23d	record_reuse_s00_n64	rec_copy	64	warm	2047.1	2037.3	2286.1
+1784674039	304e23d	record_reuse_s00_n64	rec_mut	64	warm	322.9	322.3	367.8
+1784674039	304e23d	record_reuse_s00_n64	rec_reuse_s00	64	warm	370.4	364.1	402.9

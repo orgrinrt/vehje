@@ -1,0 +1,5 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784674029	304e23d	project_field_mono_n64	project_mono_direct	64	warm	64.6	59.4	74.2
+1784674029	304e23d	project_field_mono_n64	project_mono_hash	64	warm	185.8	184.4	213.1
+1784674029	304e23d	project_field_mono_n64	project_mono_ic	64	warm	91.2	84.2	100.0
+1784674029	304e23d	project_field_mono_n64	project_mono_linear	64	warm	207.5	207.1	229.1

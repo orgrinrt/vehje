@@ -1,0 +1,5 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784673856	304e23d	interner_intern_n4096	intern_fnv_lf25	4096	warm	67695.8	67136.9	71918.1
+1784673856	304e23d	interner_intern_n4096	intern_fnv_lf75	4096	warm	60191.2	59289.6	65359.8
+1784673856	304e23d	interner_intern_n4096	intern_fx_lf25	4096	warm	71425.8	71393.1	75499.9
+1784673856	304e23d	interner_intern_n4096	intern_fx_lf75	4096	warm	58111.2	57911.6	61953.3

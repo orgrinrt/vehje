@@ -1,0 +1,15 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784706697	94d9f93	carrier_predecode_n4096	carrier_predec_flat	4096	warm	432784.6	430908.3	453233.1
+1784706697	94d9f93	carrier_predecode_n4096	carrier_predec_wire	4096	warm	545812.9	545282.1	561940.8
+1784706894	c3b0ca7	carrier_predecode_n4096	carrier_predec_flat	4096	warm	465616.2	462932.7	477530.8
+1784706894	c3b0ca7	carrier_predecode_n4096	carrier_predec_flatthread	4096	warm	472107.1	456341.7	486005.2
+1784706894	c3b0ca7	carrier_predecode_n4096	carrier_predec_wire	4096	warm	574910.0	569562.1	598220.8
+1784706940	c3b0ca7	carrier_predecode_n4096	carrier_predec_flat	4096	warm	470050.8	468192.9	486471.5
+1784706940	c3b0ca7	carrier_predecode_n4096	carrier_predec_flatthread	4096	warm	449003.3	448342.5	459673.8
+1784706940	c3b0ca7	carrier_predecode_n4096	carrier_predec_wire	4096	warm	590305.0	587999.2	597709.0
+1784706957	c3b0ca7	carrier_predecode_n4096	carrier_predec_flat	4096	warm	440724.2	438985.5	447537.1
+1784706957	c3b0ca7	carrier_predecode_n4096	carrier_predec_flatthread	4096	warm	448652.5	441592.7	469147.5
+1784706957	c3b0ca7	carrier_predecode_n4096	carrier_predec_wire	4096	warm	545575.8	542584.6	563294.8
+1784706973	c3b0ca7	carrier_predecode_n4096	carrier_predec_flat	4096	warm	432573.8	431527.3	451750.8
+1784706973	c3b0ca7	carrier_predecode_n4096	carrier_predec_flatthread	4096	warm	432483.3	419195.4	453977.9
+1784706973	c3b0ca7	carrier_predecode_n4096	carrier_predec_wire	4096	warm	560106.7	552034.2	578677.9

@@ -1,0 +1,5 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784675880	ebb6ee8	incr_reload_n256	incr_cold	256	warm	42025.8	41606.2	44603.6
+1784675880	ebb6ee8	incr_reload_n256	incr_warm	256	warm	272390.0	271784.0	281303.8
+1784676059	ebb6ee8	incr_reload_n256	incr_cold	256	warm	131618.3	130775.2	133373.7
+1784676059	ebb6ee8	incr_reload_n256	incr_warm	256	warm	39937.1	39887.9	40256.4
