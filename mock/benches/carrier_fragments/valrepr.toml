@@ -1,0 +1,23 @@
+# >>> valrepr (generated)
+[bench.valrepr]
+title = "Value representation: static/raw vs runtime-tagged vs NaN-boxed (dynamic-typing cost)"
+workload = "realistic"
+master_seed = 0x5eed_7a10_0000_0001
+[bench.valrepr.normalise]
+baseline = "valrepr_static"
+mode = "subtract"
+[[bench.valrepr.sizes]]
+n = 64
+variants = ["variants/valrepr_static/target/release/valrepr_static", "variants/valrepr_tagged/target/release/valrepr_tagged", "variants/valrepr_nanbox/target/release/valrepr_nanbox"]
+[[bench.valrepr.sizes]]
+n = 256
+variants = ["variants/valrepr_static/target/release/valrepr_static", "variants/valrepr_tagged/target/release/valrepr_tagged", "variants/valrepr_nanbox/target/release/valrepr_nanbox"]
+[[bench.valrepr.sizes]]
+n = 1024
+variants = ["variants/valrepr_static/target/release/valrepr_static", "variants/valrepr_tagged/target/release/valrepr_tagged", "variants/valrepr_nanbox/target/release/valrepr_nanbox"]
+[[bench.valrepr.sizes]]
+n = 4096
+variants = ["variants/valrepr_static/target/release/valrepr_static", "variants/valrepr_tagged/target/release/valrepr_tagged", "variants/valrepr_nanbox/target/release/valrepr_nanbox"]
+[[bench.valrepr.sizes]]
+n = 16384
+variants = ["variants/valrepr_static/target/release/valrepr_static", "variants/valrepr_tagged/target/release/valrepr_tagged", "variants/valrepr_nanbox/target/release/valrepr_nanbox"]
