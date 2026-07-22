@@ -236,8 +236,12 @@ pub fn generate(p: &GenParams) -> Program {
         // Node 0 is INPUT so the whole DAG depends on the per-call seed and
         // cannot be hoisted. The next leaves are CONST so later nodes always
         // have earlier operands. From then on ops are drawn under the
-        // correlation model (INPUT, op COUNT-1, is excluded from the draw and
-        // reached only through node 0).
+        // correlation model. CONST dominates the leaf phase, but INPUT can
+        // recur at interior nodes under uniform weights (it carries weight 1
+        // like every op and `vocab == op::COUNT` includes it), which is
+        // harmless: INPUT is a well-formed arity-0 leaf wherever it lands, and
+        // more input-dependent leaves make over-eager partial evaluation less
+        // likely, not more.
         let op_code = if i == 0 {
             op::INPUT
         } else if i < LEAF_SEED {

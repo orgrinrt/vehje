@@ -282,4 +282,71 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn sink_count_varies_across_profiles() {
+        // Fusion, liveness, and output-building all cost-scale with sink count,
+        // and sink count is an emergent property of each profile's
+        // locality_window, not a stated parameter: a small window (p_madd: 4,
+        // p_tight: 8) leaves a band of recent nodes unreferenced, while
+        // p_scatter's usize::MAX window lets any later node reference any earlier
+        // one, structurally shrinking the sink set. Comparing a stage delta across
+        // profiles without reporting each profile's sink count risks attributing a
+        // locality-driven cardinality difference to the stage itself. This records
+        // the per-profile counts (the number the bench report must carry) and
+        // confirms the confound is real, not hypothetical: they genuinely differ.
+        let profiles = ["real", "madd", "tight", "scatter", "wideselect", "leaf"];
+        let counts: Vec<(&str, usize)> = profiles
+            .iter()
+            .map(|&name| {
+                let mut gp = GenParams::profile(name).unwrap();
+                gp.node_count = 4096;
+                (name, sinks(&generate(&gp)).len())
+            })
+            .collect();
+        for &(name, c) in &counts {
+            assert!(c > 0, "{name} has no sinks");
+        }
+        let first = counts[0].1;
+        assert!(
+            counts.iter().any(|&(_, c)| c != first),
+            "sink counts should vary across profiles (locality-driven confound): {counts:?}"
+        );
+    }
+
+    #[test]
+    fn interned_operands_gains_little_on_p_madd() {
+        // The interned-operand exclusion (named in the fairness audit) claims
+        // operand tuples do not repeat on this value-DAG, so interning (a, b)
+        // pairs cannot win. p_madd is the profile built to stress that claim: a
+        // correlated MUL/ADD stream over a 4-wide locality window, the case most
+        // likely to reproduce operand tuples. Measure the actual distinct-(a, b)
+        // ratio among binary-op nodes. Because the window slides with the node
+        // index (lo = i - window), the ABSOLUTE (a, b) tuples an interner would
+        // key on shift as the program advances even when relative positions
+        // repeat, so distinct tuples stay near the binary-node count and interning
+        // finds almost nothing to dedup. If this ratio ever drops, the exclusion
+        // does not hold on p_madd and this test surfaces it.
+        use std::collections::HashSet;
+        let mut gp = GenParams::p_madd();
+        gp.node_count = 4096;
+        let prog = generate(&gp);
+        let mut binops = 0usize;
+        let mut distinct: HashSet<(u32, u32)> = HashSet::new();
+        for node in &prog.nodes {
+            if op::ARITY[node.op as usize] == 2 {
+                binops += 1;
+                distinct.insert((node.operands[0], node.operands[1]));
+            }
+        }
+        assert!(binops > 100, "p_madd should have many binary ops, got {binops}");
+        assert!(
+            distinct.len() * 100 >= binops * 90,
+            "operand tuples repeat more than expected on p_madd: {} distinct of {} binops ({}%); \
+             the interned-operand exclusion may not hold on this profile",
+            distinct.len(),
+            binops,
+            distinct.len() * 100 / binops
+        );
+    }
 }

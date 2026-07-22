@@ -7,7 +7,7 @@
 use mockspace_bench_core::{timed, FfiBenchCall};
 use mockspace_bench_macro::bench_variant;
 use std::sync::OnceLock;
-use vehje_bench_carrier::{madd_bytes, native_madd, Decoded, REC24};
+use vehje_bench_carrier::{checksum, madd_bytes, native_madd, Decoded, REC24};
 
 static BYTES: OnceLock<Vec<u8>> = OnceLock::new();
 const ITERS: usize = 16;
@@ -16,13 +16,18 @@ const ITERS: usize = 16;
 fn run<const N: usize>(input: &[u8; N], output: &mut [u8; 8]) -> FfiBenchCall {
     let bytes = BYTES.get_or_init(|| madd_bytes(N / 4, REC24));
     let d = Decoded::parse(bytes, REC24).unwrap();
-    
+    // results buffer allocated outside the timed region (decode/alloc is setup);
+    // native_madd writes node values, the caller folds one post-pass checksum,
+    // matching the interpreters' cost shape exactly.
+    let mut results = vec![0u64; d.node_count];
+
     timed! { run {
         let mut acc: u64 = 0;
         let mut k = 0usize;
         while k < ITERS {
             let seed = input[k % N] as u64 ^ (k as u64);
-            acc ^= native_madd(&d, seed);
+            native_madd(&d, seed, &mut results);
+            acc ^= checksum(&results);
             k += 1;
         }
         output.copy_from_slice(&acc.to_le_bytes());

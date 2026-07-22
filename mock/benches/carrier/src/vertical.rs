@@ -74,6 +74,26 @@ pub fn interpret_vertical<const W: usize>(
     }
 }
 
+/// Run the vertical interpreter over W seeds and reduce the SoA results to one
+/// scalar checksum (every node, every lane). Exists so the disasm probe can
+/// isolate the vertical dispatch loop (which inlines here) without the probe
+/// crate having to enable `portable_simd` and name `Simd` itself. The reduction
+/// is a separate loop after the dispatch loop, so the packed-NEON dispatch code
+/// stays identifiable in the disassembly.
+#[inline]
+pub fn interpret_vertical_checksum<const W: usize>(p: &Predecoded, seeds: &[u64; W]) -> u64 {
+    let mut results = vec![Simd::<u64, W>::splat(0); p.nodes.len()];
+    interpret_vertical::<W>(p, seeds, &mut results);
+    let mut h = 0u64;
+    for v in &results {
+        let arr = v.as_array();
+        for &lane in arr {
+            h = h.rotate_left(7) ^ lane;
+        }
+    }
+    h
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

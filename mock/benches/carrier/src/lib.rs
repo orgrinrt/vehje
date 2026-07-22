@@ -68,7 +68,7 @@ pub use gen::{generate, GenParams, Rng};
 pub use access::checksum;
 pub use interp::{
     interpret, interpret_bittree, interpret_fntable, interpret_ifchain, interpret_ifchain_ascending,
-    interpret_nulldispatch, run_over_input,
+    interpret_ifchain_linear, interpret_nulldispatch, run_over_input,
 };
 pub use predecode::{
     interpret_predecoded, interpret_predecoded_fntable, interpret_predecoded_nulldispatch,
@@ -76,7 +76,7 @@ pub use predecode::{
 };
 #[cfg(feature = "threaded")]
 pub use interp_threaded::interpret_threaded;
-pub use native::{madd_bytes, madd_program, native_madd};
+pub use native::{madd_bytes, madd_program, native_madd, native_madd_over_input};
 pub use ir::{
     encode, Decoded, Layout, Node, Program, ALL_LAYOUTS, REC12, REC16, REC20, REC24, REC32,
 };
@@ -132,10 +132,11 @@ mod tests {
             let mut r = vec![0u64; prog.nodes.len()];
             interpret(&d, 12345, &mut r);
             let sw = checksum(&r);
-            let shapes: [fn(&Decoded, u64, &mut [u64]); 4] = [
+            let shapes: [fn(&Decoded, u64, &mut [u64]); 5] = [
                 interpret_fntable,
                 interpret_ifchain,
                 interpret_ifchain_ascending,
+                interpret_ifchain_linear,
                 interpret_bittree,
             ];
             for f in shapes {
@@ -201,11 +202,13 @@ mod tests {
         let bytes = encode(&prog, &REC24);
         let d = Decoded::parse(&bytes, REC24).unwrap();
         let mut r = vec![0u64; prog.nodes.len()];
+        let mut rn = vec![0u64; prog.nodes.len()];
         for seed in [0u64, 1, 42, 12345, 999_999] {
             interpret(&d, seed, &mut r);
+            native::native_madd(&d, seed, &mut rn);
             assert_eq!(
                 checksum(&r),
-                native::native_madd(&d, seed),
+                checksum(&rn),
                 "native diverged from interp at seed {seed}"
             );
         }
@@ -226,10 +229,11 @@ mod tests {
         for seed in [0u64, 1, 42, 255, 1000] {
             interpret(&d, seed, &mut r);
             let sw = checksum(&r);
-            let shapes: [fn(&Decoded, u64, &mut [u64]); 4] = [
+            let shapes: [fn(&Decoded, u64, &mut [u64]); 5] = [
                 interpret_fntable,
                 interpret_ifchain,
                 interpret_ifchain_ascending,
+                interpret_ifchain_linear,
                 interpret_bittree,
             ];
             for f in shapes {

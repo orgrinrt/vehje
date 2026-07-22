@@ -10,7 +10,10 @@ use vehje_bench_carrier::ir::{Decoded, REC24};
 use vehje_bench_carrier::predecode::{
     interpret_predecoded, interpret_predecoded_fntable, interpret_predecoded_regcache, predecode,
 };
-use vehje_bench_carrier::{interpret, interpret_bittree, interpret_fntable, interpret_ifchain};
+use vehje_bench_carrier::{
+    interpret, interpret_bittree, interpret_fntable, interpret_ifchain,
+    interpret_ifchain_ascending, interpret_ifchain_linear,
+};
 
 /// # Safety: caller passes a valid wire-program byte range and an 8-byte output.
 unsafe fn parse<'a>(bytes: *const u8, len: usize) -> Decoded<'a> {
@@ -33,7 +36,49 @@ macro_rules! wire_probe {
 wire_probe!(di_switch, interpret);
 wire_probe!(di_fntable, interpret_fntable);
 wire_probe!(di_ifchain, interpret_ifchain);
+// the if-chain axis was missing from the ISA audit. di_ifchain / di_ifchain_ascending
+// are expected to lower to a computed jump table (SimplifyCFG switch formation over
+// the dense opcode range); di_ifchain_linear is barrier-forced and must stay a real
+// branch cascade (no computed jump). Comparing the three at the ISA level is what
+// distinguishes "natural source if-chain" from "textbook linear scan."
+wire_probe!(di_ifchain_ascending, interpret_ifchain_ascending);
+wire_probe!(di_ifchain_linear, interpret_ifchain_linear);
 wire_probe!(di_bittree, interpret_bittree);
+
+// Vertical / SoA SIMD dispatch. The one beyond-runtime cell whose whole result is
+// codegen quality: these probes must show packed NEON (e.g. `add v0.2d, ...`,
+// `mul`/`umin`/`cmeq` on `.2d` vectors) in the dispatch loop, not W duplicated
+// scalar instruction sequences (which would mean auto-vectorization scalarized it
+// and any "SIMD win" is really loop unrolling). W distinct seeds derived from the
+// probe seed; the reduction loop is separate so the dispatch code stays isolable.
+#[no_mangle]
+pub extern "C" fn di_vertical4(bytes: *const u8, len: usize, seed: u64, out: *mut u64) {
+    use vehje_bench_carrier::predecode::predecode;
+    use vehje_bench_carrier::vertical::interpret_vertical_checksum;
+    let d = unsafe { parse(bytes, len) };
+    let p = predecode(&d);
+    let seeds = [seed, seed ^ 0x1111, seed ^ 0x2222, seed ^ 0x3333];
+    unsafe { *out = interpret_vertical_checksum::<4>(&p, &seeds) };
+}
+
+#[no_mangle]
+pub extern "C" fn di_vertical8(bytes: *const u8, len: usize, seed: u64, out: *mut u64) {
+    use vehje_bench_carrier::predecode::predecode;
+    use vehje_bench_carrier::vertical::interpret_vertical_checksum;
+    let d = unsafe { parse(bytes, len) };
+    let p = predecode(&d);
+    let seeds = [
+        seed,
+        seed ^ 0x1111,
+        seed ^ 0x2222,
+        seed ^ 0x3333,
+        seed ^ 0x4444,
+        seed ^ 0x5555,
+        seed ^ 0x6666,
+        seed ^ 0x7777,
+    ];
+    unsafe { *out = interpret_vertical_checksum::<8>(&p, &seeds) };
+}
 
 macro_rules! flat_probe {
     ($name:ident, $fn:path) => {

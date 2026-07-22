@@ -92,22 +92,32 @@ pub fn interp(blocks: &[Block], seed: u64, cap: u64) -> (u64, u64, u64) {
 }
 
 /// Per-instruction op function for the function-pointer-table dispatch over the
-/// CFG: `(imm, regs[a], regs[b]) -> value`. Order matches `op` (SET..AND).
-type CFn = fn(u64, u64, u64) -> u64;
-fn c_set(imm: u64, _a: u64, _b: u64) -> u64 {
-    imm
+/// CFG: `(ins, regs) -> value`. Order matches `op` (SET..AND).
+///
+/// Each op function does its own `rload`s, exactly like the straight-line
+/// fntable's `f_*` functions (`interp.rs`). The earlier signature was
+/// `fn(imm, regs[a], regs[b])`, which forced the fntable call site to load
+/// `regs[a]` and `regs[b]` eagerly for EVERY instruction, including SET, which
+/// ignores both. Because the call is through a runtime-resolved pointer the
+/// compiler cannot prove the callee discards them, so those two loads executed
+/// unconditionally on every SET, a cost the switch and threaded cells do not pay
+/// (disassembly confirmed: two dead `ldr` before the `blr`). Passing `ins` and
+/// `regs` and letting each op load only what it needs removes the asymmetry.
+type CFn = fn(&Instr, *const u64) -> u64;
+fn c_set(ins: &Instr, _rp: *const u64) -> u64 {
+    ins.imm
 }
-fn c_add(_i: u64, a: u64, b: u64) -> u64 {
-    a.wrapping_add(b)
+fn c_add(ins: &Instr, rp: *const u64) -> u64 {
+    unsafe { crate::access::rload(rp, ins.a as u32).wrapping_add(crate::access::rload(rp, ins.b as u32)) }
 }
-fn c_sub(_i: u64, a: u64, b: u64) -> u64 {
-    a.wrapping_sub(b)
+fn c_sub(ins: &Instr, rp: *const u64) -> u64 {
+    unsafe { crate::access::rload(rp, ins.a as u32).wrapping_sub(crate::access::rload(rp, ins.b as u32)) }
 }
-fn c_mul(_i: u64, a: u64, b: u64) -> u64 {
-    a.wrapping_mul(b)
+fn c_mul(ins: &Instr, rp: *const u64) -> u64 {
+    unsafe { crate::access::rload(rp, ins.a as u32).wrapping_mul(crate::access::rload(rp, ins.b as u32)) }
 }
-fn c_and(_i: u64, a: u64, b: u64) -> u64 {
-    a & b
+fn c_and(ins: &Instr, rp: *const u64) -> u64 {
+    unsafe { crate::access::rload(rp, ins.a as u32) & crate::access::rload(rp, ins.b as u32) }
 }
 static CTABLE: [CFn; 5] = [c_set, c_add, c_sub, c_mul, c_and];
 
@@ -126,9 +136,9 @@ pub fn interp_fntable(blocks: &[Block], seed: u64, cap: u64) -> (u64, u64, u64) 
     loop {
         let b = &blocks[pc as usize];
         for ins in &b.instrs {
-            let v = unsafe {
-                CTABLE[ins.op as usize](ins.imm, rload(rp, ins.a as u32), rload(rp, ins.b as u32))
-            };
+            // each op function loads only the operands it needs (see `CFn`), so
+            // SET pays no register loads here, matching switch and threaded.
+            let v = CTABLE[ins.op as usize](ins, rp);
             unsafe { rstore(rp, ins.dst as usize, v) };
             ninstr += 1;
         }
