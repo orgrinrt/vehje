@@ -598,3 +598,76 @@ and superinstructions (the cells most likely to change the tiering conclusion, m
 the value-representation axis, medium). Cold-tier framing of the form axis is free and should be adopted
 immediately. Each is independently landable and independently improves the fidelity of every cell that
 follows.
+
+## Addendum: the bench explores the design space, it does not validate the shipped shape (refines the previous addendum)
+
+The previous addendum is right that a toy carrier yields toy insight, but it over-corrected in one direction:
+it kept talking about making the carrier resemble the actual tier-tagged runtime, treating the runtime's
+shape as the target the bench should conform to. That framing is wrong for a bench, and this addendum
+corrects it. A bench is not there to confirm that the shape already chosen is good. It is there to measure
+every shape and approach on its own merits, as equals, including shapes the runtime does not currently use
+and might be better off adopting. The runtime's current design is one point in the space, not the frame the
+space is measured against.
+
+The distinction is concrete and it changes several calls from the previous addendum.
+
+No shape is the privileged baseline. The previous addendum said predecode is the baseline and wire-decode is
+the exotic case because that is what a real runtime does. For the bench that is exactly the wrong move: it
+pre-decides an answer the measurement should produce. Wire24-plus-switch stays as the normalization anchor,
+but only as a fixed reference point that makes tables readable, explicitly not a claim that it is the default,
+the thing to beat, or the shape that ships. Every cell is judged against the native ceiling and against every
+other cell on merit, and the oracle envelope is the best measured shape at each point regardless of whether
+the runtime would have picked it. If the data says a shape the runtime does not build wins, that is the
+result, and it is a recommendation to the runtime, not an anomaly to explain away.
+
+Fidelity changes stay, but for a different reason. The value arena, control flow, real output sink, typed
+values, and the shared operand primitive all still belong, but not because they make the carrier look like
+the runtime. They belong because each one lets some approach show its true merits instead of an artifact: the
+value arena because materialise-every-node is a measurement artifact that buries the shapes which reuse
+storage, control flow because a straight-line stream cannot exercise the regime where several approaches earn
+their keep, the shared operand primitive because without it the axis measures something other than what it
+claims. The motivation is "let every approach compete at its best and remove artifacts," not "conform to the
+shipped design." Keep materialise-every-node and wire-decode-per-node as real measured cells too; they are
+approaches on their own merits, not just worst-case references.
+
+The tier mapping is one reporting lens, offered, not imposed. Reporting the form axis as cold-residual versus
+baseline-arena versus native is a useful way to read the numbers for the tiering decision, so keep it as a
+lens available in the analysis. But it must not constrain what is measured or privilege those three points;
+the individual widths, the exotic forms, and the beyond-runtime shapes are all first-class cells, and the
+tier lens is applied after the fact to the subset it illuminates.
+
+### Approaches beyond the current runtime, worth measuring because the bench might vindicate them
+
+The strongest reason to unforce the shape is that the most valuable results are the ones that tell the
+runtime to do something it is not doing. A design-space bench should therefore carry approaches that are not
+in the current tier plan, each measured on its own merits:
+
+- Vertical, data-parallel interpretation. Interpret one program over many inputs at once, SoA across inputs,
+  so one dispatch is amortised over a SIMD vector of values. This is a genuinely different shape from the
+  scalar per-input loop, and it maps directly onto vehje's real per-record evaluation pattern (the same
+  residual run over a column of records), so it could dominate exactly the workload the runtime cares about
+  most while being nowhere in the current tier plan. This deserves its own axis, not a footnote: scalar
+  versus vertical is potentially the largest single result the matrix can produce.
+- Copy-and-patch stencil execution. Paste per-op precompiled machine-code stencils into a buffer and run it,
+  the tier between interpreter and full native (the Cranelift weval and the copy-and-patch lineage). It is a
+  cheap-to-build near-native tier the current plan does not include, and measuring it answers whether the
+  jump from baseline interpreter straight to full native skips a tier that is most of the win for a fraction
+  of the cost.
+- Computed-goto and token-threading in the Zig cdylib. Rust cannot express label-as-value computed goto, but
+  the Zig side can, and it is a real dispatch shape the Rust variants structurally cannot represent. The
+  cross-language cdylib isolation already in place means a Zig dispatch cell drops into the same matrix on the
+  same program bytes; measuring it closes the gap the Rust-only dispatch axis leaves.
+- Trace or superblock dispatch. Record hot straight-line runs once and dispatch per-trace instead of per-op,
+  amortising dispatch over a whole trace. A different granularity of the same question, and the one that most
+  directly attacks dispatch cost in hot loops.
+- Alternative residual shapes. Register bytecode versus stack bytecode versus the SSA value-graph the carrier
+  uses now are three different residual encodings, and which one interprets fastest is an open question the
+  runtime's baseline-form choice rests on; measure all three rather than assuming the value-graph.
+- Allocation strategies for the value arena as an axis in themselves: none (materialise all), simple slot
+  reuse, linear-scan register allocation. The winner informs how much the runtime should invest in liveness
+  at load time.
+
+None of these is required for a first matrix, but the design must leave room for them as first-class cells
+rather than treating the runtime's current tiers as the boundary of the space. The point of the whole
+exercise, per op, is that we do not force the actual shape of things; we measure all the shapes on their
+merits, and the ones that win beyond what the runtime does today are precisely the insight worth having.
