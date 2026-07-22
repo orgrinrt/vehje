@@ -135,6 +135,70 @@ pub fn interpret_fntable(d: &Decoded, input_seed: u64, results: &mut [u64]) -> u
     hash
 }
 
+/// If-chain dispatch: the opcode is matched by an explicit linear if-else
+/// cascade rather than a `match` (which the backend lowers to a jump table).
+/// The match-lowering bench found an if-chain beating the jump table on M1 for
+/// the branch-prediction reasons; this tests the same hypothesis inside the
+/// interpreter. Identical semantics to [`interpret`]; the cascade is ordered by
+/// ascending opcode. Written with explicit `if`/`else if` so the backend keeps
+/// it as a branch chain.
+#[inline]
+pub fn interpret_ifchain(d: &Decoded, input_seed: u64, results: &mut [u64]) -> u64 {
+    let mut hash: u64 = 0;
+    for i in 0..d.node_count {
+        let opcode = d.op_at(i);
+        macro_rules! bin {
+            ($k:expr) => {
+                results[d.operand(i, $k, 2) as usize]
+            };
+        }
+        let v = if opcode == op::INPUT {
+            input_seed
+        } else if opcode == op::CONST {
+            d.const_at(d.operand(i, 0, 1) as usize)
+        } else if opcode == op::ADD {
+            bin!(0).wrapping_add(bin!(1))
+        } else if opcode == op::SUB {
+            bin!(0).wrapping_sub(bin!(1))
+        } else if opcode == op::MUL {
+            bin!(0).wrapping_mul(bin!(1))
+        } else if opcode == op::AND {
+            bin!(0) & bin!(1)
+        } else if opcode == op::OR {
+            bin!(0) | bin!(1)
+        } else if opcode == op::XOR {
+            bin!(0) ^ bin!(1)
+        } else if opcode == op::SHL {
+            bin!(0).wrapping_shl(bin!(1) as u32)
+        } else if opcode == op::SHR {
+            bin!(0).wrapping_shr(bin!(1) as u32)
+        } else if opcode == op::MIN {
+            bin!(0).min(bin!(1))
+        } else if opcode == op::MAX {
+            bin!(0).max(bin!(1))
+        } else if opcode == op::EQ {
+            (bin!(0) == bin!(1)) as u64
+        } else if opcode == op::LT {
+            (bin!(0) < bin!(1)) as u64
+        } else if opcode == op::SELECT {
+            if results[d.operand(i, 0, 3) as usize] != 0 {
+                results[d.operand(i, 1, 3) as usize]
+            } else {
+                results[d.operand(i, 2, 3) as usize]
+            }
+        } else if opcode == op::NEG {
+            results[d.operand(i, 0, 1) as usize].wrapping_neg()
+        } else if opcode == op::NOT {
+            !results[d.operand(i, 0, 1) as usize]
+        } else {
+            0
+        };
+        results[i] = v;
+        hash = hash.rotate_left(7) ^ v;
+    }
+    hash
+}
+
 /// Drive the switch interpreter over a stream of input bytes, folding each
 /// per-byte hash into one accumulator. The exact shape a variant's `timed!`
 /// region runs: program structure fixed, input bytes vary the eval.
