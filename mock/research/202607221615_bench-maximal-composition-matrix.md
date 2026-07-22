@@ -671,3 +671,121 @@ None of these is required for a first matrix, but the design must leave room for
 rather than treating the runtime's current tiers as the boundary of the space. The point of the whole
 exercise, per op, is that we do not force the actual shape of things; we measure all the shapes on their
 merits, and the ones that win beyond what the runtime does today are precisely the insight worth having.
+
+## Final addendum: audit of the siblings' own amendments, and the three-way convergence
+
+Checked both siblings for growth. `202607221600` (the cost-model deliverable) is unchanged, still the
+tight origin of the `S + k * I` reframe. `202607221530` grew from its 289-line committed base to 824 lines
+with four amendments that parallel the sequence op walked all three of us through: an audit of 1600 plus a
+"better framework" synthesis, a second amendment auditing this deliverable, a loud representativeness
+amendment, and a final-like amendment. It is rigorous work, it converges with this deliverable on the load-
+bearing findings, and on several points it is sharper than my own audit. This closes the loop honestly:
+what it confirms, what it catches that I missed, what it adds, and the one genuine tension left for op.
+
+### Independent confirmation raises the bounds-check confound to near-certainty
+
+The single most important cross-check: 1530 independently source-verified the same threaded bounds-check
+confound this deliverable's representativeness audit found, and did so by the same method (grepping raw-
+pointer versus indexed access) reaching the same conclusion, with exact site counts (interp.rs: zero raw-
+pointer sites, all checked; interp_threaded.rs: seven, all unchecked; predecode.rs: fifteen in the threaded
+path). Two independent audits, from two forks that did not share state, converging on "the threaded variants
+elide bounds checks the others pay, so A1 and A3 are confounded and must be re-run" is much stronger evidence
+than either alone. Treat it as established, not as one reviewer's opinion: the threaded findings are not
+trustworthy until operand access is normalized, and A2 (predecode flat, both variants checked switch) is
+clean. Both audits agree on this exact split.
+
+### What 1530 caught that this deliverable missed, and I concede
+
+Three points where 1530's audit is more rigorous than mine, and which I adopt:
+
+- ISA-level label confirmation. My audit verified the bounds-check confound but took the "switch" and
+  "threaded" labels at face value for their mechanism. 1530 correctly refuses to: it flags that "switch
+  lowers to a jump table" and "threaded actually elides callee-saved spills under preserve-none" are both
+  unconfirmed at the instruction level, and that `rust_preserve_none_cc` being an incomplete nightly feature
+  means it could silently fall back to the standard ABI on some handler, in which case the threaded cell is
+  measuring something that is not preserve-none. This is a real gap in my audit. Concede it and adopt its
+  fix: before the matrix, confirm with `cargo-show-asm` or focused disassembly that switch is a jump table,
+  fntable stays an indirect call (1530 already verified the `blr` survives LTO), and a threaded handler shows
+  no `stp`/`ldp` of x19-x28 around the dispatch; record any cell that fails to match its label as mislabelled
+  rather than shipping it. A cell that is not the shape it names poisons every comparison it is in.
+- A form-side bounds-check asymmetry, not just a dispatch-side one. My audit named the threaded dispatch
+  confound and the flat setup asymmetry, but 1530 additionally notes the flat loop's node index may be
+  provably in range and its checks elided by the compiler while the wire loop's `from_le_bytes`-derived
+  indices are harder to prove and its checks survive, so part of the A2 flat-over-wire win could also be
+  elided checks on the flat side, not only the smaller footprint. I missed this. Adopt: the get-unchecked-
+  everywhere normalization must be verified to leave the A2 margin standing (it should, footprint and wire-
+  arithmetic differences are real and independent of checking, but it must be confirmed not assumed).
+- Unchecked-everywhere as the primary normalization, not an axis. My audit proposed one shared operand
+  primitive with checked-versus-unchecked promoted to its own axis. 1530 argues more decisively for
+  unchecked-everywhere as the default: the program is validated once (children-before-parents, every operand
+  an earlier index, asserted by `is_well_formed` and the untrusted-load verifier), so post-validation the
+  bounds check is pure overhead a real runtime elides anyway, and "all checked" is not cleanly reachable for
+  the threaded raw-pointer ABI without re-adding an explicit compare that is itself a different hand-shape.
+  That is the better call. Make unchecked-everywhere the fair normalization; keep checked-versus-unchecked as
+  an optional axis only if the cost of validation-elided checks is itself interesting.
+
+### What 1530 adds that is genuinely new and worth taking
+
+Beyond the convergent audit, 1530 contributes three things neither 1600 nor this deliverable had:
+
+- The warmup-curve regime unification. Rather than treating hot-single and cold-many as two separate benches
+  (1600's framing, which this deliverable adopted), 1530 fits `total(k) = S + sum_{j<k} I(j)` with the per-
+  evaluation cost `I(j)` decaying from a cold first-eval slope to a warm asymptote, extracting the cold
+  slope, the warm slope, and the warmup length from one richer k-sweep. The warmup length is exactly the
+  "how many evaluations until a program is hot" quantity a tiering runtime needs, and it is measured directly
+  rather than inferred. Adopt it as a refinement on the regime axis; the cold-many batch becomes the cross-
+  check that the curve's cold end agrees with.
+- The framework-primitives framing. 1530 generalizes the whole exercise into first-class harness services:
+  regression cells (the harness owns the k-ladder, the duration-floor auto-calibration, the least-squares
+  fit), floor decomposition as a service, regime as a harness execution mode over pure cells, isolated
+  cross-product codegen from a declarative axis spec, and oracle-envelope plus selector-regret reporting as
+  outputs. This is the right home for this deliverable's `timed_stage!` per-stage sub-timing (it becomes a
+  sixth primitive) and for the tiered on-demand generation. Adopt the framework framing; it turns the
+  maximal matrix from hand-authored cells into declared-axes-in, decision-surface-out.
+- Predecode-optimizes-on-load and slot allocation as the concrete value-arena mechanism. This deliverable
+  proposed "a real value arena with lifetimes" and "direct threading plus superinstructions"; 1530 sharpens
+  both: the value arena is a backward last-use pass at predecode emitting slot indices into an arena sized to
+  the liveness width (so the resident set stops growing with program size once it fits the live width), and
+  the optimize stage (CSE, eqsat, const-fold, DCE, fusion) belongs inside the predecode path for the final-
+  like cells rather than as a separate untaken axis. Adopt both as the concrete mechanism for my value-arena
+  and optimize stages.
+
+### The one genuine tension, and why it is op's call
+
+There is a real divergence between 1530's final-like amendment and this deliverable's last one, and it
+should be surfaced rather than smoothed over. 1530 frames the endgame as converging on the final-like
+optimal interpreter, so the oracle envelope becomes "a buildable runtime" and the strongest cell is the
+predecoded-slot-allocated-fused-threaded-or-native path. This deliverable's last addendum, following op's
+correction, frames the endgame as the opposite: do not privilege the shipped or the final-like shape, measure
+every approach on its merits as equals, and keep first-class room for beyond-runtime shapes the current tier
+plan does not include (vertical SoA/SIMD interpretation, which maps onto vehje's real per-record evaluation
+and could dominate exactly that workload; copy-and-patch stencils; Zig computed-goto; trace or superblock
+dispatch; register versus stack versus value-graph residuals). These are not contradictory but they pull in
+different directions: 1530 optimizes toward one known-good shape, op's directive to me searches for a better-
+than-known shape.
+
+The reconciliation, which I believe is the correct synthesis: 1530's final-like path is the right
+materialized-oracle reference cell (it answers the load-bearing tiering question, how close the best
+interpreter tier gets to native, and it belongs in the matrix as the strongest currently-conceived cell),
+but it must not be the frame that defines the space, because a beyond-runtime shape like vertical SIMD
+interpretation could beat it and the matrix has to be able to show that. Keep the naive shipped default at
+one end (both agree on this), the 1530 final-like optimal as a labelled strong reference in the middle-to-
+top, and the beyond-runtime shapes as open first-class cells that are allowed to win. The oracle envelope is
+then over everything measured, not anchored to the final-like path, which is what op's "measure all shapes on
+their merits" requires. Whether to invest in the beyond-runtime cells for the first matrix or defer them is
+the one open decision for op; everything else across the three deliverables has converged.
+
+### The three-way state, stated plainly
+
+All three now agree on the measurement backbone: the `S + k * I` cost-model line fit (1600's origin), the
+native and null-dispatch reference floors (1600), the checksum moved post-pass (1600), the two regimes
+(1600, refined to 1530's warmup curve), the eight-stage pipeline with form-by-dispatch as Tier 0 (this
+deliverable, adopted by 1530), per-stage sub-timing (this deliverable, adopted by 1530), designed program
+profiles via `op_weights` (1530), the honest runtime selectors judged against an oracle envelope (all
+three, with per-stage from here and per-region from 1530 as orthogonal-and-fusable champions), and the non-
+negotiable shared-program cross-validated-checksum contract (all three). The divisions of labour are clean:
+1600 is the measurement model, 1530 is the program design plus the framework primitives plus the warmup
+curve plus the sharpest representativeness audit, this deliverable is the pipeline breadth plus per-stage
+timing plus the design-space-exploration reframe plus the beyond-runtime shapes. The unified proposal is
+the union of all three, and the only unresolved question is the final-like-convergence versus open-
+exploration tension above, which is a direction for op to set, not a disagreement about facts.
