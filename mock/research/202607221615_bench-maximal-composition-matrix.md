@@ -376,3 +376,104 @@ the eight-stage pipeline matrix, run over 1530's designed profiles, measured as 
 reference floors and per-stage sub-timings, across the hot-single and cold-many regimes, with per-stage and
 per-region adaptive selectors judged against the oracle envelope. None of the three is redundant; each
 supplies an axis the other two left pinned.
+
+## Addendum: are the current variants and IR actually representative? (a loud, honest audit)
+
+This is the audit that matters most and is easiest to skip: passing cross-validation proves every variant
+computes the same result, and proves nothing about whether every variant measures the same thing. Two
+variants can fold the identical checksum while one does incidental work the other does not, or elides work
+the other pays. The shipped A1-A3 variants were read line by line for this. There is one real confound that
+partially invalidates a published headline, plus several softer issues and one clean bill.
+
+### The confound that matters: the threaded variants elide bounds checks the others pay
+
+This is the loud one. The switch, function-table, and predecoded interpreters read operands and results
+through checked slice indexing (`interp.rs:35` `results[d.operand(...) as usize]`, `interp.rs:64`
+`results[i] = v`, `predecode.rs:67` `p.nodes[i]`, `predecode.rs:73` `results[a]`). The two threaded
+interpreters read them through unchecked raw-pointer arithmetic (`interp_threaded.rs:67`
+`*r.add(dec.operand(...))`, `interp_threaded.rs:50` `*r.add(i) = v`; `predecode.rs:203-204`
+`*r.add(nd.a)` / `*r.add(nd.b)`, `predecode.rs:202` `*p.add(i)`). The flat-threaded handler elides two
+bounds checks per node (the node-array load and each results load) that flat-switch pays.
+
+So the threaded-versus-switch comparison is not a clean dispatch-shape measurement. It confounds the
+preserve-none dispatch with bounds-check elision on every operand and result access, and operand/result
+access is a large share of per-node cost. The A1 small-n threaded win and the A3 "flat-threaded is
+best-or-tied everywhere" both inherit this: some unknown fraction of the threaded advantage is the elided
+checks, not the dispatch. It happened because the preserve-none handlers thread a raw `*mut u64` and raw
+pointer arithmetic was the path of least resistance, not a considered choice. It is exactly the
+"hacked-together advantage" the audit was asked to find, and it means A1 and A3 are overstated by an
+unquantified amount until it is fixed.
+
+The fix is not to make threaded checked (that would understate it symmetrically); it is to make operand and
+result access an explicit, shared primitive used identically by every dispatch shape, and to promote
+checked-versus-unchecked to its own axis if it is interesting. Every interpreter should call one
+`#[inline(always)]` operand-load and result-store, so the only thing the dispatch axis varies is dispatch.
+Until that lands, the threaded cells are not isolated and their numbers carry an asterisk.
+
+### The if-chain variant is a strawman as written
+
+`interpret_ifchain` (`interp.rs:155+`) orders its cascade by ascending opcode (INPUT, CONST, ADD, SUB, ...),
+so a hot binary op sits behind several cold comparisons. The match-lowering finding it is meant to test
+(an if-chain beating the jump table) was about a frequency-ordered chain with the hot ops first. As written
+the variant measures an arbitrarily-ordered chain and will under-perform the real technique, so an
+"if-chain loses" result from this cell would be an artifact of the ordering, not a property of if-chains.
+Either frequency-order the cascade (and state the ordering is part of the strategy) or carry both orders as
+a sub-axis; do not ship the opcode-ordered chain as "the if-chain."
+
+### Setup asymmetry: the flat forms get a larger free ride
+
+Every variant excludes its setup from the timed region: the wire forms exclude `Decoded::parse`, the flat
+forms exclude parse plus `predecode`. The flat forms therefore move strictly more work out of the
+measurement, and at the fixed sixteen iterations that free setup is a real advantage a run-once program
+would never grant. This is the same setup-versus-per-evaluation honesty gap the cost-model reframe fixes;
+noting it here because it is a per-variant asymmetry (flat benefits more than wire), not a uniform one, so
+the flat wins are partly a measurement framing that the `S + k * I` sweep must replace before they can be
+stated as general.
+
+### Fair-but-diluting, and faithful-disadvantage (not hacks)
+
+Two things look like fairness problems and are not. The per-node checksum fold is paid identically by every
+variant, so it does not advantage any cell; it does dilute the dispatch signal uniformly, which is a
+reason to move it out of the loop (for signal clarity) but not a representativeness fault. And the threaded
+shape's per-node re-derivation of interpreter state (`view(d)` and the node-count reload each handler,
+`interp_threaded.rs:54,74`) is intrinsic to context threading under preserve-none, so it is a faithful
+disadvantage of the real shape, correctly represented, and must not be "optimised away" to flatter the
+cell, or the cell stops representing threading.
+
+### The IR is representative for what it currently composes, and not yet for value representation
+
+The 17-op u64 node DAG is a faithful small value-graph IR, and the wire layouts and flat predecode are
+honest representations of it (PNode is genuinely 16 bytes: `repr(C)`, u8 plus three u32 with padding,
+`predecode.rs:25`). But value representation does not compose over it: the `valrepr` bench interprets a
+separate mixed int/float mini-IR, not this program. Folding a value-representation axis into the shared-IR
+matrix without the per-node type-tag extension would put a cell in the matrix that runs a different program,
+silently breaking the shared-program contract the whole matrix rests on. Either extend the IR (this
+proposal's type tag) so all three representations run the one program and cross-validate, or keep value
+representation out of the shared-IR matrix entirely. There is no honest middle.
+
+### cdylib isolation and program opacity: a clean bill
+
+The isolation is real and correct, and this is worth stating affirmatively because it is the foundation the
+rest stands on. Each variant is its own crate with `crate-type = ["cdylib"]`, `lto = "fat"`,
+`codegen-units = 1`, and a static path dependency on the carrier, so each dylib gets its own monomorphised,
+fully-LTO'd copy of the interpreter with no cross-variant inlining, and the harness loads each in a separate
+subprocess by dlopen, so no variant can perturb another. The program crosses into each variant as bytes
+generated at runtime in a `OnceLock` (`program_vocab` in the get-or-init), so the optimiser never sees the
+program and cannot partial-evaluate the interpreter over it, which is the exact failure that made the old
+native-ceiling bench measure native-against-native. And the shared-program property is real: every variant
+generates from the same fixed `GenParams::default_point()` seed, so all interpret the byte-identical
+program, and only the harness input stream varies. Isolation, opacity, and shared-program are sound as
+built; the representativeness faults above are in the variant bodies and the framing, not in the harness
+scaffolding.
+
+### The bottom line for op
+
+One shipped result is confounded (threaded's advantage is dispatch plus bounds-check elision, currently
+inseparable, so A1 and A3 are overstated by an unknown amount), one planned variant is a strawman as
+written (opcode-ordered if-chain), one framing advantage favours the flat forms (larger free setup), and
+the IR cannot honestly carry a value-representation axis without the type-tag extension. The harness
+isolation itself is clean. Before the matrix is written, unify operand access into one shared primitive
+across all dispatch shapes, frequency-order (or dual-order) the if-chain, adopt the `S + k * I` setup
+accounting, and gate the value-representation axis on the IR extension. With those four, the cells measure
+their strategy and nothing else; without them, the matrix inherits the same confounds at scale and produces
+a larger body of precisely-wrong numbers.
