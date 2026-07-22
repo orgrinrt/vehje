@@ -1135,3 +1135,27 @@ variants = ["variants/carrier_disp_switch_v17/target/release/carrier_disp_switch
 [[bench.carrier_dispatch_v17.sizes]]
 n = 16384
 variants = ["variants/carrier_disp_switch_v17/target/release/carrier_disp_switch_v17", "variants/carrier_disp_fntable_v17/target/release/carrier_disp_fntable_v17", "variants/carrier_disp_threaded_v17/target/release/carrier_disp_threaded_v17"]
+
+# >>> carrier_predecode (generated)
+[bench.carrier_predecode]
+title = "Predecode: zero-copy wire decode vs flat predecoded form (carrier)"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0007
+[bench.carrier_predecode.normalise]
+baseline = "carrier_predec_wire"
+mode = "subtract"
+[[bench.carrier_predecode.sizes]]
+n = 64
+variants = ["variants/carrier_predec_wire/target/release/carrier_predec_wire", "variants/carrier_predec_flat/target/release/carrier_predec_flat"]
+[[bench.carrier_predecode.sizes]]
+n = 256
+variants = ["variants/carrier_predec_wire/target/release/carrier_predec_wire", "variants/carrier_predec_flat/target/release/carrier_predec_flat"]
+[[bench.carrier_predecode.sizes]]
+n = 1024
+variants = ["variants/carrier_predec_wire/target/release/carrier_predec_wire", "variants/carrier_predec_flat/target/release/carrier_predec_flat"]
+[[bench.carrier_predecode.sizes]]
+n = 4096
+variants = ["variants/carrier_predec_wire/target/release/carrier_predec_wire", "variants/carrier_predec_flat/target/release/carrier_predec_flat"]
+[[bench.carrier_predecode.sizes]]
+n = 16384
+variants = ["variants/carrier_predec_wire/target/release/carrier_predec_wire", "variants/carrier_predec_flat/target/release/carrier_predec_flat"]

@@ -113,3 +113,40 @@ cross-validation status, and what it means. Append-only; corrections annotate ra
   a raw record pointer advanced by stride, drop the per-node index arithmetic) and (b) superinstructions
   (fuse hot op pairs, cutting both dispatch count and records fetched). Superinstructions also attack the
   native-ceiling bench, so they get their own attempt.
+
+### A2. Predecoding to a flat form (attacks: "interpretation costs ~2x native", the wire-decode default)
+
+- Assumption attacked: the reference interpreter decodes operands from wire bytes (offset math +
+  `from_le_bytes`) on every node every iteration. A real interpreter that runs a program many times
+  predecodes it once into a flat dispatch-ready form. Does the front-loaded predecode pay?
+- Variant: `carrier::predecode` transforms the wire program into a flat 16-byte-record form
+  (`PNode { op, a, b, c }`) once outside the timed region (like `parse`), then a tight switch runs it
+  with no wire arithmetic. `carrier_predec_flat` vs `carrier_predec_wire` (the shipped wire-decode
+  switch), same program bytes, same 16 iterations inside the timed region. Cross-validated byte-exact.
+- Result: **WIN at every size, no crossover** (median, 1.00x = fastest; carrier predecode bench, M1):
+
+  | n | wire | flat | flat speedup |
+  |---|---|---|---|
+  | 64 | 1.25x | 1.00x | 1.25x |
+  | 256 | 1.10x | 1.00x | 1.10x |
+  | 1024 | 1.10x | 1.00x | 1.10x |
+  | 4096 | 1.26x | 1.00x | 1.26x |
+  | 16384 | 1.26x | 1.00x | 1.26x |
+
+- Reading: predecoding wins 10-26% across the whole range, and it wins **most at large n** (1.26x at
+  16384), exactly the memory-bound regime where the threaded shape lost. Two mechanisms compound: no
+  per-node wire arithmetic in the loop, and a smaller working set (16B flat record vs 24B wire), so the
+  program spills L1 later and moves less memory when it does. This is the same lever the record-width
+  finding pointed at from the other side: the runtime's in-memory form can be 16B even when the wire is
+  wider.
+- Load-bearing caveat: the predecode is a once-per-program cost amortized over the run count (16 here).
+  For a program interpreted exactly once (cold, run-and-discard) predecoding is net overhead; it pays
+  when the same program runs enough times (hot loop bodies, per-entity evaluation, per-frame eval),
+  which is the runtime's actual regime. The honest claim is "predecoding beats zero-copy wire decode by
+  10-26% per iteration, amortizing the transform over the run count," not "flat is unconditionally
+  faster."
+- Design implication (op's call): the runtime wants a predecoded flat form for anything it runs more
+  than a couple of times, and 16 bytes is enough for it. Candidate, not a settled conclusion.
+- Next: combine predecode with the threaded shape (flat + preserve-none) to see whether the flat form
+  fixes threaded's large-n loss, and build superinstructions on the flat form (the flat record is the
+  natural place to fuse op pairs).

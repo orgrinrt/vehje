@@ -40,6 +40,7 @@ pub mod interp;
 pub mod interp_threaded;
 pub mod ir;
 pub mod native;
+pub mod predecode;
 pub mod reach;
 pub mod retract;
 pub mod sharded_intern;
