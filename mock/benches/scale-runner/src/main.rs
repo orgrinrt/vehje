@@ -22,6 +22,9 @@ use vehje_bench_carrier::retract::{
     delete_counted, delete_recompute, gen_reach_graph, init_counted, reach_checksum as retract_cksum,
     recompute,
 };
+use vehje_bench_carrier::sharded_intern::{
+    canonical_checksum, gen_corpus, intern_shard, intern_single, merge_shards, Interner, ShardResult,
+};
 use vehje_bench_carrier::reach::{
     gen_fanin, gen_layered, gen_random_dag, reach_checksum, reset_reach, solve_semi, solve_whole,
     Graph,
@@ -485,6 +488,99 @@ fn run_retract(out_dir: &Path, runs: usize) {
         .expect("scale-runner refuses to conclude without writing its CSV");
 }
 
+/// Sharded interner merge: single-threaded interning vs sharded parallel intern
+/// plus a sequential merge tail. Swept over the dedup rate, because that governs
+/// the tail: high dedup means each shard finds few distinct strings so the merge
+/// re-interns little; mostly-unique tokens make the merge re-intern ~everything.
+fn run_intern(out_dir: &Path, runs: usize) {
+    println!("\n== sharded interner merge: single vs sharded parallel + merge tail ==");
+    println!(
+        "{:>9} {:>10} {:>8} {:>5} | {:>9} {:>9} {:>9} {:>9} {:>7}",
+        "n", "regime", "distinct", "S", "single", "parallel", "merge", "total", "speedup"
+    );
+    let mut csv = String::from(
+        "n,regime,distinct,shards,single_ns,parallel_ns,merge_ns,total_ns,speedup\n",
+    );
+    let n = 2_000_000usize;
+    for &(vocab, common, regime) in &[
+        (256usize, 64usize, "high-dedup"),
+        (n / 20, n / 400, "med-dedup"),
+        (n / 2, n / 5000, "low-dedup"),
+    ] {
+        let c = gen_corpus(n, vocab, common, 0x5eed_141e ^ vocab as u64);
+        let gcap = (vocab * 2).next_power_of_two().max(16);
+
+        // single-threaded baseline.
+        let mut sk = vec![0u64; gcap];
+        let mut ssi = vec![0u32; gcap];
+        let mut sio = vec![0u32; vocab + 1];
+        let mut sil = vec![0u32; vocab + 1];
+        let mut ids_s = vec![0u32; n];
+        let mut single_ns = Vec::with_capacity(runs);
+        let mut nd_s = 0u32;
+        for _ in 0..runs {
+            let mut it = Interner { keys: &mut sk, slot_id: &mut ssi, id_off: &mut sio, id_len: &mut sil, mask: gcap - 1, next_id: 0 };
+            let t0 = read_counter();
+            nd_s = intern_single(&c, &mut it, &mut ids_s);
+            let t1 = read_counter();
+            single_ns.push(ticks_to_ns(t1.wrapping_sub(t0)));
+        }
+        let ck_s = canonical_checksum(&ids_s, nd_s);
+        let sm = median(single_ns);
+
+        for &s in &[2usize, 4, 8] {
+            let mut par_ns = Vec::with_capacity(runs);
+            let mut mrg_ns = Vec::with_capacity(runs);
+            let mut ck_m = 0u64;
+            let mut gk = vec![0u64; gcap];
+            let mut gsi = vec![0u32; gcap];
+            let mut gio = vec![0u32; vocab + 1];
+            let mut gil = vec![0u32; vocab + 1];
+            let mut ids_m = vec![0u32; n];
+            let mut remap: Vec<u32> = Vec::new();
+            for _ in 0..runs {
+                // parallel intern: one thread per shard, wall time = slowest shard.
+                let t0 = read_counter();
+                let shards: Vec<ShardResult> = std::thread::scope(|sc| {
+                    let mut hs = Vec::with_capacity(s);
+                    for si in 0..s {
+                        let (lo, hi) = (si * n / s, (si + 1) * n / s);
+                        let cref = &c;
+                        hs.push(sc.spawn(move || intern_shard(cref, lo, hi)));
+                    }
+                    hs.into_iter().map(|h| h.join().unwrap()).collect()
+                });
+                let t1 = read_counter();
+                par_ns.push(ticks_to_ns(t1.wrapping_sub(t0)));
+                // merge tail (sequential).
+                let mut git = Interner { keys: &mut gk, slot_id: &mut gsi, id_off: &mut gio, id_len: &mut gil, mask: gcap - 1, next_id: 0 };
+                let t2 = read_counter();
+                let nd_m = merge_shards(&c.pool, &shards, &mut git, &mut ids_m, &mut remap);
+                let t3 = read_counter();
+                mrg_ns.push(ticks_to_ns(t3.wrapping_sub(t2)));
+                ck_m = canonical_checksum(&ids_m, nd_m);
+            }
+            if ck_m != ck_s {
+                eprintln!("  !! intern CROSS-VAL FAIL regime={regime} S={s}: 0x{ck_m:x} != 0x{ck_s:x}");
+                std::process::exit(2);
+            }
+            let pm = median(par_ns);
+            let mm = median(mrg_ns);
+            let total = pm + mm;
+            println!(
+                "{:>9} {:>10} {:>8} {:>5} | {:>7.1}us {:>7.1}us {:>7.1}us {:>7.1}us {:>6.2}x",
+                n, regime, nd_s, s, sm / 1000.0, pm / 1000.0, mm / 1000.0, total / 1000.0, sm / total
+            );
+            csv.push_str(&format!(
+                "{},{},{},{},{:.1},{:.1},{:.1},{:.1},{:.2}\n",
+                n, regime, nd_s, s, sm, pm, mm, total, sm / total
+            ));
+        }
+    }
+    fs::write(out_dir.join("intern_shard.csv"), csv)
+        .expect("scale-runner refuses to conclude without writing its CSV");
+}
+
 fn main() {
     let out_dir = Path::new("results/scale");
     fs::create_dir_all(out_dir).expect("create results/scale");
@@ -521,6 +617,11 @@ fn main() {
         println!("\nscale CSVs written to results/scale/");
         return;
     }
+    if args.first().map(String::as_str) == Some("intern") {
+        run_intern(out_dir, 5);
+        println!("\nscale CSVs written to results/scale/");
+        return;
+    }
     if args.first().map(String::as_str) == Some("recwidth") {
         run_record_width(out_dir, 5);
         println!("\nscale CSVs written to results/scale/");
@@ -548,6 +649,7 @@ fn main() {
         run_threaded_dag(out_dir, 5);
         run_record_width(out_dir, 5);
         run_retract(out_dir, 5);
+        run_intern(out_dir, 5);
     }
     println!("\nscale CSVs written to results/scale/");
 }

@@ -32,6 +32,7 @@ pub mod ir;
 pub mod native;
 pub mod reach;
 pub mod retract;
+pub mod sharded_intern;
 pub mod thermo;
 pub mod valrepr;
 
