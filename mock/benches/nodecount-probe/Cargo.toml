@@ -1,0 +1,11 @@
+[workspace]
+[package]
+name = "nodecount-probe"
+version = "0.0.0"
+edition = "2021"
+publish = false
+[[bin]]
+name = "nodecount-probe"
+path = "src/main.rs"
+[dependencies]
+libloading = "0.8"

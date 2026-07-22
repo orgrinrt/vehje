@@ -36,8 +36,9 @@ claim: 16B is a live contender; "24B precisely optimal" is not supported.
 ### 3. "Switch refutes Deegen" was a toolchain-ABI artifact (audit C3), now measured properly
 
 `zig_dispatch`: a Zig 0.16 cdylib (first-class harness variant, same C ABI, byte-identical abi_hash) running
-switch vs tail-threaded `@call(.always_tail)` over an identical opcode stream, cross-validated. Tail is ~1.4x
-SLOWER than switch on M1. The reason is the calling convention: Zig 0.16's `always_tail` uses the standard ABI
+switch vs tail-threaded `@call(.always_tail)` over an identical opcode stream, cross-validated. Tail is 1.5x to
+4x SLOWER than switch on M1 (a fine size sweep shows tail goes memory-bound earlier than switch, so the ratio
+peaks ~3-4x in the mid working-set range and settles to ~1.5x once both saturate). The reason is the calling convention: Zig 0.16's `always_tail` uses the standard ABI
 (callee-saved preservation per handler), while Deegen's advantage needs `preserve_none`, which Zig 0.16 cannot
 express. Corrected claim: on this toolchain switch is the faster dispatch shape, and this neither confirms nor
 refutes Deegen (whose mechanism is `preserve_none` tail dispatch); a fair Deegen test is blocked on
@@ -97,8 +98,9 @@ match lowering on M1 (unpredictable indirect branch); flat shadow-stack resolve 
 offset, megamorphic converges to a dead heat (the IC hazard). A fine size sweep corrected a coarse-sweep
 reading: what looked like an isolated n=4096 spike in two benches (push-fusion, zig-tail) is a mid-size
 working-set/cache transition spanning n~1024-6144 (peak ~3.8x at n=2048-3072), converging at large n as both
-sides stream from DRAM. A machine effect, mapped, not a variant property. One gap:
-`cheap_lowering`'s node-count metric is emitted in the output but not yet surfaced to CSV.
+sides stream from DRAM. A machine effect, mapped, not a variant property. `cheap_lowering`'s
+node-count metric (emitted in the variant output high-32-bits) is now extracted via a small dlopen probe and
+committed: CSE reduces node count 59-75% (growing with N) at 1.5-2.7x lowering latency, so it is clearly worth it.
 
 ## Headline status table
 
@@ -106,7 +108,7 @@ sides stream from DRAM. A machine effect, mapped, not a variant property. One ga
 |---|---|---|
 | native ceiling 1.0-1.2x | retracted | ~2.0x (switch), ~2.2x (fntable) |
 | 24B precisely optimal | not supported | 12-32B tie; 16B a live contender |
-| switch refutes Deegen | reframed | tail 1.4x slower on Zig 0.16 std ABI; Deegen blocked on preserve_none |
+| switch refutes Deegen | reframed | tail 1.5-4x slower on Zig 0.16 std ABI; Deegen blocked on preserve_none |
 | incremental warm 1300x | deleted | warm 2.5-3.7x faster than cold (ratio scales with compile/hash) |
 | hardware-counter timing | corrected | wall-clock CNTVCT + cost-model line |
 | whole-column vs delta (unrun) | now measured | semi 2-5x deep/narrow, ~1.2x wide/many-target |

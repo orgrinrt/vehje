@@ -67,6 +67,26 @@ may_differ (CSE reduces node count, so outputs differ by design; the low-32 chec
 
 ## Verdict
 
-Fold+CSE costs 1.5x to 2.7x the latency of fold-only. The design-deciding quantity is the node-count reduction CSE buys, which the variant emits in the output high-32-bits but the harness does not surface to CSV; extracting it is a small follow-up before the cost/benefit claim is definitive. The latency peak at n=4096 (2.7x) is a CSE hash-table cache effect, not monotonic.
+The complete cost/benefit, both sides now measured. BENEFIT (the design-deciding quantity, the reduced node
+count, extracted from the variants' output high-32-bits via `nodecount-probe`, one fresh process per size, and
+committed in `nodecount.csv`):
+
+| n | fold-only nodes | fold+CSE nodes | reduction |
+|---|---|---|---|
+| 64    | 64    | 26   | 59.4% |
+| 256   | 256   | 94   | 63.3% |
+| 1024  | 1024  | 313  | 69.4% |
+| 4096  | 4096  | 1307 | 68.1% |
+| 16384 | 16384 | 4178 | 74.5% |
+
+CSE removes 59% to 75% of the nodes (a 2.4x to 3.9x smaller program), and the reduction GROWS with program
+size as more common subexpressions accumulate. fold-only removes nothing here (this program has no
+constant-foldable subexpressions, only CSE-able common ones), so its node count is exactly N.
+
+COST: fold+CSE costs 1.5x to 2.7x the latency of fold-only (the latency peak at n=4096 is a CSE hash-table
+cache transition, not monotonic; see the fine-sweep discussion in the dispatch findings for the same
+crossover shape). VERDICT: CSE is clearly worth it, buying a ~3x smaller program for ~2x the lowering time,
+with the benefit widening at scale. The metric extraction closes the audit's "committed CSV is the bench" gap
+for this bench: the node-count reduction is now in a committed CSV, not only latency.
 
 **Strength: measurement** (wall-clock timing, cross-validated per above; no hardware event counters available in M1 userspace, so mechanism attribution rests on designed sweeps, not counters).
