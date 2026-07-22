@@ -477,3 +477,124 @@ across all dispatch shapes, frequency-order (or dual-order) the if-chain, adopt 
 accounting, and gate the value-representation axis on the IR extension. With those four, the cells measure
 their strategy and nothing else; without them, the matrix inherits the same confounds at scale and produces
 a larger body of precisely-wrong numbers.
+
+## Addendum: make the carrier final-like, or the insight is only about a toy
+
+The representativeness audit above is about fairness between variants. This one is about a deeper thing: even
+a perfectly fair comparison between naive variants of a toy interpreter yields conclusions about the toy, not
+about the runtime vehje will ship. If the carrier interpreter is a naive tree-walk over an arithmetic DAG
+with a hash keep-alive, then "flat-threaded beats wire-switch by 1.26x" is a true fact about that naive
+interpreter and an unreliable guide to what the real Zig residual runtime should do. To get usable insight,
+each variant must be the best realistic form of its strategy, and the shared carrier must be shaped like the
+thing being built. Below is what that means concretely, grounded in vehje's actual runtime contract (a
+tier-tagged residual: a flat serialized IR arena at the baseline, an optimized bytecode above it, native
+code at the top).
+
+### Map the form axis onto vehje's real tiers, so the matrix answers the tiering question
+
+The single most useful reframing: the form axis is not five arbitrary record widths plus a flat form, it is
+the runtime's actual execution tiers. The serialized wire record is the residual as it crosses the ABI (the
+cold, just-loaded form). The predecoded flat form is the baseline arena the runtime builds on load. The
+native-ceiling is the native tier. Framed this way, the matrix stops being "which record width is fastest"
+trivia and becomes the decision the runtime actually faces: how much does building the baseline arena from
+the residual buy over interpreting the residual directly, and how far short of native does the best baseline
+interpreter fall, so is the bytecode or native tier worth building at all. That is decision-grade. Keep the
+individual wire widths as a sub-axis of the cold tier (they answer the residual-encoding question), but
+report the form axis primarily as cold-residual versus baseline-arena versus native.
+
+### The IR: typed values, a real value arena, and control flow
+
+Three changes move the IR from toy to final-like, in priority order.
+
+Typed values. The u64-only value model is why value representation cannot compose. A final IR carries a
+typed value (at minimum int and float; ideally the residual's real value union). Add a per-node result type
+so the value representation is intrinsic: the static, tagged, and NaN-boxed cells then interpret the one
+shared program and cross-validate, and the value-representation cost is measured on the real IR rather than a
+private mini-program. This is the type-tag extension the audit named, stated here as a positive design move
+rather than a caveat.
+
+A real value arena with lifetimes. The current interpreter stores every node's result into a
+`results[node_count]` array kept live for the whole pass, and at scale that array is the dominant memory
+traffic (A2 and A3 were memory-bound at large n precisely because of it). No production interpreter
+materialises every intermediate forever; it allocates values into a reused arena sized to the live set, freed
+as values die. Model a real value arena with a liveness-driven slot allocator, so the memory the interpreter
+touches reflects the live set, not the node count. This is the highest-leverage realism change, because it
+attacks the exact term that dominates the large-program regime, and it turns the output-building axis from a
+toy post-pass into the real question of how values are allocated and reused. The naive "store every node" is
+kept only as the worst-case reference cell.
+
+Control flow. The IR is currently straight-line: a DAG evaluated in index order with no branches or loops in
+the program. This is not just unrealistic, it structurally understates the thing the dispatch axis exists to
+measure. Threaded dispatch's whole advantage is that the indirect branch at each handler tail learns the
+local opcode-successor distribution, and that advantage is largest in hot loop bodies where the same handler
+sequence repeats. A linear stream never exercises that. The IR should carry basic blocks and terminators
+(branch, loop back-edge, and eventually call), so dispatch is measured under real control flow where the
+branch predictor and the threaded shape actually earn or lose their keep. Without this the matrix measures
+dispatch on the one workload that least resembles where dispatch matters, and the threaded numbers are
+understated in the direction that matters for the runtime. The existing `cfg` module already has a
+block-and-terminator machine; the move is to make the shared IR itself block-structured rather than keeping a
+separate straight-line DAG and a separate CFG bench.
+
+### Eval: a real output sink, and predecode as the default not the exotic option
+
+Replace the per-node hash keep-alive with a real output sink. The `rotate_left(7) ^ v` per node exists only
+to keep results live and to cross-validate; both are achievable with a post-pass checksum over the arena (as
+7081 proposes), and the keep-alive should instead be the interpreter writing its actual outputs (the live
+results at the end, or a designated output node's value) into the FFI output region, which is real work a
+real interpreter does. That makes output building a measured stage rather than an artifact, and removes the
+fixed per-node dilution from every dispatch number.
+
+Treat predecode as the baseline, not a contender. A real runtime does not re-parse wire bytes on every
+evaluation; it builds a dispatch-ready form once on load and runs that. So the predecoded flat form is the
+realistic baseline, and the wire-decode-every-node interpreter is the exotic case (a cold, run-once, or
+memory-constrained tier), not the default. Framing the default as the wire switch is itself a toy artifact of
+where the arc started. The matrix should center on the baseline-arena forms and treat re-decoding wire as the
+cold-tier variant.
+
+### Dispatch: each variant its best realistic form, plus the ones the runtime would actually build
+
+The dispatch axis is only usable if each cell is the optimal realisation of its strategy, so the comparison
+is best-against-best, not best-against-strawman.
+
+- Direct threading, not indirect. The current threaded interpreter looks up `TABLE[opcode]` on every step.
+  The final threaded form stores the resolved handler pointer directly in the predecoded node, so dispatch is
+  a jump through the instruction's own handler field with no table load. Resolve opcodes to handler pointers
+  at predecode time and the threaded cell measures true direct threading, which is what a production
+  threaded interpreter ships; the table-indirect version stays as a labelled less-optimal point.
+- Superinstructions. Fuse the most frequent consecutive producer-consumer node pairs into single handlers
+  that compute both and keep the intermediate in a register, skipping its arena round-trip. This attacks the
+  memory-traffic term directly and is a standard production technique; it is the cell most likely to move the
+  large-program regime, and it composes with the value arena (fusion removes a value from the live set).
+- Register or accumulator caching. Keep the most-recently-produced value in a register so an immediately
+  consuming node avoids the arena load, the interpreter analogue of top-of-stack caching. Cheap, real, and
+  measurable.
+- Frequency-ordered if-chain and the perfect-hash and bit-tree strategies, as already noted, each in their
+  strongest form.
+- One shared operand-load and result-store primitive used identically by every dispatch cell, so the axis
+  varies dispatch alone (the audit's confound fix), with checked-versus-unchecked promoted to its own axis if
+  it proves interesting.
+
+The insight this yields is the usable kind: not "threaded beats switch on a toy," but "on the block-structured
+IR with a real value arena, direct-threaded dispatch with superinstructions reaches N times native and M
+percent over the flat-switch baseline in the hot-loop regime, and the gap to native is small enough (or not)
+that the bytecode or native tier is (or is not) worth building." That is a statement the runtime design can
+act on.
+
+### What stays deliberately simple
+
+Not everything should chase realism. The determinism and the cross-validation checksum contract stay exactly
+as they are (they are what make the matrix trustworthy, not what make it a toy). The generator stays a
+seeded, dependency-free deterministic function. The point is to make the interpreter and IR shaped like the
+real thing, not to import the whole runtime; the carrier remains a measurement instrument, just one whose
+measured object now resembles what ships.
+
+### Priority
+
+If only some of this lands before the matrix, the order by insight-per-effort is: the shared operand
+primitive (unblocks honest dispatch comparison, small), the real output sink plus post-pass checksum
+(removes dilution, small), the value arena with lifetimes (attacks the dominant large-program term, medium),
+control flow in the IR (unlocks the regime where dispatch actually matters, medium-large), direct threading
+and superinstructions (the cells most likely to change the tiering conclusion, medium), typed values (unlocks
+the value-representation axis, medium). Cold-tier framing of the form axis is free and should be adopted
+immediately. Each is independently landable and independently improves the fidelity of every cell that
+follows.
