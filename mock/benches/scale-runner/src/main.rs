@@ -28,7 +28,7 @@ use vehje_bench_carrier::retract::{
 use vehje_bench_carrier::sharded_intern::{
     canonical_checksum, gen_corpus, intern_shard, intern_single, merge_shards, Interner, ShardResult,
 };
-use vehje_bench_carrier::cfg::{build_nested_loop, interp as cfg_interp, oracle_nested_loop};
+use vehje_bench_carrier::cfg::{build_branchy, build_nested_loop, interp as cfg_interp, oracle_branchy, oracle_nested_loop, Block};
 use vehje_bench_carrier::reach::{
     gen_fanin, gen_layered, gen_random_dag, reach_checksum, reset_reach, solve_semi, solve_whole,
     Graph,
@@ -703,39 +703,51 @@ fn run_value_arena(out_dir: &Path, runs: usize) {
 /// oracle. Reports ns/instr, ns/step (instr + terminator), and the control-flow
 /// fraction, since branches are the interp's hard-to-predict work.
 fn run_cfg_interp(out_dir: &Path, runs: usize) {
-    println!("\n== CFG interp throughput: control-flow-heavy nested-loop kernel ==");
-    let (outer, inner) = (2000u64, 16000u64);
+    println!("\n== CFG interp throughput: predictable vs unpredictable control flow ==");
+    println!("{:>22} {:>10} {:>8} {:>10} {:>8}", "kernel", "steps", "ns/step", "cyc/step", "cf%");
     let seed = 3u64;
-    let blocks = build_nested_loop(outer, inner);
-    // cross-validate against the oracle.
-    let (r, ni, nt) = cfg_interp(&blocks, seed, u64::MAX);
-    if r != oracle_nested_loop(seed, outer, inner) {
-        eprintln!("  !! cfg CROSS-VAL FAIL: 0x{r:x} != oracle");
-        std::process::exit(2);
+    let mut csv = String::from("kernel,steps,instrs,terminators,ns,ns_per_step,cyc_per_step,cf_pct\n");
+    // (label, blocks, oracle-result) for each kernel.
+    let nested = build_nested_loop(2000, 16000);
+    let bpred = build_branchy(12_000_000, true);
+    let bunpred = build_branchy(12_000_000, false);
+    let cases: [(&str, &[Block], u64); 3] = [
+        ("nested-loop", &nested, oracle_nested_loop(seed, 2000, 16000)),
+        ("branchy-predictable", &bpred, oracle_branchy(seed, 12_000_000, true)),
+        ("branchy-unpredictable", &bunpred, oracle_branchy(seed, 12_000_000, false)),
+    ];
+    let mut ns_step_by_kernel = [0.0f64; 3];
+    for (idx, (label, blocks, oracle)) in cases.iter().enumerate() {
+        let (r, ni, nt) = cfg_interp(blocks, seed, u64::MAX);
+        if r != *oracle {
+            eprintln!("  !! cfg CROSS-VAL FAIL {label}: 0x{r:x} != oracle 0x{oracle:x}");
+            std::process::exit(2);
+        }
+        let mut ns = Vec::with_capacity(runs);
+        for _ in 0..runs {
+            let t0 = read_counter();
+            let _ = cfg_interp(blocks, seed, u64::MAX);
+            let t1 = read_counter();
+            ns.push(ticks_to_ns(t1.wrapping_sub(t0)));
+        }
+        let m = median(ns);
+        let steps = ni + nt;
+        let ns_step = m / steps as f64;
+        let cf = nt as f64 / steps as f64 * 100.0;
+        ns_step_by_kernel[idx] = ns_step;
+        println!(
+            "{:>22} {:>10} {:>7.3} {:>9.2} {:>7.0}%",
+            label, steps, ns_step, ns_step * 3.2, cf
+        );
+        csv.push_str(&format!(
+            "{},{},{},{},{:.1},{:.4},{:.2},{:.1}\n",
+            label, steps, ni, nt, m, ns_step, ns_step * 3.2, cf
+        ));
     }
-    let mut ns = Vec::with_capacity(runs);
-    for _ in 0..runs {
-        let t0 = read_counter();
-        let _ = cfg_interp(&blocks, seed, u64::MAX);
-        let t1 = read_counter();
-        ns.push(ticks_to_ns(t1.wrapping_sub(t0)));
-    }
-    let m = median(ns);
-    let steps = ni + nt;
-    let ns_step = m / steps as f64;
-    let ns_instr = m / ni as f64;
-    let cf = nt as f64 / steps as f64 * 100.0;
+    let mispredict = ns_step_by_kernel[2] - ns_step_by_kernel[1];
     println!(
-        "  {} outer x {} inner: {} instrs + {} terminators = {} steps in {:.1} ms",
-        outer, inner, ni, nt, steps, m / 1e6
-    );
-    println!(
-        "  {:.3} ns/step ({:.2} cyc), {:.3} ns/instr, control-flow {:.0}% of steps",
-        ns_step, ns_step * 3.2, ns_instr, cf
-    );
-    let csv = format!(
-        "outer,inner,instrs,terminators,steps,ns,ns_per_step,cyc_per_step,ns_per_instr,cf_pct\n{},{},{},{},{},{:.1},{:.4},{:.2},{:.4},{:.1}\n",
-        outer, inner, ni, nt, steps, m, ns_step, ns_step * 3.2, ns_instr, cf
+        "  => unpredictable branch costs +{:.2} ns/step ({:.1} cyc) over predictable, the misprediction tax",
+        mispredict, mispredict * 3.2
     );
     fs::write(out_dir.join("cfg_interp.csv"), csv)
         .expect("scale-runner refuses to conclude without writing its CSV");

@@ -1,49 +1,53 @@
-# CFG interp throughput: control-flow-heavy per-instruction cost
+# CFG interp throughput: predictable vs unpredictable control flow
 
-**Strength: measurement** (CNTVCT_EL0, 5 runs median; the interpreted result cross-validated against a direct
-Rust computation of the same kernel, the oracle). The audit's fifth standalone scaling bench, ported onto the
-carrier as a register-CFG interpreter.
+**Strength: measurement** (CNTVCT_EL0, 5 runs median; every kernel's interpreted result cross-validated
+against a direct Rust oracle). The audit's fifth standalone scaling bench, ported onto the carrier as a
+register-CFG interpreter, plus a predictability variant that isolates the branch-misprediction cost.
 
 ## The question
 
-Every other interp bench here is straight-line. The vehje runtime also has a CFG-of-blocks interpreter tier,
-whose profile differs: a large fraction of executed steps are block terminators (branches, loop back-edges).
-The workload is a nested-loop numeric kernel (`acc += seed * inner_counter` over outer x inner iterations) run
-through a small register VM (8 registers, blocks ending in jump / conditional-branch / return).
+The vehje runtime has a CFG-of-blocks interpreter tier whose profile differs from the straight-line interp: a
+large fraction of executed steps are block terminators. Two sub-questions: what does control-flow-heavy
+interpretation cost, and how much of that cost is branch MISPREDICTION versus control-flow density? The
+branchy kernels answer the second: both do the identical work per iteration (one MUL, one ADD, one AND, then a
+branch on a parity bit); only the branch SOURCE differs. Predictable branches on the loop counter's parity (a
+learnable ABAB alternation); unpredictable branches on a per-iteration LCG value's parity (~50/50, unlearnable).
 
-## Result
+## Result (register-CFG interp)
 
-| outer | inner | instrs | terminators | steps | time | ns/step | cyc/step | ns/instr | control-flow |
-|---|---|---|---|---|---|---|---|---|---|
-| 2000 | 16000 | 96.0M | 32.0M | 128.0M | 383.7 ms | 3.00 | 9.6 | 4.00 | 25% |
+| kernel | steps | ns/step | cyc/step | control-flow |
+|---|---|---|---|---|
+| nested-loop            | 128.0M | 2.83 | 9.0  | 25% |
+| branchy-predictable    | 108.0M | 3.03 | 9.7  | 44% |
+| branchy-unpredictable  | 108.0M | 3.24 | 10.4 | 44% |
+
+Unpredictable minus predictable (same kernel): **+0.21 ns/step (+0.7 cycles), the misprediction tax.**
 
 ## The finding
 
-The register-CFG interpreter runs at ~3.0 ns/step (~9.6 cycles), with 25% of executed steps being control-flow
-terminators. Two things this says:
+Two things, both design-relevant:
 
-- **The per-step cost is interpreter dispatch overhead, not the register op.** A register op (read two
-  registers, compute, write one, all in registers or L1) is a cycle or two of real work; the ~9.6 cycles/step
-  is the interpreter's own control flow: the `match` on the opcode, the block-instruction loop, the terminator
-  `match`. Interpretation overhead dominates a tight in-cache kernel, where there is no large working set to
-  stream (unlike the straight-line interp streaming a 96 MB wire at ~9.8 ns/op). Against a native compiled loop
-  (~1-2 cycles/iteration), this is roughly 5x to 9x, which is the interpreter tax on a hot loop and the
-  motivation for a native tier where such loops are hot.
-- **The 25% control-flow is nearly free here because the branches are predictable.** The loop-head branches are
-  taken N times then fall through, a pattern the branch predictor learns, so the terminators are as cheap as
-  the arithmetic steps. This is the predictable case; a data-dependent branch (an unpredictable conditional in
-  the loop body) would mispredict and cost far more per terminator. The 25% figure is the control-flow density,
-  not a misprediction cost; the honest headline is "control-flow-heavy but predictable is cheap."
+- **Per-step interpretation cost is dispatch overhead, not the register op.** ~9-10 cycles/step for
+  register-only arithmetic in cache is the interpreter's own control flow (opcode match, block-instruction
+  loop, terminator match), consistent with the ~5-9x interpretation tax over a native loop.
+- **Branch misprediction is real but diluted.** A 50%-mispredicting branch adds only +0.7 cycles/step on
+  average. Per iteration that is ~+6 cycles for the one data-dependent branch (nine steps per iteration times
+  0.7), which is the full M1 mispredict penalty (~13 cycles) at a 50% miss rate. So the misprediction costs the
+  whole penalty per mispredicting branch, but because it is one branch among ~nine interpreted steps, its
+  per-step average impact is modest (+7%). The interpreter's already-high per-step latency and the
+  out-of-order engine absorb most of the branch cost that would dominate on tight native code.
 
-Design implication (op's call): the CFG interpreter tier is fine for cold or control-light code, but a tight
-hot loop pays a ~5-9x interpretation tax that a native tier removes; the predictability of the loop's own
-branches means the control-flow density alone does not make the interpreter slow, only unpredictable branches
-would.
+Design implication (op's call): the CFG interpreter tier pays the branch-mispredict penalty in full per
+data-dependent branch, so branch-dense code with unpredictable conditions is the case where the interpreter
+hurts most and a native tier helps most; but for arithmetic-heavy code with a modest branch density, even
+fully-unpredictable branches raise the per-step cost only ~7%, because interpretation overhead dominates.
+Control-flow DENSITY alone (the 25% vs 44% here) is not what makes the interpreter slow; unpredictable
+branches are, and only in proportion to how many steps are branches.
 
 ## Cost-model / boundary
 
-3.0 ns/step at 3.2 GHz is 9.6 cycles/step, consistent with an interpreter dispatching per instruction (opcode
-match + loop bookkeeping + terminator match) over an all-in-cache working set (5 blocks, 8 registers). Boundary:
-a single kernel shape (nested loop, predictable branches). The unpredictable-branch case is the natural
-follow-up variant; here the named bench is the loop kernel, whose branches predict, so this measures
-control-flow density cost, not misprediction cost.
+The +6 cycles/iteration misprediction cost matches a ~13-cycle M1 branch-mispredict penalty at a ~50% miss
+rate; the predictable and unpredictable kernels are byte-identical in work (one MUL, one ADD, one AND per
+iteration) so the difference is the branch source alone, physically consistent. Boundary: one data-dependent
+branch per iteration; a kernel with several unpredictable branches per iteration would scale the tax
+proportionally (the per-step average would rise toward the full per-branch penalty).

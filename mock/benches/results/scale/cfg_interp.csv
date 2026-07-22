@@ -1,2 +1,4 @@
-outer,inner,instrs,terminators,steps,ns,ns_per_step,cyc_per_step,ns_per_instr,cf_pct
-2000,16000,96004005,32004003,128008008,383737375.0,2.9978,9.59,3.9971,25.0
+kernel,steps,instrs,terminators,ns,ns_per_step,cyc_per_step,cf_pct
+nested-loop,128008008,96004005,32004003,361680500.0,2.8255,9.04,25.0
+branchy-predictable,108000008,60000005,48000003,326727166.7,3.0253,9.68,44.4
+branchy-unpredictable,108000008,60000005,48000003,349589208.3,3.2369,10.36,44.4

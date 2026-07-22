@@ -19,6 +19,7 @@ pub mod op {
     pub const ADD: u8 = 1;
     pub const SUB: u8 = 2;
     pub const MUL: u8 = 3;
+    pub const AND: u8 = 4;
 }
 
 #[derive(Clone, Copy)]
@@ -62,6 +63,7 @@ pub fn interp(blocks: &[Block], seed: u64, cap: u64) -> (u64, u64, u64) {
                 op::SET => ins.imm,
                 op::ADD => regs[ins.a as usize].wrapping_add(regs[ins.b as usize]),
                 op::SUB => regs[ins.a as usize].wrapping_sub(regs[ins.b as usize]),
+                op::AND => regs[ins.a as usize] & regs[ins.b as usize],
                 _ => regs[ins.a as usize].wrapping_mul(regs[ins.b as usize]),
             };
             regs[ins.dst as usize] = v;
@@ -136,6 +138,77 @@ pub fn oracle_nested_loop(seed: u64, outer: u64, inner: u64) -> u64 {
     acc
 }
 
+const LCG_A: u64 = 6364136223846793005;
+const LCG_C: u64 = 1442695040888963407;
+
+/// Build a loop with one hot conditional branch per iteration whose predictability
+/// is controlled. Both variants do the identical work per iteration (one MUL, one
+/// ADD, one AND, then a branch on a parity bit); only the branch SOURCE differs:
+/// `predictable` branches on the loop counter's parity (a learnable ABAB
+/// alternation), `!predictable` on a per-iteration LCG value's parity (~50/50,
+/// unlearnable). The gap between the two is the branch-misprediction cost per
+/// terminator, which the predictable nested-loop kernel could not show.
+/// Registers: r0 = advancing value, r1 = counter, r2 = acc, r3 = parity, r4 = 1,
+/// r5 = LCG_A, r6 = LCG_C, r7 = dead scratch (to match instruction counts).
+pub fn build_branchy(n: u64, predictable: bool) -> Vec<Block> {
+    let i = |op, dst, a, b, imm| Instr { op, dst, a, b, imm };
+    let advance = if predictable {
+        // dead MUL (matches the unpredictable variant's MUL op) then r0 += 1.
+        vec![i(op::MUL, 7, 5, 6, 0), i(op::ADD, 0, 0, 4, 0)]
+    } else {
+        // r0 = r0 * A + C (an LCG step; its parity is unpredictable).
+        vec![i(op::MUL, 0, 0, 5, 0), i(op::ADD, 0, 0, 6, 0)]
+    };
+    let mut b2 = advance;
+    b2.push(i(op::AND, 3, 0, 4, 0)); // r3 = r0 & 1 (parity)
+    vec![
+        // block 0: entry.
+        Block {
+            instrs: vec![
+                i(op::SET, 1, 0, 0, n),
+                i(op::SET, 2, 0, 0, 0),
+                i(op::SET, 4, 0, 0, 1),
+                i(op::SET, 5, 0, 0, LCG_A),
+                i(op::SET, 6, 0, 0, LCG_C),
+            ],
+            term: Term::Jmp(1),
+        },
+        // block 1: loop head. if r1 == 0 -> exit(6), else -> 2.
+        Block { instrs: vec![], term: Term::BrNz(1, 2, 6) },
+        // block 2: advance + compute parity; branch on it.
+        Block { instrs: b2, term: Term::BrNz(3, 3, 4) },
+        // block 3: path A. r2 += r1. -> 5.
+        Block { instrs: vec![i(op::ADD, 2, 2, 1, 0)], term: Term::Jmp(5) },
+        // block 4: path B. r2 -= r1. -> 5.
+        Block { instrs: vec![i(op::SUB, 2, 2, 1, 0)], term: Term::Jmp(5) },
+        // block 5: tail. r1 -= 1. -> 1.
+        Block { instrs: vec![i(op::SUB, 1, 1, 4, 0)], term: Term::Jmp(1) },
+        // block 6: exit. ret r2.
+        Block { instrs: vec![], term: Term::Ret(2) },
+    ]
+}
+
+/// Oracle for [`build_branchy`], for cross-validation.
+pub fn oracle_branchy(seed: u64, n: u64, predictable: bool) -> u64 {
+    let mut r0 = seed;
+    let mut acc = 0u64;
+    let mut c = n;
+    while c != 0 {
+        if predictable {
+            r0 = r0.wrapping_add(1);
+        } else {
+            r0 = r0.wrapping_mul(LCG_A).wrapping_add(LCG_C);
+        }
+        if r0 & 1 != 0 {
+            acc = acc.wrapping_add(c);
+        } else {
+            acc = acc.wrapping_sub(c);
+        }
+        c -= 1;
+    }
+    acc
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -147,6 +220,19 @@ mod tests {
                 let blocks = build_nested_loop(outer, inner);
                 let (r, _ni, _nt) = interp(&blocks, seed, u64::MAX);
                 assert_eq!(r, oracle_nested_loop(seed, outer, inner), "cfg vs oracle at ({outer},{inner}) seed {seed}");
+            }
+        }
+    }
+
+    #[test]
+    fn branchy_matches_oracle() {
+        for pred in [true, false] {
+            for &n in &[5u64, 50, 1000] {
+                for seed in [1u64, 42, 999] {
+                    let blocks = build_branchy(n, pred);
+                    let (r, _, _) = interp(&blocks, seed, u64::MAX);
+                    assert_eq!(r, oracle_branchy(seed, n, pred), "branchy vs oracle pred={pred} n={n} seed={seed}");
+                }
             }
         }
     }
