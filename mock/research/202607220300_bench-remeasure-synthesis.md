@@ -133,6 +133,18 @@ sides stream from DRAM. A machine effect, mapped, not a variant property. `cheap
 node-count metric (emitted in the variant output high-32-bits) is now extracted via a small dlopen probe and
 committed: CSE reduces node count 59-75% (growing with N) at 1.5-2.7x lowering latency, so it is clearly worth it.
 
+### The five standalone scaling benches, ported to the carrier (audit C7)
+
+The audit named five standalone scaling benches with header-only or non-carrier data. All are now carrier-based
+and cross-validated on the scale-runner: reach-8M (C5), record-width-past-L2 (both above), plus three ported
+this pass. arena-locality: interp throughput is flat vs the operand backward-read window through an 8MB window
+(whole L2), +16% only past L2 at 16MB, so operand-locality tuning buys <=16% and only at extreme windows real
+programs never reach (the old standalone swept to 512 nodes and missed the cliff). value-arena: encode ~2GiB/s,
+parse zero-copy (free), interpret latency-bound (same ~78ms for 128MB rec16 and 192MB rec24), confirming 16B is
+as good as 24B for the interpreter from the throughput side. cfg-interp: a register-CFG interp over a nested
+loop, 3.0 ns/step (9.6 cyc), 25% control-flow; the per-step cost is interpreter dispatch overhead (~5-9x a
+native loop), and the predictable loop branches make the control-flow density nearly free.
+
 ## Headline status table
 
 | topic headline | status | corrected number |
