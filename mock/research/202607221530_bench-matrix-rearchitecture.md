@@ -606,3 +606,219 @@ compute-plus-structure-plus-dispatch, draws the amortization and warmup and work
 curves rather than points, and asks the one question worth the whole apparatus: can an adaptive runtime,
 choosing each stage (and dispatch per region) from a cheap measured model, beat every fixed composition
 across the entire program-and-regime space, and by how much.
+
+## Third amendment (LOUD): are the variants actually representative, or hacked to look good?
+
+Op asked the question that matters most and that the other deliverables skated past: forget the elegant
+matrix design, are the variants I have ALREADY WRITTEN honest? Does any variant win because of how it was
+hacked together to mimic its shape rather than because the shape is genuinely faster? Does any lose
+unfairly? Are they truly isolated? I audited the real carrier source and the built cdylibs. The answer is
+that there is one serious fairness bug, two unconfirmed label claims, and clean isolation. The landed A1
+and A3 threaded findings are confounded and must not be trusted until the bug is fixed.
+
+### The serious one: the threaded variants cheat on bounds checks.
+
+Source-verified, not inferred. Grepping the interpreter modules for raw-pointer (`.add()`, unchecked)
+versus indexed (`results[..]`, bounds-checked) operand access:
+
+- `interp.rs` (switch, fntable, ifchain): **0** raw-pointer sites. Every operand read is bounds-checked
+  `results[idx]` indexing.
+- `interp_threaded.rs` (wire threaded): **7** raw-pointer sites. Every operand read is unchecked
+  `*r.add(idx)`.
+- `predecode.rs`: the switch and fntable flat interpreters use bounds-checked `results[a]`; the
+  flat-threaded submodule uses unchecked `*r.add(idx)` / `*p.add(i)` (15 raw-pointer sites in the file,
+  all in the threaded path).
+
+So the threaded and flat-threaded variants elide the two-per-node array bounds checks (a compare plus a
+predictable conditional branch each) that switch, fntable, ifchain, and the flat switch all pay. This is
+not a property of threaded dispatch. It is an artefact of how I wrote it: the preserve-none handlers
+thread a raw `*mut u64` because carrying a `&mut [u64]` slice with its lifetime through the guaranteed-
+tail-call chain is awkward, and the raw pointer silently dropped the bounds check along with the lifetime.
+The variant is measuring "threaded dispatch AND unchecked access" against "switch dispatch WITH checked
+access," and reporting the difference as if it were dispatch alone.
+
+The magnitude is not negligible and it aligns suspiciously with the findings. Two elided checks per node
+matter most exactly where the threaded variants looked best: in the L1-resident small-n regime, where per-
+node cost is a few nanoseconds and a predictable branch is a real fraction of it, A1 had threaded winning
+by ~2% and A3 had flat-threaded winning by 1.24-1.49x. At large n the checks hide under memory latency,
+and there A3 had flat-threaded merely TYING plain flat. That pattern (threaded wins where checks are cheap
+to skip, ties where they are hidden) is exactly what an elided-bounds-check advantage would produce. So a
+meaningful part, possibly most, of the A1 and A3 threaded advantage may be the missing checks, not the
+dispatch shape. I flag this loudly: **the A1 and A3 threaded results are confounded and must be re-run
+after the access discipline is normalized before any "threaded wins" claim is trusted.** A2 (predecode
+flat beats wire) is clean, because both its variants are switch and both are bounds-checked, so that 10-26%
+result stands.
+
+The fix, and it is a fidelity requirement not a nicety: normalize the access-checking discipline across
+every interpreter so the only thing that varies is the axis under test. The honest choice is that ALL
+interpreters use `get_unchecked`: the program is validated once (children-before-parents, every operand an
+earlier index, asserted by `is_well_formed` and the untrusted-load verifier), so every operand access is
+provably in range and the bounds check is pure overhead a real runtime would also elide after validation.
+Making them all unchecked removes the confound and measures dispatch cleanly. The alternative (all checked)
+is not reachable for the threaded ABI-threaded raw pointer without re-adding an explicit compare, which
+would itself be a different hand-shape. Unchecked-everywhere is the fair and realistic normalization.
+
+### Two label claims I have NOT actually confirmed at the instruction level.
+
+- **"switch" assumes the `match` lowers to a jump table.** The 17 opcodes are dense and contiguous (0..16),
+  which is the case LLVM usually lowers to a jump table, so it is probably faithful, but I did not confirm
+  it in the disassembly (inlining plus libstd noise defeated a quick objdump). If LLVM instead lowered the
+  match to a balanced-comparison tree or an if-chain, the "switch" cell is mislabeled and the
+  switch-versus-ifchain and switch-versus-bittree comparisons are partly degenerate. This must be confirmed
+  with `cargo-show-asm` or a focused disassembly of the interpret loop before the dispatch axis is trusted.
+- **"threaded" assumes preserve-none actually elides the callee-saved spills.** I proved the guaranteed
+  tail call is real (a 20,000-node program does not overflow the stack, which only holds if `become` is a
+  jump, not a call), so the tail-call half of the mechanism is confirmed. But the preserve-none half (no
+  callee-saved register preserved across the dispatch, which is the actual source of the advantage) is not
+  confirmed at the instruction level. `rust_preserve_none_cc` is an incomplete nightly feature; if it
+  silently fell back to the standard ABI on some handler, the threaded cell would be paying spills and thus
+  measuring something that is not preserve-none. The disassembly of a handler (look for the absence of
+  `stp`/`ldp` of x19-x28 around the dispatch) must confirm it.
+
+fntable is in better shape: the indirect call (`blr`) survives in the built dylib, so LTO did not
+devirtualize the function-pointer table back into a switch, which was the real risk for that cell. It
+appears faithful. ifchain is written as an explicit `if/else if` cascade and is structurally what it
+claims, though it has not been benched in the matrix yet and its ordering (ascending opcode, not
+frequency) is a documented choice that a profile-ordered variant should be compared against.
+
+### A subtler asymmetry between forms, not just dispatch.
+
+The flat variants may get a second, quieter bounds-check break: in the flat loop the compiler can often
+prove the node index `i` is in range for the whole `results`/`nodes` slice and hoist or elide the check,
+whereas the wire loop's operand indices come through `from_le_bytes` and are harder to prove, so its checks
+survive. If so, part of the flat-over-wire win is elided checks on the flat side, not just the smaller
+footprint. The `get_unchecked`-everywhere normalization fixes this too, and it should be verified that
+after normalization the flat-over-wire margin (A2) holds, which I expect it will because the footprint and
+wire-arithmetic differences are real and independent of checking.
+
+### Isolation: this part is clean.
+
+Every variant is its own cdylib, built with `lto = "fat"` and `codegen-units = 1`, dlopened by the harness
+and run in its own subprocess, and the program crosses the FFI boundary as opaque bytes so a variant's
+optimizer cannot see the program and cannot partially evaluate the interpreter over it (the exact failure
+that made the original native-ceiling bench measure native-versus-native). Each variant statically links
+its own copy of the carrier through the path dependency, so there is no shared-carrier object that could
+let one variant's codegen affect another. Cross-variant isolation is airtight. The only within-variant risk
+is the LTO devirtualization/lowering question above (does fntable stay indirect, does switch stay a jump
+table), which is about whether a cell is labelled correctly, not about contamination between cells; fntable
+already checks out, switch needs confirming.
+
+### Per-variant verdict
+
+- **switch (wire, flat):** representative IF the match is a jump table (confirm at ISA level); no unfair
+  advantage; bounds-checked (the fair baseline).
+- **fntable (wire, flat):** representative, indirect call confirmed to survive LTO; bounds-checked; fair.
+- **ifchain (wire, flat):** structurally faithful; bounds-checked; fair; not yet benched; compare against a
+  frequency-ordered variant.
+- **threaded (wire, flat):** UNFAIR ADVANTAGE from unchecked access (source-confirmed), AND the
+  preserve-none mechanism is unconfirmed at the ISA level. Do not trust A1/A3 threaded numbers until both
+  are fixed: normalize to unchecked-everywhere, and confirm the no-spill codegen.
+- **predecoded switch/fntable:** representative; the predecode is an honest one-time setup cost (`S`), not a
+  hidden per-evaluation advantage, and the cost-model reframe measures it explicitly.
+
+### What this adds to the build plan
+
+Before the matrix is built, a fidelity pass is now step zero, ahead of even the checksum move: (1)
+normalize every interpreter to `get_unchecked` operand access so dispatch is the only axis that varies; (2)
+confirm at the ISA level, with `cargo-show-asm` or focused disassembly, that switch is a jump table,
+fntable stays an indirect call, and threaded actually elides callee-saved spills, recording any cell that
+fails to match its label as mislabelled rather than shipping it; (3) re-run A1 and A3 on the normalized,
+confirmed variants and correct the beating-attempts log, because the current threaded findings are stated
+with more confidence than the code earns. Only then does the composition matrix mean what it says, because
+a matrix built on variants that each cheat differently measures the cheats, not the compositions. This is
+the ten-honesty-rules "assert every layout" and "strongest opponent" rules applied to the variants
+themselves: a variant must be the honest strongest form of the shape it names, and right now the threaded
+variants are not, they are the shape plus a bounds-check break, and that has to be corrected before the
+elaborate matrix is worth building on top of them.
+
+## Fourth amendment: make the carrier and variants final-like, so the insight is usable
+
+The audits so far fix fairness (make each variant the honest form of its shape). Op's last point pushes
+further and it is the one that makes the whole exercise pay: fairness gives naive-but-honest comparisons,
+and a naive-but-honest comparison of shapes that no real runtime would ship is still only trivia. The
+shared IR, the way it evaluates, and each variant should express the shape a FINAL runtime would actually
+use, so the matrix measures the design space of a real interpreter tier and the oracle envelope becomes a
+buildable runtime rather than the winner of a toy race. Concretely, the current carrier has three
+strawman properties that every variant inherits and that a real runtime would never have.
+
+### Strawman 1: it stores every node's result forever. A real runtime allocates slots by liveness.
+
+`results[i] = v` for every node, kept for the whole pass, is the single biggest gap between the carrier
+and a real runtime. It means the working set is the ENTIRE program (node_count u64 slots), and every
+form/cache crossover we have measured is over that whole array. A real runtime does register allocation:
+it computes each value's last use and reuses freed slots, so the live working set is the program's
+liveness WIDTH (the maximum number of simultaneously-live values), which for typical DAGs is a small
+constant, not the node count. This changes the form and cache story fundamentally, because the resident
+hot set stops growing with program size once it fits the live width. The naive carrier makes large
+programs look memory-bound when a real slot-allocated runtime would keep them L1-resident.
+
+Proposal: add a liveness/slot-allocation stage (a cheap backward last-use pass at predecode, emitting a
+per-node slot index into a small slot arena sized to the liveness width). Operand access then reads from
+`slots[slot_of[operand]]` and the working set is the live width. Make slot allocation an operand-access /
+output-building axis value ("slot-allocated" versus the naive "store-all"), so the matrix measures exactly
+how much the store-everything strawman inflated the working-set crossovers, and the final-like cells run
+slot-allocated. This is the highest-value realism fix; without it the form axis is measuring a fiction.
+
+### Strawman 2: the flat/predecoded form is a 1:1 transcription. A real runtime predecodes to an OPTIMIZED form.
+
+`predecode` today copies each wire node to a flat record unchanged. A real runtime's load/warm path folds
+constants, eliminates dead nodes, does CSE, and fuses superinstructions while it predecodes, so the flat
+form it runs is SMALLER and cheaper than the source. The optimize pipeline stage (CSE from `cheap_lowering`,
+bounded eqsat, plus constant folding and DCE) belongs IN the predecode path for the final-like cells, not
+as a separate untaken axis. The insight this unlocks is the real one: how much does a warm runtime's
+optimize-on-load buy over naive transcription, and does the shrunken node count move every downstream
+form/dispatch crossover (it will, because it changes the working set). The predecode cost of the optimize
+work is an honest part of `S` and the cost-model line captures its amortization.
+
+### Strawman 3: the keep-alive is a rolling hash. A real runtime produces outputs and reuses buffers.
+
+The per-node `rotate_left(7) ^ v` is a cross-validation and anti-DCE device, not what a runtime does. The
+second-deliverable fix (fold one checksum post-pass) already removes it from the hot loop; the final-like
+step is that the "output" is the live-out values written through the output-building stage (overwrite /
+cow / reuse-arena), which is a real runtime concern, with the post-pass checksum computed over the live-out
+set purely for cross-validation. So the output stage measures a real materialization strategy, and the
+keep-alive stops being a fixed per-node tax that dilutes every signal.
+
+### Per-variant: the strongest realistic form of each shape
+
+Beyond making them fair (unchecked-everywhere post-validation), each variant should be the strongest
+version of its shape a real runtime would ship, so the matrix compares best-against-best, not
+naive-against-naive:
+
+- **threaded:** thread a raw instruction pointer advanced by stride (or a predecoded-record pointer) and
+  keep the hot interpreter state (ip, slot base, dispatch table base) minimal and register-resident across
+  the `become` chain, rather than re-deriving `view(d)` and recomputing offsets each handler as the current
+  code does. That re-derivation is naive overhead a real context-threaded interpreter does not pay; removing
+  it is what makes threaded actually express the preserve-none advantage.
+- **fntable:** the returning-loop indirect call is already close to its strongest form; ensure the handler
+  does only the op and the store, with the loop owning dispatch, and confirm LTO keeps the call indirect
+  (it does).
+- **switch:** confirm the jump table; if LLVM ever fails to emit one for the dense arms, force it (a
+  computed-goto-style table of label addresses is the honest strongest switch, though Rust cannot express
+  labels-as-values, so the fallback is an explicit function/blockaddress table, which is really the
+  threaded/fntable shape and should be labelled as such rather than pretending to be a switch).
+- **predecoded + slot-allocated + fused + threaded/native:** add this as an explicit cell, the honest
+  strongest interpreter the carrier can express (optimized flat form, slot-allocated working set,
+  superinstruction-fused hot pairs, preserve-none dispatch). It is the materialized oracle-envelope path,
+  and its gap to the native ceiling is THE usable number: how close can the best interpreter tier get to
+  compiled code, which is exactly the interpret-versus-JIT tiering decision the runtime has to make.
+
+### Why this is the usable-insight step, not gold-plating
+
+With these, the matrix spans from the shipped-default naive interpreter (wire, switch, store-all, checked,
+no optimize) at one end to the final-like optimal interpreter (optimized-flat, slot-allocated, fused,
+threaded-or-native) at the other, with every pipeline stage's contribution attributed along the way. The
+deliverable stops being "switch beats fntable by X on a toy" and becomes: "the shipped naive interpreter is
+N times slower than the final-like interpreter, the final-like interpreter is M times native, here is which
+pipeline stage buys each part of the gap, here is the program size and iteration count where each stage's
+choice flips, and here is whether an adaptive selector that picks each stage from a cheap measure captures
+the oracle envelope." That is a design document for the runtime's interpreter tier, derived from
+measurement, which is the usable insight op is asking for and which naive variant comparisons structurally
+cannot produce.
+
+The discipline caveat stays: keep the naive baselines in the matrix as the reference points (the shipped
+default is genuinely naive wire-switch-store-all, and the delta from it to the final-like shape is the
+number that justifies the work), and hold every final-like addition to the same cross-validated checksum
+and the same honest cost-model measurement, so "final-like" never means "optimized until it is no longer
+the same program." The correctness contract is what keeps the elaborate, realistic carrier honest: every
+cell, naive or final-like, computes the identical result on the identical program, or the bench fails.
