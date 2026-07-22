@@ -80,3 +80,32 @@ pub extern "C" fn di_pre_direct(bytes: *const u8, len: usize, seed: u64, out: *m
     interpret_predecoded_direct(&p, &h, seed, &mut r);
     unsafe { *out = checksum(&r) };
 }
+
+// CFG dispatch cells (control-flow register VM). The three shapes share the
+// register-file operand access (`access::rload`/`rstore`), so only the dispatch
+// differs; the audit confirms switch=jump-table, fntable=indirect-call, and the
+// threaded handlers=spills-0 + tail br, exactly as for the straight-line cells.
+#[no_mangle]
+pub extern "C" fn di_cfg_switch(seed: u64, outer: u64, inner: u64, out: *mut u64) {
+    use vehje_bench_carrier::cfg::{build_nested_loop, interp};
+    let blocks = build_nested_loop(outer, inner);
+    let (r, _, _) = interp(&blocks, seed, u64::MAX);
+    unsafe { *out = r };
+}
+
+#[no_mangle]
+pub extern "C" fn di_cfg_fntable(seed: u64, outer: u64, inner: u64, out: *mut u64) {
+    use vehje_bench_carrier::cfg::{build_nested_loop, interp_fntable};
+    let blocks = build_nested_loop(outer, inner);
+    let (r, _, _) = interp_fntable(&blocks, seed, u64::MAX);
+    unsafe { *out = r };
+}
+
+#[no_mangle]
+pub extern "C" fn di_cfg_threaded(seed: u64, outer: u64, inner: u64, out: *mut u64) {
+    use vehje_bench_carrier::cfg::{build_nested_loop, threaded};
+    let blocks = build_nested_loop(outer, inner);
+    let code = threaded::flatten(&blocks);
+    let (r, _, _) = threaded::interp_flat(&code, seed, u64::MAX);
+    unsafe { *out = r };
+}

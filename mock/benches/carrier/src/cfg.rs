@@ -50,33 +50,43 @@ const NREG: usize = 8;
 /// Interpret the CFG from block 0 with `seed` in r0. Returns
 /// (result, instrs_executed, terminators_executed). `cap` bounds total steps as
 /// a safety net; a well-formed kernel returns before hitting it.
+///
+/// Every register read and write goes through the shared `access::rload` /
+/// `access::rstore` (unchecked, sound: `build_*` only emit register indices
+/// below `NREG`), so this switch cell, the fntable cell, and the threaded cell
+/// share identical operand access and the CFG dispatch axis varies dispatch
+/// alone (no bounds-check-vs-no-bounds-check confound between the shapes).
 pub fn interp(blocks: &[Block], seed: u64, cap: u64) -> (u64, u64, u64) {
+    use crate::access::{rload, rstore};
     let mut regs = [0u64; NREG];
-    regs[0] = seed;
+    let rp = regs.as_mut_ptr();
+    unsafe { rstore(rp, 0, seed) };
     let mut pc = 0u32;
     let mut ninstr = 0u64;
     let mut nterm = 0u64;
     loop {
         let b = &blocks[pc as usize];
         for ins in &b.instrs {
-            let v = match ins.op {
-                op::SET => ins.imm,
-                op::ADD => regs[ins.a as usize].wrapping_add(regs[ins.b as usize]),
-                op::SUB => regs[ins.a as usize].wrapping_sub(regs[ins.b as usize]),
-                op::AND => regs[ins.a as usize] & regs[ins.b as usize],
-                _ => regs[ins.a as usize].wrapping_mul(regs[ins.b as usize]),
+            let v = unsafe {
+                match ins.op {
+                    op::SET => ins.imm,
+                    op::ADD => rload(rp, ins.a as u32).wrapping_add(rload(rp, ins.b as u32)),
+                    op::SUB => rload(rp, ins.a as u32).wrapping_sub(rload(rp, ins.b as u32)),
+                    op::AND => rload(rp, ins.a as u32) & rload(rp, ins.b as u32),
+                    _ => rload(rp, ins.a as u32).wrapping_mul(rload(rp, ins.b as u32)),
+                }
             };
-            regs[ins.dst as usize] = v;
+            unsafe { rstore(rp, ins.dst as usize, v) };
             ninstr += 1;
         }
         nterm += 1;
         if ninstr + nterm > cap {
-            return (regs[0], ninstr, nterm); // safety
+            return (unsafe { rload(rp, 0) }, ninstr, nterm); // safety
         }
         match b.term {
             Term::Jmp(t) => pc = t,
-            Term::BrNz(r, nz, z) => pc = if regs[r as usize] != 0 { nz } else { z },
-            Term::Ret(r) => return (regs[r as usize], ninstr, nterm),
+            Term::BrNz(r, nz, z) => pc = if unsafe { rload(rp, r as u32) } != 0 { nz } else { z },
+            Term::Ret(r) => return (unsafe { rload(rp, r as u32) }, ninstr, nterm),
         }
     }
 }
@@ -106,26 +116,30 @@ static CTABLE: [CFn; 5] = [c_set, c_add, c_sub, c_mul, c_and];
 /// `match`. Measures dispatch shape under real control flow (loops, branches),
 /// where a straight-line DAG cannot.
 pub fn interp_fntable(blocks: &[Block], seed: u64, cap: u64) -> (u64, u64, u64) {
+    use crate::access::{rload, rstore};
     let mut regs = [0u64; NREG];
-    regs[0] = seed;
+    let rp = regs.as_mut_ptr();
+    unsafe { rstore(rp, 0, seed) };
     let mut pc = 0u32;
     let mut ninstr = 0u64;
     let mut nterm = 0u64;
     loop {
         let b = &blocks[pc as usize];
         for ins in &b.instrs {
-            let v = CTABLE[ins.op as usize](ins.imm, regs[ins.a as usize], regs[ins.b as usize]);
-            regs[ins.dst as usize] = v;
+            let v = unsafe {
+                CTABLE[ins.op as usize](ins.imm, rload(rp, ins.a as u32), rload(rp, ins.b as u32))
+            };
+            unsafe { rstore(rp, ins.dst as usize, v) };
             ninstr += 1;
         }
         nterm += 1;
         if ninstr + nterm > cap {
-            return (regs[0], ninstr, nterm);
+            return (unsafe { rload(rp, 0) }, ninstr, nterm);
         }
         match b.term {
             Term::Jmp(t) => pc = t,
-            Term::BrNz(r, nz, z) => pc = if regs[r as usize] != 0 { nz } else { z },
-            Term::Ret(r) => return (regs[r as usize], ninstr, nterm),
+            Term::BrNz(r, nz, z) => pc = if unsafe { rload(rp, r as u32) } != 0 { nz } else { z },
+            Term::Ret(r) => return (unsafe { rload(rp, r as u32) }, ninstr, nterm),
         }
     }
 }
@@ -258,6 +272,256 @@ pub fn oracle_branchy(seed: u64, n: u64, predictable: bool) -> u64 {
     acc
 }
 
+/// Preserve-none context-threaded dispatch over the CFG.
+///
+/// The straight-line threaded cells (`interp_threaded`, `threaded_flat`,
+/// `threaded_direct`) thread a linear node stream: each handler does its op and
+/// tail-calls the next handler. That understates the technique, because token
+/// threading's advantage is meant to live in hot loops with real control
+/// transfers, which a straight-line DAG has none of. This cell threads the CFG:
+/// the block instructions and terminators are flattened into one handler stream,
+/// an op handler tail-calls its successor, and a terminator handler computes the
+/// next flat index (a jump target or branch) and tail-calls into the target
+/// block's first handler. So a loop back-edge is a `become` into an earlier flat
+/// index, and the branch-heavy kernels exercise the indirect tail transfer that
+/// is the whole point of the technique.
+///
+/// Same fairness contract as the switch and fntable CFG cells: every register
+/// read and write goes through the shared `access::rload` / `access::rstore`, so
+/// only the dispatch shape differs. The handler stream is built once (an honest
+/// setup `S` term, hoisted out of the timed region by `flatten`), then the run
+/// is pure threaded dispatch.
+#[cfg(feature = "threaded")]
+pub mod threaded {
+    use super::{op, Block, Term, NREG};
+    use crate::access::{rload, rstore};
+
+    /// The run outputs, written by the terminal `h_ret` handler. `#[repr(C)]` so
+    /// the pointer passed through the preserve-none handler chain has a stable
+    /// layout.
+    #[repr(C)]
+    #[derive(Clone, Copy, Default)]
+    pub struct Out {
+        pub result: u64,
+        pub ninstr: u64,
+        pub nterm: u64,
+    }
+
+    /// One flattened threaded instruction: a handler plus the fields it reads.
+    /// Op instructions use `dst/a/b/imm`; terminators use `reg` (the tested
+    /// register) and `t0/t1` (flat successor indices). 32 bytes.
+    #[repr(C)]
+    #[derive(Clone, Copy)]
+    pub struct TInstr {
+        pub handler: H,
+        pub dst: u8,
+        pub a: u8,
+        pub b: u8,
+        pub reg: u8,
+        pub imm: u64,
+        pub t0: u32,
+        pub t1: u32,
+    }
+
+    // The handler's `code` argument is typed `*const ()` rather than
+    // `*const TInstr` to break the otherwise-recursive type alias (`H` names
+    // `TInstr` which names `H`); it is cast back inside every handler. Same
+    // device the straight-line `threaded_direct` cell uses.
+    pub type H = extern "rust-preserve-none" fn(usize, *const (), *mut u64, u64, u64, u64, *mut Out);
+
+    #[inline(always)]
+    unsafe fn finish(result: u64, ninstr: u64, nterm: u64, out: *mut Out) {
+        (*out).result = result;
+        (*out).ninstr = ninstr;
+        (*out).nterm = nterm;
+    }
+
+    macro_rules! op_handler {
+        ($name:ident, $combine:expr) => {
+            extern "rust-preserve-none" fn $name(
+                idx: usize,
+                code: *const (),
+                regs: *mut u64,
+                ninstr: u64,
+                nterm: u64,
+                cap: u64,
+                out: *mut Out,
+            ) {
+                unsafe {
+                    let c = code as *const TInstr;
+                    let ins = *c.add(idx);
+                    let a = rload(regs, ins.a as u32);
+                    let b = rload(regs, ins.b as u32);
+                    let combine: fn(u64, u64, u64) -> u64 = $combine;
+                    let v = combine(ins.imm, a, b);
+                    rstore(regs, ins.dst as usize, v);
+                    let next = idx + 1;
+                    become ((*c.add(next)).handler)(next, code, regs, ninstr + 1, nterm, cap, out);
+                }
+            }
+        };
+    }
+
+    op_handler!(h_set, |imm, _a, _b| imm);
+    op_handler!(h_add, |_i, a, b| a.wrapping_add(b));
+    op_handler!(h_sub, |_i, a, b| a.wrapping_sub(b));
+    op_handler!(h_mul, |_i, a, b| a.wrapping_mul(b));
+    op_handler!(h_and, |_i, a, b| a & b);
+
+    extern "rust-preserve-none" fn h_jmp(
+        idx: usize,
+        code: *const (),
+        regs: *mut u64,
+        ninstr: u64,
+        nterm: u64,
+        cap: u64,
+        out: *mut Out,
+    ) {
+        unsafe {
+            let c = code as *const TInstr;
+            let nterm = nterm + 1;
+            if ninstr + nterm > cap {
+                return finish(rload(regs, 0), ninstr, nterm, out);
+            }
+            let ins = *c.add(idx);
+            let next = ins.t0 as usize;
+            become ((*c.add(next)).handler)(next, code, regs, ninstr, nterm, cap, out);
+        }
+    }
+
+    extern "rust-preserve-none" fn h_brnz(
+        idx: usize,
+        code: *const (),
+        regs: *mut u64,
+        ninstr: u64,
+        nterm: u64,
+        cap: u64,
+        out: *mut Out,
+    ) {
+        unsafe {
+            let c = code as *const TInstr;
+            let nterm = nterm + 1;
+            if ninstr + nterm > cap {
+                return finish(rload(regs, 0), ninstr, nterm, out);
+            }
+            let ins = *c.add(idx);
+            let next = if rload(regs, ins.reg as u32) != 0 { ins.t0 } else { ins.t1 } as usize;
+            become ((*c.add(next)).handler)(next, code, regs, ninstr, nterm, cap, out);
+        }
+    }
+
+    extern "rust-preserve-none" fn h_ret(
+        idx: usize,
+        code: *const (),
+        regs: *mut u64,
+        ninstr: u64,
+        nterm: u64,
+        cap: u64,
+        out: *mut Out,
+    ) {
+        let _ = cap;
+        unsafe {
+            let c = code as *const TInstr;
+            let nterm = nterm + 1;
+            let ins = *c.add(idx);
+            finish(rload(regs, ins.reg as u32), ninstr, nterm, out);
+        }
+    }
+
+    fn op_handler(o: u8) -> H {
+        match o {
+            op::SET => h_set,
+            op::ADD => h_add,
+            op::SUB => h_sub,
+            op::MUL => h_mul,
+            _ => h_and,
+        }
+    }
+
+    /// Flatten the block CFG into a single threaded instruction stream, resolving
+    /// each block's jump targets to flat indices. Setup work, hoisted out of the
+    /// timed region.
+    pub fn flatten(blocks: &[Block]) -> Vec<TInstr> {
+        let mut starts = vec![0u32; blocks.len()];
+        let mut pos = 0u32;
+        for (bi, b) in blocks.iter().enumerate() {
+            starts[bi] = pos;
+            pos += b.instrs.len() as u32 + 1; // +1 for the terminator slot
+        }
+        let mut code = Vec::with_capacity(pos as usize);
+        for b in blocks {
+            for ins in &b.instrs {
+                code.push(TInstr {
+                    handler: op_handler(ins.op),
+                    dst: ins.dst,
+                    a: ins.a,
+                    b: ins.b,
+                    reg: 0,
+                    imm: ins.imm,
+                    t0: 0,
+                    t1: 0,
+                });
+            }
+            let term = match b.term {
+                Term::Jmp(t) => TInstr {
+                    handler: h_jmp,
+                    dst: 0,
+                    a: 0,
+                    b: 0,
+                    reg: 0,
+                    imm: 0,
+                    t0: starts[t as usize],
+                    t1: 0,
+                },
+                Term::BrNz(r, nz, z) => TInstr {
+                    handler: h_brnz,
+                    dst: 0,
+                    a: 0,
+                    b: 0,
+                    reg: r,
+                    imm: 0,
+                    t0: starts[nz as usize],
+                    t1: starts[z as usize],
+                },
+                Term::Ret(r) => TInstr {
+                    handler: h_ret,
+                    dst: 0,
+                    a: 0,
+                    b: 0,
+                    reg: r,
+                    imm: 0,
+                    t0: 0,
+                    t1: 0,
+                },
+            };
+            code.push(term);
+        }
+        code
+    }
+
+    /// Run a flattened threaded CFG from flat index 0 with `seed` in r0. The
+    /// register file is caller-independent (a fresh `[u64; NREG]`); returns the
+    /// same `(result, ninstr, nterm)` triple as the switch and fntable cells.
+    pub fn interp_flat(code: &[TInstr], seed: u64, cap: u64) -> (u64, u64, u64) {
+        let mut regs = [0u64; NREG];
+        let rp = regs.as_mut_ptr();
+        unsafe { rstore(rp, 0, seed) };
+        let mut out = Out::default();
+        unsafe {
+            let c = code.as_ptr();
+            ((*c).handler)(0, c as *const (), rp, 0, 0, cap, &mut out);
+        }
+        (out.result, out.ninstr, out.nterm)
+    }
+
+    /// Convenience: flatten and run. The flatten cost is included, so a bench
+    /// hoists `flatten` out and times `interp_flat`; tests use this.
+    pub fn interp_threaded(blocks: &[Block], seed: u64, cap: u64) -> (u64, u64, u64) {
+        let code = flatten(blocks);
+        interp_flat(&code, seed, cap)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -321,5 +585,38 @@ mod tests {
         let (_r, ni, nt) = interp(&blocks, 7, u64::MAX);
         let frac = nt as f64 / (ni + nt) as f64;
         assert!(frac > 0.25, "control-flow fraction {frac} too low to be a CFG-heavy workload");
+    }
+
+    #[cfg(feature = "threaded")]
+    #[test]
+    fn threaded_matches_switch_cfg() {
+        // The preserve-none context-threaded CFG interpreter agrees with the
+        // switch CFG interpreter (the full triple: result, instr count, term
+        // count) on both kernels, so the threaded control-flow dispatch cell
+        // measures dispatch and nothing else. The identical instr/term counts
+        // also prove the flattened stream walks the same path as the block VM
+        // (same loop back-edges taken, same branches).
+        for &(outer, inner) in &[(3u64, 5u64), (10, 10), (7, 100), (20, 40)] {
+            for seed in [1u64, 3, 42, 1000] {
+                let blocks = build_nested_loop(outer, inner);
+                assert_eq!(
+                    interp(&blocks, seed, u64::MAX),
+                    threaded::interp_threaded(&blocks, seed, u64::MAX),
+                    "cfg threaded vs switch at ({outer},{inner}) seed {seed}"
+                );
+            }
+        }
+        for pred in [true, false] {
+            for &n in &[5u64, 50, 1000] {
+                for seed in [1u64, 42, 999] {
+                    let blocks = build_branchy(n, pred);
+                    assert_eq!(
+                        interp(&blocks, seed, u64::MAX),
+                        threaded::interp_threaded(&blocks, seed, u64::MAX),
+                        "cfg threaded vs switch branchy pred={pred} n={n} seed={seed}"
+                    );
+                }
+            }
+        }
     }
 }

@@ -15,7 +15,6 @@
 
 use crate::access::{rload, rstore};
 use crate::ir::op;
-use crate::optimize::sinks;
 use crate::predecode::{PNode, Predecoded};
 
 /// One fused-program step.
@@ -194,6 +193,7 @@ mod tests {
     use super::*;
     use crate::access::checksum_at;
     use crate::ir::{encode, Decoded, REC24};
+    use crate::optimize::sinks;
     use crate::predecode::predecode;
     use crate::{generate, GenParams};
 

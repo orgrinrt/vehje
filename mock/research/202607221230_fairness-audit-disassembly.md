@@ -42,6 +42,40 @@ The disassembly shows **zero callee-saved spills across all ~51 handlers of all 
 every one ending in exactly one tail `br`. The mechanism is real everywhere; the threaded cells are the
 shape they claim to be.
 
+## CFG (control-flow) dispatch cells
+
+The three CFG dispatch shapes run a register VM of blocks over the nested-loop and
+branchy kernels (real loops and branches, which the straight-line cells lack). All three
+reach the register file through the same `access::rload` / `access::rstore` as the
+straight-line cells, so the CFG axis varies dispatch alone. Measured on
+`libdisasm_probe.dylib` (`di_cfg_switch`, `di_cfg_fntable`, and the `cfg::threaded`
+handlers):
+
+| cell | label | ISA evidence | verdict |
+|---|---|---|---|
+| CFG switch (`cfg::interp`) | match dispatch, compare chain | `di_cfg_switch`: zero `br xN`, zero `blr` (the 5-arm op match lowers to a compare/cmov chain, not a jump table) | CONFIRMED (compare chain, not jump table) |
+| CFG fntable (`cfg::interp_fntable`) | indirect call, survives LTO | `di_cfg_fntable`: one `blr xN`, zero `br` | CONFIRMED (not devirtualized) |
+| CFG threaded (`cfg::threaded`) | preserve-none context-threaded over control flow | all 8 handlers `spills=0`, `blr=0`; the 7 continuing handlers (`h_set/add/sub/mul/and/jmp/brnz`) end in one tail `br`; `h_ret` is terminal (`br=0`) | CONFIRMED, no ABI fallback |
+
+Two honest notes, not defects:
+
+- The CFG switch is a compare chain, not a jump table, because it dispatches only 5
+  register ops. The straight-line switch dispatches 17 IR opcodes and lowers to a jump
+  table (`br`). Both are legitimate `match` dispatch; the ISA realization tracks the arm
+  count, and the label is recorded as what it is per cell (jump table for the 17-op
+  straight-line switch, compare chain for the 5-op CFG switch), never conflated.
+- `cfg::threaded`'s `h_jmp` and `h_brnz` are the load-bearing addition: a loop back-edge is
+  a `become` into an earlier flat index and a branch is a `become` into one of two
+  targets, so the branch-heavy kernels exercise the indirect tail transfer that the
+  straight-line threaded cells cannot. Their `spills=0` + single tail `br` confirms the
+  control-transfer handlers are still preserve-none, no std-ABI fallback on the branch.
+
+The CFG switch and fntable cells were refactored to the shared `access` primitive as part
+of this cell (they previously used checked `regs[i]` array indexing); the refactor closes
+the same check-vs-no-check confound at the source for the CFG axis that the fidelity gate
+closed for the straight-line axis. Register indices are `< NREG` by construction of the
+kernel builders, so the unchecked access is sound.
+
 ## No accidental advantage (the check-vs-no-check class)
 
 The confound both prior audits found (threaded used unchecked raw pointers while switch/fntable used checked
