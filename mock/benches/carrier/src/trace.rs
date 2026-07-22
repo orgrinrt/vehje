@@ -100,13 +100,16 @@ pub fn select_trace(blocks: &[Block], seed: u64) -> Option<Trace> {
 /// Evaluate one register instruction against the register file (shared access).
 #[inline(always)]
 fn eval_instr(rp: *const u64, ins: &crate::cfg::Instr) -> u64 {
+    use crate::ops::binop_body;
     unsafe {
+        // the register VM's arithmetic is the same scalar semantics the carrier
+        // ops define, so it defers to the same `binop_body!` (SET is CFG-specific).
         match ins.op {
             op::SET => ins.imm,
-            op::ADD => rload(rp, ins.a as u32).wrapping_add(rload(rp, ins.b as u32)),
-            op::SUB => rload(rp, ins.a as u32).wrapping_sub(rload(rp, ins.b as u32)),
-            op::AND => rload(rp, ins.a as u32) & rload(rp, ins.b as u32),
-            _ => rload(rp, ins.a as u32).wrapping_mul(rload(rp, ins.b as u32)),
+            op::ADD => binop_body!(ADD, rload(rp, ins.a as u32), rload(rp, ins.b as u32)),
+            op::SUB => binop_body!(SUB, rload(rp, ins.a as u32), rload(rp, ins.b as u32)),
+            op::AND => binop_body!(AND, rload(rp, ins.a as u32), rload(rp, ins.b as u32)),
+            _ => binop_body!(MUL, rload(rp, ins.a as u32), rload(rp, ins.b as u32)),
         }
     }
 }

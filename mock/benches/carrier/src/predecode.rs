@@ -71,18 +71,18 @@ pub fn interpret_predecoded(p: &Predecoded, input_seed: u64, results: &mut [u64]
         let v = match nd.op {
             op::INPUT => input_seed,
             op::CONST => unsafe { cload(cp, nd.a) },
-            op::ADD => unsafe { rload(rp, nd.a).wrapping_add(rload(rp, nd.b)) },
-            op::SUB => unsafe { rload(rp, nd.a).wrapping_sub(rload(rp, nd.b)) },
-            op::MUL => unsafe { rload(rp, nd.a).wrapping_mul(rload(rp, nd.b)) },
-            op::AND => unsafe { rload(rp, nd.a) & rload(rp, nd.b) },
-            op::OR => unsafe { rload(rp, nd.a) | rload(rp, nd.b) },
-            op::XOR => unsafe { rload(rp, nd.a) ^ rload(rp, nd.b) },
-            op::SHL => unsafe { rload(rp, nd.a).wrapping_shl(rload(rp, nd.b) as u32) },
-            op::SHR => unsafe { rload(rp, nd.a).wrapping_shr(rload(rp, nd.b) as u32) },
-            op::MIN => unsafe { rload(rp, nd.a).min(rload(rp, nd.b)) },
-            op::MAX => unsafe { rload(rp, nd.a).max(rload(rp, nd.b)) },
-            op::EQ => unsafe { (rload(rp, nd.a) == rload(rp, nd.b)) as u64 },
-            op::LT => unsafe { (rload(rp, nd.a) < rload(rp, nd.b)) as u64 },
+            op::ADD => unsafe { crate::ops::binop_body!(ADD, rload(rp, nd.a), rload(rp, nd.b)) },
+            op::SUB => unsafe { crate::ops::binop_body!(SUB, rload(rp, nd.a), rload(rp, nd.b)) },
+            op::MUL => unsafe { crate::ops::binop_body!(MUL, rload(rp, nd.a), rload(rp, nd.b)) },
+            op::AND => unsafe { crate::ops::binop_body!(AND, rload(rp, nd.a), rload(rp, nd.b)) },
+            op::OR => unsafe { crate::ops::binop_body!(OR, rload(rp, nd.a), rload(rp, nd.b)) },
+            op::XOR => unsafe { crate::ops::binop_body!(XOR, rload(rp, nd.a), rload(rp, nd.b)) },
+            op::SHL => unsafe { crate::ops::binop_body!(SHL, rload(rp, nd.a), rload(rp, nd.b)) },
+            op::SHR => unsafe { crate::ops::binop_body!(SHR, rload(rp, nd.a), rload(rp, nd.b)) },
+            op::MIN => unsafe { crate::ops::binop_body!(MIN, rload(rp, nd.a), rload(rp, nd.b)) },
+            op::MAX => unsafe { crate::ops::binop_body!(MAX, rload(rp, nd.a), rload(rp, nd.b)) },
+            op::EQ => unsafe { crate::ops::binop_body!(EQ, rload(rp, nd.a), rload(rp, nd.b)) },
+            op::LT => unsafe { crate::ops::binop_body!(LT, rload(rp, nd.a), rload(rp, nd.b)) },
             op::SELECT => unsafe {
                 if rload(rp, nd.a) != 0 {
                     rload(rp, nd.b)
@@ -123,26 +123,26 @@ fn pf_select(_p: &Predecoded, nd: PNode, r: *const u64, _s: u64) -> u64 {
     }
 }
 macro_rules! pbinop {
-    ($name:ident, $x:ident, $y:ident, $body:expr) => {
+    ($name:ident, $op:ident) => {
         fn $name(_p: &Predecoded, nd: PNode, r: *const u64, _s: u64) -> u64 {
-            let $x = unsafe { rload(r, nd.a) };
-            let $y = unsafe { rload(r, nd.b) };
-            $body
+            let a = unsafe { rload(r, nd.a) };
+            let b = unsafe { rload(r, nd.b) };
+            crate::ops::binop_body!($op, a, b)
         }
     };
 }
-pbinop!(pf_add, a, b, a.wrapping_add(b));
-pbinop!(pf_sub, a, b, a.wrapping_sub(b));
-pbinop!(pf_mul, a, b, a.wrapping_mul(b));
-pbinop!(pf_and, a, b, a & b);
-pbinop!(pf_or, a, b, a | b);
-pbinop!(pf_xor, a, b, a ^ b);
-pbinop!(pf_shl, a, b, a.wrapping_shl(b as u32));
-pbinop!(pf_shr, a, b, a.wrapping_shr(b as u32));
-pbinop!(pf_min, a, b, a.min(b));
-pbinop!(pf_max, a, b, a.max(b));
-pbinop!(pf_eq, a, b, (a == b) as u64);
-pbinop!(pf_lt, a, b, (a < b) as u64);
+pbinop!(pf_add, ADD);
+pbinop!(pf_sub, SUB);
+pbinop!(pf_mul, MUL);
+pbinop!(pf_and, AND);
+pbinop!(pf_or, OR);
+pbinop!(pf_xor, XOR);
+pbinop!(pf_shl, SHL);
+pbinop!(pf_shr, SHR);
+pbinop!(pf_min, MIN);
+pbinop!(pf_max, MAX);
+pbinop!(pf_eq, EQ);
+pbinop!(pf_lt, LT);
 
 static PDISPATCH: [PFn; op::COUNT as usize] = [
     pf_const, pf_add, pf_sub, pf_mul, pf_and, pf_or, pf_xor, pf_shl, pf_shr, pf_min, pf_max, pf_eq,
@@ -194,18 +194,18 @@ pub fn interpret_predecoded_regcache(p: &Predecoded, input_seed: u64, results: &
         let v = match nd.op {
             op::INPUT => input_seed,
             op::CONST => unsafe { cload(cp, nd.a) },
-            op::ADD => ld!(nd.a).wrapping_add(ld!(nd.b)),
-            op::SUB => ld!(nd.a).wrapping_sub(ld!(nd.b)),
-            op::MUL => ld!(nd.a).wrapping_mul(ld!(nd.b)),
-            op::AND => ld!(nd.a) & ld!(nd.b),
-            op::OR => ld!(nd.a) | ld!(nd.b),
-            op::XOR => ld!(nd.a) ^ ld!(nd.b),
-            op::SHL => ld!(nd.a).wrapping_shl(ld!(nd.b) as u32),
-            op::SHR => ld!(nd.a).wrapping_shr(ld!(nd.b) as u32),
-            op::MIN => ld!(nd.a).min(ld!(nd.b)),
-            op::MAX => ld!(nd.a).max(ld!(nd.b)),
-            op::EQ => (ld!(nd.a) == ld!(nd.b)) as u64,
-            op::LT => (ld!(nd.a) < ld!(nd.b)) as u64,
+            op::ADD => crate::ops::binop_body!(ADD, ld!(nd.a), ld!(nd.b)),
+            op::SUB => crate::ops::binop_body!(SUB, ld!(nd.a), ld!(nd.b)),
+            op::MUL => crate::ops::binop_body!(MUL, ld!(nd.a), ld!(nd.b)),
+            op::AND => crate::ops::binop_body!(AND, ld!(nd.a), ld!(nd.b)),
+            op::OR => crate::ops::binop_body!(OR, ld!(nd.a), ld!(nd.b)),
+            op::XOR => crate::ops::binop_body!(XOR, ld!(nd.a), ld!(nd.b)),
+            op::SHL => crate::ops::binop_body!(SHL, ld!(nd.a), ld!(nd.b)),
+            op::SHR => crate::ops::binop_body!(SHR, ld!(nd.a), ld!(nd.b)),
+            op::MIN => crate::ops::binop_body!(MIN, ld!(nd.a), ld!(nd.b)),
+            op::MAX => crate::ops::binop_body!(MAX, ld!(nd.a), ld!(nd.b)),
+            op::EQ => crate::ops::binop_body!(EQ, ld!(nd.a), ld!(nd.b)),
+            op::LT => crate::ops::binop_body!(LT, ld!(nd.a), ld!(nd.b)),
             op::SELECT => {
                 if ld!(nd.a) != 0 {
                     ld!(nd.b)
@@ -237,7 +237,7 @@ pub fn interpret_predecoded_nulldispatch(p: &Predecoded, input_seed: u64, result
         } else if nd.op == op::CONST || nd.op == op::NEG || nd.op == op::NOT {
             unsafe { rload(rp, nd.a) }
         } else {
-            unsafe { rload(rp, nd.a).wrapping_add(rload(rp, nd.b)) }
+            unsafe { crate::ops::binop_body!(ADD, rload(rp, nd.a), rload(rp, nd.b)) }
         };
         unsafe { rstore(wp, i, v) };
     }
@@ -274,29 +274,29 @@ pub mod threaded_flat {
     }
 
     macro_rules! bin_h {
-        ($name:ident, $x:ident, $y:ident, $body:expr) => {
+        ($name:ident, $op:ident) => {
             extern "rust-preserve-none" fn $name(i: usize, np: *const PNode, cp: *const u64, wp: *mut u64, seed: u64, n: usize) {
                 let nd = unsafe { *np.add(i) };
                 let rp = wp as *const u64;
-                let $x = unsafe { rload(rp, nd.a) };
-                let $y = unsafe { rload(rp, nd.b) };
-                advance!(i, np, cp, wp, seed, n, $body)
+                let a = unsafe { rload(rp, nd.a) };
+                let b = unsafe { rload(rp, nd.b) };
+                advance!(i, np, cp, wp, seed, n, crate::ops::binop_body!($op, a, b))
             }
         };
     }
 
-    bin_h!(h_add, a, b, a.wrapping_add(b));
-    bin_h!(h_sub, a, b, a.wrapping_sub(b));
-    bin_h!(h_mul, a, b, a.wrapping_mul(b));
-    bin_h!(h_and, a, b, a & b);
-    bin_h!(h_or, a, b, a | b);
-    bin_h!(h_xor, a, b, a ^ b);
-    bin_h!(h_shl, a, b, a.wrapping_shl(b as u32));
-    bin_h!(h_shr, a, b, a.wrapping_shr(b as u32));
-    bin_h!(h_min, a, b, a.min(b));
-    bin_h!(h_max, a, b, a.max(b));
-    bin_h!(h_eq, a, b, (a == b) as u64);
-    bin_h!(h_lt, a, b, (a < b) as u64);
+    bin_h!(h_add, ADD);
+    bin_h!(h_sub, SUB);
+    bin_h!(h_mul, MUL);
+    bin_h!(h_and, AND);
+    bin_h!(h_or, OR);
+    bin_h!(h_xor, XOR);
+    bin_h!(h_shl, SHL);
+    bin_h!(h_shr, SHR);
+    bin_h!(h_min, MIN);
+    bin_h!(h_max, MAX);
+    bin_h!(h_eq, EQ);
+    bin_h!(h_lt, LT);
 
     extern "rust-preserve-none" fn h_const(i: usize, np: *const PNode, cp: *const u64, wp: *mut u64, seed: u64, n: usize) {
         let nd = unsafe { *np.add(i) };

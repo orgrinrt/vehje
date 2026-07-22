@@ -41,22 +41,25 @@ pub fn sinks(prog: &Program) -> Vec<u32> {
     (0..n as u32).filter(|&i| !referenced[i as usize]).collect()
 }
 
-/// Evaluate one op on constant operand values. MUST match `interp::interpret`'s
-/// arms exactly, or const-folding would change the observable result.
+/// Evaluate one op on constant operand values. Uses the same `ops::binop_body` /
+/// `unop_body` single definition the interpreters use, so "the const-folder must
+/// match `interp`" is a guarantee (one definition) rather than a discipline (two
+/// copies kept in sync by hand).
 fn eval_op(opcode: u8, a: &[u64]) -> u64 {
+    use crate::ops::{binop_body, unop_body};
     match opcode {
-        op::ADD => a[0].wrapping_add(a[1]),
-        op::SUB => a[0].wrapping_sub(a[1]),
-        op::MUL => a[0].wrapping_mul(a[1]),
-        op::AND => a[0] & a[1],
-        op::OR => a[0] | a[1],
-        op::XOR => a[0] ^ a[1],
-        op::SHL => a[0].wrapping_shl(a[1] as u32),
-        op::SHR => a[0].wrapping_shr(a[1] as u32),
-        op::MIN => a[0].min(a[1]),
-        op::MAX => a[0].max(a[1]),
-        op::EQ => (a[0] == a[1]) as u64,
-        op::LT => (a[0] < a[1]) as u64,
+        op::ADD => binop_body!(ADD, a[0], a[1]),
+        op::SUB => binop_body!(SUB, a[0], a[1]),
+        op::MUL => binop_body!(MUL, a[0], a[1]),
+        op::AND => binop_body!(AND, a[0], a[1]),
+        op::OR => binop_body!(OR, a[0], a[1]),
+        op::XOR => binop_body!(XOR, a[0], a[1]),
+        op::SHL => binop_body!(SHL, a[0], a[1]),
+        op::SHR => binop_body!(SHR, a[0], a[1]),
+        op::MIN => binop_body!(MIN, a[0], a[1]),
+        op::MAX => binop_body!(MAX, a[0], a[1]),
+        op::EQ => binop_body!(EQ, a[0], a[1]),
+        op::LT => binop_body!(LT, a[0], a[1]),
         op::SELECT => {
             if a[0] != 0 {
                 a[1]
@@ -64,8 +67,8 @@ fn eval_op(opcode: u8, a: &[u64]) -> u64 {
                 a[2]
             }
         }
-        op::NEG => a[0].wrapping_neg(),
-        op::NOT => !a[0],
+        op::NEG => unop_body!(NEG, a[0]),
+        op::NOT => unop_body!(NOT, a[0]),
         _ => 0,
     }
 }

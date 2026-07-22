@@ -12,6 +12,7 @@
 
 use crate::access::{rload, rstore};
 use crate::ir::{op, Decoded};
+use crate::ops::{binop_body, unop_body};
 
 /// Switch dispatch: a flat single-level `match` over the opcode, which the
 /// backend lowers to a jump table. Fills `results`; no in-loop hash.
@@ -26,21 +27,23 @@ pub fn interpret(d: &Decoded, input_seed: u64, results: &mut [u64]) {
                 unsafe { rload(rp, d.operand(i, $k, 2)) }
             };
         }
+        // op bodies come from the single `ops::binop_body` / `unop_body`
+        // definition; only the switch skeleton (this match) is this cell's.
         let v = match opcode {
             op::INPUT => input_seed,
             op::CONST => d.const_at(d.operand(i, 0, 1) as usize),
-            op::ADD => bin!(0).wrapping_add(bin!(1)),
-            op::SUB => bin!(0).wrapping_sub(bin!(1)),
-            op::MUL => bin!(0).wrapping_mul(bin!(1)),
-            op::AND => bin!(0) & bin!(1),
-            op::OR => bin!(0) | bin!(1),
-            op::XOR => bin!(0) ^ bin!(1),
-            op::SHL => bin!(0).wrapping_shl(bin!(1) as u32),
-            op::SHR => bin!(0).wrapping_shr(bin!(1) as u32),
-            op::MIN => bin!(0).min(bin!(1)),
-            op::MAX => bin!(0).max(bin!(1)),
-            op::EQ => (bin!(0) == bin!(1)) as u64,
-            op::LT => (bin!(0) < bin!(1)) as u64,
+            op::ADD => binop_body!(ADD, bin!(0), bin!(1)),
+            op::SUB => binop_body!(SUB, bin!(0), bin!(1)),
+            op::MUL => binop_body!(MUL, bin!(0), bin!(1)),
+            op::AND => binop_body!(AND, bin!(0), bin!(1)),
+            op::OR => binop_body!(OR, bin!(0), bin!(1)),
+            op::XOR => binop_body!(XOR, bin!(0), bin!(1)),
+            op::SHL => binop_body!(SHL, bin!(0), bin!(1)),
+            op::SHR => binop_body!(SHR, bin!(0), bin!(1)),
+            op::MIN => binop_body!(MIN, bin!(0), bin!(1)),
+            op::MAX => binop_body!(MAX, bin!(0), bin!(1)),
+            op::EQ => binop_body!(EQ, bin!(0), bin!(1)),
+            op::LT => binop_body!(LT, bin!(0), bin!(1)),
             op::SELECT => {
                 if unsafe { rload(rp, d.operand(i, 0, 3)) } != 0 {
                     unsafe { rload(rp, d.operand(i, 1, 3)) }
@@ -48,8 +51,8 @@ pub fn interpret(d: &Decoded, input_seed: u64, results: &mut [u64]) {
                     unsafe { rload(rp, d.operand(i, 2, 3)) }
                 }
             }
-            op::NEG => unsafe { rload(rp, d.operand(i, 0, 1)) }.wrapping_neg(),
-            op::NOT => !unsafe { rload(rp, d.operand(i, 0, 1)) },
+            op::NEG => unop_body!(NEG, unsafe { rload(rp, d.operand(i, 0, 1)) }),
+            op::NOT => unop_body!(NOT, unsafe { rload(rp, d.operand(i, 0, 1)) }),
             _ => 0,
         };
         unsafe { rstore(p, i, v) };
@@ -67,10 +70,10 @@ fn f_input(_d: &Decoded, _i: usize, _r: *const u64, s: u64) -> u64 {
     s
 }
 fn f_neg(d: &Decoded, i: usize, r: *const u64, _s: u64) -> u64 {
-    unsafe { rload(r, d.operand(i, 0, 1)) }.wrapping_neg()
+    unop_body!(NEG, unsafe { rload(r, d.operand(i, 0, 1)) })
 }
 fn f_not(d: &Decoded, i: usize, r: *const u64, _s: u64) -> u64 {
-    !unsafe { rload(r, d.operand(i, 0, 1)) }
+    unop_body!(NOT, unsafe { rload(r, d.operand(i, 0, 1)) })
 }
 fn f_select(d: &Decoded, i: usize, r: *const u64, _s: u64) -> u64 {
     unsafe {
@@ -81,27 +84,29 @@ fn f_select(d: &Decoded, i: usize, r: *const u64, _s: u64) -> u64 {
         }
     }
 }
-macro_rules! binop {
-    ($name:ident, $a:ident, $b:ident, $body:expr) => {
+// each f_* function reads its two operands, then defers to the single
+// `binop_body!` definition for the op's semantics.
+macro_rules! fbin {
+    ($name:ident, $op:ident) => {
         fn $name(d: &Decoded, i: usize, r: *const u64, _s: u64) -> u64 {
-            let $a = unsafe { rload(r, d.operand(i, 0, 2)) };
-            let $b = unsafe { rload(r, d.operand(i, 1, 2)) };
-            $body
+            let a = unsafe { rload(r, d.operand(i, 0, 2)) };
+            let b = unsafe { rload(r, d.operand(i, 1, 2)) };
+            binop_body!($op, a, b)
         }
     };
 }
-binop!(f_add, a, b, a.wrapping_add(b));
-binop!(f_sub, a, b, a.wrapping_sub(b));
-binop!(f_mul, a, b, a.wrapping_mul(b));
-binop!(f_and, a, b, a & b);
-binop!(f_or, a, b, a | b);
-binop!(f_xor, a, b, a ^ b);
-binop!(f_shl, a, b, a.wrapping_shl(b as u32));
-binop!(f_shr, a, b, a.wrapping_shr(b as u32));
-binop!(f_min, a, b, a.min(b));
-binop!(f_max, a, b, a.max(b));
-binop!(f_eq, a, b, (a == b) as u64);
-binop!(f_lt, a, b, (a < b) as u64);
+fbin!(f_add, ADD);
+fbin!(f_sub, SUB);
+fbin!(f_mul, MUL);
+fbin!(f_and, AND);
+fbin!(f_or, OR);
+fbin!(f_xor, XOR);
+fbin!(f_shl, SHL);
+fbin!(f_shr, SHR);
+fbin!(f_min, MIN);
+fbin!(f_max, MAX);
+fbin!(f_eq, EQ);
+fbin!(f_lt, LT);
 
 /// Table indexed by opcode; order matches `ir::op`.
 static DISPATCH: [OpFn; op::COUNT as usize] = [
@@ -149,33 +154,33 @@ pub fn interpret_ifchain(d: &Decoded, input_seed: u64, results: &mut [u64]) {
         }
         // frequency order: arithmetic binaries, then leaves, then the rest.
         let v = if opcode == op::ADD {
-            bin!(0).wrapping_add(bin!(1))
+            binop_body!(ADD, bin!(0), bin!(1))
         } else if opcode == op::MUL {
-            bin!(0).wrapping_mul(bin!(1))
+            binop_body!(MUL, bin!(0), bin!(1))
         } else if opcode == op::SUB {
-            bin!(0).wrapping_sub(bin!(1))
+            binop_body!(SUB, bin!(0), bin!(1))
         } else if opcode == op::CONST {
             d.const_at(d.operand(i, 0, 1) as usize)
         } else if opcode == op::INPUT {
             input_seed
         } else if opcode == op::AND {
-            bin!(0) & bin!(1)
+            binop_body!(AND, bin!(0), bin!(1))
         } else if opcode == op::OR {
-            bin!(0) | bin!(1)
+            binop_body!(OR, bin!(0), bin!(1))
         } else if opcode == op::XOR {
-            bin!(0) ^ bin!(1)
+            binop_body!(XOR, bin!(0), bin!(1))
         } else if opcode == op::LT {
-            (bin!(0) < bin!(1)) as u64
+            binop_body!(LT, bin!(0), bin!(1))
         } else if opcode == op::EQ {
-            (bin!(0) == bin!(1)) as u64
+            binop_body!(EQ, bin!(0), bin!(1))
         } else if opcode == op::SHL {
-            bin!(0).wrapping_shl(bin!(1) as u32)
+            binop_body!(SHL, bin!(0), bin!(1))
         } else if opcode == op::SHR {
-            bin!(0).wrapping_shr(bin!(1) as u32)
+            binop_body!(SHR, bin!(0), bin!(1))
         } else if opcode == op::MIN {
-            bin!(0).min(bin!(1))
+            binop_body!(MIN, bin!(0), bin!(1))
         } else if opcode == op::MAX {
-            bin!(0).max(bin!(1))
+            binop_body!(MAX, bin!(0), bin!(1))
         } else if opcode == op::SELECT {
             if unsafe { rload(rp, d.operand(i, 0, 3)) } != 0 {
                 unsafe { rload(rp, d.operand(i, 1, 3)) }
@@ -183,9 +188,9 @@ pub fn interpret_ifchain(d: &Decoded, input_seed: u64, results: &mut [u64]) {
                 unsafe { rload(rp, d.operand(i, 2, 3)) }
             }
         } else if opcode == op::NEG {
-            unsafe { rload(rp, d.operand(i, 0, 1)) }.wrapping_neg()
+            unop_body!(NEG, unsafe { rload(rp, d.operand(i, 0, 1)) })
         } else if opcode == op::NOT {
-            !unsafe { rload(rp, d.operand(i, 0, 1)) }
+            unop_body!(NOT, unsafe { rload(rp, d.operand(i, 0, 1)) })
         } else {
             0
         };
@@ -209,29 +214,29 @@ pub fn interpret_ifchain_ascending(d: &Decoded, input_seed: u64, results: &mut [
         let v = if opcode == op::CONST {
             d.const_at(d.operand(i, 0, 1) as usize)
         } else if opcode == op::ADD {
-            bin!(0).wrapping_add(bin!(1))
+            binop_body!(ADD, bin!(0), bin!(1))
         } else if opcode == op::SUB {
-            bin!(0).wrapping_sub(bin!(1))
+            binop_body!(SUB, bin!(0), bin!(1))
         } else if opcode == op::MUL {
-            bin!(0).wrapping_mul(bin!(1))
+            binop_body!(MUL, bin!(0), bin!(1))
         } else if opcode == op::AND {
-            bin!(0) & bin!(1)
+            binop_body!(AND, bin!(0), bin!(1))
         } else if opcode == op::OR {
-            bin!(0) | bin!(1)
+            binop_body!(OR, bin!(0), bin!(1))
         } else if opcode == op::XOR {
-            bin!(0) ^ bin!(1)
+            binop_body!(XOR, bin!(0), bin!(1))
         } else if opcode == op::SHL {
-            bin!(0).wrapping_shl(bin!(1) as u32)
+            binop_body!(SHL, bin!(0), bin!(1))
         } else if opcode == op::SHR {
-            bin!(0).wrapping_shr(bin!(1) as u32)
+            binop_body!(SHR, bin!(0), bin!(1))
         } else if opcode == op::MIN {
-            bin!(0).min(bin!(1))
+            binop_body!(MIN, bin!(0), bin!(1))
         } else if opcode == op::MAX {
-            bin!(0).max(bin!(1))
+            binop_body!(MAX, bin!(0), bin!(1))
         } else if opcode == op::EQ {
-            (bin!(0) == bin!(1)) as u64
+            binop_body!(EQ, bin!(0), bin!(1))
         } else if opcode == op::LT {
-            (bin!(0) < bin!(1)) as u64
+            binop_body!(LT, bin!(0), bin!(1))
         } else if opcode == op::SELECT {
             if unsafe { rload(rp, d.operand(i, 0, 3)) } != 0 {
                 unsafe { rload(rp, d.operand(i, 1, 3)) }
@@ -239,9 +244,9 @@ pub fn interpret_ifchain_ascending(d: &Decoded, input_seed: u64, results: &mut [
                 unsafe { rload(rp, d.operand(i, 2, 3)) }
             }
         } else if opcode == op::NEG {
-            unsafe { rload(rp, d.operand(i, 0, 1)) }.wrapping_neg()
+            unop_body!(NEG, unsafe { rload(rp, d.operand(i, 0, 1)) })
         } else if opcode == op::NOT {
-            !unsafe { rload(rp, d.operand(i, 0, 1)) }
+            unop_body!(NOT, unsafe { rload(rp, d.operand(i, 0, 1)) })
         } else if opcode == op::INPUT {
             input_seed
         } else {
@@ -279,33 +284,33 @@ pub fn interpret_ifchain_linear(d: &Decoded, input_seed: u64, results: &mut [u64
         // black_box each comparison so the compiler must materialize and branch
         // on it individually, keeping the cascade a real linear scan.
         let v = if black_box(opcode == op::ADD) {
-            bin!(0).wrapping_add(bin!(1))
+            binop_body!(ADD, bin!(0), bin!(1))
         } else if black_box(opcode == op::MUL) {
-            bin!(0).wrapping_mul(bin!(1))
+            binop_body!(MUL, bin!(0), bin!(1))
         } else if black_box(opcode == op::SUB) {
-            bin!(0).wrapping_sub(bin!(1))
+            binop_body!(SUB, bin!(0), bin!(1))
         } else if black_box(opcode == op::CONST) {
             d.const_at(d.operand(i, 0, 1) as usize)
         } else if black_box(opcode == op::INPUT) {
             input_seed
         } else if black_box(opcode == op::AND) {
-            bin!(0) & bin!(1)
+            binop_body!(AND, bin!(0), bin!(1))
         } else if black_box(opcode == op::OR) {
-            bin!(0) | bin!(1)
+            binop_body!(OR, bin!(0), bin!(1))
         } else if black_box(opcode == op::XOR) {
-            bin!(0) ^ bin!(1)
+            binop_body!(XOR, bin!(0), bin!(1))
         } else if black_box(opcode == op::LT) {
-            (bin!(0) < bin!(1)) as u64
+            binop_body!(LT, bin!(0), bin!(1))
         } else if black_box(opcode == op::EQ) {
-            (bin!(0) == bin!(1)) as u64
+            binop_body!(EQ, bin!(0), bin!(1))
         } else if black_box(opcode == op::SHL) {
-            bin!(0).wrapping_shl(bin!(1) as u32)
+            binop_body!(SHL, bin!(0), bin!(1))
         } else if black_box(opcode == op::SHR) {
-            bin!(0).wrapping_shr(bin!(1) as u32)
+            binop_body!(SHR, bin!(0), bin!(1))
         } else if black_box(opcode == op::MIN) {
-            bin!(0).min(bin!(1))
+            binop_body!(MIN, bin!(0), bin!(1))
         } else if black_box(opcode == op::MAX) {
-            bin!(0).max(bin!(1))
+            binop_body!(MAX, bin!(0), bin!(1))
         } else if black_box(opcode == op::SELECT) {
             if unsafe { rload(rp, d.operand(i, 0, 3)) } != 0 {
                 unsafe { rload(rp, d.operand(i, 1, 3)) }
@@ -313,9 +318,9 @@ pub fn interpret_ifchain_linear(d: &Decoded, input_seed: u64, results: &mut [u64
                 unsafe { rload(rp, d.operand(i, 2, 3)) }
             }
         } else if black_box(opcode == op::NEG) {
-            unsafe { rload(rp, d.operand(i, 0, 1)) }.wrapping_neg()
+            unop_body!(NEG, unsafe { rload(rp, d.operand(i, 0, 1)) })
         } else if black_box(opcode == op::NOT) {
-            !unsafe { rload(rp, d.operand(i, 0, 1)) }
+            unop_body!(NOT, unsafe { rload(rp, d.operand(i, 0, 1)) })
         } else {
             0
         };
@@ -344,39 +349,39 @@ pub fn interpret_bittree(d: &Decoded, input_seed: u64, results: &mut [u64]) {
                     if opcode == op::CONST {
                         d.const_at(d.operand(i, 0, 1) as usize)
                     } else {
-                        bin!(0).wrapping_add(bin!(1)) // ADD
+                        binop_body!(ADD, bin!(0), bin!(1)) // ADD
                     }
                 } else if opcode == op::SUB {
-                    bin!(0).wrapping_sub(bin!(1))
+                    binop_body!(SUB, bin!(0), bin!(1))
                 } else {
-                    bin!(0).wrapping_mul(bin!(1)) // MUL
+                    binop_body!(MUL, bin!(0), bin!(1)) // MUL
                 }
             } else if opcode < 6 {
                 if opcode == op::AND {
-                    bin!(0) & bin!(1)
+                    binop_body!(AND, bin!(0), bin!(1))
                 } else {
-                    bin!(0) | bin!(1) // OR
+                    binop_body!(OR, bin!(0), bin!(1)) // OR
                 }
             } else if opcode == op::XOR {
-                bin!(0) ^ bin!(1)
+                binop_body!(XOR, bin!(0), bin!(1))
             } else {
-                bin!(0).wrapping_shl(bin!(1) as u32) // SHL
+                binop_body!(SHL, bin!(0), bin!(1)) // SHL
             }
         } else if opcode < 12 {
             if opcode < 10 {
                 if opcode == op::SHR {
-                    bin!(0).wrapping_shr(bin!(1) as u32)
+                    binop_body!(SHR, bin!(0), bin!(1))
                 } else {
-                    bin!(0).min(bin!(1)) // MIN
+                    binop_body!(MIN, bin!(0), bin!(1)) // MIN
                 }
             } else if opcode == op::MAX {
-                bin!(0).max(bin!(1))
+                binop_body!(MAX, bin!(0), bin!(1))
             } else {
-                (bin!(0) == bin!(1)) as u64 // EQ
+                binop_body!(EQ, bin!(0), bin!(1)) // EQ
             }
         } else if opcode < 14 {
             if opcode == op::LT {
-                (bin!(0) < bin!(1)) as u64
+                binop_body!(LT, bin!(0), bin!(1))
             } else {
                 // SELECT
                 if unsafe { rload(rp, d.operand(i, 0, 3)) } != 0 {
@@ -386,9 +391,9 @@ pub fn interpret_bittree(d: &Decoded, input_seed: u64, results: &mut [u64]) {
                 }
             }
         } else if opcode == op::NEG {
-            unsafe { rload(rp, d.operand(i, 0, 1)) }.wrapping_neg()
+            unop_body!(NEG, unsafe { rload(rp, d.operand(i, 0, 1)) })
         } else if opcode == op::NOT {
-            !unsafe { rload(rp, d.operand(i, 0, 1)) }
+            unop_body!(NOT, unsafe { rload(rp, d.operand(i, 0, 1)) })
         } else {
             input_seed // INPUT (16)
         };

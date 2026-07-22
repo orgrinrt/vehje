@@ -91,19 +91,20 @@ pub fn compile(prog: &Program) -> StackProgram {
 
 #[inline(always)]
 fn bin(opcode: u8, a: u64, b: u64) -> u64 {
+    use crate::ops::binop_body;
     match opcode {
-        op::ADD => a.wrapping_add(b),
-        op::SUB => a.wrapping_sub(b),
-        op::MUL => a.wrapping_mul(b),
-        op::AND => a & b,
-        op::OR => a | b,
-        op::XOR => a ^ b,
-        op::SHL => a.wrapping_shl(b as u32),
-        op::SHR => a.wrapping_shr(b as u32),
-        op::MIN => a.min(b),
-        op::MAX => a.max(b),
-        op::EQ => (a == b) as u64,
-        op::LT => (a < b) as u64,
+        op::ADD => binop_body!(ADD, a, b),
+        op::SUB => binop_body!(SUB, a, b),
+        op::MUL => binop_body!(MUL, a, b),
+        op::AND => binop_body!(AND, a, b),
+        op::OR => binop_body!(OR, a, b),
+        op::XOR => binop_body!(XOR, a, b),
+        op::SHL => binop_body!(SHL, a, b),
+        op::SHR => binop_body!(SHR, a, b),
+        op::MIN => binop_body!(MIN, a, b),
+        op::MAX => binop_body!(MAX, a, b),
+        op::EQ => binop_body!(EQ, a, b),
+        op::LT => binop_body!(LT, a, b),
         _ => 0,
     }
 }

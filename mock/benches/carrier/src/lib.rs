@@ -52,6 +52,7 @@ pub mod interp_threaded;
 pub mod ir;
 pub mod liveness;
 pub mod native;
+pub mod ops;
 pub mod optimize;
 pub mod output_building;
 pub mod predecode;

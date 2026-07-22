@@ -42,30 +42,33 @@ macro_rules! advance {
     }};
 }
 
+// each handler reads its two operands, then defers to the single `binop_body!`
+// definition for the op's semantics (only the preserve-none tail-threaded
+// skeleton is this cell's).
 macro_rules! bin_h {
-    ($name:ident, $a:ident, $b:ident, $body:expr) => {
+    ($name:ident, $op:ident) => {
         extern "rust-preserve-none" fn $name(i: usize, d: *const (), wp: *mut u64, seed: u64) {
             let dec = unsafe { view(d) };
             let rp = wp as *const u64;
-            let $a = unsafe { rload(rp, dec.operand(i, 0, 2)) };
-            let $b = unsafe { rload(rp, dec.operand(i, 1, 2)) };
-            advance!(i, d, wp, seed, $body)
+            let a = unsafe { rload(rp, dec.operand(i, 0, 2)) };
+            let b = unsafe { rload(rp, dec.operand(i, 1, 2)) };
+            advance!(i, d, wp, seed, crate::ops::binop_body!($op, a, b))
         }
     };
 }
 
-bin_h!(h_add, a, b, a.wrapping_add(b));
-bin_h!(h_sub, a, b, a.wrapping_sub(b));
-bin_h!(h_mul, a, b, a.wrapping_mul(b));
-bin_h!(h_and, a, b, a & b);
-bin_h!(h_or, a, b, a | b);
-bin_h!(h_xor, a, b, a ^ b);
-bin_h!(h_shl, a, b, a.wrapping_shl(b as u32));
-bin_h!(h_shr, a, b, a.wrapping_shr(b as u32));
-bin_h!(h_min, a, b, a.min(b));
-bin_h!(h_max, a, b, a.max(b));
-bin_h!(h_eq, a, b, (a == b) as u64);
-bin_h!(h_lt, a, b, (a < b) as u64);
+bin_h!(h_add, ADD);
+bin_h!(h_sub, SUB);
+bin_h!(h_mul, MUL);
+bin_h!(h_and, AND);
+bin_h!(h_or, OR);
+bin_h!(h_xor, XOR);
+bin_h!(h_shl, SHL);
+bin_h!(h_shr, SHR);
+bin_h!(h_min, MIN);
+bin_h!(h_max, MAX);
+bin_h!(h_eq, EQ);
+bin_h!(h_lt, LT);
 
 extern "rust-preserve-none" fn h_const(i: usize, d: *const (), wp: *mut u64, seed: u64) {
     let dec = unsafe { view(d) };
@@ -77,12 +80,12 @@ extern "rust-preserve-none" fn h_input(i: usize, d: *const (), wp: *mut u64, see
 }
 extern "rust-preserve-none" fn h_neg(i: usize, d: *const (), wp: *mut u64, seed: u64) {
     let dec = unsafe { view(d) };
-    let v = unsafe { rload(wp as *const u64, dec.operand(i, 0, 1)) }.wrapping_neg();
+    let v = crate::ops::unop_body!(NEG, unsafe { rload(wp as *const u64, dec.operand(i, 0, 1)) });
     advance!(i, d, wp, seed, v)
 }
 extern "rust-preserve-none" fn h_not(i: usize, d: *const (), wp: *mut u64, seed: u64) {
     let dec = unsafe { view(d) };
-    let v = !unsafe { rload(wp as *const u64, dec.operand(i, 0, 1)) };
+    let v = crate::ops::unop_body!(NOT, unsafe { rload(wp as *const u64, dec.operand(i, 0, 1)) });
     advance!(i, d, wp, seed, v)
 }
 extern "rust-preserve-none" fn h_select(i: usize, d: *const (), wp: *mut u64, seed: u64) {

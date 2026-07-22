@@ -38,30 +38,33 @@ pub fn interpret_vertical<const W: usize>(
     results: &mut [Simd<u64, W>],
 ) {
     let seed_v = Simd::from_array(*seeds);
+    // `zero` is still used by NEG / SELECT / the default arm; the binop macro
+    // constructs its own splat constants inline (macro hygiene hides caller locals).
     let zero = Simd::splat(0u64);
-    let one = Simd::splat(1u64);
-    let shmask = Simd::splat(63u64);
     let wp = results.as_mut_ptr();
     let rp = wp as *const Simd<u64, W>;
     let np = p.nodes.as_ptr();
+    use crate::ops::binop_simd;
     for i in 0..p.nodes.len() {
         let nd = unsafe { *np.add(i) };
+        // the SIMD op bodies come from the single `ops::binop_simd` definition
+        // (the vector twin of the scalar `binop_body`); only the lane-loop
+        // skeleton is this cell's. `zero`/`one`/`shmask` are the splats it needs.
         let v = match nd.op {
             op::INPUT => seed_v,
             op::CONST => Simd::splat(p.consts[nd.a as usize]),
-            op::ADD => unsafe { vload(rp, nd.a) + vload(rp, nd.b) },
-            op::SUB => unsafe { vload(rp, nd.a) - vload(rp, nd.b) },
-            op::MUL => unsafe { vload(rp, nd.a) * vload(rp, nd.b) },
-            op::AND => unsafe { vload(rp, nd.a) & vload(rp, nd.b) },
-            op::OR => unsafe { vload(rp, nd.a) | vload(rp, nd.b) },
-            op::XOR => unsafe { vload(rp, nd.a) ^ vload(rp, nd.b) },
-            // mask the shift amount to 0..63 to match scalar wrapping_shl/shr.
-            op::SHL => unsafe { vload(rp, nd.a) << (vload(rp, nd.b) & shmask) },
-            op::SHR => unsafe { vload(rp, nd.a) >> (vload(rp, nd.b) & shmask) },
-            op::MIN => unsafe { vload(rp, nd.a).simd_min(vload(rp, nd.b)) },
-            op::MAX => unsafe { vload(rp, nd.a).simd_max(vload(rp, nd.b)) },
-            op::EQ => unsafe { vload(rp, nd.a).simd_eq(vload(rp, nd.b)).select(one, zero) },
-            op::LT => unsafe { vload(rp, nd.a).simd_lt(vload(rp, nd.b)).select(one, zero) },
+            op::ADD => unsafe { binop_simd!(ADD, vload(rp, nd.a), vload(rp, nd.b)) },
+            op::SUB => unsafe { binop_simd!(SUB, vload(rp, nd.a), vload(rp, nd.b)) },
+            op::MUL => unsafe { binop_simd!(MUL, vload(rp, nd.a), vload(rp, nd.b)) },
+            op::AND => unsafe { binop_simd!(AND, vload(rp, nd.a), vload(rp, nd.b)) },
+            op::OR => unsafe { binop_simd!(OR, vload(rp, nd.a), vload(rp, nd.b)) },
+            op::XOR => unsafe { binop_simd!(XOR, vload(rp, nd.a), vload(rp, nd.b)) },
+            op::SHL => unsafe { binop_simd!(SHL, vload(rp, nd.a), vload(rp, nd.b)) },
+            op::SHR => unsafe { binop_simd!(SHR, vload(rp, nd.a), vload(rp, nd.b)) },
+            op::MIN => unsafe { binop_simd!(MIN, vload(rp, nd.a), vload(rp, nd.b)) },
+            op::MAX => unsafe { binop_simd!(MAX, vload(rp, nd.a), vload(rp, nd.b)) },
+            op::EQ => unsafe { binop_simd!(EQ, vload(rp, nd.a), vload(rp, nd.b)) },
+            op::LT => unsafe { binop_simd!(LT, vload(rp, nd.a), vload(rp, nd.b)) },
             op::SELECT => unsafe {
                 let cond = vload(rp, nd.a).simd_ne(zero);
                 cond.select(vload(rp, nd.b), vload(rp, nd.c))
