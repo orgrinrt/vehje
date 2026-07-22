@@ -43,3 +43,16 @@ pub fn checksum(results: &[u64]) -> u64 {
     }
     h
 }
+
+/// Checksum over a chosen set of node results (the program's live-out / output
+/// nodes), in the given index order. Used to cross-validate the optimize axis,
+/// where CSE / DCE change the node count so a full-array checksum is not
+/// comparable, but the program's observable outputs must be preserved.
+#[inline]
+pub fn checksum_at(results: &[u64], indices: &[u32]) -> u64 {
+    let mut h = 0u64;
+    for &idx in indices {
+        h = h.rotate_left(7) ^ results[idx as usize];
+    }
+    h
+}

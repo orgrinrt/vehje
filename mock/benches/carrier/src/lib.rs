@@ -44,6 +44,7 @@ pub mod interp;
 pub mod interp_threaded;
 pub mod ir;
 pub mod native;
+pub mod optimize;
 pub mod predecode;
 pub mod reach;
 #[cfg(feature = "vertical")]
