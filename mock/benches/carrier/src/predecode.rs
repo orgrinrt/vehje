@@ -292,6 +292,146 @@ pub mod threaded_flat {
 #[cfg(feature = "threaded")]
 pub use threaded_flat::interpret_predecoded_threaded;
 
+/// Direct-threaded dispatch: the resolved handler pointer is stored per node at
+/// predecode time, so dispatch is a load of the node's own handler field and a
+/// tail jump, with no opcode read and no dispatch-table index. The strongest
+/// form of the threaded shape a production interpreter ships (vs the
+/// table-indirect `threaded_flat`). Only compiled with the `threaded` feature.
+#[cfg(feature = "threaded")]
+pub mod threaded_direct {
+    use super::{cload, PNode};
+    use crate::access::{rload, rstore};
+    use crate::ir::op;
+
+    // State: node index, flat node pointer, resolved-handler pointer array,
+    // const pointer, results write pointer, input seed, node count.
+    pub type H = extern "rust-preserve-none" fn(usize, *const PNode, *const (), *const u64, *mut u64, u64, usize);
+
+    macro_rules! advance {
+        ($i:expr, $np:expr, $hp:expr, $cp:expr, $wp:expr, $seed:expr, $n:expr, $v:expr) => {{
+            let i = $i;
+            unsafe {
+                rstore($wp, i, $v);
+            }
+            let ni = i + 1;
+            if ni >= $n {
+                return;
+            }
+            // direct: load the next handler pointer, jump. No opcode, no table index.
+            let next = unsafe { *($hp as *const H).add(ni) };
+            become next(ni, $np, $hp, $cp, $wp, $seed, $n)
+        }};
+    }
+
+    macro_rules! bin_h {
+        ($name:ident, $x:ident, $y:ident, $body:expr) => {
+            extern "rust-preserve-none" fn $name(i: usize, np: *const PNode, hp: *const (), cp: *const u64, wp: *mut u64, seed: u64, n: usize) {
+                let nd = unsafe { *np.add(i) };
+                let rp = wp as *const u64;
+                let $x = unsafe { rload(rp, nd.a) };
+                let $y = unsafe { rload(rp, nd.b) };
+                advance!(i, np, hp, cp, wp, seed, n, $body)
+            }
+        };
+    }
+
+    bin_h!(h_add, a, b, a.wrapping_add(b));
+    bin_h!(h_sub, a, b, a.wrapping_sub(b));
+    bin_h!(h_mul, a, b, a.wrapping_mul(b));
+    bin_h!(h_and, a, b, a & b);
+    bin_h!(h_or, a, b, a | b);
+    bin_h!(h_xor, a, b, a ^ b);
+    bin_h!(h_shl, a, b, a.wrapping_shl(b as u32));
+    bin_h!(h_shr, a, b, a.wrapping_shr(b as u32));
+    bin_h!(h_min, a, b, a.min(b));
+    bin_h!(h_max, a, b, a.max(b));
+    bin_h!(h_eq, a, b, (a == b) as u64);
+    bin_h!(h_lt, a, b, (a < b) as u64);
+
+    extern "rust-preserve-none" fn h_const(i: usize, np: *const PNode, hp: *const (), cp: *const u64, wp: *mut u64, seed: u64, n: usize) {
+        let nd = unsafe { *np.add(i) };
+        let v = unsafe { cload(cp, nd.a) };
+        advance!(i, np, hp, cp, wp, seed, n, v)
+    }
+    extern "rust-preserve-none" fn h_input(i: usize, np: *const PNode, hp: *const (), cp: *const u64, wp: *mut u64, seed: u64, n: usize) {
+        advance!(i, np, hp, cp, wp, seed, n, seed)
+    }
+    extern "rust-preserve-none" fn h_neg(i: usize, np: *const PNode, hp: *const (), cp: *const u64, wp: *mut u64, seed: u64, n: usize) {
+        let nd = unsafe { *np.add(i) };
+        let v = unsafe { rload(wp as *const u64, nd.a) }.wrapping_neg();
+        advance!(i, np, hp, cp, wp, seed, n, v)
+    }
+    extern "rust-preserve-none" fn h_not(i: usize, np: *const PNode, hp: *const (), cp: *const u64, wp: *mut u64, seed: u64, n: usize) {
+        let nd = unsafe { *np.add(i) };
+        let v = !unsafe { rload(wp as *const u64, nd.a) };
+        advance!(i, np, hp, cp, wp, seed, n, v)
+    }
+    extern "rust-preserve-none" fn h_select(i: usize, np: *const PNode, hp: *const (), cp: *const u64, wp: *mut u64, seed: u64, n: usize) {
+        let nd = unsafe { *np.add(i) };
+        let rp = wp as *const u64;
+        let v = unsafe {
+            if rload(rp, nd.a) != 0 {
+                rload(rp, nd.b)
+            } else {
+                rload(rp, nd.c)
+            }
+        };
+        advance!(i, np, hp, cp, wp, seed, n, v)
+    }
+
+    fn handler_of(opcode: u8) -> H {
+        match opcode {
+            op::CONST => h_const,
+            op::ADD => h_add,
+            op::SUB => h_sub,
+            op::MUL => h_mul,
+            op::AND => h_and,
+            op::OR => h_or,
+            op::XOR => h_xor,
+            op::SHL => h_shl,
+            op::SHR => h_shr,
+            op::MIN => h_min,
+            op::MAX => h_max,
+            op::EQ => h_eq,
+            op::LT => h_lt,
+            op::SELECT => h_select,
+            op::NEG => h_neg,
+            op::NOT => h_not,
+            _ => h_input,
+        }
+    }
+
+    /// Resolve one handler pointer per node (the predecode-time work that turns
+    /// opcode dispatch into a direct jump). Caller owns the buffer.
+    pub fn resolve_handlers(p: &super::Predecoded, handlers: &mut Vec<H>) {
+        handlers.clear();
+        handlers.reserve(p.nodes.len());
+        for nd in &p.nodes {
+            handlers.push(handler_of(nd.op));
+        }
+    }
+
+    /// Direct-threaded interpretation over the flat form + resolved handlers.
+    /// Fills `results`.
+    #[inline]
+    pub fn interpret_predecoded_direct(p: &super::Predecoded, handlers: &[H], input_seed: u64, results: &mut [u64]) {
+        let n = p.nodes.len();
+        if n == 0 {
+            return;
+        }
+        let np = p.nodes.as_ptr();
+        let hp_typed = handlers.as_ptr();
+        let hp = hp_typed as *const ();
+        let cp = p.consts.as_ptr();
+        let wp = results.as_mut_ptr();
+        let h0 = unsafe { *hp_typed };
+        h0(0, np, hp, cp, wp, input_seed, n);
+    }
+}
+
+#[cfg(feature = "threaded")]
+pub use threaded_direct::{interpret_predecoded_direct, resolve_handlers};
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -340,6 +480,27 @@ mod tests {
             let sw = switch_ck(&d, seed, &mut r1);
             super::interpret_predecoded_threaded(&p, seed, &mut r2);
             assert_eq!(sw, checksum(&r2), "predecoded-threaded diverged at seed {seed}");
+        }
+    }
+
+    #[cfg(feature = "threaded")]
+    #[test]
+    fn predecoded_direct_matches_switch() {
+        let prog = generate(&GenParams {
+            node_count: 500,
+            ..GenParams::default_point()
+        });
+        let bytes = encode(&prog, &REC24);
+        let d = Decoded::parse(&bytes, REC24).unwrap();
+        let p = predecode(&d);
+        let mut handlers = Vec::new();
+        super::resolve_handlers(&p, &mut handlers);
+        let mut r1 = vec![0u64; prog.nodes.len()];
+        let mut r2 = vec![0u64; prog.nodes.len()];
+        for seed in [0u64, 1, 42, 255, 1000, 999_999] {
+            let sw = switch_ck(&d, seed, &mut r1);
+            super::interpret_predecoded_direct(&p, &handlers, seed, &mut r2);
+            assert_eq!(sw, checksum(&r2), "predecoded-direct diverged at seed {seed}");
         }
     }
 }
