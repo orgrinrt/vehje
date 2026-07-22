@@ -50,6 +50,7 @@ pub mod optimize;
 pub mod predecode;
 pub mod reach;
 pub mod stackbc;
+pub mod trace;
 #[cfg(feature = "vertical")]
 pub mod vertical;
 pub mod retract;
