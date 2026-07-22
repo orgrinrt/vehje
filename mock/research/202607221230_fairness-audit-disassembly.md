@@ -114,15 +114,33 @@ a measured cell).
   near-zero-dispatch native `I` term. The imm12 window (nodes and consts below 4096) is a stated scope of
   this realization, and `emit` declines rather than miscompiles above it.
 
+## Zig (cross-language) dispatch cells
+
+The Zig cell consumes the identical REC24 wire bytes and folds the identical checksum as the Rust
+interpreters, cross-validated byte-exact through the `zigcheck` CLI (a Rust test pipes `[seed][program]` and
+compares checksums across all six profiles and five seeds; `zigcheck` also asserts the two Zig shapes agree
+internally). Measured on `libcarrier_zig.dylib` (M1, Zig 0.16, ReleaseFast):
+
+| cell | label | ISA evidence | verdict |
+|---|---|---|---|
+| Zig switch (`carrier_zig_switch`) | match dispatch, jump table | one `br xN` (the 17-arm switch jump table), zero `blr` | CONFIRMED (jump table) |
+| Zig tail (`carrier_zig_tail`) | guaranteed-tail-call token threading | every opcode handler (`hConst`, `hAdd`, `hMul`, `hSelect`, `hInput`, ...) ends in one indirect `br` (the threaded dispatch through the handler table, `step` inlined into each) with `bl=0`, `blr=0`, `ret=1` | CONFIRMED, true tail threading |
+
+The load-bearing confirmation: `@call(.always_tail)` lowered to a genuine indirect tail branch (`br`) in every
+handler, with **zero regular calls** (`bl`/`blr`) across the dispatch. So the Zig tail cell has no stack growth
+and no call overhead per node, the token-threaded shape Rust needs the nightly `become` feature to express.
+This is the one dispatch shape a Rust-only carrier cannot ask, and the shipped vehje runtime is Zig, so the
+cross-language cell is load-bearing rather than a curiosity. Its operand access is the same wire-format read as
+the Rust switch (both index the REC24 record inline), so the cross-language comparison is dispatch plus the
+Zig-vs-Rust codegen difference, faithfully what a Zig runtime would pay.
+
 ## Not yet built / flagged
 
 - perfect-hash dispatch: degenerate to the fn-pointer table for the dense contiguous opcode set (0..16); a
   representative perfect-hash cell needs a sparse opcode design decision (panel / op). A degenerate cell
   would misrepresent the technique, so it is not built.
-- Zig computed-goto dispatch: the one dispatch shape Rust cannot express (label-address threading via
-  `goto`), built as a Zig cdylib consuming identical program bytes. It gets the same ISA confirmation
-  appended here (its threaded loop should show the computed-goto indirect branch, no per-op call) once the
-  Zig toolchain path lands.
+- copy-and-patch stencils above the imm12 window (nodes/consts >= 4096): a register-materialized base
+  address is the labelled refinement; the current cell declines rather than miscompiles.
 
 ## Reproduce
 
