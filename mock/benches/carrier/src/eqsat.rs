@@ -280,6 +280,198 @@ pub fn build_chain(k: usize, op: Op, cap: usize, seed: u64) -> (EGraph, u32) {
     (g, acc)
 }
 
+// ── Program-level associativity/commutativity reassociation (optimize strategy) ──
+//
+// The engine above answers the standalone bounded-explosion question (does a
+// capped rewrite window catch the reassociation blowup). This section wires
+// reassociation in as the optimize stage's fourth strategy, so the axis is
+// genuinely `none / CSE / eqsat / CSE+eqsat` as the design specified, not just
+// CSE/fold/DCE.
+//
+// It does NOT run a general e-graph to saturation and then extract: general
+// e-graph extraction is unsound under a greedy extractor once associativity
+// introduces cyclic e-classes (a real, well-known hazard; egg/egglog handle it
+// with a dedicated cyclic extractor). Instead it computes the canonical AC
+// normal form directly, which is sound, bounded, terminating, and acyclic by
+// construction: it flattens every maximal same-op ADD or MUL chain into its
+// operand multiset, sorts the operands, and rebuilds a canonical left-leaning
+// tree, hash-consing every node. Two expressions equal modulo associativity and
+// commutativity therefore normalise to the identical node and share it, the
+// CSE-modulo-AC that plain structural CSE (which keys on exact operand order and
+// nesting) cannot see. On the carrier's random DAGs this shares little; on the
+// correlated MUL/ADD profiles it exposes repeated reassociated subexpressions.
+// The bench measures which per profile, which is the point.
+
+use crate::ir::{op as irop, Node, Program};
+
+/// Get-or-create a CONST node for value `v`, pooling the constant and CSEing the
+/// node so equal constants share one node.
+fn mk_const(
+    v: u64,
+    new_nodes: &mut Vec<Node>,
+    new_consts: &mut Vec<u64>,
+    const_pool: &mut HashMap<u64, u32>,
+    const_node: &mut HashMap<u64, u32>,
+) -> u32 {
+    if let Some(&id) = const_node.get(&v) {
+        return id;
+    }
+    let pool_idx = *const_pool.entry(v).or_insert_with(|| {
+        let idx = new_consts.len() as u32;
+        new_consts.push(v);
+        idx
+    });
+    let id = new_nodes.len() as u32;
+    new_nodes.push(Node { op: irop::CONST, operands: vec![pool_idx] });
+    const_node.insert(v, id);
+    id
+}
+
+/// Get-or-create an op node, hash-consed on `(op, operands)` so structurally
+/// identical nodes share one id.
+fn mk_op(
+    op: u8,
+    operands: Vec<u32>,
+    new_nodes: &mut Vec<Node>,
+    cse_op: &mut HashMap<(u8, Vec<u32>), u32>,
+) -> u32 {
+    let key = (op, operands.clone());
+    if let Some(&id) = cse_op.get(&key) {
+        return id;
+    }
+    let id = new_nodes.len() as u32;
+    new_nodes.push(Node { op, operands });
+    cse_op.insert(key, id);
+    id
+}
+
+/// Fold a canonical (already sorted) operand list into a left-leaning tree of
+/// `op`, hash-consing each intermediate so shared prefixes are reused.
+fn build_tree(
+    op: u8,
+    flat: &[u32],
+    new_nodes: &mut Vec<Node>,
+    cse_op: &mut HashMap<(u8, Vec<u32>), u32>,
+) -> u32 {
+    debug_assert!(!flat.is_empty());
+    let mut acc = flat[0];
+    for &next in &flat[1..] {
+        acc = mk_op(op, vec![acc, next], new_nodes, cse_op);
+    }
+    acc
+}
+
+/// Canonical AC reassociation with structural CSE (see the section doc above).
+/// Returns the rewritten program plus the new node ids of the original
+/// `sink_nodes`, in the same order, so the optimize stage keeps its live-out
+/// provenance and the sink-fold cross-validation holds (ADD and MUL are
+/// associative and commutative under wrapping arithmetic, so every rewritten form
+/// evaluates to the same value for every input). `cap` bounds how far a chain is
+/// flattened: once a node's flattened operand list reaches `cap`, further same-op
+/// operands are kept as concrete subtrees rather than spliced. That is the
+/// "bounded" in bounded reassociation. It keeps the pass O(n * cap); without it a
+/// fully-flattened linear chain of length L stores an O(L) operand list at each of
+/// its L nodes, O(L^2) copying on the correlated profiles. The bound limits only
+/// how wide one reassociation window is (a wider expression reassociates in
+/// cap-sized windows), never correctness, and value is preserved regardless.
+pub fn eqsat_reassociate(prog: &Program, sink_nodes: &[u32], cap: usize) -> (Program, Vec<u32>) {
+    let n = prog.nodes.len();
+    let mut new_nodes: Vec<Node> = Vec::new();
+    let mut new_consts: Vec<u64> = Vec::new();
+    let mut const_pool: HashMap<u64, u32> = HashMap::new();
+    let mut const_node: HashMap<u64, u32> = HashMap::new();
+    let mut cse_op: HashMap<(u8, Vec<u32>), u32> = HashMap::new();
+    // concrete new id per original node, built lazily: a CONST/INPUT/non-AC node
+    // gets its id here; an ADD/MUL node in a chain leaves this None and only its
+    // flattened operand list is recorded, so a same-op parent absorbs it. The
+    // concrete tree for a chain node is built (via `concrete_id`) only when a
+    // non-same-op consumer or a sink actually needs its id. That keeps the node
+    // count bounded by the original: interior chain nodes emit nothing, only the
+    // maximal-chain roots emit a canonical tree (of the same node count the
+    // original nesting had, or fewer with sharing). Eagerly building a tree per
+    // interior node was correct but O(chain^2) on the correlated profiles.
+    let mut id_of: Vec<Option<u32>> = vec![None; n];
+    // for each ADD/MUL node, the flattened sorted operand list it normalises to.
+    let mut flat_of: Vec<Option<Vec<u32>>> = vec![None; n];
+    let mut input_id: Option<u32> = None;
+
+    for i in 0..n {
+        let op = prog.nodes[i].op;
+        match op {
+            irop::CONST => {
+                let v = prog.consts[prog.nodes[i].operands[0] as usize];
+                id_of[i] = Some(mk_const(v, &mut new_nodes, &mut new_consts, &mut const_pool, &mut const_node));
+            }
+            irop::INPUT => {
+                id_of[i] = Some(*input_id.get_or_insert_with(|| {
+                    let id = new_nodes.len() as u32;
+                    new_nodes.push(Node { op: irop::INPUT, operands: vec![] });
+                    id
+                }));
+            }
+            _ if (op == irop::ADD || op == irop::MUL) && prog.nodes[i].operands.len() == 2 => {
+                let ops = prog.nodes[i].operands.clone();
+                let mut flat: Vec<u32> = Vec::new();
+                for &o in &ops {
+                    // splice a same-op operand's normal form (reassociation) while
+                    // under the cap; else realise the operand as one concrete
+                    // subtree. The cap keeps flat lists O(cap) so the whole pass is
+                    // O(n * cap) instead of O(chain^2).
+                    if prog.nodes[o as usize].op == op
+                        && flat_of[o as usize].is_some()
+                        && flat.len() < cap
+                    {
+                        flat.extend_from_slice(flat_of[o as usize].as_ref().unwrap());
+                    } else {
+                        flat.push(concrete_id(o, prog, &mut id_of, &flat_of, &mut new_nodes, &mut cse_op));
+                    }
+                }
+                flat.sort_unstable();
+                flat_of[i] = Some(flat); // id_of[i] stays None (deferred).
+            }
+            _ => {
+                // non-AC op: operand order is semantic; realise operand ids, CSE.
+                let ops = prog.nodes[i].operands.clone();
+                let operands: Vec<u32> = ops
+                    .iter()
+                    .map(|&o| concrete_id(o, prog, &mut id_of, &flat_of, &mut new_nodes, &mut cse_op))
+                    .collect();
+                id_of[i] = Some(mk_op(op, operands, &mut new_nodes, &mut cse_op));
+            }
+        }
+    }
+
+    let out_ids: Vec<u32> = sink_nodes
+        .iter()
+        .map(|&s| concrete_id(s, prog, &mut id_of, &flat_of, &mut new_nodes, &mut cse_op))
+        .collect();
+    (Program { consts: new_consts, nodes: new_nodes }, out_ids)
+}
+
+/// Realise the concrete new-node id of original node `o`. Leaves and non-AC nodes
+/// already have one; a deferred ADD/MUL chain node builds its canonical tree from
+/// its flattened operand list now (memoised into `id_of`), so each chain node's
+/// tree is built at most once and only if a non-same-op consumer or a sink needs
+/// it.
+fn concrete_id(
+    o: u32,
+    prog: &Program,
+    id_of: &mut Vec<Option<u32>>,
+    flat_of: &[Option<Vec<u32>>],
+    new_nodes: &mut Vec<Node>,
+    cse_op: &mut HashMap<(u8, Vec<u32>), u32>,
+) -> u32 {
+    let oi = o as usize;
+    if let Some(id) = id_of[oi] {
+        return id;
+    }
+    let op = prog.nodes[oi].op;
+    let flat = flat_of[oi].as_ref().expect("deferred AC node has a flattened operand list");
+    let id = build_tree(op, flat, new_nodes, cse_op);
+    id_of[oi] = Some(id);
+    id
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

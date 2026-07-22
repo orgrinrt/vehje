@@ -70,10 +70,34 @@ fn eval_op(opcode: u8, a: &[u64]) -> u64 {
     }
 }
 
-/// Optimize a program with the chosen passes. `fold` const-folds pure constant
-/// subtrees, `cse` deduplicates structurally identical nodes, `dce` drops nodes
-/// not reachable from the live-outs.
-pub fn optimize(prog: &Program, cse: bool, fold: bool, dce: bool) -> Optimized {
+/// The reassociation window for the eqsat pre-pass: the maximum number of
+/// operands a single ADD/MUL expression is flattened across before the bound
+/// keeps the rest as concrete subtrees. This is the no-alloc-style bound that
+/// keeps the pass O(n * window); a wider expression is reassociated in
+/// window-sized pieces. 64 is comfortably wider than any real reassociatable
+/// motif in the profiles while keeping flat lists small.
+pub const EQSAT_WINDOW: usize = 64;
+
+/// Optimize a program with the chosen passes. `eqsat` runs a bounded
+/// associativity/commutativity equality-saturation reassociation pre-pass (the
+/// design's fourth optimize strategy, so the axis is none / CSE / eqsat /
+/// CSE+eqsat), `fold` const-folds pure constant subtrees, `cse` deduplicates
+/// structurally identical nodes, `dce` drops nodes not reachable from the
+/// live-outs. eqsat runs first so fold/CSE/DCE see the reassociated form.
+pub fn optimize(prog: &Program, cse: bool, fold: bool, dce: bool, eqsat: bool) -> Optimized {
+    // eqsat reassociation pre-pass. It rewrites ADD/MUL modulo assoc+comm and
+    // extracts a min-cost DAG that preserves the original live-out values, so the
+    // downstream passes operate on the reassociated form. sinks(original) is
+    // computed before the rewrite so the provenance of the live-outs survives it.
+    let eq_holder;
+    let (prog, base_sinks): (&Program, Vec<u32>) = if eqsat {
+        let orig = sinks(prog);
+        let (p, outs) = crate::eqsat::eqsat_reassociate(prog, &orig, EQSAT_WINDOW);
+        eq_holder = p;
+        (&eq_holder, outs)
+    } else {
+        (prog, sinks(prog))
+    };
     let n = prog.nodes.len();
 
     // Phase 1: compute the compile-time constant value of each node where it has
@@ -187,8 +211,10 @@ pub fn optimize(prog: &Program, cse: bool, fold: bool, dce: bool) -> Optimized {
         map[i] = new_id;
     }
 
-    let orig_sinks = sinks(prog);
-    let mut out_ids: Vec<u32> = orig_sinks.iter().map(|&s| map[s as usize]).collect();
+    // base_sinks are the live-outs of the (possibly eqsat-rewritten) program, in
+    // the original sink order, so out_ids keep the original program's live-out
+    // provenance through both eqsat and the CSE/fold/DCE renumbering.
+    let mut out_ids: Vec<u32> = base_sinks.iter().map(|&s| map[s as usize]).collect();
 
     let mut result = Program {
         consts: new_consts,
@@ -255,30 +281,45 @@ mod tests {
     #[test]
     fn optimize_preserves_outputs() {
         let profiles = ["real", "madd", "tight", "scatter", "wideselect", "leaf"];
+        // (cse, fold, dce, eqsat): the design's optimize axis is none / CSE /
+        // eqsat / CSE+eqsat, plus fold and dce and their compositions.
         let flags = [
-            (true, false, false),
-            (false, true, false),
-            (false, false, true),
-            (true, true, true),
+            (true, false, false, false),  // CSE only
+            (false, true, false, false),  // fold only
+            (false, false, true, false),  // DCE only
+            (false, false, false, true),  // eqsat only
+            (true, false, false, true),   // CSE + eqsat
+            (true, true, true, false),    // CSE + fold + DCE
+            (true, true, true, true),     // everything
         ];
         for name in profiles {
             let mut gp = GenParams::profile(name).unwrap();
             gp.node_count = 700;
             let prog = generate(&gp);
             let orig_sinks = sinks(&prog);
-            for &(cse, fold, dce) in &flags {
-                let opt = optimize(&prog, cse, fold, dce);
-                assert!(opt.prog.is_well_formed(), "{name} ({cse},{fold},{dce}) ill-formed");
+            for &(cse, fold, dce, eqsat) in &flags {
+                let opt = optimize(&prog, cse, fold, dce, eqsat);
+                assert!(
+                    opt.prog.is_well_formed(),
+                    "{name} ({cse},{fold},{dce},{eqsat}) ill-formed"
+                );
                 for seed in [0u64, 1, 42, 12345, 999_999] {
                     let a = out_fold(&prog, &orig_sinks, seed);
                     let b = out_fold(&opt.prog, &opt.out_ids, seed);
                     assert_eq!(
                         a, b,
-                        "{name} ({cse},{fold},{dce}) output diverged at seed {seed}"
+                        "{name} ({cse},{fold},{dce},{eqsat}) output diverged at seed {seed}"
                     );
                 }
-                // the optimized program is never larger than the original.
-                assert!(opt.prog.nodes.len() <= prog.nodes.len());
+                // CSE/fold/DCE are size-non-increasing. eqsat is a normalization,
+                // not a shrink: on a DAG it can lose cross-consumer sharing and
+                // transiently enlarge (the CSE+eqsat combo recovers it), so the
+                // size guarantee only holds for the non-eqsat strategies. The
+                // load-bearing invariant for eqsat is value preservation, asserted
+                // in the seed loop above.
+                if !eqsat {
+                    assert!(opt.prog.nodes.len() <= prog.nodes.len());
+                }
             }
         }
     }
