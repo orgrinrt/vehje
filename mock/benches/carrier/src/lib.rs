@@ -31,6 +31,7 @@ pub mod interp;
 pub mod ir;
 pub mod native;
 pub mod reach;
+pub mod retract;
 pub mod thermo;
 pub mod valrepr;
 

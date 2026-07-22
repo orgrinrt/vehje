@@ -18,6 +18,10 @@ use mockspace_bench_core::counter::{read_counter, ticks_to_ns};
 use vehje_bench_carrier::eqsat::{build_chain, Op};
 use vehje_bench_carrier::incr::{compile_module, gen_modules};
 use vehje_bench_carrier::{interpret, program_at, Decoded, Layout, REC12, REC16, REC24, REC32};
+use vehje_bench_carrier::retract::{
+    delete_counted, delete_recompute, gen_reach_graph, init_counted, reach_checksum as retract_cksum,
+    recompute,
+};
 use vehje_bench_carrier::reach::{
     gen_fanin, gen_layered, gen_random_dag, reach_checksum, reset_reach, solve_semi, solve_whole,
     Graph,
@@ -400,6 +404,87 @@ fn run_record_width(out_dir: &Path, runs: usize) {
         .expect("scale-runner refuses to conclude without writing its CSV");
 }
 
+/// Retraction: recompute vs counted differential on edge deletion (the DBSP-style
+/// counted case the design names for non-additive edits). Single-target
+/// reach-to-sink; recompute rebuilds the whole reach set, counted propagates only
+/// the retraction cascade. Both reach the identical answer (cross-validated). The
+/// sweep over delete-batch size finds the crossover: counted wins for localised
+/// deletions, recompute for catastrophic ones where most nodes drop anyway.
+fn run_retract(out_dir: &Path, runs: usize) {
+    println!("\n== retraction: recompute vs counted differential on delete ==");
+    println!(
+        "{:>9} {:>4} {:>9} {:>8} {:>7} | {:>11} {:>11} {:>9} {:>8}",
+        "n", "aout", "edges", "del%", "ndels", "recompute", "counted", "speedup", "dropped"
+    );
+    let mut csv = String::from(
+        "n,avg_out,edges,del_frac,ndels,recompute_ns,counted_ns,speedup,nodes_dropped\n",
+    );
+    for &n in &[100_000usize, 1_000_000] {
+    for &avg_out in &[1usize, 4] {
+        let mut g = gen_reach_graph(n, avg_out, 0x5eed_de1e ^ n as u64 ^ (avg_out as u64) << 40);
+        let e = g.edge_count();
+        let mut reach = vec![false; n];
+        let mut count = vec![0u32; n];
+        let mut work: Vec<u32> = Vec::new();
+        let mut fr: Vec<u32> = Vec::new();
+        for &frac in &[0.0001f64, 0.001, 0.01, 0.1] {
+            let ndel = ((e as f64 * frac) as usize).max(1);
+            let dels: Vec<usize> = (0..ndel)
+                .map(|i| (i.wrapping_mul(2_654_435_761) ^ 0x9e37) % e)
+                .collect();
+
+            // pre-delete reaching count, for the retraction size.
+            g.reset_live();
+            recompute(&g, &mut reach, &mut work);
+            let reaching_pre = reach.iter().filter(|&&r| r).count();
+
+            // recompute timing: delete + full backward BFS.
+            let mut rec_ns = Vec::with_capacity(runs);
+            let mut rec_ck = 0u64;
+            for _ in 0..runs {
+                g.reset_live();
+                let t0 = read_counter();
+                delete_recompute(&mut g, &dels, &mut reach, &mut work);
+                let t1 = read_counter();
+                rec_ns.push(ticks_to_ns(t1.wrapping_sub(t0)));
+                rec_ck = retract_cksum(&reach);
+            }
+            let reaching_post = reach.iter().filter(|&&r| r).count();
+            let dropped = reaching_pre - reaching_post;
+
+            // counted timing: init (untimed) then the retraction cascade.
+            let mut cnt_ns = Vec::with_capacity(runs);
+            let mut cnt_ck = 0u64;
+            for _ in 0..runs {
+                g.reset_live();
+                init_counted(&g, &mut reach, &mut count, &mut work);
+                let t0 = read_counter();
+                delete_counted(&mut g, &dels, &mut reach, &mut count, &mut fr);
+                let t1 = read_counter();
+                cnt_ns.push(ticks_to_ns(t1.wrapping_sub(t0)));
+                cnt_ck = retract_cksum(&reach);
+            }
+            if rec_ck != cnt_ck {
+                eprintln!("  !! retract CROSS-VAL FAIL n={n} frac={frac}: 0x{rec_ck:x} != 0x{cnt_ck:x}");
+                std::process::exit(2);
+            }
+            let rm = median(rec_ns);
+            let cm = median(cnt_ns);
+            println!(
+                "{:>9} {:>4} {:>9} {:>7.3}% {:>7} | {:>9.1} us {:>9.1} us {:>8.1}x {:>8}",
+                n, avg_out, e, frac * 100.0, ndel, rm / 1000.0, cm / 1000.0, rm / cm, dropped
+            );
+            csv.push_str(&format!(
+                "{},{},{},{},{},{:.1},{:.1},{:.2},{}\n",
+                n, avg_out, e, frac, ndel, rm, cm, rm / cm, dropped
+            ));
+        }
+    }
+    }
+    fs::write(out_dir.join("retract.csv"), csv)
+        .expect("scale-runner refuses to conclude without writing its CSV");
+}
+
 fn main() {
     let out_dir = Path::new("results/scale");
     fs::create_dir_all(out_dir).expect("create results/scale");
@@ -431,6 +516,11 @@ fn main() {
         println!("\nscale CSVs written to results/scale/");
         return;
     }
+    if args.first().map(String::as_str) == Some("retract") {
+        run_retract(out_dir, 5);
+        println!("\nscale CSVs written to results/scale/");
+        return;
+    }
     if args.first().map(String::as_str) == Some("recwidth") {
         run_record_width(out_dir, 5);
         println!("\nscale CSVs written to results/scale/");
@@ -457,6 +547,7 @@ fn main() {
         run_eqsat(out_dir, 3);
         run_threaded_dag(out_dir, 5);
         run_record_width(out_dir, 5);
+        run_retract(out_dir, 5);
     }
     println!("\nscale CSVs written to results/scale/");
 }
