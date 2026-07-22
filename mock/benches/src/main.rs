@@ -41,7 +41,7 @@ fn main() -> ExitCode {
         routine_for,
         byte_dispatch: byte_routine_dispatch!(
             out = 8,
-            sizes = [64, 256, 1024, 4096, 16384]
+            sizes = [64, 256, 1024, 2048, 3072, 4096, 6144, 8192, 16384]
         ),
     })
 }

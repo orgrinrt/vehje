@@ -1473,6 +1473,18 @@ variants = ["variants/iterfuse_mat2/target/release/iterfuse_mat2", "variants/ite
 [[bench.iter_fusion_d2.sizes]]
 n = 16384
 variants = ["variants/iterfuse_mat2/target/release/iterfuse_mat2", "variants/iterfuse_push2/target/release/iterfuse_push2", "variants/iterfuse_pull2/target/release/iterfuse_pull2"]
+[[bench.iter_fusion_d2.sizes]]
+n = 2048
+variants = ["variants/iterfuse_mat2/target/release/iterfuse_mat2", "variants/iterfuse_push2/target/release/iterfuse_push2", "variants/iterfuse_pull2/target/release/iterfuse_pull2"]
+[[bench.iter_fusion_d2.sizes]]
+n = 3072
+variants = ["variants/iterfuse_mat2/target/release/iterfuse_mat2", "variants/iterfuse_push2/target/release/iterfuse_push2", "variants/iterfuse_pull2/target/release/iterfuse_pull2"]
+[[bench.iter_fusion_d2.sizes]]
+n = 6144
+variants = ["variants/iterfuse_mat2/target/release/iterfuse_mat2", "variants/iterfuse_push2/target/release/iterfuse_push2", "variants/iterfuse_pull2/target/release/iterfuse_pull2"]
+[[bench.iter_fusion_d2.sizes]]
+n = 8192
+variants = ["variants/iterfuse_mat2/target/release/iterfuse_mat2", "variants/iterfuse_push2/target/release/iterfuse_push2", "variants/iterfuse_pull2/target/release/iterfuse_pull2"]
 
 [bench.iter_fusion_d3]
 title = "Iterator fusion (depth 3): materialized vs fused push vs fused pull"
@@ -1873,4 +1885,16 @@ n = 4096
 variants = ["variants/zig_switch/target/release/zig_switch", "variants/zig_tail/target/release/zig_tail"]
 [[bench.zig_dispatch.sizes]]
 n = 16384
+variants = ["variants/zig_switch/target/release/zig_switch", "variants/zig_tail/target/release/zig_tail"]
+[[bench.zig_dispatch.sizes]]
+n = 2048
+variants = ["variants/zig_switch/target/release/zig_switch", "variants/zig_tail/target/release/zig_tail"]
+[[bench.zig_dispatch.sizes]]
+n = 3072
+variants = ["variants/zig_switch/target/release/zig_switch", "variants/zig_tail/target/release/zig_tail"]
+[[bench.zig_dispatch.sizes]]
+n = 6144
+variants = ["variants/zig_switch/target/release/zig_switch", "variants/zig_tail/target/release/zig_tail"]
+[[bench.zig_dispatch.sizes]]
+n = 8192
 variants = ["variants/zig_switch/target/release/zig_switch", "variants/zig_tail/target/release/zig_tail"]

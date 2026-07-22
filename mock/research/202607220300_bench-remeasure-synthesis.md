@@ -94,8 +94,10 @@ Run + findings filled (`results/<name>/FINDINGS.md`), cross-validated, cost-mode
 thermometer effect encoding 24-69x over branch-max (vectorizes at scale); jump-table never beats if-chain for
 match lowering on M1 (unpredictable indirect branch); flat shadow-stack resolve 5-20x over hashed-per-scope
 (growing); record copy-on-write reaches full-copy cost by 60% sharing; monomorphic field access wants a direct
-offset, megamorphic converges to a dead heat (the IC hazard). A reproducible n=4096 cache-conflict valley
-recurs across two benches (push-fusion, zig-tail) as a machine artifact, not a variant property. One gap:
+offset, megamorphic converges to a dead heat (the IC hazard). A fine size sweep corrected a coarse-sweep
+reading: what looked like an isolated n=4096 spike in two benches (push-fusion, zig-tail) is a mid-size
+working-set/cache transition spanning n~1024-6144 (peak ~3.8x at n=2048-3072), converging at large n as both
+sides stream from DRAM. A machine effect, mapped, not a variant property. One gap:
 `cheap_lowering`'s node-count metric is emitted in the output but not yet surfaced to CSV.
 
 ## Headline status table

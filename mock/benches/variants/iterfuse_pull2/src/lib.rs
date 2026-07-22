@@ -8,7 +8,7 @@ fn xf(x: u64) -> u64 { core::hint::black_box(x.wrapping_mul(3).wrapping_add(1)) 
 #[inline(always)]
 fn xf2(x: u64) -> u64 { core::hint::black_box(x ^ 0x5a5a) }
 
-#[bench_variant("iterfuse_pull2", sizes = [64, 256, 1024, 4096, 16384])]
+#[bench_variant("iterfuse_pull2", sizes = [64, 256, 1024, 2048, 3072, 4096, 6144, 8192, 16384])]
 fn run<const N: usize>(input: &[u8; N], output: &mut [u8; 8]) -> FfiBenchCall {
     timed! { run {
         let mut acc: u64 = 0;

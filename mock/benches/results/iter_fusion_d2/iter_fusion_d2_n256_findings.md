@@ -7,186 +7,169 @@ Baseline: **iterfuse_pull2**
 
 Baseline for all deltas below: **iterfuse_pull2**. (Deltas are paired `variant - baseline` medians; `*` marks a CI that excludes zero.)
 
-### iterfuse_push2 dominates: 10% faster than the next best (iterfuse_pull2)
+### Top two (iterfuse_push2, iterfuse_pull2) are a dead heat (<1%)
 
-iterfuse_push2 (2.73 us) leads iterfuse_pull2 (3.01 us) by 10%, a clear separation rather than a photo finish. CV 10.1%.
+iterfuse_push2 (3.22 us) and iterfuse_pull2 (3.24 us) differ by 0.50%, inside the noise, even though the wider field spreads 45.6%.
 
-_Why it matters:_ A dominant, well-separated winner is a safe default pick for this workload shape.
+_Why it matters:_ Do not over-fit to the nominal leader when the runner-up is within measurement noise; either is a fine pick.
 
-### iterfuse_push2 is fastest but the noisiest (CV 10.1%)
+### iterfuse_push2's edge over baseline is significant but tiny (-16 ns, 0.50%)
 
-iterfuse_push2 wins on median (2.73 us) yet has the highest variance (CV 10.1%), while iterfuse_mat2 is the steadiest (CV 7.9%, 4.08 us).
-
-_Why it matters:_ For latency-sensitive or tail-bound paths, the steadier variant can beat the faster-on-average one; weigh peak vs consistency.
-
-### iterfuse_pull2 shows warm-up / thermal drift (autocorr +0.56)
-
-iterfuse_pull2's per-pass series has lag-1 autocorrelation +0.56, indicating warm-up / thermal drift. Its timing may not be at steady state.
-
-_Why it matters:_ Autocorrelated samples violate the independence the CIs assume; the interval is optimistic until the drift is warmed out or cooled down.
-
-### iterfuse_push2's edge over baseline is significant but tiny (-42 ns, 1.39%)
-
-iterfuse_push2 differs from baseline iterfuse_pull2 by -42 ns (1.39%) - statistically real (CI excludes zero) but small enough to be practically irrelevant.
+iterfuse_push2 differs from baseline iterfuse_pull2 by -16 ns (0.50%) - statistically real (CI excludes zero) but small enough to be practically irrelevant.
 
 _Why it matters:_ Statistical significance is not practical significance: a measurable-but-tiny gap should not drive a decision.
 
 ## Key findings
 
-- **Fastest: iterfuse_push2** at 2729.8 ns median (-9.2% vs baseline)
-- 1 variant significantly faster than baseline
+- **Fastest: iterfuse_push2** at 3220.8 ns median (-0.5% vs baseline)
 - 1 variant significantly slower than baseline
-- Spread: 1.49x (fastest 2729.8 ns, slowest 4077.5 ns)
+- Spread: 1.46x (fastest 3220.8 ns, slowest 4689.0 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| iterfuse_mat2 | 6596ns | 6336ns | 6072ns | 6288ns | 7320ns | +22.20% |
-| iterfuse_pull2 | 5398ns | 5425ns | 4901ns | 5254ns | 5861ns | base |
-| iterfuse_push2 | 5197ns | 4901ns | 4733ns | 4888ns | 5892ns | -3.72% |
+| iterfuse_mat2 | 7079ns | 7273ns | 5950ns | 7232ns | 7412ns | +24.77% |
+| iterfuse_pull2 | 5673ns | 5807ns | 4915ns | 5775ns | 5900ns | base |
+| iterfuse_push2 | 5660ns | 5790ns | 4934ns | 5774ns | 5852ns | -0.24% |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| iterfuse_mat2 | 4243ns | 3896ns | 4671ns | +41.00% | 0.060 |
-| iterfuse_pull2 | 3010ns | 2735ns | 3283ns | base | 0.085 |
-| iterfuse_push2 | 2882ns | 2600ns | 3264ns | -4.25% | 0.089 |
+| iterfuse_mat2 | 4555ns | 3849ns | 4754ns | +44.00% | 0.056 |
+| iterfuse_pull2 | 3163ns | 2749ns | 3303ns | base | 0.081 |
+| iterfuse_push2 | 3146ns | 2757ns | 3265ns | -0.52% | 0.081 |
 
 ## Performance model
 
-- Peak throughput: **0.098 Gops/s** (iterfuse_push2; best 20% batches)
+- Peak throughput: **0.093 Gops/s** (iterfuse_pull2; best 20% batches)
 - Ops per call: 256
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| iterfuse_mat2 | 0.063 | 63.8% |
-| iterfuse_pull2 | 0.085 | 86.5% |
-| iterfuse_push2 | 0.094 | 95.2% |
+| iterfuse_mat2 | 0.055 | 58.6% |
+| iterfuse_pull2 | 0.079 | 84.9% |
+| iterfuse_push2 | 0.079 | 85.3% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| iterfuse_mat2 | 6596ns | 6596ns | +22.20% |
-| iterfuse_pull2 | 5398ns | 5398ns | base |
-| iterfuse_push2 | 5197ns | 5197ns | -3.72% |
+| iterfuse_mat2 | 7079ns | 7079ns | +24.77% |
+| iterfuse_pull2 | 5673ns | 5673ns | base |
+| iterfuse_push2 | 5660ns | 5660ns | -0.24% |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| iterfuse_pull2 | 3006ns | base | --- | [2740, 3283] | --- | --- | --- | --- |
-| iterfuse_mat2 | 4078ns | +1253.5ns (+41.7%) | [+1032, +1416]ns | [3982, 4671] | YES (adj: no) | 0.0625 | 0.0313 | 0 |
-| iterfuse_push2 | 2730ns | -41.7ns (-1.4%) | [-328, -14]ns | [2651, 3264] | YES (adj: no) | 0.2188 | 0.2188 | 0 |
+| iterfuse_pull2 | 3237ns | base | --- | [2949, 3303] | --- | --- | --- | --- |
+| iterfuse_mat2 | 4689ns | +1446.2ns (+44.7%) | [+1254, +1474]ns | [4221, 4754] | YES (adj: no) | 0.0625 | 0.0313 | 0 |
+| iterfuse_push2 | 3221ns | no significant difference | [-39, +5]ns | [2953, 3265] | no | 1.0000 | 1.0000 | 0 |
 
 ## Per-pass consistency (nonstop e2e, Δ vs baseline)
 
 | Pass | iterfuse_pull2 | iterfuse_mat2 | iterfuse_push2 |
 |---|---|---|---|
-| 1 | 2856ns | +42.7% | -3.5% |
-| 2 | 2744ns | +42.0% | -1.5% |
-| 3 | 2735ns | +49.2% | -1.1% |
-| 4 | 3155ns | +28.9% | -17.6% |
-| 5 | 3348ns | +44.4% | -1.2% |
-| 6 | 3219ns | +40.0% | +0.1% |
+| 1 | 2749ns | +40.0% | +0.3% |
+| 2 | 3265ns | +43.1% | -1.3% |
+| 3 | 3256ns | +44.5% | -1.0% |
+| 4 | 3149ns | +45.8% | +0.0% |
+| 5 | 3341ns | +43.4% | -1.0% |
+| 6 | 3218ns | +46.6% | +0.1% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| iterfuse_mat2 | 0.314 | moderate+ |
-| iterfuse_pull2 | 0.555 | HIGH+ (drift/warm-up) |
-| iterfuse_push2 | 0.284 | moderate+ |
+| iterfuse_mat2 | -0.021 | ok |
+| iterfuse_pull2 | -0.119 | ok |
+| iterfuse_push2 | -0.055 | ok |
 
 **Consistency summary:**
 
 - **iterfuse_mat2**: won 0/6, lost 6/6
-- **iterfuse_push2**: won 5/6, lost 0/6
+- **iterfuse_push2**: won 3/6, lost 1/6
 
 ## Bridge overhead per variant
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| iterfuse_mat2 | 126.1ns | 4243.3ns | 3.0% |  |
-| iterfuse_pull2 | 4.1ns | 3009.5ns | 0.1% |  |
-| iterfuse_push2 | 3.6ns | 2881.5ns | 0.1% |  |
+| iterfuse_mat2 | 132.5ns | 4554.5ns | 2.9% |  |
+| iterfuse_pull2 | 4.7ns | 3162.9ns | 0.1% |  |
+| iterfuse_push2 | 4.4ns | 3146.4ns | 0.1% |  |
 
 ## Distribution (algo ns)
 
 ```
-iterfuse_mat2 (n=6, range 3895.8-4670.6 ns)
-   3895.8 |#############
-   3934.5 |
-   3973.3 |
-   4012.0 |
-   4050.8 |########################################
-   4089.5 |
-   4128.2 |
-   4167.0 |
-   4205.7 |
-   4244.5 |
-   4283.2 |
-   4321.9 |
-   4360.7 |
-   4399.4 |
-   4438.2 |
-   4476.9 |#############
-   4515.6 |
-   4554.4 |
-   4593.1 |
-   4631.9 |
+iterfuse_mat2 (n=6, range 3848.8-4753.8 ns)
+   3848.8 |####################
+   3894.0 |
+   3939.3 |
+   3984.5 |
+   4029.8 |
+   4075.0 |
+   4120.3 |
+   4165.5 |
+   4210.8 |
+   4256.0 |
+   4301.3 |
+   4346.5 |
+   4391.8 |
+   4437.0 |
+   4482.3 |
+   4527.5 |
+   4572.8 |####################
+   4618.0 |
+   4663.3 |########################################
+   4708.5 |####################
   (0 below, 1 above range)
 
-iterfuse_pull2 (n=6, range 2735.0-3283.3 ns)
-   2735.0 |########################################
-   2762.4 |
-   2789.8 |
-   2817.3 |
-   2844.7 |####################
-   2872.1 |
-   2899.5 |
-   2926.9 |
-   2954.3 |
-   2981.8 |
-   3009.2 |
-   3036.6 |
-   3064.0 |
-   3091.4 |
-   3118.8 |
-   3146.3 |####################
-   3173.7 |
-   3201.1 |####################
-   3228.5 |
-   3255.9 |
-  (0 below, 1 above range)
-
-iterfuse_push2 (n=6, range 2599.6-3263.8 ns)
-   2599.6 |####################
-   2632.8 |
-   2666.0 |
-   2699.2 |########################################
-   2732.4 |####################
-   2765.6 |
-   2798.8 |
-   2832.1 |
-   2865.3 |
-   2898.5 |
-   2931.7 |
-   2964.9 |
+iterfuse_pull2 (n=6, range 2748.8-3302.9 ns)
+   2748.8 |####################
+   2776.5 |
+   2804.2 |
+   2831.9 |
+   2859.6 |
+   2887.3 |
+   2915.0 |
+   2942.7 |
+   2970.4 |
    2998.1 |
-   3031.3 |
-   3064.5 |
-   3097.7 |
-   3130.9 |
-   3164.1 |
-   3197.3 |####################
-   3230.5 |
+   3025.9 |
+   3053.6 |
+   3081.3 |
+   3109.0 |
+   3136.7 |####################
+   3164.4 |
+   3192.1 |####################
+   3219.8 |
+   3247.5 |########################################
+   3275.2 |
+  (0 below, 1 above range)
+
+iterfuse_push2 (n=6, range 2757.1-3265.2 ns)
+   2757.1 |#############
+   2782.5 |
+   2807.9 |
+   2833.3 |
+   2858.7 |
+   2884.1 |
+   2909.5 |
+   2934.9 |
+   2960.3 |
+   2985.7 |
+   3011.1 |
+   3036.6 |
+   3062.0 |
+   3087.4 |
+   3112.8 |
+   3138.2 |#############
+   3163.6 |
+   3189.0 |
+   3214.4 |########################################
+   3239.8 |
   (0 below, 1 above range)
 
 ```
-
-## Diagnostics
-
-- **iterfuse_pull2**: autocorrelation=0.56 (measurement drift or warm-up artifact)

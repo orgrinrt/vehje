@@ -7,37 +7,43 @@ Baseline: **zig_switch**
 
 Baseline for all deltas below: **zig_switch**. (Deltas are paired `variant - baseline` medians; `*` marks a CI that excludes zero.)
 
-### zig_switch dominates: 41% faster than the next best (zig_tail)
+### zig_switch dominates: 68% faster than the next best (zig_tail)
 
-zig_switch (27.57 us) leads zig_tail (38.80 us) by 41%, a clear separation rather than a photo finish. CV 4.9%.
+zig_switch (27.26 us) leads zig_tail (45.89 us) by 68%, a clear separation rather than a photo finish. CV 5.3%.
 
 _Why it matters:_ A dominant, well-separated winner is a safe default pick for this workload shape.
 
+### zig_switch is fastest but the noisiest (CV 5.3%)
+
+zig_switch wins on median (27.26 us) yet has the highest variance (CV 5.3%), while zig_tail is the steadiest (CV 3.3%, 45.89 us).
+
+_Why it matters:_ For latency-sensitive or tail-bound paths, the steadier variant can beat the faster-on-average one; weigh peak vs consistency.
+
 ### No variant beats the baseline (zig_switch)
 
-The baseline zig_switch is the fastest (27.57 us median); no rival improves on it (all deltas are >= 0).
+The baseline zig_switch is the fastest (27.26 us median); no rival improves on it (all deltas are >= 0).
 
 _Why it matters:_ When nothing beats the baseline, the current choice stands; the contenders cost speed for whatever else they buy.
 
 ## Key findings
 
-- **Baseline (zig_switch) is the fastest** at 27569.8 ns median
+- **Baseline (zig_switch) is the fastest** at 27260.6 ns median
 - 1 variant significantly slower than baseline
-- Spread: 1.41x (fastest 27569.8 ns, slowest 38797.5 ns)
+- Spread: 1.68x (fastest 27260.6 ns, slowest 45889.6 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| zig_switch | 29589ns | 30028ns | 26574ns | 29753ns | 30852ns | base |
-| zig_tail | 41193ns | 41285ns | 40231ns | 41202ns | 41661ns | +39.22% |
+| zig_switch | 29015ns | 29711ns | 26568ns | 28971ns | 30306ns | base |
+| zig_tail | 47840ns | 48364ns | 44415ns | 48170ns | 49056ns | +64.88% |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| zig_switch | 27163ns | 24402ns | 28292ns | base | 0.038 |
-| zig_tail | 38704ns | 37864ns | 39088ns | +42.49% | 0.026 |
+| zig_switch | 26574ns | 24385ns | 27853ns | base | 0.039 |
+| zig_tail | 45366ns | 42112ns | 46472ns | +70.72% | 0.023 |
 
 ## Performance model
 
@@ -46,40 +52,40 @@ _Why it matters:_ When nothing beats the baseline, the current choice stands; th
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| zig_switch | 0.037 | 88.5% |
-| zig_tail | 0.026 | 62.9% |
+| zig_switch | 0.038 | 89.5% |
+| zig_tail | 0.022 | 53.1% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| zig_switch | 29589ns | 29589ns | base |
-| zig_tail | 41193ns | 41193ns | +39.22% |
+| zig_switch | 29015ns | 29015ns | base |
+| zig_tail | 47840ns | 47840ns | +64.88% |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| zig_switch | 27570ns | base | --- | [25627, 28292] | --- | --- | --- | --- |
-| zig_tail | 38798ns | +11378.3ns (+41.3%) | [+10528, +12716]ns | [38225, 39088] | YES | 0.0313 | 0.0313 | 0 |
+| zig_switch | 27261ns | base | --- | [24607, 27853] | --- | --- | --- | --- |
+| zig_tail | 45890ns | +18523.2ns (+67.9%) | [+17199, +20655]ns | [43736, 46472] | YES | 0.0313 | 0.0313 | 0 |
 
 ## Per-pass consistency (nonstop e2e, Δ vs baseline)
 
 | Pass | zig_switch | zig_tail |
 |---|---|---|
-| 1 | 24402ns | +55.2% |
-| 2 | 26852ns | +44.6% |
-| 3 | 28657ns | +35.3% |
-| 4 | 27288ns | +41.4% |
-| 5 | 27852ns | +41.1% |
-| 6 | 27927ns | +39.2% |
+| 1 | 24829ns | +69.6% |
+| 2 | 24385ns | +90.4% |
+| 3 | 27248ns | +70.7% |
+| 4 | 27273ns | +66.6% |
+| 5 | 27460ns | +68.8% |
+| 6 | 28246ns | +60.6% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| zig_switch | 0.108 | ok |
-| zig_tail | -0.063 | ok |
+| zig_switch | 0.398 | moderate+ |
+| zig_tail | -0.151 | ok |
 
 **Consistency summary:**
 
@@ -89,56 +95,56 @@ _Why it matters:_ When nothing beats the baseline, the current choice stands; th
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| zig_switch | 2.7ns | 27162.9ns | 0.0% |  |
-| zig_tail | 2.6ns | 38703.6ns | 0.0% |  |
+| zig_switch | 2.1ns | 26573.6ns | 0.0% |  |
+| zig_tail | 2.9ns | 45365.8ns | 0.0% |  |
 
 ## Distribution (algo ns)
 
 ```
-zig_switch (n=6, range 24402.1-28292.1 ns)
-  24402.1 |########################################
-  24596.6 |
-  24791.1 |
-  24985.6 |
-  25180.1 |
-  25374.6 |
-  25569.1 |
-  25763.6 |
-  25958.1 |
-  26152.6 |
-  26347.1 |
-  26541.6 |
-  26736.1 |########################################
-  26930.6 |
-  27125.1 |########################################
-  27319.6 |
-  27514.1 |
-  27708.6 |########################################
-  27903.1 |########################################
-  28097.6 |
+zig_switch (n=6, range 24385.4-27852.9 ns)
+  24385.4 |####################
+  24558.8 |
+  24732.2 |####################
+  24905.5 |
+  25078.9 |
+  25252.3 |
+  25425.7 |
+  25599.0 |
+  25772.4 |
+  25945.8 |
+  26119.2 |
+  26292.5 |
+  26465.9 |
+  26639.3 |
+  26812.7 |
+  26986.0 |
+  27159.4 |########################################
+  27332.8 |####################
+  27506.2 |
+  27679.5 |
   (0 below, 1 above range)
 
-zig_tail (n=6, range 37864.2-39087.9 ns)
-  37864.2 |########################################
-  37925.4 |
-  37986.6 |
-  38047.8 |
-  38108.9 |
-  38170.1 |
-  38231.3 |
-  38292.5 |
-  38353.7 |
-  38414.9 |
-  38476.0 |
-  38537.2 |########################################
-  38598.4 |
-  38659.6 |
-  38720.8 |########################################
-  38782.0 |########################################
-  38843.2 |########################################
-  38904.3 |
-  38965.5 |
-  39026.7 |
+zig_tail (n=6, range 42112.5-46471.6 ns)
+  42112.5 |####################
+  42330.5 |
+  42548.4 |
+  42766.4 |
+  42984.3 |
+  43202.3 |
+  43420.2 |
+  43638.2 |
+  43856.2 |
+  44074.1 |
+  44292.1 |
+  44510.0 |
+  44728.0 |
+  44945.9 |
+  45163.9 |####################
+  45381.9 |####################
+  45599.8 |
+  45817.8 |
+  46035.7 |
+  46253.7 |########################################
   (0 below, 1 above range)
 
 ```
