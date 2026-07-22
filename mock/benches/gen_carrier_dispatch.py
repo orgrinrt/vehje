@@ -23,8 +23,18 @@ SIZES = [64, 256, 1024, 4096, 16384]
 SEED = "0x5eed_d15b_a7c4_0002"
 # (vocab_tag, vocab_value): the two op-vocabularies to compare.
 VOCABS = [("v4", 4), ("v17", 17)]
-# (shape_tag, carrier fn): the dispatch shapes under test.
-SHAPES = [("switch", "interpret"), ("fntable", "interpret_fntable")]
+# (shape_tag, carrier fn): the dispatch shapes under test. `threaded` is the
+# preserve-none context-threaded (Deegen-shape) interpreter, expressible in Rust
+# via `extern "rust-preserve-none"` + `become`; it needs the carrier's opt-in
+# `threaded` feature (the incomplete nightly features stay off every other
+# variant's carrier build).
+SHAPES = [
+    ("switch", "interpret"),
+    ("fntable", "interpret_fntable"),
+    ("threaded", "interpret_threaded"),
+]
+# which shapes need the carrier built with the `threaded` feature.
+THREADED_SHAPES = {"threaded"}
 
 CARGO = """\
 [workspace]
@@ -40,7 +50,7 @@ crate-type = ["cdylib"]
 [dependencies]
 mockspace-bench-core = {{ git = "https://github.com/hiisi-digital/mockspace", branch = "dev", features = ["std"] }}
 mockspace-bench-macro = {{ git = "https://github.com/hiisi-digital/mockspace", branch = "dev" }}
-vehje-bench-carrier = {{ path = "../../carrier" }}
+vehje-bench-carrier = {{ path = "../../carrier"{carrier_features} }}
 [profile.release]
 opt-level = 3
 lto = "fat"
@@ -83,8 +93,9 @@ def variant(vocab_tag, vocab_val, shape_tag, fn_name):
     name = f"carrier_disp_{shape_tag}_{vocab_tag}"
     d = os.path.join(HERE, "variants", name, "src")
     os.makedirs(d, exist_ok=True)
+    carrier_features = ', features = ["threaded"]' if shape_tag in THREADED_SHAPES else ""
     with open(os.path.join(HERE, "variants", name, "Cargo.toml"), "w") as f:
-        f.write(CARGO.format(name=name))
+        f.write(CARGO.format(name=name, carrier_features=carrier_features))
     with open(os.path.join(d, "lib.rs"), "w") as f:
         f.write(LIB.format(name=name, shape=shape_tag, vocab=vocab_val, fn_name=fn_name))
     return name

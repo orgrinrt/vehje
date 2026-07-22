@@ -19,6 +19,12 @@ publish = false
 [lib]
 path = "src/lib.rs"
 
+[features]
+# opt-in preserve-none context-threaded interpreter (interp_threaded), used only
+# by the threaded-dispatch variant. Pulls two incomplete nightly features, so it
+# stays off the default build every other variant compiles the carrier for.
+threaded = []
+
 [dependencies]
 # none by design: a seeded generator with no external RNG keeps runs
 # byte-reproducible and free of any supply-chain surface.

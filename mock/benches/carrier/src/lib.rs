@@ -23,12 +23,21 @@
 //! shipped language is load-bearing (dispatch shape, the real runtime, and
 //! wire-format differential); every other bench is Rust-default.
 
+// The threaded interpreter uses two incomplete nightly features (the
+// preserve-none calling convention and guaranteed tail calls) that only the
+// preserve_none dispatch variant opts into, so they are gated behind a cargo
+// feature and never touch the default carrier build the other variants use.
+#![cfg_attr(feature = "threaded", feature(explicit_tail_calls, rust_preserve_none_cc))]
+#![cfg_attr(feature = "threaded", allow(incomplete_features))]
+
 pub mod cfg;
 pub mod checksum;
 pub mod eqsat;
 pub mod gen;
 pub mod incr;
 pub mod interp;
+#[cfg(feature = "threaded")]
+pub mod interp_threaded;
 pub mod ir;
 pub mod native;
 pub mod reach;
@@ -40,6 +49,8 @@ pub mod valrepr;
 pub use checksum::Checksum;
 pub use gen::{generate, GenParams, Rng};
 pub use interp::{interpret, interpret_fntable, run_over_input};
+#[cfg(feature = "threaded")]
+pub use interp_threaded::interpret_threaded;
 pub use native::{madd_bytes, madd_program, native_madd};
 pub use ir::{
     encode, Decoded, Layout, Node, Program, ALL_LAYOUTS, REC12, REC16, REC20, REC24, REC32,

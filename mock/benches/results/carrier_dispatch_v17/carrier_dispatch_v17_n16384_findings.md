@@ -1,43 +1,40 @@
 # Dispatch shape: switch vs fn-pointer table, op vocab v17 (carrier)
 
-2 variants, 6 samples per variant.
+3 variants, 6 samples per variant.
 Baseline: **carrier_disp_switch_v17**
 
 ## Highlights
 
 Baseline for all deltas below: **carrier_disp_switch_v17**. (Deltas are paired `variant - baseline` medians; `*` marks a CI that excludes zero.)
 
-### Baseline (carrier_disp_switch_v17) is the SLOWEST variant; every rival beats it
-
-The declared/defaulted baseline carrier_disp_switch_v17 has the worst median (2.55 ms). Every delta is therefore measured against the worst performer, which flatters all rivals and compresses the differences that matter among them (e.g. fastest carrier_disp_fntable_v17 at 2.15 ms).
-
-_Why it matters:_ A baseline picked by accident (often the first variant to run / sort) silently skews every comparison. Re-baseline via `[bench.<name>.normalise]` on a representative variant.
-
 ### carrier_disp_fntable_v17 dominates: 19% faster than the next best (carrier_disp_switch_v17)
 
-carrier_disp_fntable_v17 (2.15 ms) leads carrier_disp_switch_v17 (2.55 ms) by 19%, a clear separation rather than a photo finish. CV 0.6%.
+carrier_disp_fntable_v17 (2.15 ms) leads carrier_disp_switch_v17 (2.56 ms) by 19%, a clear separation rather than a photo finish. CV 0.4%.
 
 _Why it matters:_ A dominant, well-separated winner is a safe default pick for this workload shape.
 
 ## Key findings
 
-- **Fastest: carrier_disp_fntable_v17** at 2145874.0 ns median (-15.9% vs baseline)
+- **Fastest: carrier_disp_fntable_v17** at 2153484.4 ns median (-15.7% vs baseline)
 - 1 variant significantly faster than baseline
-- Spread: 1.19x (fastest 2145874.0 ns, slowest 2551341.2 ns)
+- 1 variant significantly slower than baseline
+- Spread: 1.31x (fastest 2153484.4 ns, slowest 2819723.5 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| carrier_disp_fntable_v17 | 2147884ns | 2149455ns | 2130585ns | 2144521ns | 2161577ns | -15.86% |
-| carrier_disp_switch_v17 | 2552626ns | 2554546ns | 2526899ns | 2551134ns | 2567728ns | base |
+| carrier_disp_fntable_v17 | 2156569ns | 2157017ns | 2143325ns | 2155837ns | 2164288ns | -15.62% |
+| carrier_disp_switch_v17 | 2555771ns | 2558996ns | 2520492ns | 2553115ns | 2577394ns | base |
+| carrier_disp_threaded_v17 | 2824430ns | 2823343ns | 2799630ns | 2817282ns | 2847552ns | +10.51% |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| carrier_disp_fntable_v17 | 2144518ns | 2127132ns | 2158079ns | -15.88% | 0.008 |
-| carrier_disp_switch_v17 | 2549427ns | 2523681ns | 2564593ns | base | 0.006 |
+| carrier_disp_fntable_v17 | 2153252ns | 2139838ns | 2161061ns | -15.64% | 0.008 |
+| carrier_disp_switch_v17 | 2552566ns | 2517741ns | 2574267ns | base | 0.006 |
+| carrier_disp_threaded_v17 | 2820742ns | 2795896ns | 2843797ns | +10.51% | 0.006 |
 
 ## Performance model
 
@@ -46,99 +43,128 @@ _Why it matters:_ A dominant, well-separated winner is a safe default pick for t
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| carrier_disp_fntable_v17 | 0.008 | 99.1% |
-| carrier_disp_switch_v17 | 0.006 | 83.4% |
+| carrier_disp_fntable_v17 | 0.008 | 99.4% |
+| carrier_disp_switch_v17 | 0.006 | 83.7% |
+| carrier_disp_threaded_v17 | 0.006 | 75.9% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| carrier_disp_fntable_v17 | 2147884ns | 2147884ns | -15.86% |
-| carrier_disp_switch_v17 | 2552626ns | 2552626ns | base |
+| carrier_disp_fntable_v17 | 2156569ns | 2156569ns | -15.62% |
+| carrier_disp_switch_v17 | 2555771ns | 2555771ns | base |
+| carrier_disp_threaded_v17 | 2824430ns | 2824430ns | +10.51% |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| carrier_disp_switch_v17 | 2551341ns | base | --- | [2532347, 2564593] | --- | --- | --- | --- |
-| carrier_disp_fntable_v17 | 2145874ns | -405077.1ns (-15.9%) | [-426535, -383115]ns | [2129600, 2158079] | YES | 0.0313 | 0.0313 | 0 |
+| carrier_disp_switch_v17 | 2555669ns | base | --- | [2527761, 2574267] | --- | --- | --- | --- |
+| carrier_disp_fntable_v17 | 2153484ns | -402784.4ns (-15.8%) | [-427752, -367404]ns | [2145211, 2161061] | YES | 0.0313 | 0.0313 | 0 |
+| carrier_disp_threaded_v17 | 2819724ns | +274094.6ns (+10.7%) | [+245200, +285235]ns | [2798706, 2843797] | YES | 0.0313 | 0.0313 | 0 |
 
 ## Per-pass consistency (nonstop e2e, Δ vs baseline)
 
-| Pass | carrier_disp_switch_v17 | carrier_disp_fntable_v17 |
-|---|---|---|
-| 1 | 2541012ns | -15.6% |
-| 2 | 2572269ns | -16.1% |
-| 3 | 2555355ns | -16.6% |
-| 4 | 2547328ns | -15.3% |
-| 5 | 2523681ns | -14.9% |
-| 6 | 2556916ns | -16.8% |
+| Pass | carrier_disp_switch_v17 | carrier_disp_fntable_v17 | carrier_disp_threaded_v17 |
+|---|---|---|---|
+| 1 | 2537782ns | -14.6% | +11.2% |
+| 2 | 2557570ns | -15.9% | +9.5% |
+| 3 | 2517741ns | -14.5% | +11.0% |
+| 4 | 2553768ns | -15.6% | +10.6% |
+| 5 | 2571081ns | -16.8% | +9.6% |
+| 6 | 2577453ns | -16.5% | +11.1% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| carrier_disp_fntable_v17 | -0.431 | moderate- |
-| carrier_disp_switch_v17 | -0.154 | ok |
+| carrier_disp_fntable_v17 | -0.164 | ok |
+| carrier_disp_switch_v17 | 0.080 | ok |
+| carrier_disp_threaded_v17 | 0.081 | ok |
 
 **Consistency summary:**
 
 - **carrier_disp_fntable_v17**: won 6/6, lost 0/6
+- **carrier_disp_threaded_v17**: won 0/6, lost 6/6
 
 ## Bridge overhead per variant
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| carrier_disp_fntable_v17 | 2331.2ns | 2144517.8ns | 0.1% |  |
-| carrier_disp_switch_v17 | 2402.0ns | 2549426.9ns | 0.1% |  |
+| carrier_disp_fntable_v17 | 2422.2ns | 2153252.3ns | 0.1% |  |
+| carrier_disp_switch_v17 | 2510.9ns | 2552565.7ns | 0.1% |  |
+| carrier_disp_threaded_v17 | 2737.4ns | 2820742.1ns | 0.1% |  |
 
 ## Distribution (algo ns)
 
 ```
-carrier_disp_fntable_v17 (n=6, range 2127132.5-2158079.2 ns)
-  2127132.5 |########################################
-  2128679.8 |
-  2130227.2 |
-  2131774.5 |########################################
-  2133321.8 |
-  2134869.2 |
-  2136416.5 |
-  2137963.8 |
-  2139511.2 |
-  2141058.5 |
-  2142605.9 |########################################
-  2144153.2 |
-  2145700.5 |
-  2147247.9 |########################################
-  2148795.2 |
-  2150342.5 |
-  2151889.9 |
-  2153437.2 |
-  2154984.5 |
-  2156531.9 |########################################
+carrier_disp_fntable_v17 (n=6, range 2139837.9-2161061.0 ns)
+  2139837.9 |########################################
+  2140899.1 |
+  2141960.2 |
+  2143021.4 |
+  2144082.5 |
+  2145143.7 |
+  2146204.8 |
+  2147266.0 |
+  2148327.2 |
+  2149388.3 |
+  2150449.5 |########################################
+  2151510.6 |
+  2152571.8 |########################################
+  2153632.9 |########################################
+  2154694.1 |########################################
+  2155755.3 |
+  2156816.4 |
+  2157877.6 |
+  2158938.7 |
+  2159999.9 |
   (0 below, 1 above range)
 
-carrier_disp_switch_v17 (n=6, range 2523681.2-2564592.7 ns)
-  2523681.2 |########################################
-  2525726.8 |
-  2527772.4 |
-  2529817.9 |
-  2531863.5 |
-  2533909.1 |
-  2535954.7 |
-  2538000.2 |
-  2540045.8 |########################################
-  2542091.4 |
-  2544137.0 |
-  2546182.5 |########################################
-  2548228.1 |
-  2550273.7 |
-  2552319.2 |
-  2554364.8 |########################################
-  2556410.4 |########################################
-  2558456.0 |
-  2560501.6 |
-  2562547.1 |
+carrier_disp_switch_v17 (n=6, range 2517740.8-2574267.0 ns)
+  2517740.8 |########################################
+  2520567.1 |
+  2523393.4 |
+  2526219.7 |
+  2529046.0 |
+  2531872.4 |
+  2534698.7 |
+  2537525.0 |########################################
+  2540351.3 |
+  2543177.6 |
+  2546003.9 |
+  2548830.2 |
+  2551656.5 |########################################
+  2554482.9 |
+  2557309.2 |########################################
+  2560135.5 |
+  2562961.8 |
+  2565788.1 |
+  2568614.4 |########################################
+  2571440.7 |
+  (0 below, 1 above range)
+
+carrier_disp_threaded_v17 (n=6, range 2795896.2-2843796.9 ns)
+  2795896.2 |########################################
+  2798291.2 |
+  2800686.3 |########################################
+  2803081.3 |
+  2805476.3 |
+  2807871.4 |
+  2810266.4 |
+  2812661.4 |
+  2815056.5 |
+  2817451.5 |########################################
+  2819846.5 |########################################
+  2822241.6 |########################################
+  2824636.6 |
+  2827031.6 |
+  2829426.7 |
+  2831821.7 |
+  2834216.7 |
+  2836611.8 |
+  2839006.8 |
+  2841401.8 |
   (0 below, 1 above range)
 
 ```

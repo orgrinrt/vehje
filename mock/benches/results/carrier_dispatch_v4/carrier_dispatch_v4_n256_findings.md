@@ -1,150 +1,179 @@
 # Dispatch shape: switch vs fn-pointer table, op vocab v4 (carrier)
 
-2 variants, 6 samples per variant.
+3 variants, 6 samples per variant.
 Baseline: **carrier_disp_switch_v4**
 
 ## Highlights
 
 Baseline for all deltas below: **carrier_disp_switch_v4**. (Deltas are paired `variant - baseline` medians; `*` marks a CI that excludes zero.)
 
-### carrier_disp_switch_v4 dominates: 15% faster than the next best (carrier_disp_fntable_v4)
+### carrier_disp_threaded_v4 is fastest but the noisiest (CV 9.1%)
 
-carrier_disp_switch_v4 (9.90 us) leads carrier_disp_fntable_v4 (11.34 us) by 15%, a clear separation rather than a photo finish. CV 6.4%.
-
-_Why it matters:_ A dominant, well-separated winner is a safe default pick for this workload shape.
-
-### carrier_disp_switch_v4 is fastest but the noisiest (CV 6.4%)
-
-carrier_disp_switch_v4 wins on median (9.90 us) yet has the highest variance (CV 6.4%), while carrier_disp_fntable_v4 is the steadiest (CV 5.2%, 11.34 us).
+carrier_disp_threaded_v4 wins on median (9.12 us) yet has the highest variance (CV 9.1%), while carrier_disp_fntable_v4 is the steadiest (CV 7.2%, 10.35 us).
 
 _Why it matters:_ For latency-sensitive or tail-bound paths, the steadier variant can beat the faster-on-average one; weigh peak vs consistency.
 
-### No variant beats the baseline (carrier_disp_switch_v4)
+### carrier_disp_switch_v4 shows warm-up / thermal drift (autocorr +0.58)
 
-The baseline carrier_disp_switch_v4 is the fastest (9.90 us median); no rival improves on it (all deltas are >= 0).
+carrier_disp_switch_v4's per-pass series has lag-1 autocorrelation +0.58, indicating warm-up / thermal drift. Its timing may not be at steady state.
 
-_Why it matters:_ When nothing beats the baseline, the current choice stands; the contenders cost speed for whatever else they buy.
+_Why it matters:_ Autocorrelated samples violate the independence the CIs assume; the interval is optimistic until the drift is warmed out or cooled down.
 
 ## Key findings
 
-- **Baseline (carrier_disp_switch_v4) is the fastest** at 9898.0 ns median
+- **Fastest: carrier_disp_threaded_v4** at 9115.4 ns median (-1.6% vs baseline)
 - 1 variant significantly slower than baseline
-- Spread: 1.15x (fastest 9898.0 ns, slowest 11338.4 ns)
+- Spread: 1.14x (fastest 9115.4 ns, slowest 10347.5 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| carrier_disp_fntable_v4 | 13553ns | 13935ns | 12135ns | 13655ns | 14108ns | +11.15% |
-| carrier_disp_switch_v4 | 12193ns | 12497ns | 10582ns | 12236ns | 12935ns | base |
+| carrier_disp_fntable_v4 | 12802ns | 12692ns | 11744ns | 12380ns | 13964ns | +10.51% |
+| carrier_disp_switch_v4 | 11584ns | 11728ns | 10465ns | 11309ns | 12557ns | base |
+| carrier_disp_threaded_v4 | 11579ns | 11436ns | 10308ns | 11186ns | 12804ns | -0.04% |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| carrier_disp_fntable_v4 | 11007ns | 9845ns | 11438ns | +14.47% | 0.023 |
-| carrier_disp_switch_v4 | 9616ns | 8375ns | 10122ns | base | 0.027 |
+| carrier_disp_fntable_v4 | 10410ns | 9524ns | 11339ns | +13.60% | 0.025 |
+| carrier_disp_switch_v4 | 9164ns | 8293ns | 9928ns | base | 0.028 |
+| carrier_disp_threaded_v4 | 9215ns | 8193ns | 10178ns | +0.56% | 0.028 |
 
 ## Performance model
 
-- Peak throughput: **0.031 Gops/s** (carrier_disp_switch_v4; best 20% batches)
+- Peak throughput: **0.031 Gops/s** (carrier_disp_threaded_v4; best 20% batches)
 - Ops per call: 256
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| carrier_disp_fntable_v4 | 0.023 | 73.9% |
-| carrier_disp_switch_v4 | 0.026 | 84.6% |
+| carrier_disp_fntable_v4 | 0.025 | 79.2% |
+| carrier_disp_switch_v4 | 0.028 | 88.4% |
+| carrier_disp_threaded_v4 | 0.028 | 89.9% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| carrier_disp_fntable_v4 | 13553ns | 13553ns | +11.15% |
-| carrier_disp_switch_v4 | 12193ns | 12193ns | base |
+| carrier_disp_fntable_v4 | 12802ns | 12802ns | +10.51% |
+| carrier_disp_switch_v4 | 11584ns | 11584ns | base |
+| carrier_disp_threaded_v4 | 11579ns | 11579ns | -0.04% |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| carrier_disp_switch_v4 | 9898ns | base | --- | [8827, 10122] | --- | --- | --- | --- |
-| carrier_disp_fntable_v4 | 11338ns | +1447.1ns (+14.6%) | [+949, +1778]ns | [10245, 11438] | YES | 0.0313 | 0.0313 | 0 |
+| carrier_disp_switch_v4 | 9268ns | base | --- | [8296, 9928] | --- | --- | --- | --- |
+| carrier_disp_fntable_v4 | 10348ns | +1349.4ns (+14.6%) | [+939, +1450]ns | [9544, 11339] | YES (adj: no) | 0.0625 | 0.0313 | 0 |
+| carrier_disp_threaded_v4 | 9115ns | no significant difference | [-339, +304]ns | [8351, 10178] | no | 0.6875 | 0.6875 | 0 |
 
 ## Per-pass consistency (nonstop e2e, Δ vs baseline)
 
-| Pass | carrier_disp_switch_v4 | carrier_disp_fntable_v4 |
-|---|---|---|
-| 1 | 8375ns | +17.5% |
-| 2 | 9962ns | +6.9% |
-| 3 | 9917ns | +14.4% |
-| 4 | 9879ns | +15.2% |
-| 5 | 10283ns | +11.8% |
-| 6 | 9279ns | +22.2% |
+| Pass | carrier_disp_switch_v4 | carrier_disp_fntable_v4 | carrier_disp_threaded_v4 |
+|---|---|---|---|
+| 1 | 8298ns | +14.8% | +2.5% |
+| 2 | 8293ns | +15.3% | +2.9% |
+| 3 | 8661ns | +16.5% | -5.4% |
+| 4 | 9875ns | +14.8% | +3.7% |
+| 5 | 9954ns | +6.5% | +1.6% |
+| 6 | 9903ns | +14.5% | -2.1% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| carrier_disp_fntable_v4 | 0.369 | moderate+ |
-| carrier_disp_switch_v4 | -0.124 | ok |
+| carrier_disp_fntable_v4 | 0.322 | moderate+ |
+| carrier_disp_switch_v4 | 0.576 | HIGH+ (drift/warm-up) |
+| carrier_disp_threaded_v4 | 0.361 | moderate+ |
 
 **Consistency summary:**
 
 - **carrier_disp_fntable_v4**: won 0/6, lost 6/6
+- **carrier_disp_threaded_v4**: won 2/6, lost 4/6
 
 ## Bridge overhead per variant
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| carrier_disp_fntable_v4 | 90.8ns | 11007.1ns | 0.8% |  |
-| carrier_disp_switch_v4 | 90.6ns | 9615.8ns | 0.9% |  |
+| carrier_disp_fntable_v4 | 82.6ns | 10410.3ns | 0.8% |  |
+| carrier_disp_switch_v4 | 75.1ns | 9164.1ns | 0.8% |  |
+| carrier_disp_threaded_v4 | 82.6ns | 9215.0ns | 0.9% |  |
 
 ## Distribution (algo ns)
 
 ```
-carrier_disp_fntable_v4 (n=6, range 9844.6-11438.1 ns)
-   9844.6 |####################
-   9924.3 |
-  10004.0 |
-  10083.6 |
-  10163.3 |
-  10243.0 |
-  10322.6 |
-  10402.3 |
-  10482.0 |
-  10561.7 |
-  10641.4 |####################
-  10721.0 |
-  10800.7 |
-  10880.4 |
-  10960.1 |
-  11039.7 |
-  11119.4 |
-  11199.1 |
-  11278.8 |########################################
-  11358.4 |####################
+carrier_disp_fntable_v4 (n=6, range 9524.2-11339.4 ns)
+   9524.2 |########################################
+   9615.0 |
+   9705.7 |
+   9796.5 |
+   9887.2 |
+   9978.0 |
+  10068.8 |####################
+  10159.5 |
+  10250.3 |
+  10341.0 |
+  10431.8 |
+  10522.6 |####################
+  10613.3 |
+  10704.1 |
+  10794.8 |
+  10885.6 |
+  10976.4 |
+  11067.1 |
+  11157.9 |
+  11248.6 |####################
   (0 below, 1 above range)
 
-carrier_disp_switch_v4 (n=6, range 8375.0-10122.5 ns)
-   8375.0 |####################
-   8462.4 |
-   8549.8 |
-   8637.1 |
-   8724.5 |
-   8811.9 |
-   8899.2 |
-   8986.6 |
-   9074.0 |
-   9161.4 |
-   9248.8 |####################
-   9336.1 |
-   9423.5 |
-   9510.9 |
-   9598.2 |
-   9685.6 |
-   9773.0 |
-   9860.4 |########################################
-   9947.8 |####################
-  10035.1 |
+carrier_disp_switch_v4 (n=6, range 8293.3-9928.3 ns)
+   8293.3 |########################################
+   8375.0 |
+   8456.8 |
+   8538.5 |
+   8620.3 |####################
+   8702.0 |
+   8783.8 |
+   8865.5 |
+   8947.3 |
+   9029.0 |
+   9110.8 |
+   9192.5 |
+   9274.3 |
+   9356.0 |
+   9437.8 |
+   9519.5 |
+   9601.3 |
+   9683.0 |
+   9764.8 |
+   9846.5 |########################################
+  (0 below, 1 above range)
+
+carrier_disp_threaded_v4 (n=6, range 8193.3-10178.4 ns)
+   8193.3 |####################
+   8292.6 |
+   8391.8 |
+   8491.1 |########################################
+   8590.3 |
+   8689.6 |
+   8788.8 |
+   8888.1 |
+   8987.3 |
+   9086.6 |
+   9185.8 |
+   9285.1 |
+   9384.3 |
+   9483.6 |
+   9582.8 |
+   9682.1 |####################
+   9781.3 |
+   9880.6 |
+   9979.8 |
+  10079.1 |####################
   (0 below, 1 above range)
 
 ```
+
+## Diagnostics
+
+- **carrier_disp_switch_v4**: autocorrelation=0.58 (measurement drift or warm-up artifact)
