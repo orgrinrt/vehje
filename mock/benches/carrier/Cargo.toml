@@ -24,6 +24,8 @@ path = "src/lib.rs"
 # by the threaded-dispatch variant. Pulls two incomplete nightly features, so it
 # stays off the default build every other variant compiles the carrier for.
 threaded = []
+# opt-in vertical/SoA data-parallel SIMD interpretation (portable_simd).
+vertical = []
 
 [dependencies]
 # none by design: a seeded generator with no external RNG keeps runs

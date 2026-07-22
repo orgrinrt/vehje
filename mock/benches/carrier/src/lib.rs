@@ -29,6 +29,9 @@
 // feature and never touch the default carrier build the other variants use.
 #![cfg_attr(feature = "threaded", feature(explicit_tail_calls, rust_preserve_none_cc))]
 #![cfg_attr(feature = "threaded", allow(incomplete_features))]
+// Vertical/SoA data-parallel interpretation uses portable SIMD, gated so only
+// the vertical cells pull the nightly feature.
+#![cfg_attr(feature = "vertical", feature(portable_simd))]
 
 pub mod access;
 pub mod cfg;
@@ -43,6 +46,8 @@ pub mod ir;
 pub mod native;
 pub mod predecode;
 pub mod reach;
+#[cfg(feature = "vertical")]
+pub mod vertical;
 pub mod retract;
 pub mod sharded_intern;
 pub mod thermo;
