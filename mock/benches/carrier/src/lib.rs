@@ -37,6 +37,7 @@ pub mod access;
 pub mod cfg;
 pub mod checksum;
 pub mod eqsat;
+pub mod fusion;
 pub mod gen;
 pub mod incr;
 pub mod interp;
