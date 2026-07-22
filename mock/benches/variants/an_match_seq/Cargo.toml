@@ -9,8 +9,8 @@ name="an_match_seq"
 path="src/lib.rs"
 crate-type=["cdylib"]
 [dependencies]
-mockspace-bench-core={ git="https://github.com/hiisi-digital/mockspace", rev="70fb75b500c8af22ddc18c5e0fb7d2467ab7dfc6", features=["std"] }
-mockspace-bench-macro={ git="https://github.com/hiisi-digital/mockspace", rev="70fb75b500c8af22ddc18c5e0fb7d2467ab7dfc6" }
+mockspace-bench-core={ git="https://github.com/hiisi-digital/mockspace", rev="49ff5f55b8413f7046281ae1944130c10509c361", features=["std"] }
+mockspace-bench-macro={ git="https://github.com/hiisi-digital/mockspace", rev="49ff5f55b8413f7046281ae1944130c10509c361" }
 [profile.release]
 opt-level=3
 lto="fat"

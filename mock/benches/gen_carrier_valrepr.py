@@ -9,7 +9,7 @@ import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SIZES = [64, 256, 1024, 4096, 16384]
-REV = "70fb75b500c8af22ddc18c5e0fb7d2467ab7dfc6"
+REV = "49ff5f55b8413f7046281ae1944130c10509c361"
 
 # (tag, buffer decls, call expr)
 VARIANTS = [
