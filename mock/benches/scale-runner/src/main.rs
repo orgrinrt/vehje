@@ -17,7 +17,10 @@ use std::path::Path;
 use mockspace_bench_core::counter::{read_counter, ticks_to_ns};
 use vehje_bench_carrier::eqsat::{build_chain, Op};
 use vehje_bench_carrier::incr::{compile_module, gen_modules};
-use vehje_bench_carrier::{interpret, program_at, Decoded, Layout, REC12, REC16, REC24, REC32};
+use vehje_bench_carrier::{
+    encode, generate, interpret, program_at, Decoded, GenParams, Layout, REC12, REC16, REC24, REC32,
+};
+use vehje_bench_carrier::interp::interpret_fntable;
 use vehje_bench_carrier::retract::{
     delete_counted, delete_recompute, gen_reach_graph, init_counted, reach_checksum as retract_cksum,
     recompute,
@@ -581,6 +584,119 @@ fn run_intern(out_dir: &Path, runs: usize) {
         .expect("scale-runner refuses to conclude without writing its CSV");
 }
 
+/// Arena locality: interpreter throughput vs the backward-read window (how far
+/// back operands reference). A tight window keeps operands in recently-written,
+/// cache-hot results; a wide window scatters the reads. Ported from the old
+/// standalone Zig bench onto the carrier so it shares the IR and validation.
+fn run_arena_locality(out_dir: &Path, runs: usize) {
+    println!("\n== arena locality: interp throughput vs backward-read window (4M nodes) ==");
+    println!("{:>8} {:>10} {:>10}", "window", "ns/op", "cyc/op");
+    let mut csv = String::from("window,n,ns_per_op,cyc_per_op\n");
+    let n = 4_000_000usize;
+    for &w in &[2usize, 128, 4096, 65536, 262144, 1000000, 2000000] {
+        let mut p = GenParams::default_point();
+        p.node_count = n;
+        p.locality_window = w;
+        let prog = generate(&p);
+        let bytes = encode(&prog, &REC24);
+        let d = Decoded::parse(&bytes, REC24).expect("parse");
+        let mut results = vec![0u64; n];
+        // cross-validate the interp against the fn-table interp on this program.
+        let cs = interpret(&d, 0x1234_5678, &mut results);
+        let cf = interpret_fntable(&d, 0x1234_5678, &mut results);
+        if cs != cf {
+            eprintln!("  !! arena-locality CROSS-VAL FAIL window={w}: 0x{cs:x} != 0x{cf:x}");
+            std::process::exit(2);
+        }
+        let mut ns = Vec::with_capacity(runs);
+        for _ in 0..runs {
+            let t0 = read_counter();
+            let _ = interpret(&d, 0x1234_5678, &mut results);
+            let t1 = read_counter();
+            ns.push(ticks_to_ns(t1.wrapping_sub(t0)));
+        }
+        let m = median(ns);
+        let ns_op = m / n as f64;
+        println!("{:>8} {:>9.3} {:>9.2}", w, ns_op, ns_op * 3.2);
+        csv.push_str(&format!("{},{},{:.4},{:.2}\n", w, n, ns_op, ns_op * 3.2));
+    }
+    fs::write(out_dir.join("arena_locality.csv"), csv)
+        .expect("scale-runner refuses to conclude without writing its CSV");
+}
+
+/// Value-arena throughput: the wire-format pipeline at scale, encode -> parse
+/// (zero-copy) -> interpret, each stage's bytes/second. Ported from the old
+/// standalone Zig bench onto the carrier. Cross-validates the interp checksum
+/// across all record layouts.
+fn run_value_arena(out_dir: &Path, runs: usize) {
+    println!("\n== value-arena throughput: encode / zero-copy parse / interpret (8M nodes) ==");
+    let n = 8_000_000usize;
+    let mut p = GenParams::default_point();
+    p.node_count = n;
+    let prog = generate(&p);
+    let mut csv = String::from("n,stage,layout,bytes,ns,gib_per_s,checksum\n");
+    println!("{:>8} {:>8} {:>8} {:>10} {:>10}", "layout", "wire_mb", "stage", "ms", "GiB/s");
+    let mut reference: Option<u64> = None;
+    for (layout, name) in [(REC16, "rec16"), (REC24, "rec24")] {
+        // encode throughput.
+        let mut enc_ns = Vec::with_capacity(runs);
+        let mut bytes = Vec::new();
+        for _ in 0..runs {
+            let t0 = read_counter();
+            bytes = encode(&prog, &layout);
+            let t1 = read_counter();
+            enc_ns.push(ticks_to_ns(t1.wrapping_sub(t0)));
+        }
+        let wire = bytes.len();
+        let em = median(enc_ns);
+        // parse (zero-copy) throughput.
+        let mut par_ns = Vec::with_capacity(runs);
+        for _ in 0..runs {
+            let t0 = read_counter();
+            let _ = Decoded::parse(&bytes, layout).expect("parse");
+            let t1 = read_counter();
+            par_ns.push(ticks_to_ns(t1.wrapping_sub(t0)));
+        }
+        let pm = median(par_ns);
+        // interpret (read + validate) throughput.
+        let d = Decoded::parse(&bytes, layout).unwrap();
+        let mut results = vec![0u64; n];
+        let mut int_ns = Vec::with_capacity(runs);
+        let mut cs = 0u64;
+        for _ in 0..runs {
+            let t0 = read_counter();
+            cs = interpret(&d, 0x1234_5678, &mut results);
+            let t1 = read_counter();
+            int_ns.push(ticks_to_ns(t1.wrapping_sub(t0)));
+        }
+        match reference {
+            None => reference = Some(cs),
+            Some(r) => {
+                if r != cs {
+                    eprintln!("  !! value-arena CROSS-VAL FAIL {name}: 0x{cs:x} != 0x{r:x}");
+                    std::process::exit(2);
+                }
+            }
+        }
+        let im = median(int_ns);
+        let gib = |b: usize, ns: f64| if ns < 1.0 { f64::NAN } else { (b as f64) / (ns / 1e9) / (1024.0 * 1024.0 * 1024.0) };
+        for (stage, ns) in [("encode", em), ("parse", pm), ("interpret", im)] {
+            let g = gib(wire, ns);
+            let gs = if g.is_nan() { "zero-copy".to_string() } else { format!("{:.1}", g) };
+            println!(
+                "{:>8} {:>7.1} {:>8} {:>8.3} {:>9}",
+                name, wire as f64 / 1e6, stage, ns / 1e6, gs
+            );
+            csv.push_str(&format!(
+                "{},{},{},{},{:.1},{},0x{:x}\n",
+                n, stage, name, wire, ns, gs, cs
+            ));
+        }
+    }
+    fs::write(out_dir.join("value_arena.csv"), csv)
+        .expect("scale-runner refuses to conclude without writing its CSV");
+}
+
 fn main() {
     let out_dir = Path::new("results/scale");
     fs::create_dir_all(out_dir).expect("create results/scale");
@@ -622,6 +738,16 @@ fn main() {
         println!("\nscale CSVs written to results/scale/");
         return;
     }
+    if args.first().map(String::as_str) == Some("arena") {
+        run_arena_locality(out_dir, 5);
+        println!("\nscale CSVs written to results/scale/");
+        return;
+    }
+    if args.first().map(String::as_str) == Some("value-arena") {
+        run_value_arena(out_dir, 5);
+        println!("\nscale CSVs written to results/scale/");
+        return;
+    }
     if args.first().map(String::as_str) == Some("recwidth") {
         run_record_width(out_dir, 5);
         println!("\nscale CSVs written to results/scale/");
@@ -650,6 +776,8 @@ fn main() {
         run_record_width(out_dir, 5);
         run_retract(out_dir, 5);
         run_intern(out_dir, 5);
+        run_arena_locality(out_dir, 5);
+        run_value_arena(out_dir, 5);
     }
     println!("\nscale CSVs written to results/scale/");
 }
