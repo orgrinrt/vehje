@@ -1,0 +1,25 @@
+# Disassembly probe for the fairness audit. Each interpreter is exported as a
+# non-inlined `#[no_mangle] extern "C"` symbol so its lowered machine code can be
+# disassembled and its dispatch label confirmed at the ISA level (switch = jump
+# table, fntable = surviving indirect call, threaded = no callee-saved spills
+# under preserve-none). Built with the same profile the variant cdylibs use so
+# the codegen matches what would be measured. Not a bench; an audit tool.
+[workspace]
+[package]
+name = "disasm-probe"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "disasm_probe"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+vehje-bench-carrier = { path = "../carrier", features = ["threaded", "vertical"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
