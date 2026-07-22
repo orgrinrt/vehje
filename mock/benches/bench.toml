@@ -1146,16 +1146,16 @@ baseline = "carrier_predec_wire"
 mode = "subtract"
 [[bench.carrier_predecode.sizes]]
 n = 64
-variants = ["variants/carrier_predec_wire/target/release/carrier_predec_wire", "variants/carrier_predec_flat/target/release/carrier_predec_flat"]
+variants = ["variants/carrier_predec_wire/target/release/carrier_predec_wire", "variants/carrier_predec_flat/target/release/carrier_predec_flat", "variants/carrier_predec_flatthread/target/release/carrier_predec_flatthread"]
 [[bench.carrier_predecode.sizes]]
 n = 256
-variants = ["variants/carrier_predec_wire/target/release/carrier_predec_wire", "variants/carrier_predec_flat/target/release/carrier_predec_flat"]
+variants = ["variants/carrier_predec_wire/target/release/carrier_predec_wire", "variants/carrier_predec_flat/target/release/carrier_predec_flat", "variants/carrier_predec_flatthread/target/release/carrier_predec_flatthread"]
 [[bench.carrier_predecode.sizes]]
 n = 1024
-variants = ["variants/carrier_predec_wire/target/release/carrier_predec_wire", "variants/carrier_predec_flat/target/release/carrier_predec_flat"]
+variants = ["variants/carrier_predec_wire/target/release/carrier_predec_wire", "variants/carrier_predec_flat/target/release/carrier_predec_flat", "variants/carrier_predec_flatthread/target/release/carrier_predec_flatthread"]
 [[bench.carrier_predecode.sizes]]
 n = 4096
-variants = ["variants/carrier_predec_wire/target/release/carrier_predec_wire", "variants/carrier_predec_flat/target/release/carrier_predec_flat"]
+variants = ["variants/carrier_predec_wire/target/release/carrier_predec_wire", "variants/carrier_predec_flat/target/release/carrier_predec_flat", "variants/carrier_predec_flatthread/target/release/carrier_predec_flatthread"]
 [[bench.carrier_predecode.sizes]]
 n = 16384
-variants = ["variants/carrier_predec_wire/target/release/carrier_predec_wire", "variants/carrier_predec_flat/target/release/carrier_predec_flat"]
+variants = ["variants/carrier_predec_wire/target/release/carrier_predec_wire", "variants/carrier_predec_flat/target/release/carrier_predec_flat", "variants/carrier_predec_flatthread/target/release/carrier_predec_flatthread"]

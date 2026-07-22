@@ -150,3 +150,41 @@ cross-validation status, and what it means. Append-only; corrections annotate ra
 - Next: combine predecode with the threaded shape (flat + preserve-none) to see whether the flat form
   fixes threaded's large-n loss, and build superinstructions on the flat form (the flat record is the
   natural place to fuse op pairs).
+
+### A3. Flat + threaded combined (attacks: A1's large-n threaded loss; the whole dispatch family)
+
+- Assumption attacked: A1 concluded the preserve-none threaded shape loses at large n. Hypothesis: the
+  loss was the 24-byte wire working set and per-node wire arithmetic, not the threading. Put the
+  threaded dispatch on the flat 16-byte predecoded form and the large-n loss should vanish.
+- Variant: `carrier::predecode::interpret_predecoded_threaded`, preserve-none context-threaded dispatch
+  over the flat `PNode` array. `carrier_predec_flatthread` vs `carrier_predec_flat` (flat switch) vs
+  `carrier_predec_wire` (wire switch). Cross-validated byte-exact.
+- Result: **WIN, best-or-tied at every size** (3 runs, medians; 1.00x = fastest at that size):
+
+  | n | wire | flat | flatthread | reading |
+  |---|---|---|---|---|
+  | 64 | ~1.40x | ~1.31x | 1.00x | flatthread wins clearly |
+  | 256 | ~1.41x | ~1.23x | 1.00x | flatthread wins clearly |
+  | 1024 | ~1.40x | ~1.24-1.31x | 1.00x | flatthread wins clearly (~28 vs ~34.5 vs ~39 us) |
+  | 4096 | ~1.24-1.31x | ~1.00-1.05x | ~1.00-1.02x | flat and flatthread TIE (within noise), both beat wire |
+  | 16384 | ~1.25-1.28x | 1.00x | ~1.01-1.03x | flat and flatthread TIE (~2.0 ms), both beat wire |
+
+- Reading: flat-threaded is the fastest interpreter shape measured. It wins outright in the L1-resident
+  regime (n<=1024, ~1.24-1.49x over the others) and ties plain flat once memory-bound (n>=4096, the
+  ~1-3% gap is inside the noise floor and is not ranked). The A1 large-n threaded loss is resolved: the
+  same threaded dispatch that was 31% slower than switch on the 24-byte wire form is tied-best on the
+  16-byte flat form. So threaded's cost at scale was the working-set size and wire arithmetic, not the
+  preserve-none dispatch. Against the shipped wire switch (A1's baseline, 2.56 ms at n=16384),
+  flat-threaded is ~1.26x faster at large n and much faster small.
+- Scrutiny note (a caught outlier): the first flat-threaded run showed plain-flat at n=1024 at 46 us
+  (vs ~34.5 us stable across three subsequent runs), which would have wrongly ranked flat behind wire
+  there. Re-running per the >=3-runs and ranking-stops-at-noise rules corrected it; the one-off was a
+  post-build thermal/contention outlier, not a variant property. This is the fourth "cross-validated
+  but momentarily mis-measured" catch of the arc; a single run at n=1024 would have recorded a false
+  inversion.
+- Design implication (op's call): the runtime's best interpreter shape (short of a native tier) is a
+  predecoded 16-byte flat form dispatched by preserve-none guaranteed-tail-call threading, giving the
+  small-program win outright and tying the memory-bound large-program regime. Candidate, not settled.
+- Still open: superinstructions on the flat form (fuse hot op pairs, checksum-preserving by storing
+  intermediates), which is the remaining lever to push the memory-bound regime and close more of the
+  native gap.
