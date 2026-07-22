@@ -318,3 +318,61 @@ runtime selector unchanged; extend its two-axis matrix to the full eight-stage p
 sub-timing harness feature on top of its single-region timing. The two deliverables compose into one
 design: its rigour on how to measure a composition, this one's breadth on how many composable stages the
 shared IR actually has and how to time each in place.
+
+### `202607221530` (first-principles rearchitecture; designed program profiles)
+
+Landed after this deliverable's first draft (commit f9bc225, 289-line committed snapshot audited here; its
+working tree had grown to 469 lines and may still be in progress, so the additions past the commit are not
+audited). It is the strongest of the three on one specific and load-bearing point: the program itself is
+the dominant variable, and a single random `generate()` sample fixes, at one unknown coordinate, exactly
+the properties (opcode-stream predictability, operand locality, arity mix, leaf fraction) that mechanically
+drive every dispatch and record-form number. Its fix is designed program profiles, each a fixed `GenParams`
+preset that stresses one mechanism: P_madd (native-anchored single motif), P_tight (predictable + local),
+P_scatter (unpredictable + cache-hostile), P_wideselect (arity-heavy, stresses spill), P_leaf
+(decode-bound), P_real (balanced). Plus a minimal generator upgrade (an `op_weights` vector replacing
+uniform op selection, which makes arity/leaf/heavy profiles expressible orthogonally), native-normalized
+per-profile reporting (every cell as x-native, turning relative interpreter trivia into the
+interpret-versus-tier-up decision the runtime actually faces), a dispatch-fraction-dilution critique with an
+optional heavy-op knob to make dispatch's share of the per-node budget legible, and two honest heuristic
+selectors including a per-region one that dispatches different program regions with the locally-best shape.
+
+What I take from it into this proposal:
+
+- The designed program profiles, wholesale, as the concrete instantiation of this deliverable's
+  program-shape basis. My shape-basis section named the dimensions (vocabulary, topology, operand-locality)
+  but left the points generic; 1530's P_madd/P_tight/P_scatter/P_wideselect/P_leaf/P_real are the concrete,
+  mechanism-targeted presets that basis should be. I replace my generic four-to-five-point basis with its
+  named profile set.
+- The `op_weights` generator upgrade. It is the clean mechanism that makes arity mix, leaf fraction, and a
+  heavy-op profile all controllable by reweighting the vocabulary, and this proposal's operand-access,
+  spill, and value-representation axes need exactly that control. Adopted.
+- Native-normalized-per-profile reporting. It composes with my per-stage sub-timing: report each stage's
+  cost and the whole path both in absolute time and as a multiple of the per-profile native ceiling.
+  Adopted as the reporting standard.
+- The per-region selector, as a champion strictly more ambitious than my per-stage adaptive selector, and
+  orthogonal to it: per-region varies dispatch across spatial regions of one program; per-stage varies the
+  strategy across pipeline stages. Both compose, and a selector that does both is the maximal champion.
+  Adopted alongside mine.
+- The dispatch-fraction-dilution critique and the heavy-op knob, as a complement to 7081's null-dispatch
+  floor: the floor isolates dispatch by subtraction, the heavy-op profile isolates it by dilution ratio.
+  Both, cross-checked, are stronger than either.
+
+What I do not take, or where mine differs:
+
+- Its decision to keep the axis set at form x dispatch (x profile x iters) and hold the IR fixed. That is
+  right for its scope but narrower than this directive's maximal remit: it does not compose the optimize,
+  intern, value-representation, operand-access, fusion, or output-building stages that the corpus benched in
+  isolation. I keep my eight-stage pipeline as the axis set and fold its profiles in as the shape axis, so
+  the matrix is profiles x the full pipeline, not profiles x form x dispatch.
+- Its "keep the IR exactly as is." Value representation cannot compose over a u64-only IR, so I keep the
+  per-node type-tag extension; but I adopt its minimal-change discipline (the tag is off on the static
+  canonical path, and the extension is the only IR change).
+
+Net across all three: 1530 decides what program (designed profiles + op-weights + native-normalized
+reporting), 7081 decides how to measure a composition's cost (S plus k times I, reference floors, hot and
+cold regimes), and this deliverable decides how many pipeline stages actually compose and how to time each
+in place (the eight-stage matrix + per-stage sub-timing harness feature). The synthesis is one experiment:
+the eight-stage pipeline matrix, run over 1530's designed profiles, measured as 7081's cost-model lines with
+reference floors and per-stage sub-timings, across the hot-single and cold-many regimes, with per-stage and
+per-region adaptive selectors judged against the oracle envelope. None of the three is redundant; each
+supplies an axis the other two left pinned.
