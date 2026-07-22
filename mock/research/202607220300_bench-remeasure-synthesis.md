@@ -142,8 +142,11 @@ this pass. arena-locality: interp throughput is flat vs the operand backward-rea
 programs never reach (the old standalone swept to 512 nodes and missed the cliff). value-arena: encode ~2GiB/s,
 parse zero-copy (free), interpret latency-bound (same ~78ms for 128MB rec16 and 192MB rec24), confirming 16B is
 as good as 24B for the interpreter from the throughput side. cfg-interp: a register-CFG interp over a nested
-loop, 3.0 ns/step (9.6 cyc), 25% control-flow; the per-step cost is interpreter dispatch overhead (~5-9x a
-native loop), and the predictable loop branches make the control-flow density nearly free.
+loop, 3.0 ns/step (9.6 cyc); the per-step cost is interpreter dispatch overhead (~5-9x a native loop). A
+predictable-vs-unpredictable-branch variant isolates the misprediction tax: a 50%-mispredicting branch adds
++0.7 cyc/step (~+7%), which is the full ~13-cyc M1 penalty per data-dependent branch diluted across ~9
+interpreted steps. Control-flow density alone does not slow the interp; unpredictable branches do, in
+proportion to branch density.
 
 ## Headline status table
 
