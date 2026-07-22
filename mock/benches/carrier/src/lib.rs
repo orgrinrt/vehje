@@ -40,6 +40,8 @@ pub mod cfg_threaded;
 pub mod checksum;
 #[cfg(all(feature = "jit", target_arch = "aarch64", target_os = "macos"))]
 pub mod copypatch;
+#[cfg(all(feature = "jit", target_arch = "aarch64", target_os = "macos"))]
+pub mod stencil;
 pub mod eqsat;
 pub mod fusion;
 pub mod gen;

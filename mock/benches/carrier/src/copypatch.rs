@@ -1,13 +1,23 @@
-//! Copy-and-patch machine-code generation (the near-native tier).
+//! Direct native code generation (the near-native tier, template-compiler shape).
 //!
 //! Every other cell interprets. This one lowers the program to native aarch64
-//! code and runs it directly, no dispatch at all. It is the copy-and-patch
-//! technique (Xu and Kjolstad, PLDI 2021) in its essential form: each IR op has
-//! a fixed instruction stencil, and codegen is a single linear pass that emits
-//! each node's stencil with its operand offsets patched into the load/store
-//! immediates, concatenated into one executable function. Interpretation's
-//! per-node dispatch vanishes; the price is a large codegen `S` term (an emit
-//! pass over every node) paid once before the run.
+//! code and runs it directly, no dispatch at all. Codegen is a single linear pass
+//! that HAND-SELECTS an instruction sequence per node (a `match node.op` that
+//! emits the right encoders) and concatenates them into one executable function.
+//! Interpretation's per-node dispatch vanishes; the price is a codegen `S` term
+//! (an instruction-selection pass over every node) paid once before the run.
+//!
+//! This is a template / baseline native-code generator (in spirit like an early
+//! full-codegen or a baseline JIT tier), NOT the stencil-extraction mechanism of
+//! copy-and-patch (Xu and Kjolstad, PLDI 2021). Copy-and-patch precompiles a
+//! fixed per-op stencil through a real backend and codegens by `memcpy`-ing that
+//! template and patching its recorded holes, so the JIT author never selects
+//! instructions per node. That mechanism lives in `stencil.rs` as its own cell
+//! (`carrier_copypatch_stencil`); this cell is the direct-codegen comparator.
+//! The distinction is a real cost-shape difference the matrix measures: this
+//! cell's per-node codegen does instruction selection, the stencil cell's does a
+//! copy plus a few immediate patches. Naming them apart keeps each number honest
+//! about the mechanism it measures.
 //!
 //! The generated function has signature `fn(results: *mut u64, consts: *const
 //! u64, seed: u64)`. For node `i`: arithmetic ops load their operands from
