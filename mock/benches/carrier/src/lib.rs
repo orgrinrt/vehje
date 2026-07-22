@@ -61,8 +61,8 @@ pub use interp::{
     interpret_nulldispatch, run_over_input,
 };
 pub use predecode::{
-    interpret_predecoded, interpret_predecoded_fntable, interpret_predecoded_nulldispatch, predecode,
-    Predecoded,
+    interpret_predecoded, interpret_predecoded_fntable, interpret_predecoded_nulldispatch,
+    interpret_predecoded_regcache, predecode, Predecoded,
 };
 #[cfg(feature = "threaded")]
 pub use interp_threaded::interpret_threaded;

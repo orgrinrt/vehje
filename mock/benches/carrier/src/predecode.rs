@@ -162,6 +162,66 @@ pub fn interpret_predecoded_fntable(p: &Predecoded, input_seed: u64, results: &m
     }
 }
 
+/// Register/accumulator-cached switch over the flat form: the value of the
+/// immediately-previous node is kept in a register, so an operand that refers to
+/// node `i-1` reads the register instead of reloading from the results array (the
+/// interpreter analogue of top-of-stack caching). Each operand read pays a
+/// compare (is this the cached node?) in exchange for skipping a load when it
+/// hits; whether that pays depends on how often operands reference the previous
+/// node, which is exactly what this cell measures. Identical semantics; the value
+/// stored is unchanged, so it cross-validates on the full checksum.
+#[inline]
+pub fn interpret_predecoded_regcache(p: &Predecoded, input_seed: u64, results: &mut [u64]) {
+    let wp = results.as_mut_ptr();
+    let rp = wp as *const u64;
+    let np = p.nodes.as_ptr();
+    let cp = p.consts.as_ptr();
+    let mut prev: u64 = 0;
+    for i in 0..p.nodes.len() {
+        let nd = unsafe { *np.add(i) };
+        let pidx = i.wrapping_sub(1) as u32;
+        // load operand `idx`, using the cached previous-node value on a hit.
+        macro_rules! ld {
+            ($idx:expr) => {{
+                let idx = $idx;
+                if i != 0 && idx == pidx {
+                    prev
+                } else {
+                    unsafe { rload(rp, idx) }
+                }
+            }};
+        }
+        let v = match nd.op {
+            op::INPUT => input_seed,
+            op::CONST => unsafe { cload(cp, nd.a) },
+            op::ADD => ld!(nd.a).wrapping_add(ld!(nd.b)),
+            op::SUB => ld!(nd.a).wrapping_sub(ld!(nd.b)),
+            op::MUL => ld!(nd.a).wrapping_mul(ld!(nd.b)),
+            op::AND => ld!(nd.a) & ld!(nd.b),
+            op::OR => ld!(nd.a) | ld!(nd.b),
+            op::XOR => ld!(nd.a) ^ ld!(nd.b),
+            op::SHL => ld!(nd.a).wrapping_shl(ld!(nd.b) as u32),
+            op::SHR => ld!(nd.a).wrapping_shr(ld!(nd.b) as u32),
+            op::MIN => ld!(nd.a).min(ld!(nd.b)),
+            op::MAX => ld!(nd.a).max(ld!(nd.b)),
+            op::EQ => (ld!(nd.a) == ld!(nd.b)) as u64,
+            op::LT => (ld!(nd.a) < ld!(nd.b)) as u64,
+            op::SELECT => {
+                if ld!(nd.a) != 0 {
+                    ld!(nd.b)
+                } else {
+                    ld!(nd.c)
+                }
+            }
+            op::NEG => ld!(nd.a).wrapping_neg(),
+            op::NOT => !ld!(nd.a),
+            _ => 0,
+        };
+        unsafe { rstore(wp, i, v) };
+        prev = v;
+    }
+}
+
 /// Null-dispatch reference floor over the flat form: same loads and store, one
 /// fixed op, no dispatch. Not cross-validated (see `interp::interpret_nulldispatch`).
 #[inline]
@@ -461,6 +521,8 @@ mod tests {
             assert_eq!(sw, checksum(&r2), "predecoded switch diverged at seed {seed}");
             interpret_predecoded_fntable(&p, seed, &mut r2);
             assert_eq!(sw, checksum(&r2), "predecoded fntable diverged at seed {seed}");
+            interpret_predecoded_regcache(&p, seed, &mut r2);
+            assert_eq!(sw, checksum(&r2), "predecoded regcache diverged at seed {seed}");
         }
     }
 
