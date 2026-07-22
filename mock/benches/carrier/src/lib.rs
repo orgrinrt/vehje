@@ -51,6 +51,7 @@ pub mod ir;
 pub mod liveness;
 pub mod native;
 pub mod optimize;
+pub mod output_building;
 pub mod predecode;
 pub mod reach;
 pub mod stackbc;
