@@ -81,6 +81,55 @@ pub fn interp(blocks: &[Block], seed: u64, cap: u64) -> (u64, u64, u64) {
     }
 }
 
+/// Per-instruction op function for the function-pointer-table dispatch over the
+/// CFG: `(imm, regs[a], regs[b]) -> value`. Order matches `op` (SET..AND).
+type CFn = fn(u64, u64, u64) -> u64;
+fn c_set(imm: u64, _a: u64, _b: u64) -> u64 {
+    imm
+}
+fn c_add(_i: u64, a: u64, b: u64) -> u64 {
+    a.wrapping_add(b)
+}
+fn c_sub(_i: u64, a: u64, b: u64) -> u64 {
+    a.wrapping_sub(b)
+}
+fn c_mul(_i: u64, a: u64, b: u64) -> u64 {
+    a.wrapping_mul(b)
+}
+fn c_and(_i: u64, a: u64, b: u64) -> u64 {
+    a & b
+}
+static CTABLE: [CFn; 5] = [c_set, c_add, c_sub, c_mul, c_and];
+
+/// Function-pointer-table dispatch over the CFG: identical control flow to
+/// [`interp`], the per-instruction op dispatched through a table instead of a
+/// `match`. Measures dispatch shape under real control flow (loops, branches),
+/// where a straight-line DAG cannot.
+pub fn interp_fntable(blocks: &[Block], seed: u64, cap: u64) -> (u64, u64, u64) {
+    let mut regs = [0u64; NREG];
+    regs[0] = seed;
+    let mut pc = 0u32;
+    let mut ninstr = 0u64;
+    let mut nterm = 0u64;
+    loop {
+        let b = &blocks[pc as usize];
+        for ins in &b.instrs {
+            let v = CTABLE[ins.op as usize](ins.imm, regs[ins.a as usize], regs[ins.b as usize]);
+            regs[ins.dst as usize] = v;
+            ninstr += 1;
+        }
+        nterm += 1;
+        if ninstr + nterm > cap {
+            return (regs[0], ninstr, nterm);
+        }
+        match b.term {
+            Term::Jmp(t) => pc = t,
+            Term::BrNz(r, nz, z) => pc = if regs[r as usize] != 0 { nz } else { z },
+            Term::Ret(r) => return (regs[r as usize], ninstr, nterm),
+        }
+    }
+}
+
 /// Build the nested-loop kernel: `acc += r0 * inner_counter` over
 /// `outer * inner` iterations, plus a decrement per iteration. The loop-head
 /// branches are the control-flow steps.
@@ -232,6 +281,35 @@ mod tests {
                     let blocks = build_branchy(n, pred);
                     let (r, _, _) = interp(&blocks, seed, u64::MAX);
                     assert_eq!(r, oracle_branchy(seed, n, pred), "branchy vs oracle pred={pred} n={n} seed={seed}");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn fntable_matches_switch_cfg() {
+        // the function-pointer-table CFG interpreter agrees with the switch CFG
+        // interpreter on both kernels, so the control-flow dispatch axis measures
+        // dispatch and nothing else.
+        for &(outer, inner) in &[(3u64, 5u64), (10, 10), (7, 100)] {
+            for seed in [1u64, 3, 42] {
+                let blocks = build_nested_loop(outer, inner);
+                assert_eq!(
+                    interp(&blocks, seed, u64::MAX),
+                    interp_fntable(&blocks, seed, u64::MAX),
+                    "cfg fntable vs switch at ({outer},{inner}) seed {seed}"
+                );
+            }
+        }
+        for pred in [true, false] {
+            for &n in &[5u64, 50, 1000] {
+                for seed in [1u64, 42, 999] {
+                    let blocks = build_branchy(n, pred);
+                    assert_eq!(
+                        interp(&blocks, seed, u64::MAX),
+                        interp_fntable(&blocks, seed, u64::MAX),
+                        "cfg fntable vs switch branchy pred={pred} n={n} seed={seed}"
+                    );
                 }
             }
         }
