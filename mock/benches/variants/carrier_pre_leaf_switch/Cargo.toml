@@ -1,0 +1,18 @@
+[workspace]
+[package]
+name = "carrier_pre_leaf_switch"
+version = "0.0.0"
+edition = "2021"
+publish = false
+[lib]
+name = "carrier_pre_leaf_switch"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+[dependencies]
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "49ff5f55b8413f7046281ae1944130c10509c361", features = ["std"] }
+mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", rev = "49ff5f55b8413f7046281ae1944130c10509c361" }
+vehje-bench-carrier = { path = "../../carrier" }
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

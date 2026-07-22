@@ -1166,136 +1166,1033 @@ title = "Dispatch shape over the wire form, real profile (carrier)"
 workload = "realistic"
 master_seed = 0x5eed_d15b_a7c4_0002
 [bench.carrier_dispatch_real.normalise]
-baseline = "carrier_disp_switch_real"
+baseline = "carrier_disp_real_switch"
 mode = "subtract"
 [[bench.carrier_dispatch_real.sizes]]
 n = 64
-variants = ["variants/carrier_disp_switch_real/target/release/carrier_disp_switch_real", "variants/carrier_disp_fntable_real/target/release/carrier_disp_fntable_real", "variants/carrier_disp_ifchain_real/target/release/carrier_disp_ifchain_real", "variants/carrier_disp_ifchainasc_real/target/release/carrier_disp_ifchainasc_real", "variants/carrier_disp_ifchainlin_real/target/release/carrier_disp_ifchainlin_real", "variants/carrier_disp_bittree_real/target/release/carrier_disp_bittree_real", "variants/carrier_disp_threaded_real/target/release/carrier_disp_threaded_real", "variants/carrier_disp_nullfloor_real/target/release/carrier_disp_nullfloor_real"]
+variants = ["variants/carrier_disp_real_switch/target/release/carrier_disp_real_switch", "variants/carrier_disp_real_fntable/target/release/carrier_disp_real_fntable", "variants/carrier_disp_real_ifchain/target/release/carrier_disp_real_ifchain", "variants/carrier_disp_real_ifchainasc/target/release/carrier_disp_real_ifchainasc", "variants/carrier_disp_real_ifchainlin/target/release/carrier_disp_real_ifchainlin", "variants/carrier_disp_real_bittree/target/release/carrier_disp_real_bittree", "variants/carrier_disp_real_threaded/target/release/carrier_disp_real_threaded", "variants/carrier_disp_real_nullfloor/target/release/carrier_disp_real_nullfloor"]
 [[bench.carrier_dispatch_real.sizes]]
 n = 256
-variants = ["variants/carrier_disp_switch_real/target/release/carrier_disp_switch_real", "variants/carrier_disp_fntable_real/target/release/carrier_disp_fntable_real", "variants/carrier_disp_ifchain_real/target/release/carrier_disp_ifchain_real", "variants/carrier_disp_ifchainasc_real/target/release/carrier_disp_ifchainasc_real", "variants/carrier_disp_ifchainlin_real/target/release/carrier_disp_ifchainlin_real", "variants/carrier_disp_bittree_real/target/release/carrier_disp_bittree_real", "variants/carrier_disp_threaded_real/target/release/carrier_disp_threaded_real", "variants/carrier_disp_nullfloor_real/target/release/carrier_disp_nullfloor_real"]
+variants = ["variants/carrier_disp_real_switch/target/release/carrier_disp_real_switch", "variants/carrier_disp_real_fntable/target/release/carrier_disp_real_fntable", "variants/carrier_disp_real_ifchain/target/release/carrier_disp_real_ifchain", "variants/carrier_disp_real_ifchainasc/target/release/carrier_disp_real_ifchainasc", "variants/carrier_disp_real_ifchainlin/target/release/carrier_disp_real_ifchainlin", "variants/carrier_disp_real_bittree/target/release/carrier_disp_real_bittree", "variants/carrier_disp_real_threaded/target/release/carrier_disp_real_threaded", "variants/carrier_disp_real_nullfloor/target/release/carrier_disp_real_nullfloor"]
 [[bench.carrier_dispatch_real.sizes]]
 n = 1024
-variants = ["variants/carrier_disp_switch_real/target/release/carrier_disp_switch_real", "variants/carrier_disp_fntable_real/target/release/carrier_disp_fntable_real", "variants/carrier_disp_ifchain_real/target/release/carrier_disp_ifchain_real", "variants/carrier_disp_ifchainasc_real/target/release/carrier_disp_ifchainasc_real", "variants/carrier_disp_ifchainlin_real/target/release/carrier_disp_ifchainlin_real", "variants/carrier_disp_bittree_real/target/release/carrier_disp_bittree_real", "variants/carrier_disp_threaded_real/target/release/carrier_disp_threaded_real", "variants/carrier_disp_nullfloor_real/target/release/carrier_disp_nullfloor_real"]
+variants = ["variants/carrier_disp_real_switch/target/release/carrier_disp_real_switch", "variants/carrier_disp_real_fntable/target/release/carrier_disp_real_fntable", "variants/carrier_disp_real_ifchain/target/release/carrier_disp_real_ifchain", "variants/carrier_disp_real_ifchainasc/target/release/carrier_disp_real_ifchainasc", "variants/carrier_disp_real_ifchainlin/target/release/carrier_disp_real_ifchainlin", "variants/carrier_disp_real_bittree/target/release/carrier_disp_real_bittree", "variants/carrier_disp_real_threaded/target/release/carrier_disp_real_threaded", "variants/carrier_disp_real_nullfloor/target/release/carrier_disp_real_nullfloor"]
 [[bench.carrier_dispatch_real.sizes]]
 n = 4096
-variants = ["variants/carrier_disp_switch_real/target/release/carrier_disp_switch_real", "variants/carrier_disp_fntable_real/target/release/carrier_disp_fntable_real", "variants/carrier_disp_ifchain_real/target/release/carrier_disp_ifchain_real", "variants/carrier_disp_ifchainasc_real/target/release/carrier_disp_ifchainasc_real", "variants/carrier_disp_ifchainlin_real/target/release/carrier_disp_ifchainlin_real", "variants/carrier_disp_bittree_real/target/release/carrier_disp_bittree_real", "variants/carrier_disp_threaded_real/target/release/carrier_disp_threaded_real", "variants/carrier_disp_nullfloor_real/target/release/carrier_disp_nullfloor_real"]
+variants = ["variants/carrier_disp_real_switch/target/release/carrier_disp_real_switch", "variants/carrier_disp_real_fntable/target/release/carrier_disp_real_fntable", "variants/carrier_disp_real_ifchain/target/release/carrier_disp_real_ifchain", "variants/carrier_disp_real_ifchainasc/target/release/carrier_disp_real_ifchainasc", "variants/carrier_disp_real_ifchainlin/target/release/carrier_disp_real_ifchainlin", "variants/carrier_disp_real_bittree/target/release/carrier_disp_real_bittree", "variants/carrier_disp_real_threaded/target/release/carrier_disp_real_threaded", "variants/carrier_disp_real_nullfloor/target/release/carrier_disp_real_nullfloor"]
 [[bench.carrier_dispatch_real.sizes]]
 n = 16384
-variants = ["variants/carrier_disp_switch_real/target/release/carrier_disp_switch_real", "variants/carrier_disp_fntable_real/target/release/carrier_disp_fntable_real", "variants/carrier_disp_ifchain_real/target/release/carrier_disp_ifchain_real", "variants/carrier_disp_ifchainasc_real/target/release/carrier_disp_ifchainasc_real", "variants/carrier_disp_ifchainlin_real/target/release/carrier_disp_ifchainlin_real", "variants/carrier_disp_bittree_real/target/release/carrier_disp_bittree_real", "variants/carrier_disp_threaded_real/target/release/carrier_disp_threaded_real", "variants/carrier_disp_nullfloor_real/target/release/carrier_disp_nullfloor_real"]
+variants = ["variants/carrier_disp_real_switch/target/release/carrier_disp_real_switch", "variants/carrier_disp_real_fntable/target/release/carrier_disp_real_fntable", "variants/carrier_disp_real_ifchain/target/release/carrier_disp_real_ifchain", "variants/carrier_disp_real_ifchainasc/target/release/carrier_disp_real_ifchainasc", "variants/carrier_disp_real_ifchainlin/target/release/carrier_disp_real_ifchainlin", "variants/carrier_disp_real_bittree/target/release/carrier_disp_real_bittree", "variants/carrier_disp_real_threaded/target/release/carrier_disp_real_threaded", "variants/carrier_disp_real_nullfloor/target/release/carrier_disp_real_nullfloor"]
 
 [bench.carrier_dispatch_madd]
 title = "Dispatch shape over the wire form, madd profile (carrier)"
 workload = "realistic"
 master_seed = 0x5eed_d15b_a7c4_0002
 [bench.carrier_dispatch_madd.normalise]
-baseline = "carrier_disp_switch_madd"
+baseline = "carrier_disp_madd_switch"
 mode = "subtract"
 [[bench.carrier_dispatch_madd.sizes]]
 n = 64
-variants = ["variants/carrier_disp_switch_madd/target/release/carrier_disp_switch_madd", "variants/carrier_disp_fntable_madd/target/release/carrier_disp_fntable_madd", "variants/carrier_disp_ifchain_madd/target/release/carrier_disp_ifchain_madd", "variants/carrier_disp_ifchainasc_madd/target/release/carrier_disp_ifchainasc_madd", "variants/carrier_disp_ifchainlin_madd/target/release/carrier_disp_ifchainlin_madd", "variants/carrier_disp_bittree_madd/target/release/carrier_disp_bittree_madd", "variants/carrier_disp_threaded_madd/target/release/carrier_disp_threaded_madd", "variants/carrier_disp_nullfloor_madd/target/release/carrier_disp_nullfloor_madd"]
+variants = ["variants/carrier_disp_madd_switch/target/release/carrier_disp_madd_switch", "variants/carrier_disp_madd_fntable/target/release/carrier_disp_madd_fntable", "variants/carrier_disp_madd_ifchain/target/release/carrier_disp_madd_ifchain", "variants/carrier_disp_madd_ifchainasc/target/release/carrier_disp_madd_ifchainasc", "variants/carrier_disp_madd_ifchainlin/target/release/carrier_disp_madd_ifchainlin", "variants/carrier_disp_madd_bittree/target/release/carrier_disp_madd_bittree", "variants/carrier_disp_madd_threaded/target/release/carrier_disp_madd_threaded", "variants/carrier_disp_madd_nullfloor/target/release/carrier_disp_madd_nullfloor"]
 [[bench.carrier_dispatch_madd.sizes]]
 n = 256
-variants = ["variants/carrier_disp_switch_madd/target/release/carrier_disp_switch_madd", "variants/carrier_disp_fntable_madd/target/release/carrier_disp_fntable_madd", "variants/carrier_disp_ifchain_madd/target/release/carrier_disp_ifchain_madd", "variants/carrier_disp_ifchainasc_madd/target/release/carrier_disp_ifchainasc_madd", "variants/carrier_disp_ifchainlin_madd/target/release/carrier_disp_ifchainlin_madd", "variants/carrier_disp_bittree_madd/target/release/carrier_disp_bittree_madd", "variants/carrier_disp_threaded_madd/target/release/carrier_disp_threaded_madd", "variants/carrier_disp_nullfloor_madd/target/release/carrier_disp_nullfloor_madd"]
+variants = ["variants/carrier_disp_madd_switch/target/release/carrier_disp_madd_switch", "variants/carrier_disp_madd_fntable/target/release/carrier_disp_madd_fntable", "variants/carrier_disp_madd_ifchain/target/release/carrier_disp_madd_ifchain", "variants/carrier_disp_madd_ifchainasc/target/release/carrier_disp_madd_ifchainasc", "variants/carrier_disp_madd_ifchainlin/target/release/carrier_disp_madd_ifchainlin", "variants/carrier_disp_madd_bittree/target/release/carrier_disp_madd_bittree", "variants/carrier_disp_madd_threaded/target/release/carrier_disp_madd_threaded", "variants/carrier_disp_madd_nullfloor/target/release/carrier_disp_madd_nullfloor"]
 [[bench.carrier_dispatch_madd.sizes]]
 n = 1024
-variants = ["variants/carrier_disp_switch_madd/target/release/carrier_disp_switch_madd", "variants/carrier_disp_fntable_madd/target/release/carrier_disp_fntable_madd", "variants/carrier_disp_ifchain_madd/target/release/carrier_disp_ifchain_madd", "variants/carrier_disp_ifchainasc_madd/target/release/carrier_disp_ifchainasc_madd", "variants/carrier_disp_ifchainlin_madd/target/release/carrier_disp_ifchainlin_madd", "variants/carrier_disp_bittree_madd/target/release/carrier_disp_bittree_madd", "variants/carrier_disp_threaded_madd/target/release/carrier_disp_threaded_madd", "variants/carrier_disp_nullfloor_madd/target/release/carrier_disp_nullfloor_madd"]
+variants = ["variants/carrier_disp_madd_switch/target/release/carrier_disp_madd_switch", "variants/carrier_disp_madd_fntable/target/release/carrier_disp_madd_fntable", "variants/carrier_disp_madd_ifchain/target/release/carrier_disp_madd_ifchain", "variants/carrier_disp_madd_ifchainasc/target/release/carrier_disp_madd_ifchainasc", "variants/carrier_disp_madd_ifchainlin/target/release/carrier_disp_madd_ifchainlin", "variants/carrier_disp_madd_bittree/target/release/carrier_disp_madd_bittree", "variants/carrier_disp_madd_threaded/target/release/carrier_disp_madd_threaded", "variants/carrier_disp_madd_nullfloor/target/release/carrier_disp_madd_nullfloor"]
 [[bench.carrier_dispatch_madd.sizes]]
 n = 4096
-variants = ["variants/carrier_disp_switch_madd/target/release/carrier_disp_switch_madd", "variants/carrier_disp_fntable_madd/target/release/carrier_disp_fntable_madd", "variants/carrier_disp_ifchain_madd/target/release/carrier_disp_ifchain_madd", "variants/carrier_disp_ifchainasc_madd/target/release/carrier_disp_ifchainasc_madd", "variants/carrier_disp_ifchainlin_madd/target/release/carrier_disp_ifchainlin_madd", "variants/carrier_disp_bittree_madd/target/release/carrier_disp_bittree_madd", "variants/carrier_disp_threaded_madd/target/release/carrier_disp_threaded_madd", "variants/carrier_disp_nullfloor_madd/target/release/carrier_disp_nullfloor_madd"]
+variants = ["variants/carrier_disp_madd_switch/target/release/carrier_disp_madd_switch", "variants/carrier_disp_madd_fntable/target/release/carrier_disp_madd_fntable", "variants/carrier_disp_madd_ifchain/target/release/carrier_disp_madd_ifchain", "variants/carrier_disp_madd_ifchainasc/target/release/carrier_disp_madd_ifchainasc", "variants/carrier_disp_madd_ifchainlin/target/release/carrier_disp_madd_ifchainlin", "variants/carrier_disp_madd_bittree/target/release/carrier_disp_madd_bittree", "variants/carrier_disp_madd_threaded/target/release/carrier_disp_madd_threaded", "variants/carrier_disp_madd_nullfloor/target/release/carrier_disp_madd_nullfloor"]
 [[bench.carrier_dispatch_madd.sizes]]
 n = 16384
-variants = ["variants/carrier_disp_switch_madd/target/release/carrier_disp_switch_madd", "variants/carrier_disp_fntable_madd/target/release/carrier_disp_fntable_madd", "variants/carrier_disp_ifchain_madd/target/release/carrier_disp_ifchain_madd", "variants/carrier_disp_ifchainasc_madd/target/release/carrier_disp_ifchainasc_madd", "variants/carrier_disp_ifchainlin_madd/target/release/carrier_disp_ifchainlin_madd", "variants/carrier_disp_bittree_madd/target/release/carrier_disp_bittree_madd", "variants/carrier_disp_threaded_madd/target/release/carrier_disp_threaded_madd", "variants/carrier_disp_nullfloor_madd/target/release/carrier_disp_nullfloor_madd"]
+variants = ["variants/carrier_disp_madd_switch/target/release/carrier_disp_madd_switch", "variants/carrier_disp_madd_fntable/target/release/carrier_disp_madd_fntable", "variants/carrier_disp_madd_ifchain/target/release/carrier_disp_madd_ifchain", "variants/carrier_disp_madd_ifchainasc/target/release/carrier_disp_madd_ifchainasc", "variants/carrier_disp_madd_ifchainlin/target/release/carrier_disp_madd_ifchainlin", "variants/carrier_disp_madd_bittree/target/release/carrier_disp_madd_bittree", "variants/carrier_disp_madd_threaded/target/release/carrier_disp_madd_threaded", "variants/carrier_disp_madd_nullfloor/target/release/carrier_disp_madd_nullfloor"]
 
 [bench.carrier_dispatch_tight]
 title = "Dispatch shape over the wire form, tight profile (carrier)"
 workload = "realistic"
 master_seed = 0x5eed_d15b_a7c4_0002
 [bench.carrier_dispatch_tight.normalise]
-baseline = "carrier_disp_switch_tight"
+baseline = "carrier_disp_tight_switch"
 mode = "subtract"
 [[bench.carrier_dispatch_tight.sizes]]
 n = 64
-variants = ["variants/carrier_disp_switch_tight/target/release/carrier_disp_switch_tight", "variants/carrier_disp_fntable_tight/target/release/carrier_disp_fntable_tight", "variants/carrier_disp_ifchain_tight/target/release/carrier_disp_ifchain_tight", "variants/carrier_disp_ifchainasc_tight/target/release/carrier_disp_ifchainasc_tight", "variants/carrier_disp_ifchainlin_tight/target/release/carrier_disp_ifchainlin_tight", "variants/carrier_disp_bittree_tight/target/release/carrier_disp_bittree_tight", "variants/carrier_disp_threaded_tight/target/release/carrier_disp_threaded_tight", "variants/carrier_disp_nullfloor_tight/target/release/carrier_disp_nullfloor_tight"]
+variants = ["variants/carrier_disp_tight_switch/target/release/carrier_disp_tight_switch", "variants/carrier_disp_tight_fntable/target/release/carrier_disp_tight_fntable", "variants/carrier_disp_tight_ifchain/target/release/carrier_disp_tight_ifchain", "variants/carrier_disp_tight_ifchainasc/target/release/carrier_disp_tight_ifchainasc", "variants/carrier_disp_tight_ifchainlin/target/release/carrier_disp_tight_ifchainlin", "variants/carrier_disp_tight_bittree/target/release/carrier_disp_tight_bittree", "variants/carrier_disp_tight_threaded/target/release/carrier_disp_tight_threaded", "variants/carrier_disp_tight_nullfloor/target/release/carrier_disp_tight_nullfloor"]
 [[bench.carrier_dispatch_tight.sizes]]
 n = 256
-variants = ["variants/carrier_disp_switch_tight/target/release/carrier_disp_switch_tight", "variants/carrier_disp_fntable_tight/target/release/carrier_disp_fntable_tight", "variants/carrier_disp_ifchain_tight/target/release/carrier_disp_ifchain_tight", "variants/carrier_disp_ifchainasc_tight/target/release/carrier_disp_ifchainasc_tight", "variants/carrier_disp_ifchainlin_tight/target/release/carrier_disp_ifchainlin_tight", "variants/carrier_disp_bittree_tight/target/release/carrier_disp_bittree_tight", "variants/carrier_disp_threaded_tight/target/release/carrier_disp_threaded_tight", "variants/carrier_disp_nullfloor_tight/target/release/carrier_disp_nullfloor_tight"]
+variants = ["variants/carrier_disp_tight_switch/target/release/carrier_disp_tight_switch", "variants/carrier_disp_tight_fntable/target/release/carrier_disp_tight_fntable", "variants/carrier_disp_tight_ifchain/target/release/carrier_disp_tight_ifchain", "variants/carrier_disp_tight_ifchainasc/target/release/carrier_disp_tight_ifchainasc", "variants/carrier_disp_tight_ifchainlin/target/release/carrier_disp_tight_ifchainlin", "variants/carrier_disp_tight_bittree/target/release/carrier_disp_tight_bittree", "variants/carrier_disp_tight_threaded/target/release/carrier_disp_tight_threaded", "variants/carrier_disp_tight_nullfloor/target/release/carrier_disp_tight_nullfloor"]
 [[bench.carrier_dispatch_tight.sizes]]
 n = 1024
-variants = ["variants/carrier_disp_switch_tight/target/release/carrier_disp_switch_tight", "variants/carrier_disp_fntable_tight/target/release/carrier_disp_fntable_tight", "variants/carrier_disp_ifchain_tight/target/release/carrier_disp_ifchain_tight", "variants/carrier_disp_ifchainasc_tight/target/release/carrier_disp_ifchainasc_tight", "variants/carrier_disp_ifchainlin_tight/target/release/carrier_disp_ifchainlin_tight", "variants/carrier_disp_bittree_tight/target/release/carrier_disp_bittree_tight", "variants/carrier_disp_threaded_tight/target/release/carrier_disp_threaded_tight", "variants/carrier_disp_nullfloor_tight/target/release/carrier_disp_nullfloor_tight"]
+variants = ["variants/carrier_disp_tight_switch/target/release/carrier_disp_tight_switch", "variants/carrier_disp_tight_fntable/target/release/carrier_disp_tight_fntable", "variants/carrier_disp_tight_ifchain/target/release/carrier_disp_tight_ifchain", "variants/carrier_disp_tight_ifchainasc/target/release/carrier_disp_tight_ifchainasc", "variants/carrier_disp_tight_ifchainlin/target/release/carrier_disp_tight_ifchainlin", "variants/carrier_disp_tight_bittree/target/release/carrier_disp_tight_bittree", "variants/carrier_disp_tight_threaded/target/release/carrier_disp_tight_threaded", "variants/carrier_disp_tight_nullfloor/target/release/carrier_disp_tight_nullfloor"]
 [[bench.carrier_dispatch_tight.sizes]]
 n = 4096
-variants = ["variants/carrier_disp_switch_tight/target/release/carrier_disp_switch_tight", "variants/carrier_disp_fntable_tight/target/release/carrier_disp_fntable_tight", "variants/carrier_disp_ifchain_tight/target/release/carrier_disp_ifchain_tight", "variants/carrier_disp_ifchainasc_tight/target/release/carrier_disp_ifchainasc_tight", "variants/carrier_disp_ifchainlin_tight/target/release/carrier_disp_ifchainlin_tight", "variants/carrier_disp_bittree_tight/target/release/carrier_disp_bittree_tight", "variants/carrier_disp_threaded_tight/target/release/carrier_disp_threaded_tight", "variants/carrier_disp_nullfloor_tight/target/release/carrier_disp_nullfloor_tight"]
+variants = ["variants/carrier_disp_tight_switch/target/release/carrier_disp_tight_switch", "variants/carrier_disp_tight_fntable/target/release/carrier_disp_tight_fntable", "variants/carrier_disp_tight_ifchain/target/release/carrier_disp_tight_ifchain", "variants/carrier_disp_tight_ifchainasc/target/release/carrier_disp_tight_ifchainasc", "variants/carrier_disp_tight_ifchainlin/target/release/carrier_disp_tight_ifchainlin", "variants/carrier_disp_tight_bittree/target/release/carrier_disp_tight_bittree", "variants/carrier_disp_tight_threaded/target/release/carrier_disp_tight_threaded", "variants/carrier_disp_tight_nullfloor/target/release/carrier_disp_tight_nullfloor"]
 [[bench.carrier_dispatch_tight.sizes]]
 n = 16384
-variants = ["variants/carrier_disp_switch_tight/target/release/carrier_disp_switch_tight", "variants/carrier_disp_fntable_tight/target/release/carrier_disp_fntable_tight", "variants/carrier_disp_ifchain_tight/target/release/carrier_disp_ifchain_tight", "variants/carrier_disp_ifchainasc_tight/target/release/carrier_disp_ifchainasc_tight", "variants/carrier_disp_ifchainlin_tight/target/release/carrier_disp_ifchainlin_tight", "variants/carrier_disp_bittree_tight/target/release/carrier_disp_bittree_tight", "variants/carrier_disp_threaded_tight/target/release/carrier_disp_threaded_tight", "variants/carrier_disp_nullfloor_tight/target/release/carrier_disp_nullfloor_tight"]
+variants = ["variants/carrier_disp_tight_switch/target/release/carrier_disp_tight_switch", "variants/carrier_disp_tight_fntable/target/release/carrier_disp_tight_fntable", "variants/carrier_disp_tight_ifchain/target/release/carrier_disp_tight_ifchain", "variants/carrier_disp_tight_ifchainasc/target/release/carrier_disp_tight_ifchainasc", "variants/carrier_disp_tight_ifchainlin/target/release/carrier_disp_tight_ifchainlin", "variants/carrier_disp_tight_bittree/target/release/carrier_disp_tight_bittree", "variants/carrier_disp_tight_threaded/target/release/carrier_disp_tight_threaded", "variants/carrier_disp_tight_nullfloor/target/release/carrier_disp_tight_nullfloor"]
 
 [bench.carrier_dispatch_scatter]
 title = "Dispatch shape over the wire form, scatter profile (carrier)"
 workload = "realistic"
 master_seed = 0x5eed_d15b_a7c4_0002
 [bench.carrier_dispatch_scatter.normalise]
-baseline = "carrier_disp_switch_scatter"
+baseline = "carrier_disp_scatter_switch"
 mode = "subtract"
 [[bench.carrier_dispatch_scatter.sizes]]
 n = 64
-variants = ["variants/carrier_disp_switch_scatter/target/release/carrier_disp_switch_scatter", "variants/carrier_disp_fntable_scatter/target/release/carrier_disp_fntable_scatter", "variants/carrier_disp_ifchain_scatter/target/release/carrier_disp_ifchain_scatter", "variants/carrier_disp_ifchainasc_scatter/target/release/carrier_disp_ifchainasc_scatter", "variants/carrier_disp_ifchainlin_scatter/target/release/carrier_disp_ifchainlin_scatter", "variants/carrier_disp_bittree_scatter/target/release/carrier_disp_bittree_scatter", "variants/carrier_disp_threaded_scatter/target/release/carrier_disp_threaded_scatter", "variants/carrier_disp_nullfloor_scatter/target/release/carrier_disp_nullfloor_scatter"]
+variants = ["variants/carrier_disp_scatter_switch/target/release/carrier_disp_scatter_switch", "variants/carrier_disp_scatter_fntable/target/release/carrier_disp_scatter_fntable", "variants/carrier_disp_scatter_ifchain/target/release/carrier_disp_scatter_ifchain", "variants/carrier_disp_scatter_ifchainasc/target/release/carrier_disp_scatter_ifchainasc", "variants/carrier_disp_scatter_ifchainlin/target/release/carrier_disp_scatter_ifchainlin", "variants/carrier_disp_scatter_bittree/target/release/carrier_disp_scatter_bittree", "variants/carrier_disp_scatter_threaded/target/release/carrier_disp_scatter_threaded", "variants/carrier_disp_scatter_nullfloor/target/release/carrier_disp_scatter_nullfloor"]
 [[bench.carrier_dispatch_scatter.sizes]]
 n = 256
-variants = ["variants/carrier_disp_switch_scatter/target/release/carrier_disp_switch_scatter", "variants/carrier_disp_fntable_scatter/target/release/carrier_disp_fntable_scatter", "variants/carrier_disp_ifchain_scatter/target/release/carrier_disp_ifchain_scatter", "variants/carrier_disp_ifchainasc_scatter/target/release/carrier_disp_ifchainasc_scatter", "variants/carrier_disp_ifchainlin_scatter/target/release/carrier_disp_ifchainlin_scatter", "variants/carrier_disp_bittree_scatter/target/release/carrier_disp_bittree_scatter", "variants/carrier_disp_threaded_scatter/target/release/carrier_disp_threaded_scatter", "variants/carrier_disp_nullfloor_scatter/target/release/carrier_disp_nullfloor_scatter"]
+variants = ["variants/carrier_disp_scatter_switch/target/release/carrier_disp_scatter_switch", "variants/carrier_disp_scatter_fntable/target/release/carrier_disp_scatter_fntable", "variants/carrier_disp_scatter_ifchain/target/release/carrier_disp_scatter_ifchain", "variants/carrier_disp_scatter_ifchainasc/target/release/carrier_disp_scatter_ifchainasc", "variants/carrier_disp_scatter_ifchainlin/target/release/carrier_disp_scatter_ifchainlin", "variants/carrier_disp_scatter_bittree/target/release/carrier_disp_scatter_bittree", "variants/carrier_disp_scatter_threaded/target/release/carrier_disp_scatter_threaded", "variants/carrier_disp_scatter_nullfloor/target/release/carrier_disp_scatter_nullfloor"]
 [[bench.carrier_dispatch_scatter.sizes]]
 n = 1024
-variants = ["variants/carrier_disp_switch_scatter/target/release/carrier_disp_switch_scatter", "variants/carrier_disp_fntable_scatter/target/release/carrier_disp_fntable_scatter", "variants/carrier_disp_ifchain_scatter/target/release/carrier_disp_ifchain_scatter", "variants/carrier_disp_ifchainasc_scatter/target/release/carrier_disp_ifchainasc_scatter", "variants/carrier_disp_ifchainlin_scatter/target/release/carrier_disp_ifchainlin_scatter", "variants/carrier_disp_bittree_scatter/target/release/carrier_disp_bittree_scatter", "variants/carrier_disp_threaded_scatter/target/release/carrier_disp_threaded_scatter", "variants/carrier_disp_nullfloor_scatter/target/release/carrier_disp_nullfloor_scatter"]
+variants = ["variants/carrier_disp_scatter_switch/target/release/carrier_disp_scatter_switch", "variants/carrier_disp_scatter_fntable/target/release/carrier_disp_scatter_fntable", "variants/carrier_disp_scatter_ifchain/target/release/carrier_disp_scatter_ifchain", "variants/carrier_disp_scatter_ifchainasc/target/release/carrier_disp_scatter_ifchainasc", "variants/carrier_disp_scatter_ifchainlin/target/release/carrier_disp_scatter_ifchainlin", "variants/carrier_disp_scatter_bittree/target/release/carrier_disp_scatter_bittree", "variants/carrier_disp_scatter_threaded/target/release/carrier_disp_scatter_threaded", "variants/carrier_disp_scatter_nullfloor/target/release/carrier_disp_scatter_nullfloor"]
 [[bench.carrier_dispatch_scatter.sizes]]
 n = 4096
-variants = ["variants/carrier_disp_switch_scatter/target/release/carrier_disp_switch_scatter", "variants/carrier_disp_fntable_scatter/target/release/carrier_disp_fntable_scatter", "variants/carrier_disp_ifchain_scatter/target/release/carrier_disp_ifchain_scatter", "variants/carrier_disp_ifchainasc_scatter/target/release/carrier_disp_ifchainasc_scatter", "variants/carrier_disp_ifchainlin_scatter/target/release/carrier_disp_ifchainlin_scatter", "variants/carrier_disp_bittree_scatter/target/release/carrier_disp_bittree_scatter", "variants/carrier_disp_threaded_scatter/target/release/carrier_disp_threaded_scatter", "variants/carrier_disp_nullfloor_scatter/target/release/carrier_disp_nullfloor_scatter"]
+variants = ["variants/carrier_disp_scatter_switch/target/release/carrier_disp_scatter_switch", "variants/carrier_disp_scatter_fntable/target/release/carrier_disp_scatter_fntable", "variants/carrier_disp_scatter_ifchain/target/release/carrier_disp_scatter_ifchain", "variants/carrier_disp_scatter_ifchainasc/target/release/carrier_disp_scatter_ifchainasc", "variants/carrier_disp_scatter_ifchainlin/target/release/carrier_disp_scatter_ifchainlin", "variants/carrier_disp_scatter_bittree/target/release/carrier_disp_scatter_bittree", "variants/carrier_disp_scatter_threaded/target/release/carrier_disp_scatter_threaded", "variants/carrier_disp_scatter_nullfloor/target/release/carrier_disp_scatter_nullfloor"]
 [[bench.carrier_dispatch_scatter.sizes]]
 n = 16384
-variants = ["variants/carrier_disp_switch_scatter/target/release/carrier_disp_switch_scatter", "variants/carrier_disp_fntable_scatter/target/release/carrier_disp_fntable_scatter", "variants/carrier_disp_ifchain_scatter/target/release/carrier_disp_ifchain_scatter", "variants/carrier_disp_ifchainasc_scatter/target/release/carrier_disp_ifchainasc_scatter", "variants/carrier_disp_ifchainlin_scatter/target/release/carrier_disp_ifchainlin_scatter", "variants/carrier_disp_bittree_scatter/target/release/carrier_disp_bittree_scatter", "variants/carrier_disp_threaded_scatter/target/release/carrier_disp_threaded_scatter", "variants/carrier_disp_nullfloor_scatter/target/release/carrier_disp_nullfloor_scatter"]
+variants = ["variants/carrier_disp_scatter_switch/target/release/carrier_disp_scatter_switch", "variants/carrier_disp_scatter_fntable/target/release/carrier_disp_scatter_fntable", "variants/carrier_disp_scatter_ifchain/target/release/carrier_disp_scatter_ifchain", "variants/carrier_disp_scatter_ifchainasc/target/release/carrier_disp_scatter_ifchainasc", "variants/carrier_disp_scatter_ifchainlin/target/release/carrier_disp_scatter_ifchainlin", "variants/carrier_disp_scatter_bittree/target/release/carrier_disp_scatter_bittree", "variants/carrier_disp_scatter_threaded/target/release/carrier_disp_scatter_threaded", "variants/carrier_disp_scatter_nullfloor/target/release/carrier_disp_scatter_nullfloor"]
 
 [bench.carrier_dispatch_wideselect]
 title = "Dispatch shape over the wire form, wideselect profile (carrier)"
 workload = "realistic"
 master_seed = 0x5eed_d15b_a7c4_0002
 [bench.carrier_dispatch_wideselect.normalise]
-baseline = "carrier_disp_switch_wideselect"
+baseline = "carrier_disp_wideselect_switch"
 mode = "subtract"
 [[bench.carrier_dispatch_wideselect.sizes]]
 n = 64
-variants = ["variants/carrier_disp_switch_wideselect/target/release/carrier_disp_switch_wideselect", "variants/carrier_disp_fntable_wideselect/target/release/carrier_disp_fntable_wideselect", "variants/carrier_disp_ifchain_wideselect/target/release/carrier_disp_ifchain_wideselect", "variants/carrier_disp_ifchainasc_wideselect/target/release/carrier_disp_ifchainasc_wideselect", "variants/carrier_disp_ifchainlin_wideselect/target/release/carrier_disp_ifchainlin_wideselect", "variants/carrier_disp_bittree_wideselect/target/release/carrier_disp_bittree_wideselect", "variants/carrier_disp_threaded_wideselect/target/release/carrier_disp_threaded_wideselect", "variants/carrier_disp_nullfloor_wideselect/target/release/carrier_disp_nullfloor_wideselect"]
+variants = ["variants/carrier_disp_wideselect_switch/target/release/carrier_disp_wideselect_switch", "variants/carrier_disp_wideselect_fntable/target/release/carrier_disp_wideselect_fntable", "variants/carrier_disp_wideselect_ifchain/target/release/carrier_disp_wideselect_ifchain", "variants/carrier_disp_wideselect_ifchainasc/target/release/carrier_disp_wideselect_ifchainasc", "variants/carrier_disp_wideselect_ifchainlin/target/release/carrier_disp_wideselect_ifchainlin", "variants/carrier_disp_wideselect_bittree/target/release/carrier_disp_wideselect_bittree", "variants/carrier_disp_wideselect_threaded/target/release/carrier_disp_wideselect_threaded", "variants/carrier_disp_wideselect_nullfloor/target/release/carrier_disp_wideselect_nullfloor"]
 [[bench.carrier_dispatch_wideselect.sizes]]
 n = 256
-variants = ["variants/carrier_disp_switch_wideselect/target/release/carrier_disp_switch_wideselect", "variants/carrier_disp_fntable_wideselect/target/release/carrier_disp_fntable_wideselect", "variants/carrier_disp_ifchain_wideselect/target/release/carrier_disp_ifchain_wideselect", "variants/carrier_disp_ifchainasc_wideselect/target/release/carrier_disp_ifchainasc_wideselect", "variants/carrier_disp_ifchainlin_wideselect/target/release/carrier_disp_ifchainlin_wideselect", "variants/carrier_disp_bittree_wideselect/target/release/carrier_disp_bittree_wideselect", "variants/carrier_disp_threaded_wideselect/target/release/carrier_disp_threaded_wideselect", "variants/carrier_disp_nullfloor_wideselect/target/release/carrier_disp_nullfloor_wideselect"]
+variants = ["variants/carrier_disp_wideselect_switch/target/release/carrier_disp_wideselect_switch", "variants/carrier_disp_wideselect_fntable/target/release/carrier_disp_wideselect_fntable", "variants/carrier_disp_wideselect_ifchain/target/release/carrier_disp_wideselect_ifchain", "variants/carrier_disp_wideselect_ifchainasc/target/release/carrier_disp_wideselect_ifchainasc", "variants/carrier_disp_wideselect_ifchainlin/target/release/carrier_disp_wideselect_ifchainlin", "variants/carrier_disp_wideselect_bittree/target/release/carrier_disp_wideselect_bittree", "variants/carrier_disp_wideselect_threaded/target/release/carrier_disp_wideselect_threaded", "variants/carrier_disp_wideselect_nullfloor/target/release/carrier_disp_wideselect_nullfloor"]
 [[bench.carrier_dispatch_wideselect.sizes]]
 n = 1024
-variants = ["variants/carrier_disp_switch_wideselect/target/release/carrier_disp_switch_wideselect", "variants/carrier_disp_fntable_wideselect/target/release/carrier_disp_fntable_wideselect", "variants/carrier_disp_ifchain_wideselect/target/release/carrier_disp_ifchain_wideselect", "variants/carrier_disp_ifchainasc_wideselect/target/release/carrier_disp_ifchainasc_wideselect", "variants/carrier_disp_ifchainlin_wideselect/target/release/carrier_disp_ifchainlin_wideselect", "variants/carrier_disp_bittree_wideselect/target/release/carrier_disp_bittree_wideselect", "variants/carrier_disp_threaded_wideselect/target/release/carrier_disp_threaded_wideselect", "variants/carrier_disp_nullfloor_wideselect/target/release/carrier_disp_nullfloor_wideselect"]
+variants = ["variants/carrier_disp_wideselect_switch/target/release/carrier_disp_wideselect_switch", "variants/carrier_disp_wideselect_fntable/target/release/carrier_disp_wideselect_fntable", "variants/carrier_disp_wideselect_ifchain/target/release/carrier_disp_wideselect_ifchain", "variants/carrier_disp_wideselect_ifchainasc/target/release/carrier_disp_wideselect_ifchainasc", "variants/carrier_disp_wideselect_ifchainlin/target/release/carrier_disp_wideselect_ifchainlin", "variants/carrier_disp_wideselect_bittree/target/release/carrier_disp_wideselect_bittree", "variants/carrier_disp_wideselect_threaded/target/release/carrier_disp_wideselect_threaded", "variants/carrier_disp_wideselect_nullfloor/target/release/carrier_disp_wideselect_nullfloor"]
 [[bench.carrier_dispatch_wideselect.sizes]]
 n = 4096
-variants = ["variants/carrier_disp_switch_wideselect/target/release/carrier_disp_switch_wideselect", "variants/carrier_disp_fntable_wideselect/target/release/carrier_disp_fntable_wideselect", "variants/carrier_disp_ifchain_wideselect/target/release/carrier_disp_ifchain_wideselect", "variants/carrier_disp_ifchainasc_wideselect/target/release/carrier_disp_ifchainasc_wideselect", "variants/carrier_disp_ifchainlin_wideselect/target/release/carrier_disp_ifchainlin_wideselect", "variants/carrier_disp_bittree_wideselect/target/release/carrier_disp_bittree_wideselect", "variants/carrier_disp_threaded_wideselect/target/release/carrier_disp_threaded_wideselect", "variants/carrier_disp_nullfloor_wideselect/target/release/carrier_disp_nullfloor_wideselect"]
+variants = ["variants/carrier_disp_wideselect_switch/target/release/carrier_disp_wideselect_switch", "variants/carrier_disp_wideselect_fntable/target/release/carrier_disp_wideselect_fntable", "variants/carrier_disp_wideselect_ifchain/target/release/carrier_disp_wideselect_ifchain", "variants/carrier_disp_wideselect_ifchainasc/target/release/carrier_disp_wideselect_ifchainasc", "variants/carrier_disp_wideselect_ifchainlin/target/release/carrier_disp_wideselect_ifchainlin", "variants/carrier_disp_wideselect_bittree/target/release/carrier_disp_wideselect_bittree", "variants/carrier_disp_wideselect_threaded/target/release/carrier_disp_wideselect_threaded", "variants/carrier_disp_wideselect_nullfloor/target/release/carrier_disp_wideselect_nullfloor"]
 [[bench.carrier_dispatch_wideselect.sizes]]
 n = 16384
-variants = ["variants/carrier_disp_switch_wideselect/target/release/carrier_disp_switch_wideselect", "variants/carrier_disp_fntable_wideselect/target/release/carrier_disp_fntable_wideselect", "variants/carrier_disp_ifchain_wideselect/target/release/carrier_disp_ifchain_wideselect", "variants/carrier_disp_ifchainasc_wideselect/target/release/carrier_disp_ifchainasc_wideselect", "variants/carrier_disp_ifchainlin_wideselect/target/release/carrier_disp_ifchainlin_wideselect", "variants/carrier_disp_bittree_wideselect/target/release/carrier_disp_bittree_wideselect", "variants/carrier_disp_threaded_wideselect/target/release/carrier_disp_threaded_wideselect", "variants/carrier_disp_nullfloor_wideselect/target/release/carrier_disp_nullfloor_wideselect"]
+variants = ["variants/carrier_disp_wideselect_switch/target/release/carrier_disp_wideselect_switch", "variants/carrier_disp_wideselect_fntable/target/release/carrier_disp_wideselect_fntable", "variants/carrier_disp_wideselect_ifchain/target/release/carrier_disp_wideselect_ifchain", "variants/carrier_disp_wideselect_ifchainasc/target/release/carrier_disp_wideselect_ifchainasc", "variants/carrier_disp_wideselect_ifchainlin/target/release/carrier_disp_wideselect_ifchainlin", "variants/carrier_disp_wideselect_bittree/target/release/carrier_disp_wideselect_bittree", "variants/carrier_disp_wideselect_threaded/target/release/carrier_disp_wideselect_threaded", "variants/carrier_disp_wideselect_nullfloor/target/release/carrier_disp_wideselect_nullfloor"]
 
 [bench.carrier_dispatch_leaf]
 title = "Dispatch shape over the wire form, leaf profile (carrier)"
 workload = "realistic"
 master_seed = 0x5eed_d15b_a7c4_0002
 [bench.carrier_dispatch_leaf.normalise]
-baseline = "carrier_disp_switch_leaf"
+baseline = "carrier_disp_leaf_switch"
 mode = "subtract"
 [[bench.carrier_dispatch_leaf.sizes]]
 n = 64
-variants = ["variants/carrier_disp_switch_leaf/target/release/carrier_disp_switch_leaf", "variants/carrier_disp_fntable_leaf/target/release/carrier_disp_fntable_leaf", "variants/carrier_disp_ifchain_leaf/target/release/carrier_disp_ifchain_leaf", "variants/carrier_disp_ifchainasc_leaf/target/release/carrier_disp_ifchainasc_leaf", "variants/carrier_disp_ifchainlin_leaf/target/release/carrier_disp_ifchainlin_leaf", "variants/carrier_disp_bittree_leaf/target/release/carrier_disp_bittree_leaf", "variants/carrier_disp_threaded_leaf/target/release/carrier_disp_threaded_leaf", "variants/carrier_disp_nullfloor_leaf/target/release/carrier_disp_nullfloor_leaf"]
+variants = ["variants/carrier_disp_leaf_switch/target/release/carrier_disp_leaf_switch", "variants/carrier_disp_leaf_fntable/target/release/carrier_disp_leaf_fntable", "variants/carrier_disp_leaf_ifchain/target/release/carrier_disp_leaf_ifchain", "variants/carrier_disp_leaf_ifchainasc/target/release/carrier_disp_leaf_ifchainasc", "variants/carrier_disp_leaf_ifchainlin/target/release/carrier_disp_leaf_ifchainlin", "variants/carrier_disp_leaf_bittree/target/release/carrier_disp_leaf_bittree", "variants/carrier_disp_leaf_threaded/target/release/carrier_disp_leaf_threaded", "variants/carrier_disp_leaf_nullfloor/target/release/carrier_disp_leaf_nullfloor"]
 [[bench.carrier_dispatch_leaf.sizes]]
 n = 256
-variants = ["variants/carrier_disp_switch_leaf/target/release/carrier_disp_switch_leaf", "variants/carrier_disp_fntable_leaf/target/release/carrier_disp_fntable_leaf", "variants/carrier_disp_ifchain_leaf/target/release/carrier_disp_ifchain_leaf", "variants/carrier_disp_ifchainasc_leaf/target/release/carrier_disp_ifchainasc_leaf", "variants/carrier_disp_ifchainlin_leaf/target/release/carrier_disp_ifchainlin_leaf", "variants/carrier_disp_bittree_leaf/target/release/carrier_disp_bittree_leaf", "variants/carrier_disp_threaded_leaf/target/release/carrier_disp_threaded_leaf", "variants/carrier_disp_nullfloor_leaf/target/release/carrier_disp_nullfloor_leaf"]
+variants = ["variants/carrier_disp_leaf_switch/target/release/carrier_disp_leaf_switch", "variants/carrier_disp_leaf_fntable/target/release/carrier_disp_leaf_fntable", "variants/carrier_disp_leaf_ifchain/target/release/carrier_disp_leaf_ifchain", "variants/carrier_disp_leaf_ifchainasc/target/release/carrier_disp_leaf_ifchainasc", "variants/carrier_disp_leaf_ifchainlin/target/release/carrier_disp_leaf_ifchainlin", "variants/carrier_disp_leaf_bittree/target/release/carrier_disp_leaf_bittree", "variants/carrier_disp_leaf_threaded/target/release/carrier_disp_leaf_threaded", "variants/carrier_disp_leaf_nullfloor/target/release/carrier_disp_leaf_nullfloor"]
 [[bench.carrier_dispatch_leaf.sizes]]
 n = 1024
-variants = ["variants/carrier_disp_switch_leaf/target/release/carrier_disp_switch_leaf", "variants/carrier_disp_fntable_leaf/target/release/carrier_disp_fntable_leaf", "variants/carrier_disp_ifchain_leaf/target/release/carrier_disp_ifchain_leaf", "variants/carrier_disp_ifchainasc_leaf/target/release/carrier_disp_ifchainasc_leaf", "variants/carrier_disp_ifchainlin_leaf/target/release/carrier_disp_ifchainlin_leaf", "variants/carrier_disp_bittree_leaf/target/release/carrier_disp_bittree_leaf", "variants/carrier_disp_threaded_leaf/target/release/carrier_disp_threaded_leaf", "variants/carrier_disp_nullfloor_leaf/target/release/carrier_disp_nullfloor_leaf"]
+variants = ["variants/carrier_disp_leaf_switch/target/release/carrier_disp_leaf_switch", "variants/carrier_disp_leaf_fntable/target/release/carrier_disp_leaf_fntable", "variants/carrier_disp_leaf_ifchain/target/release/carrier_disp_leaf_ifchain", "variants/carrier_disp_leaf_ifchainasc/target/release/carrier_disp_leaf_ifchainasc", "variants/carrier_disp_leaf_ifchainlin/target/release/carrier_disp_leaf_ifchainlin", "variants/carrier_disp_leaf_bittree/target/release/carrier_disp_leaf_bittree", "variants/carrier_disp_leaf_threaded/target/release/carrier_disp_leaf_threaded", "variants/carrier_disp_leaf_nullfloor/target/release/carrier_disp_leaf_nullfloor"]
 [[bench.carrier_dispatch_leaf.sizes]]
 n = 4096
-variants = ["variants/carrier_disp_switch_leaf/target/release/carrier_disp_switch_leaf", "variants/carrier_disp_fntable_leaf/target/release/carrier_disp_fntable_leaf", "variants/carrier_disp_ifchain_leaf/target/release/carrier_disp_ifchain_leaf", "variants/carrier_disp_ifchainasc_leaf/target/release/carrier_disp_ifchainasc_leaf", "variants/carrier_disp_ifchainlin_leaf/target/release/carrier_disp_ifchainlin_leaf", "variants/carrier_disp_bittree_leaf/target/release/carrier_disp_bittree_leaf", "variants/carrier_disp_threaded_leaf/target/release/carrier_disp_threaded_leaf", "variants/carrier_disp_nullfloor_leaf/target/release/carrier_disp_nullfloor_leaf"]
+variants = ["variants/carrier_disp_leaf_switch/target/release/carrier_disp_leaf_switch", "variants/carrier_disp_leaf_fntable/target/release/carrier_disp_leaf_fntable", "variants/carrier_disp_leaf_ifchain/target/release/carrier_disp_leaf_ifchain", "variants/carrier_disp_leaf_ifchainasc/target/release/carrier_disp_leaf_ifchainasc", "variants/carrier_disp_leaf_ifchainlin/target/release/carrier_disp_leaf_ifchainlin", "variants/carrier_disp_leaf_bittree/target/release/carrier_disp_leaf_bittree", "variants/carrier_disp_leaf_threaded/target/release/carrier_disp_leaf_threaded", "variants/carrier_disp_leaf_nullfloor/target/release/carrier_disp_leaf_nullfloor"]
 [[bench.carrier_dispatch_leaf.sizes]]
 n = 16384
-variants = ["variants/carrier_disp_switch_leaf/target/release/carrier_disp_switch_leaf", "variants/carrier_disp_fntable_leaf/target/release/carrier_disp_fntable_leaf", "variants/carrier_disp_ifchain_leaf/target/release/carrier_disp_ifchain_leaf", "variants/carrier_disp_ifchainasc_leaf/target/release/carrier_disp_ifchainasc_leaf", "variants/carrier_disp_ifchainlin_leaf/target/release/carrier_disp_ifchainlin_leaf", "variants/carrier_disp_bittree_leaf/target/release/carrier_disp_bittree_leaf", "variants/carrier_disp_threaded_leaf/target/release/carrier_disp_threaded_leaf", "variants/carrier_disp_nullfloor_leaf/target/release/carrier_disp_nullfloor_leaf"]
+variants = ["variants/carrier_disp_leaf_switch/target/release/carrier_disp_leaf_switch", "variants/carrier_disp_leaf_fntable/target/release/carrier_disp_leaf_fntable", "variants/carrier_disp_leaf_ifchain/target/release/carrier_disp_leaf_ifchain", "variants/carrier_disp_leaf_ifchainasc/target/release/carrier_disp_leaf_ifchainasc", "variants/carrier_disp_leaf_ifchainlin/target/release/carrier_disp_leaf_ifchainlin", "variants/carrier_disp_leaf_bittree/target/release/carrier_disp_leaf_bittree", "variants/carrier_disp_leaf_threaded/target/release/carrier_disp_leaf_threaded", "variants/carrier_disp_leaf_nullfloor/target/release/carrier_disp_leaf_nullfloor"]
+
+[bench.carrier_predecode_real]
+title = "Predecoded dispatch shape, real profile (carrier)"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_predecode_real.normalise]
+baseline = "carrier_pre_real_switch"
+mode = "subtract"
+[[bench.carrier_predecode_real.sizes]]
+n = 64
+variants = ["variants/carrier_pre_real_switch/target/release/carrier_pre_real_switch", "variants/carrier_pre_real_fntable/target/release/carrier_pre_real_fntable", "variants/carrier_pre_real_regcache/target/release/carrier_pre_real_regcache", "variants/carrier_pre_real_null/target/release/carrier_pre_real_null", "variants/carrier_pre_real_threaded/target/release/carrier_pre_real_threaded", "variants/carrier_pre_real_direct/target/release/carrier_pre_real_direct"]
+[[bench.carrier_predecode_real.sizes]]
+n = 256
+variants = ["variants/carrier_pre_real_switch/target/release/carrier_pre_real_switch", "variants/carrier_pre_real_fntable/target/release/carrier_pre_real_fntable", "variants/carrier_pre_real_regcache/target/release/carrier_pre_real_regcache", "variants/carrier_pre_real_null/target/release/carrier_pre_real_null", "variants/carrier_pre_real_threaded/target/release/carrier_pre_real_threaded", "variants/carrier_pre_real_direct/target/release/carrier_pre_real_direct"]
+[[bench.carrier_predecode_real.sizes]]
+n = 1024
+variants = ["variants/carrier_pre_real_switch/target/release/carrier_pre_real_switch", "variants/carrier_pre_real_fntable/target/release/carrier_pre_real_fntable", "variants/carrier_pre_real_regcache/target/release/carrier_pre_real_regcache", "variants/carrier_pre_real_null/target/release/carrier_pre_real_null", "variants/carrier_pre_real_threaded/target/release/carrier_pre_real_threaded", "variants/carrier_pre_real_direct/target/release/carrier_pre_real_direct"]
+[[bench.carrier_predecode_real.sizes]]
+n = 4096
+variants = ["variants/carrier_pre_real_switch/target/release/carrier_pre_real_switch", "variants/carrier_pre_real_fntable/target/release/carrier_pre_real_fntable", "variants/carrier_pre_real_regcache/target/release/carrier_pre_real_regcache", "variants/carrier_pre_real_null/target/release/carrier_pre_real_null", "variants/carrier_pre_real_threaded/target/release/carrier_pre_real_threaded", "variants/carrier_pre_real_direct/target/release/carrier_pre_real_direct"]
+[[bench.carrier_predecode_real.sizes]]
+n = 16384
+variants = ["variants/carrier_pre_real_switch/target/release/carrier_pre_real_switch", "variants/carrier_pre_real_fntable/target/release/carrier_pre_real_fntable", "variants/carrier_pre_real_regcache/target/release/carrier_pre_real_regcache", "variants/carrier_pre_real_null/target/release/carrier_pre_real_null", "variants/carrier_pre_real_threaded/target/release/carrier_pre_real_threaded", "variants/carrier_pre_real_direct/target/release/carrier_pre_real_direct"]
+
+[bench.carrier_predecode_madd]
+title = "Predecoded dispatch shape, madd profile (carrier)"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_predecode_madd.normalise]
+baseline = "carrier_pre_madd_switch"
+mode = "subtract"
+[[bench.carrier_predecode_madd.sizes]]
+n = 64
+variants = ["variants/carrier_pre_madd_switch/target/release/carrier_pre_madd_switch", "variants/carrier_pre_madd_fntable/target/release/carrier_pre_madd_fntable", "variants/carrier_pre_madd_regcache/target/release/carrier_pre_madd_regcache", "variants/carrier_pre_madd_null/target/release/carrier_pre_madd_null", "variants/carrier_pre_madd_threaded/target/release/carrier_pre_madd_threaded", "variants/carrier_pre_madd_direct/target/release/carrier_pre_madd_direct"]
+[[bench.carrier_predecode_madd.sizes]]
+n = 256
+variants = ["variants/carrier_pre_madd_switch/target/release/carrier_pre_madd_switch", "variants/carrier_pre_madd_fntable/target/release/carrier_pre_madd_fntable", "variants/carrier_pre_madd_regcache/target/release/carrier_pre_madd_regcache", "variants/carrier_pre_madd_null/target/release/carrier_pre_madd_null", "variants/carrier_pre_madd_threaded/target/release/carrier_pre_madd_threaded", "variants/carrier_pre_madd_direct/target/release/carrier_pre_madd_direct"]
+[[bench.carrier_predecode_madd.sizes]]
+n = 1024
+variants = ["variants/carrier_pre_madd_switch/target/release/carrier_pre_madd_switch", "variants/carrier_pre_madd_fntable/target/release/carrier_pre_madd_fntable", "variants/carrier_pre_madd_regcache/target/release/carrier_pre_madd_regcache", "variants/carrier_pre_madd_null/target/release/carrier_pre_madd_null", "variants/carrier_pre_madd_threaded/target/release/carrier_pre_madd_threaded", "variants/carrier_pre_madd_direct/target/release/carrier_pre_madd_direct"]
+[[bench.carrier_predecode_madd.sizes]]
+n = 4096
+variants = ["variants/carrier_pre_madd_switch/target/release/carrier_pre_madd_switch", "variants/carrier_pre_madd_fntable/target/release/carrier_pre_madd_fntable", "variants/carrier_pre_madd_regcache/target/release/carrier_pre_madd_regcache", "variants/carrier_pre_madd_null/target/release/carrier_pre_madd_null", "variants/carrier_pre_madd_threaded/target/release/carrier_pre_madd_threaded", "variants/carrier_pre_madd_direct/target/release/carrier_pre_madd_direct"]
+[[bench.carrier_predecode_madd.sizes]]
+n = 16384
+variants = ["variants/carrier_pre_madd_switch/target/release/carrier_pre_madd_switch", "variants/carrier_pre_madd_fntable/target/release/carrier_pre_madd_fntable", "variants/carrier_pre_madd_regcache/target/release/carrier_pre_madd_regcache", "variants/carrier_pre_madd_null/target/release/carrier_pre_madd_null", "variants/carrier_pre_madd_threaded/target/release/carrier_pre_madd_threaded", "variants/carrier_pre_madd_direct/target/release/carrier_pre_madd_direct"]
+
+[bench.carrier_predecode_tight]
+title = "Predecoded dispatch shape, tight profile (carrier)"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_predecode_tight.normalise]
+baseline = "carrier_pre_tight_switch"
+mode = "subtract"
+[[bench.carrier_predecode_tight.sizes]]
+n = 64
+variants = ["variants/carrier_pre_tight_switch/target/release/carrier_pre_tight_switch", "variants/carrier_pre_tight_fntable/target/release/carrier_pre_tight_fntable", "variants/carrier_pre_tight_regcache/target/release/carrier_pre_tight_regcache", "variants/carrier_pre_tight_null/target/release/carrier_pre_tight_null", "variants/carrier_pre_tight_threaded/target/release/carrier_pre_tight_threaded", "variants/carrier_pre_tight_direct/target/release/carrier_pre_tight_direct"]
+[[bench.carrier_predecode_tight.sizes]]
+n = 256
+variants = ["variants/carrier_pre_tight_switch/target/release/carrier_pre_tight_switch", "variants/carrier_pre_tight_fntable/target/release/carrier_pre_tight_fntable", "variants/carrier_pre_tight_regcache/target/release/carrier_pre_tight_regcache", "variants/carrier_pre_tight_null/target/release/carrier_pre_tight_null", "variants/carrier_pre_tight_threaded/target/release/carrier_pre_tight_threaded", "variants/carrier_pre_tight_direct/target/release/carrier_pre_tight_direct"]
+[[bench.carrier_predecode_tight.sizes]]
+n = 1024
+variants = ["variants/carrier_pre_tight_switch/target/release/carrier_pre_tight_switch", "variants/carrier_pre_tight_fntable/target/release/carrier_pre_tight_fntable", "variants/carrier_pre_tight_regcache/target/release/carrier_pre_tight_regcache", "variants/carrier_pre_tight_null/target/release/carrier_pre_tight_null", "variants/carrier_pre_tight_threaded/target/release/carrier_pre_tight_threaded", "variants/carrier_pre_tight_direct/target/release/carrier_pre_tight_direct"]
+[[bench.carrier_predecode_tight.sizes]]
+n = 4096
+variants = ["variants/carrier_pre_tight_switch/target/release/carrier_pre_tight_switch", "variants/carrier_pre_tight_fntable/target/release/carrier_pre_tight_fntable", "variants/carrier_pre_tight_regcache/target/release/carrier_pre_tight_regcache", "variants/carrier_pre_tight_null/target/release/carrier_pre_tight_null", "variants/carrier_pre_tight_threaded/target/release/carrier_pre_tight_threaded", "variants/carrier_pre_tight_direct/target/release/carrier_pre_tight_direct"]
+[[bench.carrier_predecode_tight.sizes]]
+n = 16384
+variants = ["variants/carrier_pre_tight_switch/target/release/carrier_pre_tight_switch", "variants/carrier_pre_tight_fntable/target/release/carrier_pre_tight_fntable", "variants/carrier_pre_tight_regcache/target/release/carrier_pre_tight_regcache", "variants/carrier_pre_tight_null/target/release/carrier_pre_tight_null", "variants/carrier_pre_tight_threaded/target/release/carrier_pre_tight_threaded", "variants/carrier_pre_tight_direct/target/release/carrier_pre_tight_direct"]
+
+[bench.carrier_predecode_scatter]
+title = "Predecoded dispatch shape, scatter profile (carrier)"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_predecode_scatter.normalise]
+baseline = "carrier_pre_scatter_switch"
+mode = "subtract"
+[[bench.carrier_predecode_scatter.sizes]]
+n = 64
+variants = ["variants/carrier_pre_scatter_switch/target/release/carrier_pre_scatter_switch", "variants/carrier_pre_scatter_fntable/target/release/carrier_pre_scatter_fntable", "variants/carrier_pre_scatter_regcache/target/release/carrier_pre_scatter_regcache", "variants/carrier_pre_scatter_null/target/release/carrier_pre_scatter_null", "variants/carrier_pre_scatter_threaded/target/release/carrier_pre_scatter_threaded", "variants/carrier_pre_scatter_direct/target/release/carrier_pre_scatter_direct"]
+[[bench.carrier_predecode_scatter.sizes]]
+n = 256
+variants = ["variants/carrier_pre_scatter_switch/target/release/carrier_pre_scatter_switch", "variants/carrier_pre_scatter_fntable/target/release/carrier_pre_scatter_fntable", "variants/carrier_pre_scatter_regcache/target/release/carrier_pre_scatter_regcache", "variants/carrier_pre_scatter_null/target/release/carrier_pre_scatter_null", "variants/carrier_pre_scatter_threaded/target/release/carrier_pre_scatter_threaded", "variants/carrier_pre_scatter_direct/target/release/carrier_pre_scatter_direct"]
+[[bench.carrier_predecode_scatter.sizes]]
+n = 1024
+variants = ["variants/carrier_pre_scatter_switch/target/release/carrier_pre_scatter_switch", "variants/carrier_pre_scatter_fntable/target/release/carrier_pre_scatter_fntable", "variants/carrier_pre_scatter_regcache/target/release/carrier_pre_scatter_regcache", "variants/carrier_pre_scatter_null/target/release/carrier_pre_scatter_null", "variants/carrier_pre_scatter_threaded/target/release/carrier_pre_scatter_threaded", "variants/carrier_pre_scatter_direct/target/release/carrier_pre_scatter_direct"]
+[[bench.carrier_predecode_scatter.sizes]]
+n = 4096
+variants = ["variants/carrier_pre_scatter_switch/target/release/carrier_pre_scatter_switch", "variants/carrier_pre_scatter_fntable/target/release/carrier_pre_scatter_fntable", "variants/carrier_pre_scatter_regcache/target/release/carrier_pre_scatter_regcache", "variants/carrier_pre_scatter_null/target/release/carrier_pre_scatter_null", "variants/carrier_pre_scatter_threaded/target/release/carrier_pre_scatter_threaded", "variants/carrier_pre_scatter_direct/target/release/carrier_pre_scatter_direct"]
+[[bench.carrier_predecode_scatter.sizes]]
+n = 16384
+variants = ["variants/carrier_pre_scatter_switch/target/release/carrier_pre_scatter_switch", "variants/carrier_pre_scatter_fntable/target/release/carrier_pre_scatter_fntable", "variants/carrier_pre_scatter_regcache/target/release/carrier_pre_scatter_regcache", "variants/carrier_pre_scatter_null/target/release/carrier_pre_scatter_null", "variants/carrier_pre_scatter_threaded/target/release/carrier_pre_scatter_threaded", "variants/carrier_pre_scatter_direct/target/release/carrier_pre_scatter_direct"]
+
+[bench.carrier_predecode_wideselect]
+title = "Predecoded dispatch shape, wideselect profile (carrier)"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_predecode_wideselect.normalise]
+baseline = "carrier_pre_wideselect_switch"
+mode = "subtract"
+[[bench.carrier_predecode_wideselect.sizes]]
+n = 64
+variants = ["variants/carrier_pre_wideselect_switch/target/release/carrier_pre_wideselect_switch", "variants/carrier_pre_wideselect_fntable/target/release/carrier_pre_wideselect_fntable", "variants/carrier_pre_wideselect_regcache/target/release/carrier_pre_wideselect_regcache", "variants/carrier_pre_wideselect_null/target/release/carrier_pre_wideselect_null", "variants/carrier_pre_wideselect_threaded/target/release/carrier_pre_wideselect_threaded", "variants/carrier_pre_wideselect_direct/target/release/carrier_pre_wideselect_direct"]
+[[bench.carrier_predecode_wideselect.sizes]]
+n = 256
+variants = ["variants/carrier_pre_wideselect_switch/target/release/carrier_pre_wideselect_switch", "variants/carrier_pre_wideselect_fntable/target/release/carrier_pre_wideselect_fntable", "variants/carrier_pre_wideselect_regcache/target/release/carrier_pre_wideselect_regcache", "variants/carrier_pre_wideselect_null/target/release/carrier_pre_wideselect_null", "variants/carrier_pre_wideselect_threaded/target/release/carrier_pre_wideselect_threaded", "variants/carrier_pre_wideselect_direct/target/release/carrier_pre_wideselect_direct"]
+[[bench.carrier_predecode_wideselect.sizes]]
+n = 1024
+variants = ["variants/carrier_pre_wideselect_switch/target/release/carrier_pre_wideselect_switch", "variants/carrier_pre_wideselect_fntable/target/release/carrier_pre_wideselect_fntable", "variants/carrier_pre_wideselect_regcache/target/release/carrier_pre_wideselect_regcache", "variants/carrier_pre_wideselect_null/target/release/carrier_pre_wideselect_null", "variants/carrier_pre_wideselect_threaded/target/release/carrier_pre_wideselect_threaded", "variants/carrier_pre_wideselect_direct/target/release/carrier_pre_wideselect_direct"]
+[[bench.carrier_predecode_wideselect.sizes]]
+n = 4096
+variants = ["variants/carrier_pre_wideselect_switch/target/release/carrier_pre_wideselect_switch", "variants/carrier_pre_wideselect_fntable/target/release/carrier_pre_wideselect_fntable", "variants/carrier_pre_wideselect_regcache/target/release/carrier_pre_wideselect_regcache", "variants/carrier_pre_wideselect_null/target/release/carrier_pre_wideselect_null", "variants/carrier_pre_wideselect_threaded/target/release/carrier_pre_wideselect_threaded", "variants/carrier_pre_wideselect_direct/target/release/carrier_pre_wideselect_direct"]
+[[bench.carrier_predecode_wideselect.sizes]]
+n = 16384
+variants = ["variants/carrier_pre_wideselect_switch/target/release/carrier_pre_wideselect_switch", "variants/carrier_pre_wideselect_fntable/target/release/carrier_pre_wideselect_fntable", "variants/carrier_pre_wideselect_regcache/target/release/carrier_pre_wideselect_regcache", "variants/carrier_pre_wideselect_null/target/release/carrier_pre_wideselect_null", "variants/carrier_pre_wideselect_threaded/target/release/carrier_pre_wideselect_threaded", "variants/carrier_pre_wideselect_direct/target/release/carrier_pre_wideselect_direct"]
+
+[bench.carrier_predecode_leaf]
+title = "Predecoded dispatch shape, leaf profile (carrier)"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_predecode_leaf.normalise]
+baseline = "carrier_pre_leaf_switch"
+mode = "subtract"
+[[bench.carrier_predecode_leaf.sizes]]
+n = 64
+variants = ["variants/carrier_pre_leaf_switch/target/release/carrier_pre_leaf_switch", "variants/carrier_pre_leaf_fntable/target/release/carrier_pre_leaf_fntable", "variants/carrier_pre_leaf_regcache/target/release/carrier_pre_leaf_regcache", "variants/carrier_pre_leaf_null/target/release/carrier_pre_leaf_null", "variants/carrier_pre_leaf_threaded/target/release/carrier_pre_leaf_threaded", "variants/carrier_pre_leaf_direct/target/release/carrier_pre_leaf_direct"]
+[[bench.carrier_predecode_leaf.sizes]]
+n = 256
+variants = ["variants/carrier_pre_leaf_switch/target/release/carrier_pre_leaf_switch", "variants/carrier_pre_leaf_fntable/target/release/carrier_pre_leaf_fntable", "variants/carrier_pre_leaf_regcache/target/release/carrier_pre_leaf_regcache", "variants/carrier_pre_leaf_null/target/release/carrier_pre_leaf_null", "variants/carrier_pre_leaf_threaded/target/release/carrier_pre_leaf_threaded", "variants/carrier_pre_leaf_direct/target/release/carrier_pre_leaf_direct"]
+[[bench.carrier_predecode_leaf.sizes]]
+n = 1024
+variants = ["variants/carrier_pre_leaf_switch/target/release/carrier_pre_leaf_switch", "variants/carrier_pre_leaf_fntable/target/release/carrier_pre_leaf_fntable", "variants/carrier_pre_leaf_regcache/target/release/carrier_pre_leaf_regcache", "variants/carrier_pre_leaf_null/target/release/carrier_pre_leaf_null", "variants/carrier_pre_leaf_threaded/target/release/carrier_pre_leaf_threaded", "variants/carrier_pre_leaf_direct/target/release/carrier_pre_leaf_direct"]
+[[bench.carrier_predecode_leaf.sizes]]
+n = 4096
+variants = ["variants/carrier_pre_leaf_switch/target/release/carrier_pre_leaf_switch", "variants/carrier_pre_leaf_fntable/target/release/carrier_pre_leaf_fntable", "variants/carrier_pre_leaf_regcache/target/release/carrier_pre_leaf_regcache", "variants/carrier_pre_leaf_null/target/release/carrier_pre_leaf_null", "variants/carrier_pre_leaf_threaded/target/release/carrier_pre_leaf_threaded", "variants/carrier_pre_leaf_direct/target/release/carrier_pre_leaf_direct"]
+[[bench.carrier_predecode_leaf.sizes]]
+n = 16384
+variants = ["variants/carrier_pre_leaf_switch/target/release/carrier_pre_leaf_switch", "variants/carrier_pre_leaf_fntable/target/release/carrier_pre_leaf_fntable", "variants/carrier_pre_leaf_regcache/target/release/carrier_pre_leaf_regcache", "variants/carrier_pre_leaf_null/target/release/carrier_pre_leaf_null", "variants/carrier_pre_leaf_threaded/target/release/carrier_pre_leaf_threaded", "variants/carrier_pre_leaf_direct/target/release/carrier_pre_leaf_direct"]
+
+[bench.carrier_cfg]
+title = "CFG register-VM dispatch (switch / fntable / threaded / trace)"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_cfg.normalise]
+baseline = "carrier_cfg_switch"
+mode = "subtract"
+[[bench.carrier_cfg.sizes]]
+n = 64
+variants = ["variants/carrier_cfg_switch/target/release/carrier_cfg_switch", "variants/carrier_cfg_fntable/target/release/carrier_cfg_fntable", "variants/carrier_cfg_threaded/target/release/carrier_cfg_threaded", "variants/carrier_cfg_trace/target/release/carrier_cfg_trace"]
+[[bench.carrier_cfg.sizes]]
+n = 256
+variants = ["variants/carrier_cfg_switch/target/release/carrier_cfg_switch", "variants/carrier_cfg_fntable/target/release/carrier_cfg_fntable", "variants/carrier_cfg_threaded/target/release/carrier_cfg_threaded", "variants/carrier_cfg_trace/target/release/carrier_cfg_trace"]
+[[bench.carrier_cfg.sizes]]
+n = 1024
+variants = ["variants/carrier_cfg_switch/target/release/carrier_cfg_switch", "variants/carrier_cfg_fntable/target/release/carrier_cfg_fntable", "variants/carrier_cfg_threaded/target/release/carrier_cfg_threaded", "variants/carrier_cfg_trace/target/release/carrier_cfg_trace"]
+[[bench.carrier_cfg.sizes]]
+n = 4096
+variants = ["variants/carrier_cfg_switch/target/release/carrier_cfg_switch", "variants/carrier_cfg_fntable/target/release/carrier_cfg_fntable", "variants/carrier_cfg_threaded/target/release/carrier_cfg_threaded", "variants/carrier_cfg_trace/target/release/carrier_cfg_trace"]
+[[bench.carrier_cfg.sizes]]
+n = 16384
+variants = ["variants/carrier_cfg_switch/target/release/carrier_cfg_switch", "variants/carrier_cfg_fntable/target/release/carrier_cfg_fntable", "variants/carrier_cfg_threaded/target/release/carrier_cfg_threaded", "variants/carrier_cfg_trace/target/release/carrier_cfg_trace"]
+
+[bench.carrier_layout_real]
+title = "Record layout (REC12..REC32) with fixed switch dispatch, real profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_layout_real.normalise]
+baseline = "carrier_lay_real_rec24"
+mode = "subtract"
+[[bench.carrier_layout_real.sizes]]
+n = 64
+variants = ["variants/carrier_lay_real_rec12/target/release/carrier_lay_real_rec12", "variants/carrier_lay_real_rec16/target/release/carrier_lay_real_rec16", "variants/carrier_lay_real_rec20/target/release/carrier_lay_real_rec20", "variants/carrier_lay_real_rec24/target/release/carrier_lay_real_rec24", "variants/carrier_lay_real_rec32/target/release/carrier_lay_real_rec32"]
+[[bench.carrier_layout_real.sizes]]
+n = 256
+variants = ["variants/carrier_lay_real_rec12/target/release/carrier_lay_real_rec12", "variants/carrier_lay_real_rec16/target/release/carrier_lay_real_rec16", "variants/carrier_lay_real_rec20/target/release/carrier_lay_real_rec20", "variants/carrier_lay_real_rec24/target/release/carrier_lay_real_rec24", "variants/carrier_lay_real_rec32/target/release/carrier_lay_real_rec32"]
+[[bench.carrier_layout_real.sizes]]
+n = 1024
+variants = ["variants/carrier_lay_real_rec12/target/release/carrier_lay_real_rec12", "variants/carrier_lay_real_rec16/target/release/carrier_lay_real_rec16", "variants/carrier_lay_real_rec20/target/release/carrier_lay_real_rec20", "variants/carrier_lay_real_rec24/target/release/carrier_lay_real_rec24", "variants/carrier_lay_real_rec32/target/release/carrier_lay_real_rec32"]
+[[bench.carrier_layout_real.sizes]]
+n = 4096
+variants = ["variants/carrier_lay_real_rec12/target/release/carrier_lay_real_rec12", "variants/carrier_lay_real_rec16/target/release/carrier_lay_real_rec16", "variants/carrier_lay_real_rec20/target/release/carrier_lay_real_rec20", "variants/carrier_lay_real_rec24/target/release/carrier_lay_real_rec24", "variants/carrier_lay_real_rec32/target/release/carrier_lay_real_rec32"]
+[[bench.carrier_layout_real.sizes]]
+n = 16384
+variants = ["variants/carrier_lay_real_rec12/target/release/carrier_lay_real_rec12", "variants/carrier_lay_real_rec16/target/release/carrier_lay_real_rec16", "variants/carrier_lay_real_rec20/target/release/carrier_lay_real_rec20", "variants/carrier_lay_real_rec24/target/release/carrier_lay_real_rec24", "variants/carrier_lay_real_rec32/target/release/carrier_lay_real_rec32"]
+
+[bench.carrier_layout_madd]
+title = "Record layout (REC12..REC32) with fixed switch dispatch, madd profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_layout_madd.normalise]
+baseline = "carrier_lay_madd_rec24"
+mode = "subtract"
+[[bench.carrier_layout_madd.sizes]]
+n = 64
+variants = ["variants/carrier_lay_madd_rec12/target/release/carrier_lay_madd_rec12", "variants/carrier_lay_madd_rec16/target/release/carrier_lay_madd_rec16", "variants/carrier_lay_madd_rec20/target/release/carrier_lay_madd_rec20", "variants/carrier_lay_madd_rec24/target/release/carrier_lay_madd_rec24", "variants/carrier_lay_madd_rec32/target/release/carrier_lay_madd_rec32"]
+[[bench.carrier_layout_madd.sizes]]
+n = 256
+variants = ["variants/carrier_lay_madd_rec12/target/release/carrier_lay_madd_rec12", "variants/carrier_lay_madd_rec16/target/release/carrier_lay_madd_rec16", "variants/carrier_lay_madd_rec20/target/release/carrier_lay_madd_rec20", "variants/carrier_lay_madd_rec24/target/release/carrier_lay_madd_rec24", "variants/carrier_lay_madd_rec32/target/release/carrier_lay_madd_rec32"]
+[[bench.carrier_layout_madd.sizes]]
+n = 1024
+variants = ["variants/carrier_lay_madd_rec12/target/release/carrier_lay_madd_rec12", "variants/carrier_lay_madd_rec16/target/release/carrier_lay_madd_rec16", "variants/carrier_lay_madd_rec20/target/release/carrier_lay_madd_rec20", "variants/carrier_lay_madd_rec24/target/release/carrier_lay_madd_rec24", "variants/carrier_lay_madd_rec32/target/release/carrier_lay_madd_rec32"]
+[[bench.carrier_layout_madd.sizes]]
+n = 4096
+variants = ["variants/carrier_lay_madd_rec12/target/release/carrier_lay_madd_rec12", "variants/carrier_lay_madd_rec16/target/release/carrier_lay_madd_rec16", "variants/carrier_lay_madd_rec20/target/release/carrier_lay_madd_rec20", "variants/carrier_lay_madd_rec24/target/release/carrier_lay_madd_rec24", "variants/carrier_lay_madd_rec32/target/release/carrier_lay_madd_rec32"]
+[[bench.carrier_layout_madd.sizes]]
+n = 16384
+variants = ["variants/carrier_lay_madd_rec12/target/release/carrier_lay_madd_rec12", "variants/carrier_lay_madd_rec16/target/release/carrier_lay_madd_rec16", "variants/carrier_lay_madd_rec20/target/release/carrier_lay_madd_rec20", "variants/carrier_lay_madd_rec24/target/release/carrier_lay_madd_rec24", "variants/carrier_lay_madd_rec32/target/release/carrier_lay_madd_rec32"]
+
+[bench.carrier_layout_tight]
+title = "Record layout (REC12..REC32) with fixed switch dispatch, tight profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_layout_tight.normalise]
+baseline = "carrier_lay_tight_rec24"
+mode = "subtract"
+[[bench.carrier_layout_tight.sizes]]
+n = 64
+variants = ["variants/carrier_lay_tight_rec12/target/release/carrier_lay_tight_rec12", "variants/carrier_lay_tight_rec16/target/release/carrier_lay_tight_rec16", "variants/carrier_lay_tight_rec20/target/release/carrier_lay_tight_rec20", "variants/carrier_lay_tight_rec24/target/release/carrier_lay_tight_rec24", "variants/carrier_lay_tight_rec32/target/release/carrier_lay_tight_rec32"]
+[[bench.carrier_layout_tight.sizes]]
+n = 256
+variants = ["variants/carrier_lay_tight_rec12/target/release/carrier_lay_tight_rec12", "variants/carrier_lay_tight_rec16/target/release/carrier_lay_tight_rec16", "variants/carrier_lay_tight_rec20/target/release/carrier_lay_tight_rec20", "variants/carrier_lay_tight_rec24/target/release/carrier_lay_tight_rec24", "variants/carrier_lay_tight_rec32/target/release/carrier_lay_tight_rec32"]
+[[bench.carrier_layout_tight.sizes]]
+n = 1024
+variants = ["variants/carrier_lay_tight_rec12/target/release/carrier_lay_tight_rec12", "variants/carrier_lay_tight_rec16/target/release/carrier_lay_tight_rec16", "variants/carrier_lay_tight_rec20/target/release/carrier_lay_tight_rec20", "variants/carrier_lay_tight_rec24/target/release/carrier_lay_tight_rec24", "variants/carrier_lay_tight_rec32/target/release/carrier_lay_tight_rec32"]
+[[bench.carrier_layout_tight.sizes]]
+n = 4096
+variants = ["variants/carrier_lay_tight_rec12/target/release/carrier_lay_tight_rec12", "variants/carrier_lay_tight_rec16/target/release/carrier_lay_tight_rec16", "variants/carrier_lay_tight_rec20/target/release/carrier_lay_tight_rec20", "variants/carrier_lay_tight_rec24/target/release/carrier_lay_tight_rec24", "variants/carrier_lay_tight_rec32/target/release/carrier_lay_tight_rec32"]
+[[bench.carrier_layout_tight.sizes]]
+n = 16384
+variants = ["variants/carrier_lay_tight_rec12/target/release/carrier_lay_tight_rec12", "variants/carrier_lay_tight_rec16/target/release/carrier_lay_tight_rec16", "variants/carrier_lay_tight_rec20/target/release/carrier_lay_tight_rec20", "variants/carrier_lay_tight_rec24/target/release/carrier_lay_tight_rec24", "variants/carrier_lay_tight_rec32/target/release/carrier_lay_tight_rec32"]
+
+[bench.carrier_layout_scatter]
+title = "Record layout (REC12..REC32) with fixed switch dispatch, scatter profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_layout_scatter.normalise]
+baseline = "carrier_lay_scatter_rec24"
+mode = "subtract"
+[[bench.carrier_layout_scatter.sizes]]
+n = 64
+variants = ["variants/carrier_lay_scatter_rec12/target/release/carrier_lay_scatter_rec12", "variants/carrier_lay_scatter_rec16/target/release/carrier_lay_scatter_rec16", "variants/carrier_lay_scatter_rec20/target/release/carrier_lay_scatter_rec20", "variants/carrier_lay_scatter_rec24/target/release/carrier_lay_scatter_rec24", "variants/carrier_lay_scatter_rec32/target/release/carrier_lay_scatter_rec32"]
+[[bench.carrier_layout_scatter.sizes]]
+n = 256
+variants = ["variants/carrier_lay_scatter_rec12/target/release/carrier_lay_scatter_rec12", "variants/carrier_lay_scatter_rec16/target/release/carrier_lay_scatter_rec16", "variants/carrier_lay_scatter_rec20/target/release/carrier_lay_scatter_rec20", "variants/carrier_lay_scatter_rec24/target/release/carrier_lay_scatter_rec24", "variants/carrier_lay_scatter_rec32/target/release/carrier_lay_scatter_rec32"]
+[[bench.carrier_layout_scatter.sizes]]
+n = 1024
+variants = ["variants/carrier_lay_scatter_rec12/target/release/carrier_lay_scatter_rec12", "variants/carrier_lay_scatter_rec16/target/release/carrier_lay_scatter_rec16", "variants/carrier_lay_scatter_rec20/target/release/carrier_lay_scatter_rec20", "variants/carrier_lay_scatter_rec24/target/release/carrier_lay_scatter_rec24", "variants/carrier_lay_scatter_rec32/target/release/carrier_lay_scatter_rec32"]
+[[bench.carrier_layout_scatter.sizes]]
+n = 4096
+variants = ["variants/carrier_lay_scatter_rec12/target/release/carrier_lay_scatter_rec12", "variants/carrier_lay_scatter_rec16/target/release/carrier_lay_scatter_rec16", "variants/carrier_lay_scatter_rec20/target/release/carrier_lay_scatter_rec20", "variants/carrier_lay_scatter_rec24/target/release/carrier_lay_scatter_rec24", "variants/carrier_lay_scatter_rec32/target/release/carrier_lay_scatter_rec32"]
+[[bench.carrier_layout_scatter.sizes]]
+n = 16384
+variants = ["variants/carrier_lay_scatter_rec12/target/release/carrier_lay_scatter_rec12", "variants/carrier_lay_scatter_rec16/target/release/carrier_lay_scatter_rec16", "variants/carrier_lay_scatter_rec20/target/release/carrier_lay_scatter_rec20", "variants/carrier_lay_scatter_rec24/target/release/carrier_lay_scatter_rec24", "variants/carrier_lay_scatter_rec32/target/release/carrier_lay_scatter_rec32"]
+
+[bench.carrier_layout_wideselect]
+title = "Record layout (REC12..REC32) with fixed switch dispatch, wideselect profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_layout_wideselect.normalise]
+baseline = "carrier_lay_wideselect_rec24"
+mode = "subtract"
+[[bench.carrier_layout_wideselect.sizes]]
+n = 64
+variants = ["variants/carrier_lay_wideselect_rec12/target/release/carrier_lay_wideselect_rec12", "variants/carrier_lay_wideselect_rec16/target/release/carrier_lay_wideselect_rec16", "variants/carrier_lay_wideselect_rec20/target/release/carrier_lay_wideselect_rec20", "variants/carrier_lay_wideselect_rec24/target/release/carrier_lay_wideselect_rec24", "variants/carrier_lay_wideselect_rec32/target/release/carrier_lay_wideselect_rec32"]
+[[bench.carrier_layout_wideselect.sizes]]
+n = 256
+variants = ["variants/carrier_lay_wideselect_rec12/target/release/carrier_lay_wideselect_rec12", "variants/carrier_lay_wideselect_rec16/target/release/carrier_lay_wideselect_rec16", "variants/carrier_lay_wideselect_rec20/target/release/carrier_lay_wideselect_rec20", "variants/carrier_lay_wideselect_rec24/target/release/carrier_lay_wideselect_rec24", "variants/carrier_lay_wideselect_rec32/target/release/carrier_lay_wideselect_rec32"]
+[[bench.carrier_layout_wideselect.sizes]]
+n = 1024
+variants = ["variants/carrier_lay_wideselect_rec12/target/release/carrier_lay_wideselect_rec12", "variants/carrier_lay_wideselect_rec16/target/release/carrier_lay_wideselect_rec16", "variants/carrier_lay_wideselect_rec20/target/release/carrier_lay_wideselect_rec20", "variants/carrier_lay_wideselect_rec24/target/release/carrier_lay_wideselect_rec24", "variants/carrier_lay_wideselect_rec32/target/release/carrier_lay_wideselect_rec32"]
+[[bench.carrier_layout_wideselect.sizes]]
+n = 4096
+variants = ["variants/carrier_lay_wideselect_rec12/target/release/carrier_lay_wideselect_rec12", "variants/carrier_lay_wideselect_rec16/target/release/carrier_lay_wideselect_rec16", "variants/carrier_lay_wideselect_rec20/target/release/carrier_lay_wideselect_rec20", "variants/carrier_lay_wideselect_rec24/target/release/carrier_lay_wideselect_rec24", "variants/carrier_lay_wideselect_rec32/target/release/carrier_lay_wideselect_rec32"]
+[[bench.carrier_layout_wideselect.sizes]]
+n = 16384
+variants = ["variants/carrier_lay_wideselect_rec12/target/release/carrier_lay_wideselect_rec12", "variants/carrier_lay_wideselect_rec16/target/release/carrier_lay_wideselect_rec16", "variants/carrier_lay_wideselect_rec20/target/release/carrier_lay_wideselect_rec20", "variants/carrier_lay_wideselect_rec24/target/release/carrier_lay_wideselect_rec24", "variants/carrier_lay_wideselect_rec32/target/release/carrier_lay_wideselect_rec32"]
+
+[bench.carrier_layout_leaf]
+title = "Record layout (REC12..REC32) with fixed switch dispatch, leaf profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_layout_leaf.normalise]
+baseline = "carrier_lay_leaf_rec24"
+mode = "subtract"
+[[bench.carrier_layout_leaf.sizes]]
+n = 64
+variants = ["variants/carrier_lay_leaf_rec12/target/release/carrier_lay_leaf_rec12", "variants/carrier_lay_leaf_rec16/target/release/carrier_lay_leaf_rec16", "variants/carrier_lay_leaf_rec20/target/release/carrier_lay_leaf_rec20", "variants/carrier_lay_leaf_rec24/target/release/carrier_lay_leaf_rec24", "variants/carrier_lay_leaf_rec32/target/release/carrier_lay_leaf_rec32"]
+[[bench.carrier_layout_leaf.sizes]]
+n = 256
+variants = ["variants/carrier_lay_leaf_rec12/target/release/carrier_lay_leaf_rec12", "variants/carrier_lay_leaf_rec16/target/release/carrier_lay_leaf_rec16", "variants/carrier_lay_leaf_rec20/target/release/carrier_lay_leaf_rec20", "variants/carrier_lay_leaf_rec24/target/release/carrier_lay_leaf_rec24", "variants/carrier_lay_leaf_rec32/target/release/carrier_lay_leaf_rec32"]
+[[bench.carrier_layout_leaf.sizes]]
+n = 1024
+variants = ["variants/carrier_lay_leaf_rec12/target/release/carrier_lay_leaf_rec12", "variants/carrier_lay_leaf_rec16/target/release/carrier_lay_leaf_rec16", "variants/carrier_lay_leaf_rec20/target/release/carrier_lay_leaf_rec20", "variants/carrier_lay_leaf_rec24/target/release/carrier_lay_leaf_rec24", "variants/carrier_lay_leaf_rec32/target/release/carrier_lay_leaf_rec32"]
+[[bench.carrier_layout_leaf.sizes]]
+n = 4096
+variants = ["variants/carrier_lay_leaf_rec12/target/release/carrier_lay_leaf_rec12", "variants/carrier_lay_leaf_rec16/target/release/carrier_lay_leaf_rec16", "variants/carrier_lay_leaf_rec20/target/release/carrier_lay_leaf_rec20", "variants/carrier_lay_leaf_rec24/target/release/carrier_lay_leaf_rec24", "variants/carrier_lay_leaf_rec32/target/release/carrier_lay_leaf_rec32"]
+[[bench.carrier_layout_leaf.sizes]]
+n = 16384
+variants = ["variants/carrier_lay_leaf_rec12/target/release/carrier_lay_leaf_rec12", "variants/carrier_lay_leaf_rec16/target/release/carrier_lay_leaf_rec16", "variants/carrier_lay_leaf_rec20/target/release/carrier_lay_leaf_rec20", "variants/carrier_lay_leaf_rec24/target/release/carrier_lay_leaf_rec24", "variants/carrier_lay_leaf_rec32/target/release/carrier_lay_leaf_rec32"]
+
+[bench.carrier_valrepr]
+title = "Value representation (static / runtime-tagged / NaN-boxed)"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_valrepr.normalise]
+baseline = "carrier_vr_static"
+mode = "subtract"
+[[bench.carrier_valrepr.sizes]]
+n = 64
+variants = ["variants/carrier_vr_static/target/release/carrier_vr_static", "variants/carrier_vr_tagged/target/release/carrier_vr_tagged", "variants/carrier_vr_nanbox/target/release/carrier_vr_nanbox"]
+[[bench.carrier_valrepr.sizes]]
+n = 256
+variants = ["variants/carrier_vr_static/target/release/carrier_vr_static", "variants/carrier_vr_tagged/target/release/carrier_vr_tagged", "variants/carrier_vr_nanbox/target/release/carrier_vr_nanbox"]
+[[bench.carrier_valrepr.sizes]]
+n = 1024
+variants = ["variants/carrier_vr_static/target/release/carrier_vr_static", "variants/carrier_vr_tagged/target/release/carrier_vr_tagged", "variants/carrier_vr_nanbox/target/release/carrier_vr_nanbox"]
+[[bench.carrier_valrepr.sizes]]
+n = 4096
+variants = ["variants/carrier_vr_static/target/release/carrier_vr_static", "variants/carrier_vr_tagged/target/release/carrier_vr_tagged", "variants/carrier_vr_nanbox/target/release/carrier_vr_nanbox"]
+[[bench.carrier_valrepr.sizes]]
+n = 16384
+variants = ["variants/carrier_vr_static/target/release/carrier_vr_static", "variants/carrier_vr_tagged/target/release/carrier_vr_tagged", "variants/carrier_vr_nanbox/target/release/carrier_vr_nanbox"]
+
+[bench.carrier_residual_real]
+title = "Residual encoding: register/SSA vs stack bytecode, real profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_residual_real.normalise]
+baseline = "carrier_res_real_register"
+mode = "subtract"
+[[bench.carrier_residual_real.sizes]]
+n = 64
+variants = ["variants/carrier_res_real_register/target/release/carrier_res_real_register", "variants/carrier_res_real_stack/target/release/carrier_res_real_stack"]
+[[bench.carrier_residual_real.sizes]]
+n = 256
+variants = ["variants/carrier_res_real_register/target/release/carrier_res_real_register", "variants/carrier_res_real_stack/target/release/carrier_res_real_stack"]
+[[bench.carrier_residual_real.sizes]]
+n = 1024
+variants = ["variants/carrier_res_real_register/target/release/carrier_res_real_register", "variants/carrier_res_real_stack/target/release/carrier_res_real_stack"]
+[[bench.carrier_residual_real.sizes]]
+n = 4096
+variants = ["variants/carrier_res_real_register/target/release/carrier_res_real_register", "variants/carrier_res_real_stack/target/release/carrier_res_real_stack"]
+[[bench.carrier_residual_real.sizes]]
+n = 16384
+variants = ["variants/carrier_res_real_register/target/release/carrier_res_real_register", "variants/carrier_res_real_stack/target/release/carrier_res_real_stack"]
+
+[bench.carrier_residual_madd]
+title = "Residual encoding: register/SSA vs stack bytecode, madd profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_residual_madd.normalise]
+baseline = "carrier_res_madd_register"
+mode = "subtract"
+[[bench.carrier_residual_madd.sizes]]
+n = 64
+variants = ["variants/carrier_res_madd_register/target/release/carrier_res_madd_register", "variants/carrier_res_madd_stack/target/release/carrier_res_madd_stack"]
+[[bench.carrier_residual_madd.sizes]]
+n = 256
+variants = ["variants/carrier_res_madd_register/target/release/carrier_res_madd_register", "variants/carrier_res_madd_stack/target/release/carrier_res_madd_stack"]
+[[bench.carrier_residual_madd.sizes]]
+n = 1024
+variants = ["variants/carrier_res_madd_register/target/release/carrier_res_madd_register", "variants/carrier_res_madd_stack/target/release/carrier_res_madd_stack"]
+[[bench.carrier_residual_madd.sizes]]
+n = 4096
+variants = ["variants/carrier_res_madd_register/target/release/carrier_res_madd_register", "variants/carrier_res_madd_stack/target/release/carrier_res_madd_stack"]
+[[bench.carrier_residual_madd.sizes]]
+n = 16384
+variants = ["variants/carrier_res_madd_register/target/release/carrier_res_madd_register", "variants/carrier_res_madd_stack/target/release/carrier_res_madd_stack"]
+
+[bench.carrier_residual_tight]
+title = "Residual encoding: register/SSA vs stack bytecode, tight profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_residual_tight.normalise]
+baseline = "carrier_res_tight_register"
+mode = "subtract"
+[[bench.carrier_residual_tight.sizes]]
+n = 64
+variants = ["variants/carrier_res_tight_register/target/release/carrier_res_tight_register", "variants/carrier_res_tight_stack/target/release/carrier_res_tight_stack"]
+[[bench.carrier_residual_tight.sizes]]
+n = 256
+variants = ["variants/carrier_res_tight_register/target/release/carrier_res_tight_register", "variants/carrier_res_tight_stack/target/release/carrier_res_tight_stack"]
+[[bench.carrier_residual_tight.sizes]]
+n = 1024
+variants = ["variants/carrier_res_tight_register/target/release/carrier_res_tight_register", "variants/carrier_res_tight_stack/target/release/carrier_res_tight_stack"]
+[[bench.carrier_residual_tight.sizes]]
+n = 4096
+variants = ["variants/carrier_res_tight_register/target/release/carrier_res_tight_register", "variants/carrier_res_tight_stack/target/release/carrier_res_tight_stack"]
+[[bench.carrier_residual_tight.sizes]]
+n = 16384
+variants = ["variants/carrier_res_tight_register/target/release/carrier_res_tight_register", "variants/carrier_res_tight_stack/target/release/carrier_res_tight_stack"]
+
+[bench.carrier_residual_scatter]
+title = "Residual encoding: register/SSA vs stack bytecode, scatter profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_residual_scatter.normalise]
+baseline = "carrier_res_scatter_register"
+mode = "subtract"
+[[bench.carrier_residual_scatter.sizes]]
+n = 64
+variants = ["variants/carrier_res_scatter_register/target/release/carrier_res_scatter_register", "variants/carrier_res_scatter_stack/target/release/carrier_res_scatter_stack"]
+[[bench.carrier_residual_scatter.sizes]]
+n = 256
+variants = ["variants/carrier_res_scatter_register/target/release/carrier_res_scatter_register", "variants/carrier_res_scatter_stack/target/release/carrier_res_scatter_stack"]
+[[bench.carrier_residual_scatter.sizes]]
+n = 1024
+variants = ["variants/carrier_res_scatter_register/target/release/carrier_res_scatter_register", "variants/carrier_res_scatter_stack/target/release/carrier_res_scatter_stack"]
+[[bench.carrier_residual_scatter.sizes]]
+n = 4096
+variants = ["variants/carrier_res_scatter_register/target/release/carrier_res_scatter_register", "variants/carrier_res_scatter_stack/target/release/carrier_res_scatter_stack"]
+[[bench.carrier_residual_scatter.sizes]]
+n = 16384
+variants = ["variants/carrier_res_scatter_register/target/release/carrier_res_scatter_register", "variants/carrier_res_scatter_stack/target/release/carrier_res_scatter_stack"]
+
+[bench.carrier_residual_wideselect]
+title = "Residual encoding: register/SSA vs stack bytecode, wideselect profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_residual_wideselect.normalise]
+baseline = "carrier_res_wideselect_register"
+mode = "subtract"
+[[bench.carrier_residual_wideselect.sizes]]
+n = 64
+variants = ["variants/carrier_res_wideselect_register/target/release/carrier_res_wideselect_register", "variants/carrier_res_wideselect_stack/target/release/carrier_res_wideselect_stack"]
+[[bench.carrier_residual_wideselect.sizes]]
+n = 256
+variants = ["variants/carrier_res_wideselect_register/target/release/carrier_res_wideselect_register", "variants/carrier_res_wideselect_stack/target/release/carrier_res_wideselect_stack"]
+[[bench.carrier_residual_wideselect.sizes]]
+n = 1024
+variants = ["variants/carrier_res_wideselect_register/target/release/carrier_res_wideselect_register", "variants/carrier_res_wideselect_stack/target/release/carrier_res_wideselect_stack"]
+[[bench.carrier_residual_wideselect.sizes]]
+n = 4096
+variants = ["variants/carrier_res_wideselect_register/target/release/carrier_res_wideselect_register", "variants/carrier_res_wideselect_stack/target/release/carrier_res_wideselect_stack"]
+[[bench.carrier_residual_wideselect.sizes]]
+n = 16384
+variants = ["variants/carrier_res_wideselect_register/target/release/carrier_res_wideselect_register", "variants/carrier_res_wideselect_stack/target/release/carrier_res_wideselect_stack"]
+
+[bench.carrier_residual_leaf]
+title = "Residual encoding: register/SSA vs stack bytecode, leaf profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_residual_leaf.normalise]
+baseline = "carrier_res_leaf_register"
+mode = "subtract"
+[[bench.carrier_residual_leaf.sizes]]
+n = 64
+variants = ["variants/carrier_res_leaf_register/target/release/carrier_res_leaf_register", "variants/carrier_res_leaf_stack/target/release/carrier_res_leaf_stack"]
+[[bench.carrier_residual_leaf.sizes]]
+n = 256
+variants = ["variants/carrier_res_leaf_register/target/release/carrier_res_leaf_register", "variants/carrier_res_leaf_stack/target/release/carrier_res_leaf_stack"]
+[[bench.carrier_residual_leaf.sizes]]
+n = 1024
+variants = ["variants/carrier_res_leaf_register/target/release/carrier_res_leaf_register", "variants/carrier_res_leaf_stack/target/release/carrier_res_leaf_stack"]
+[[bench.carrier_residual_leaf.sizes]]
+n = 4096
+variants = ["variants/carrier_res_leaf_register/target/release/carrier_res_leaf_register", "variants/carrier_res_leaf_stack/target/release/carrier_res_leaf_stack"]
+[[bench.carrier_residual_leaf.sizes]]
+n = 16384
+variants = ["variants/carrier_res_leaf_register/target/release/carrier_res_leaf_register", "variants/carrier_res_leaf_stack/target/release/carrier_res_leaf_stack"]
+
+[bench.carrier_optimize_real]
+title = "Optimize stage (none/CSE/eqsat/CSE+eqsat...), downstream interp, real profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_optimize_real.normalise]
+baseline = "carrier_opt_real_none"
+mode = "subtract"
+[[bench.carrier_optimize_real.sizes]]
+n = 64
+variants = ["variants/carrier_opt_real_none/target/release/carrier_opt_real_none", "variants/carrier_opt_real_cse/target/release/carrier_opt_real_cse", "variants/carrier_opt_real_fold/target/release/carrier_opt_real_fold", "variants/carrier_opt_real_dce/target/release/carrier_opt_real_dce", "variants/carrier_opt_real_eqsat/target/release/carrier_opt_real_eqsat", "variants/carrier_opt_real_cseeqsat/target/release/carrier_opt_real_cseeqsat", "variants/carrier_opt_real_all/target/release/carrier_opt_real_all"]
+[[bench.carrier_optimize_real.sizes]]
+n = 256
+variants = ["variants/carrier_opt_real_none/target/release/carrier_opt_real_none", "variants/carrier_opt_real_cse/target/release/carrier_opt_real_cse", "variants/carrier_opt_real_fold/target/release/carrier_opt_real_fold", "variants/carrier_opt_real_dce/target/release/carrier_opt_real_dce", "variants/carrier_opt_real_eqsat/target/release/carrier_opt_real_eqsat", "variants/carrier_opt_real_cseeqsat/target/release/carrier_opt_real_cseeqsat", "variants/carrier_opt_real_all/target/release/carrier_opt_real_all"]
+[[bench.carrier_optimize_real.sizes]]
+n = 1024
+variants = ["variants/carrier_opt_real_none/target/release/carrier_opt_real_none", "variants/carrier_opt_real_cse/target/release/carrier_opt_real_cse", "variants/carrier_opt_real_fold/target/release/carrier_opt_real_fold", "variants/carrier_opt_real_dce/target/release/carrier_opt_real_dce", "variants/carrier_opt_real_eqsat/target/release/carrier_opt_real_eqsat", "variants/carrier_opt_real_cseeqsat/target/release/carrier_opt_real_cseeqsat", "variants/carrier_opt_real_all/target/release/carrier_opt_real_all"]
+[[bench.carrier_optimize_real.sizes]]
+n = 4096
+variants = ["variants/carrier_opt_real_none/target/release/carrier_opt_real_none", "variants/carrier_opt_real_cse/target/release/carrier_opt_real_cse", "variants/carrier_opt_real_fold/target/release/carrier_opt_real_fold", "variants/carrier_opt_real_dce/target/release/carrier_opt_real_dce", "variants/carrier_opt_real_eqsat/target/release/carrier_opt_real_eqsat", "variants/carrier_opt_real_cseeqsat/target/release/carrier_opt_real_cseeqsat", "variants/carrier_opt_real_all/target/release/carrier_opt_real_all"]
+[[bench.carrier_optimize_real.sizes]]
+n = 16384
+variants = ["variants/carrier_opt_real_none/target/release/carrier_opt_real_none", "variants/carrier_opt_real_cse/target/release/carrier_opt_real_cse", "variants/carrier_opt_real_fold/target/release/carrier_opt_real_fold", "variants/carrier_opt_real_dce/target/release/carrier_opt_real_dce", "variants/carrier_opt_real_eqsat/target/release/carrier_opt_real_eqsat", "variants/carrier_opt_real_cseeqsat/target/release/carrier_opt_real_cseeqsat", "variants/carrier_opt_real_all/target/release/carrier_opt_real_all"]
+
+[bench.carrier_optimize_madd]
+title = "Optimize stage (none/CSE/eqsat/CSE+eqsat...), downstream interp, madd profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_optimize_madd.normalise]
+baseline = "carrier_opt_madd_none"
+mode = "subtract"
+[[bench.carrier_optimize_madd.sizes]]
+n = 64
+variants = ["variants/carrier_opt_madd_none/target/release/carrier_opt_madd_none", "variants/carrier_opt_madd_cse/target/release/carrier_opt_madd_cse", "variants/carrier_opt_madd_fold/target/release/carrier_opt_madd_fold", "variants/carrier_opt_madd_dce/target/release/carrier_opt_madd_dce", "variants/carrier_opt_madd_eqsat/target/release/carrier_opt_madd_eqsat", "variants/carrier_opt_madd_cseeqsat/target/release/carrier_opt_madd_cseeqsat", "variants/carrier_opt_madd_all/target/release/carrier_opt_madd_all"]
+[[bench.carrier_optimize_madd.sizes]]
+n = 256
+variants = ["variants/carrier_opt_madd_none/target/release/carrier_opt_madd_none", "variants/carrier_opt_madd_cse/target/release/carrier_opt_madd_cse", "variants/carrier_opt_madd_fold/target/release/carrier_opt_madd_fold", "variants/carrier_opt_madd_dce/target/release/carrier_opt_madd_dce", "variants/carrier_opt_madd_eqsat/target/release/carrier_opt_madd_eqsat", "variants/carrier_opt_madd_cseeqsat/target/release/carrier_opt_madd_cseeqsat", "variants/carrier_opt_madd_all/target/release/carrier_opt_madd_all"]
+[[bench.carrier_optimize_madd.sizes]]
+n = 1024
+variants = ["variants/carrier_opt_madd_none/target/release/carrier_opt_madd_none", "variants/carrier_opt_madd_cse/target/release/carrier_opt_madd_cse", "variants/carrier_opt_madd_fold/target/release/carrier_opt_madd_fold", "variants/carrier_opt_madd_dce/target/release/carrier_opt_madd_dce", "variants/carrier_opt_madd_eqsat/target/release/carrier_opt_madd_eqsat", "variants/carrier_opt_madd_cseeqsat/target/release/carrier_opt_madd_cseeqsat", "variants/carrier_opt_madd_all/target/release/carrier_opt_madd_all"]
+[[bench.carrier_optimize_madd.sizes]]
+n = 4096
+variants = ["variants/carrier_opt_madd_none/target/release/carrier_opt_madd_none", "variants/carrier_opt_madd_cse/target/release/carrier_opt_madd_cse", "variants/carrier_opt_madd_fold/target/release/carrier_opt_madd_fold", "variants/carrier_opt_madd_dce/target/release/carrier_opt_madd_dce", "variants/carrier_opt_madd_eqsat/target/release/carrier_opt_madd_eqsat", "variants/carrier_opt_madd_cseeqsat/target/release/carrier_opt_madd_cseeqsat", "variants/carrier_opt_madd_all/target/release/carrier_opt_madd_all"]
+[[bench.carrier_optimize_madd.sizes]]
+n = 16384
+variants = ["variants/carrier_opt_madd_none/target/release/carrier_opt_madd_none", "variants/carrier_opt_madd_cse/target/release/carrier_opt_madd_cse", "variants/carrier_opt_madd_fold/target/release/carrier_opt_madd_fold", "variants/carrier_opt_madd_dce/target/release/carrier_opt_madd_dce", "variants/carrier_opt_madd_eqsat/target/release/carrier_opt_madd_eqsat", "variants/carrier_opt_madd_cseeqsat/target/release/carrier_opt_madd_cseeqsat", "variants/carrier_opt_madd_all/target/release/carrier_opt_madd_all"]
+
+[bench.carrier_optimize_tight]
+title = "Optimize stage (none/CSE/eqsat/CSE+eqsat...), downstream interp, tight profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_optimize_tight.normalise]
+baseline = "carrier_opt_tight_none"
+mode = "subtract"
+[[bench.carrier_optimize_tight.sizes]]
+n = 64
+variants = ["variants/carrier_opt_tight_none/target/release/carrier_opt_tight_none", "variants/carrier_opt_tight_cse/target/release/carrier_opt_tight_cse", "variants/carrier_opt_tight_fold/target/release/carrier_opt_tight_fold", "variants/carrier_opt_tight_dce/target/release/carrier_opt_tight_dce", "variants/carrier_opt_tight_eqsat/target/release/carrier_opt_tight_eqsat", "variants/carrier_opt_tight_cseeqsat/target/release/carrier_opt_tight_cseeqsat", "variants/carrier_opt_tight_all/target/release/carrier_opt_tight_all"]
+[[bench.carrier_optimize_tight.sizes]]
+n = 256
+variants = ["variants/carrier_opt_tight_none/target/release/carrier_opt_tight_none", "variants/carrier_opt_tight_cse/target/release/carrier_opt_tight_cse", "variants/carrier_opt_tight_fold/target/release/carrier_opt_tight_fold", "variants/carrier_opt_tight_dce/target/release/carrier_opt_tight_dce", "variants/carrier_opt_tight_eqsat/target/release/carrier_opt_tight_eqsat", "variants/carrier_opt_tight_cseeqsat/target/release/carrier_opt_tight_cseeqsat", "variants/carrier_opt_tight_all/target/release/carrier_opt_tight_all"]
+[[bench.carrier_optimize_tight.sizes]]
+n = 1024
+variants = ["variants/carrier_opt_tight_none/target/release/carrier_opt_tight_none", "variants/carrier_opt_tight_cse/target/release/carrier_opt_tight_cse", "variants/carrier_opt_tight_fold/target/release/carrier_opt_tight_fold", "variants/carrier_opt_tight_dce/target/release/carrier_opt_tight_dce", "variants/carrier_opt_tight_eqsat/target/release/carrier_opt_tight_eqsat", "variants/carrier_opt_tight_cseeqsat/target/release/carrier_opt_tight_cseeqsat", "variants/carrier_opt_tight_all/target/release/carrier_opt_tight_all"]
+[[bench.carrier_optimize_tight.sizes]]
+n = 4096
+variants = ["variants/carrier_opt_tight_none/target/release/carrier_opt_tight_none", "variants/carrier_opt_tight_cse/target/release/carrier_opt_tight_cse", "variants/carrier_opt_tight_fold/target/release/carrier_opt_tight_fold", "variants/carrier_opt_tight_dce/target/release/carrier_opt_tight_dce", "variants/carrier_opt_tight_eqsat/target/release/carrier_opt_tight_eqsat", "variants/carrier_opt_tight_cseeqsat/target/release/carrier_opt_tight_cseeqsat", "variants/carrier_opt_tight_all/target/release/carrier_opt_tight_all"]
+[[bench.carrier_optimize_tight.sizes]]
+n = 16384
+variants = ["variants/carrier_opt_tight_none/target/release/carrier_opt_tight_none", "variants/carrier_opt_tight_cse/target/release/carrier_opt_tight_cse", "variants/carrier_opt_tight_fold/target/release/carrier_opt_tight_fold", "variants/carrier_opt_tight_dce/target/release/carrier_opt_tight_dce", "variants/carrier_opt_tight_eqsat/target/release/carrier_opt_tight_eqsat", "variants/carrier_opt_tight_cseeqsat/target/release/carrier_opt_tight_cseeqsat", "variants/carrier_opt_tight_all/target/release/carrier_opt_tight_all"]
+
+[bench.carrier_optimize_scatter]
+title = "Optimize stage (none/CSE/eqsat/CSE+eqsat...), downstream interp, scatter profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_optimize_scatter.normalise]
+baseline = "carrier_opt_scatter_none"
+mode = "subtract"
+[[bench.carrier_optimize_scatter.sizes]]
+n = 64
+variants = ["variants/carrier_opt_scatter_none/target/release/carrier_opt_scatter_none", "variants/carrier_opt_scatter_cse/target/release/carrier_opt_scatter_cse", "variants/carrier_opt_scatter_fold/target/release/carrier_opt_scatter_fold", "variants/carrier_opt_scatter_dce/target/release/carrier_opt_scatter_dce", "variants/carrier_opt_scatter_eqsat/target/release/carrier_opt_scatter_eqsat", "variants/carrier_opt_scatter_cseeqsat/target/release/carrier_opt_scatter_cseeqsat", "variants/carrier_opt_scatter_all/target/release/carrier_opt_scatter_all"]
+[[bench.carrier_optimize_scatter.sizes]]
+n = 256
+variants = ["variants/carrier_opt_scatter_none/target/release/carrier_opt_scatter_none", "variants/carrier_opt_scatter_cse/target/release/carrier_opt_scatter_cse", "variants/carrier_opt_scatter_fold/target/release/carrier_opt_scatter_fold", "variants/carrier_opt_scatter_dce/target/release/carrier_opt_scatter_dce", "variants/carrier_opt_scatter_eqsat/target/release/carrier_opt_scatter_eqsat", "variants/carrier_opt_scatter_cseeqsat/target/release/carrier_opt_scatter_cseeqsat", "variants/carrier_opt_scatter_all/target/release/carrier_opt_scatter_all"]
+[[bench.carrier_optimize_scatter.sizes]]
+n = 1024
+variants = ["variants/carrier_opt_scatter_none/target/release/carrier_opt_scatter_none", "variants/carrier_opt_scatter_cse/target/release/carrier_opt_scatter_cse", "variants/carrier_opt_scatter_fold/target/release/carrier_opt_scatter_fold", "variants/carrier_opt_scatter_dce/target/release/carrier_opt_scatter_dce", "variants/carrier_opt_scatter_eqsat/target/release/carrier_opt_scatter_eqsat", "variants/carrier_opt_scatter_cseeqsat/target/release/carrier_opt_scatter_cseeqsat", "variants/carrier_opt_scatter_all/target/release/carrier_opt_scatter_all"]
+[[bench.carrier_optimize_scatter.sizes]]
+n = 4096
+variants = ["variants/carrier_opt_scatter_none/target/release/carrier_opt_scatter_none", "variants/carrier_opt_scatter_cse/target/release/carrier_opt_scatter_cse", "variants/carrier_opt_scatter_fold/target/release/carrier_opt_scatter_fold", "variants/carrier_opt_scatter_dce/target/release/carrier_opt_scatter_dce", "variants/carrier_opt_scatter_eqsat/target/release/carrier_opt_scatter_eqsat", "variants/carrier_opt_scatter_cseeqsat/target/release/carrier_opt_scatter_cseeqsat", "variants/carrier_opt_scatter_all/target/release/carrier_opt_scatter_all"]
+[[bench.carrier_optimize_scatter.sizes]]
+n = 16384
+variants = ["variants/carrier_opt_scatter_none/target/release/carrier_opt_scatter_none", "variants/carrier_opt_scatter_cse/target/release/carrier_opt_scatter_cse", "variants/carrier_opt_scatter_fold/target/release/carrier_opt_scatter_fold", "variants/carrier_opt_scatter_dce/target/release/carrier_opt_scatter_dce", "variants/carrier_opt_scatter_eqsat/target/release/carrier_opt_scatter_eqsat", "variants/carrier_opt_scatter_cseeqsat/target/release/carrier_opt_scatter_cseeqsat", "variants/carrier_opt_scatter_all/target/release/carrier_opt_scatter_all"]
+
+[bench.carrier_optimize_wideselect]
+title = "Optimize stage (none/CSE/eqsat/CSE+eqsat...), downstream interp, wideselect profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_optimize_wideselect.normalise]
+baseline = "carrier_opt_wideselect_none"
+mode = "subtract"
+[[bench.carrier_optimize_wideselect.sizes]]
+n = 64
+variants = ["variants/carrier_opt_wideselect_none/target/release/carrier_opt_wideselect_none", "variants/carrier_opt_wideselect_cse/target/release/carrier_opt_wideselect_cse", "variants/carrier_opt_wideselect_fold/target/release/carrier_opt_wideselect_fold", "variants/carrier_opt_wideselect_dce/target/release/carrier_opt_wideselect_dce", "variants/carrier_opt_wideselect_eqsat/target/release/carrier_opt_wideselect_eqsat", "variants/carrier_opt_wideselect_cseeqsat/target/release/carrier_opt_wideselect_cseeqsat", "variants/carrier_opt_wideselect_all/target/release/carrier_opt_wideselect_all"]
+[[bench.carrier_optimize_wideselect.sizes]]
+n = 256
+variants = ["variants/carrier_opt_wideselect_none/target/release/carrier_opt_wideselect_none", "variants/carrier_opt_wideselect_cse/target/release/carrier_opt_wideselect_cse", "variants/carrier_opt_wideselect_fold/target/release/carrier_opt_wideselect_fold", "variants/carrier_opt_wideselect_dce/target/release/carrier_opt_wideselect_dce", "variants/carrier_opt_wideselect_eqsat/target/release/carrier_opt_wideselect_eqsat", "variants/carrier_opt_wideselect_cseeqsat/target/release/carrier_opt_wideselect_cseeqsat", "variants/carrier_opt_wideselect_all/target/release/carrier_opt_wideselect_all"]
+[[bench.carrier_optimize_wideselect.sizes]]
+n = 1024
+variants = ["variants/carrier_opt_wideselect_none/target/release/carrier_opt_wideselect_none", "variants/carrier_opt_wideselect_cse/target/release/carrier_opt_wideselect_cse", "variants/carrier_opt_wideselect_fold/target/release/carrier_opt_wideselect_fold", "variants/carrier_opt_wideselect_dce/target/release/carrier_opt_wideselect_dce", "variants/carrier_opt_wideselect_eqsat/target/release/carrier_opt_wideselect_eqsat", "variants/carrier_opt_wideselect_cseeqsat/target/release/carrier_opt_wideselect_cseeqsat", "variants/carrier_opt_wideselect_all/target/release/carrier_opt_wideselect_all"]
+[[bench.carrier_optimize_wideselect.sizes]]
+n = 4096
+variants = ["variants/carrier_opt_wideselect_none/target/release/carrier_opt_wideselect_none", "variants/carrier_opt_wideselect_cse/target/release/carrier_opt_wideselect_cse", "variants/carrier_opt_wideselect_fold/target/release/carrier_opt_wideselect_fold", "variants/carrier_opt_wideselect_dce/target/release/carrier_opt_wideselect_dce", "variants/carrier_opt_wideselect_eqsat/target/release/carrier_opt_wideselect_eqsat", "variants/carrier_opt_wideselect_cseeqsat/target/release/carrier_opt_wideselect_cseeqsat", "variants/carrier_opt_wideselect_all/target/release/carrier_opt_wideselect_all"]
+[[bench.carrier_optimize_wideselect.sizes]]
+n = 16384
+variants = ["variants/carrier_opt_wideselect_none/target/release/carrier_opt_wideselect_none", "variants/carrier_opt_wideselect_cse/target/release/carrier_opt_wideselect_cse", "variants/carrier_opt_wideselect_fold/target/release/carrier_opt_wideselect_fold", "variants/carrier_opt_wideselect_dce/target/release/carrier_opt_wideselect_dce", "variants/carrier_opt_wideselect_eqsat/target/release/carrier_opt_wideselect_eqsat", "variants/carrier_opt_wideselect_cseeqsat/target/release/carrier_opt_wideselect_cseeqsat", "variants/carrier_opt_wideselect_all/target/release/carrier_opt_wideselect_all"]
+
+[bench.carrier_optimize_leaf]
+title = "Optimize stage (none/CSE/eqsat/CSE+eqsat...), downstream interp, leaf profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_optimize_leaf.normalise]
+baseline = "carrier_opt_leaf_none"
+mode = "subtract"
+[[bench.carrier_optimize_leaf.sizes]]
+n = 64
+variants = ["variants/carrier_opt_leaf_none/target/release/carrier_opt_leaf_none", "variants/carrier_opt_leaf_cse/target/release/carrier_opt_leaf_cse", "variants/carrier_opt_leaf_fold/target/release/carrier_opt_leaf_fold", "variants/carrier_opt_leaf_dce/target/release/carrier_opt_leaf_dce", "variants/carrier_opt_leaf_eqsat/target/release/carrier_opt_leaf_eqsat", "variants/carrier_opt_leaf_cseeqsat/target/release/carrier_opt_leaf_cseeqsat", "variants/carrier_opt_leaf_all/target/release/carrier_opt_leaf_all"]
+[[bench.carrier_optimize_leaf.sizes]]
+n = 256
+variants = ["variants/carrier_opt_leaf_none/target/release/carrier_opt_leaf_none", "variants/carrier_opt_leaf_cse/target/release/carrier_opt_leaf_cse", "variants/carrier_opt_leaf_fold/target/release/carrier_opt_leaf_fold", "variants/carrier_opt_leaf_dce/target/release/carrier_opt_leaf_dce", "variants/carrier_opt_leaf_eqsat/target/release/carrier_opt_leaf_eqsat", "variants/carrier_opt_leaf_cseeqsat/target/release/carrier_opt_leaf_cseeqsat", "variants/carrier_opt_leaf_all/target/release/carrier_opt_leaf_all"]
+[[bench.carrier_optimize_leaf.sizes]]
+n = 1024
+variants = ["variants/carrier_opt_leaf_none/target/release/carrier_opt_leaf_none", "variants/carrier_opt_leaf_cse/target/release/carrier_opt_leaf_cse", "variants/carrier_opt_leaf_fold/target/release/carrier_opt_leaf_fold", "variants/carrier_opt_leaf_dce/target/release/carrier_opt_leaf_dce", "variants/carrier_opt_leaf_eqsat/target/release/carrier_opt_leaf_eqsat", "variants/carrier_opt_leaf_cseeqsat/target/release/carrier_opt_leaf_cseeqsat", "variants/carrier_opt_leaf_all/target/release/carrier_opt_leaf_all"]
+[[bench.carrier_optimize_leaf.sizes]]
+n = 4096
+variants = ["variants/carrier_opt_leaf_none/target/release/carrier_opt_leaf_none", "variants/carrier_opt_leaf_cse/target/release/carrier_opt_leaf_cse", "variants/carrier_opt_leaf_fold/target/release/carrier_opt_leaf_fold", "variants/carrier_opt_leaf_dce/target/release/carrier_opt_leaf_dce", "variants/carrier_opt_leaf_eqsat/target/release/carrier_opt_leaf_eqsat", "variants/carrier_opt_leaf_cseeqsat/target/release/carrier_opt_leaf_cseeqsat", "variants/carrier_opt_leaf_all/target/release/carrier_opt_leaf_all"]
+[[bench.carrier_optimize_leaf.sizes]]
+n = 16384
+variants = ["variants/carrier_opt_leaf_none/target/release/carrier_opt_leaf_none", "variants/carrier_opt_leaf_cse/target/release/carrier_opt_leaf_cse", "variants/carrier_opt_leaf_fold/target/release/carrier_opt_leaf_fold", "variants/carrier_opt_leaf_dce/target/release/carrier_opt_leaf_dce", "variants/carrier_opt_leaf_eqsat/target/release/carrier_opt_leaf_eqsat", "variants/carrier_opt_leaf_cseeqsat/target/release/carrier_opt_leaf_cseeqsat", "variants/carrier_opt_leaf_all/target/release/carrier_opt_leaf_all"]
+
+[bench.carrier_native_real]
+title = "Near-native tier: interp vs direct codegen vs copy-and-patch stencil, real profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_native_real.normalise]
+baseline = "carrier_nat_real_interp"
+mode = "subtract"
+[[bench.carrier_native_real.sizes]]
+n = 64
+variants = ["variants/carrier_nat_real_interp/target/release/carrier_nat_real_interp", "variants/carrier_nat_real_copypatch/target/release/carrier_nat_real_copypatch", "variants/carrier_nat_real_stencil/target/release/carrier_nat_real_stencil"]
+[[bench.carrier_native_real.sizes]]
+n = 256
+variants = ["variants/carrier_nat_real_interp/target/release/carrier_nat_real_interp", "variants/carrier_nat_real_copypatch/target/release/carrier_nat_real_copypatch", "variants/carrier_nat_real_stencil/target/release/carrier_nat_real_stencil"]
+[[bench.carrier_native_real.sizes]]
+n = 1024
+variants = ["variants/carrier_nat_real_interp/target/release/carrier_nat_real_interp", "variants/carrier_nat_real_copypatch/target/release/carrier_nat_real_copypatch", "variants/carrier_nat_real_stencil/target/release/carrier_nat_real_stencil"]
+[[bench.carrier_native_real.sizes]]
+n = 4096
+variants = ["variants/carrier_nat_real_interp/target/release/carrier_nat_real_interp", "variants/carrier_nat_real_copypatch/target/release/carrier_nat_real_copypatch", "variants/carrier_nat_real_stencil/target/release/carrier_nat_real_stencil"]
+[[bench.carrier_native_real.sizes]]
+n = 16384
+variants = ["variants/carrier_nat_real_interp/target/release/carrier_nat_real_interp", "variants/carrier_nat_real_copypatch/target/release/carrier_nat_real_copypatch", "variants/carrier_nat_real_stencil/target/release/carrier_nat_real_stencil"]
+
+[bench.carrier_native_madd]
+title = "Near-native tier: interp vs direct codegen vs copy-and-patch stencil, madd profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_native_madd.normalise]
+baseline = "carrier_nat_madd_interp"
+mode = "subtract"
+[[bench.carrier_native_madd.sizes]]
+n = 64
+variants = ["variants/carrier_nat_madd_interp/target/release/carrier_nat_madd_interp", "variants/carrier_nat_madd_copypatch/target/release/carrier_nat_madd_copypatch", "variants/carrier_nat_madd_stencil/target/release/carrier_nat_madd_stencil"]
+[[bench.carrier_native_madd.sizes]]
+n = 256
+variants = ["variants/carrier_nat_madd_interp/target/release/carrier_nat_madd_interp", "variants/carrier_nat_madd_copypatch/target/release/carrier_nat_madd_copypatch", "variants/carrier_nat_madd_stencil/target/release/carrier_nat_madd_stencil"]
+[[bench.carrier_native_madd.sizes]]
+n = 1024
+variants = ["variants/carrier_nat_madd_interp/target/release/carrier_nat_madd_interp", "variants/carrier_nat_madd_copypatch/target/release/carrier_nat_madd_copypatch", "variants/carrier_nat_madd_stencil/target/release/carrier_nat_madd_stencil"]
+[[bench.carrier_native_madd.sizes]]
+n = 4096
+variants = ["variants/carrier_nat_madd_interp/target/release/carrier_nat_madd_interp", "variants/carrier_nat_madd_copypatch/target/release/carrier_nat_madd_copypatch", "variants/carrier_nat_madd_stencil/target/release/carrier_nat_madd_stencil"]
+[[bench.carrier_native_madd.sizes]]
+n = 16384
+variants = ["variants/carrier_nat_madd_interp/target/release/carrier_nat_madd_interp", "variants/carrier_nat_madd_copypatch/target/release/carrier_nat_madd_copypatch", "variants/carrier_nat_madd_stencil/target/release/carrier_nat_madd_stencil"]
+
+[bench.carrier_native_tight]
+title = "Near-native tier: interp vs direct codegen vs copy-and-patch stencil, tight profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_native_tight.normalise]
+baseline = "carrier_nat_tight_interp"
+mode = "subtract"
+[[bench.carrier_native_tight.sizes]]
+n = 64
+variants = ["variants/carrier_nat_tight_interp/target/release/carrier_nat_tight_interp", "variants/carrier_nat_tight_copypatch/target/release/carrier_nat_tight_copypatch", "variants/carrier_nat_tight_stencil/target/release/carrier_nat_tight_stencil"]
+[[bench.carrier_native_tight.sizes]]
+n = 256
+variants = ["variants/carrier_nat_tight_interp/target/release/carrier_nat_tight_interp", "variants/carrier_nat_tight_copypatch/target/release/carrier_nat_tight_copypatch", "variants/carrier_nat_tight_stencil/target/release/carrier_nat_tight_stencil"]
+[[bench.carrier_native_tight.sizes]]
+n = 1024
+variants = ["variants/carrier_nat_tight_interp/target/release/carrier_nat_tight_interp", "variants/carrier_nat_tight_copypatch/target/release/carrier_nat_tight_copypatch", "variants/carrier_nat_tight_stencil/target/release/carrier_nat_tight_stencil"]
+[[bench.carrier_native_tight.sizes]]
+n = 4096
+variants = ["variants/carrier_nat_tight_interp/target/release/carrier_nat_tight_interp", "variants/carrier_nat_tight_copypatch/target/release/carrier_nat_tight_copypatch", "variants/carrier_nat_tight_stencil/target/release/carrier_nat_tight_stencil"]
+[[bench.carrier_native_tight.sizes]]
+n = 16384
+variants = ["variants/carrier_nat_tight_interp/target/release/carrier_nat_tight_interp", "variants/carrier_nat_tight_copypatch/target/release/carrier_nat_tight_copypatch", "variants/carrier_nat_tight_stencil/target/release/carrier_nat_tight_stencil"]
+
+[bench.carrier_native_scatter]
+title = "Near-native tier: interp vs direct codegen vs copy-and-patch stencil, scatter profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_native_scatter.normalise]
+baseline = "carrier_nat_scatter_interp"
+mode = "subtract"
+[[bench.carrier_native_scatter.sizes]]
+n = 64
+variants = ["variants/carrier_nat_scatter_interp/target/release/carrier_nat_scatter_interp", "variants/carrier_nat_scatter_copypatch/target/release/carrier_nat_scatter_copypatch", "variants/carrier_nat_scatter_stencil/target/release/carrier_nat_scatter_stencil"]
+[[bench.carrier_native_scatter.sizes]]
+n = 256
+variants = ["variants/carrier_nat_scatter_interp/target/release/carrier_nat_scatter_interp", "variants/carrier_nat_scatter_copypatch/target/release/carrier_nat_scatter_copypatch", "variants/carrier_nat_scatter_stencil/target/release/carrier_nat_scatter_stencil"]
+[[bench.carrier_native_scatter.sizes]]
+n = 1024
+variants = ["variants/carrier_nat_scatter_interp/target/release/carrier_nat_scatter_interp", "variants/carrier_nat_scatter_copypatch/target/release/carrier_nat_scatter_copypatch", "variants/carrier_nat_scatter_stencil/target/release/carrier_nat_scatter_stencil"]
+[[bench.carrier_native_scatter.sizes]]
+n = 4096
+variants = ["variants/carrier_nat_scatter_interp/target/release/carrier_nat_scatter_interp", "variants/carrier_nat_scatter_copypatch/target/release/carrier_nat_scatter_copypatch", "variants/carrier_nat_scatter_stencil/target/release/carrier_nat_scatter_stencil"]
+[[bench.carrier_native_scatter.sizes]]
+n = 16384
+variants = ["variants/carrier_nat_scatter_interp/target/release/carrier_nat_scatter_interp", "variants/carrier_nat_scatter_copypatch/target/release/carrier_nat_scatter_copypatch", "variants/carrier_nat_scatter_stencil/target/release/carrier_nat_scatter_stencil"]
+
+[bench.carrier_native_wideselect]
+title = "Near-native tier: interp vs direct codegen vs copy-and-patch stencil, wideselect profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_native_wideselect.normalise]
+baseline = "carrier_nat_wideselect_interp"
+mode = "subtract"
+[[bench.carrier_native_wideselect.sizes]]
+n = 64
+variants = ["variants/carrier_nat_wideselect_interp/target/release/carrier_nat_wideselect_interp", "variants/carrier_nat_wideselect_copypatch/target/release/carrier_nat_wideselect_copypatch", "variants/carrier_nat_wideselect_stencil/target/release/carrier_nat_wideselect_stencil"]
+[[bench.carrier_native_wideselect.sizes]]
+n = 256
+variants = ["variants/carrier_nat_wideselect_interp/target/release/carrier_nat_wideselect_interp", "variants/carrier_nat_wideselect_copypatch/target/release/carrier_nat_wideselect_copypatch", "variants/carrier_nat_wideselect_stencil/target/release/carrier_nat_wideselect_stencil"]
+[[bench.carrier_native_wideselect.sizes]]
+n = 1024
+variants = ["variants/carrier_nat_wideselect_interp/target/release/carrier_nat_wideselect_interp", "variants/carrier_nat_wideselect_copypatch/target/release/carrier_nat_wideselect_copypatch", "variants/carrier_nat_wideselect_stencil/target/release/carrier_nat_wideselect_stencil"]
+[[bench.carrier_native_wideselect.sizes]]
+n = 4096
+variants = ["variants/carrier_nat_wideselect_interp/target/release/carrier_nat_wideselect_interp", "variants/carrier_nat_wideselect_copypatch/target/release/carrier_nat_wideselect_copypatch", "variants/carrier_nat_wideselect_stencil/target/release/carrier_nat_wideselect_stencil"]
+[[bench.carrier_native_wideselect.sizes]]
+n = 16384
+variants = ["variants/carrier_nat_wideselect_interp/target/release/carrier_nat_wideselect_interp", "variants/carrier_nat_wideselect_copypatch/target/release/carrier_nat_wideselect_copypatch", "variants/carrier_nat_wideselect_stencil/target/release/carrier_nat_wideselect_stencil"]
+
+[bench.carrier_native_leaf]
+title = "Near-native tier: interp vs direct codegen vs copy-and-patch stencil, leaf profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_native_leaf.normalise]
+baseline = "carrier_nat_leaf_interp"
+mode = "subtract"
+[[bench.carrier_native_leaf.sizes]]
+n = 64
+variants = ["variants/carrier_nat_leaf_interp/target/release/carrier_nat_leaf_interp", "variants/carrier_nat_leaf_copypatch/target/release/carrier_nat_leaf_copypatch", "variants/carrier_nat_leaf_stencil/target/release/carrier_nat_leaf_stencil"]
+[[bench.carrier_native_leaf.sizes]]
+n = 256
+variants = ["variants/carrier_nat_leaf_interp/target/release/carrier_nat_leaf_interp", "variants/carrier_nat_leaf_copypatch/target/release/carrier_nat_leaf_copypatch", "variants/carrier_nat_leaf_stencil/target/release/carrier_nat_leaf_stencil"]
+[[bench.carrier_native_leaf.sizes]]
+n = 1024
+variants = ["variants/carrier_nat_leaf_interp/target/release/carrier_nat_leaf_interp", "variants/carrier_nat_leaf_copypatch/target/release/carrier_nat_leaf_copypatch", "variants/carrier_nat_leaf_stencil/target/release/carrier_nat_leaf_stencil"]
+[[bench.carrier_native_leaf.sizes]]
+n = 4096
+variants = ["variants/carrier_nat_leaf_interp/target/release/carrier_nat_leaf_interp", "variants/carrier_nat_leaf_copypatch/target/release/carrier_nat_leaf_copypatch", "variants/carrier_nat_leaf_stencil/target/release/carrier_nat_leaf_stencil"]
+[[bench.carrier_native_leaf.sizes]]
+n = 16384
+variants = ["variants/carrier_nat_leaf_interp/target/release/carrier_nat_leaf_interp", "variants/carrier_nat_leaf_copypatch/target/release/carrier_nat_leaf_copypatch", "variants/carrier_nat_leaf_stencil/target/release/carrier_nat_leaf_stencil"]
+
+[bench.carrier_vertical_real]
+title = "Vertical/SoA SIMD (scalar 1-input vs vertical W-input, per-input = time/W), real profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_vertical_real.normalise]
+baseline = "carrier_vert_real_scalar"
+mode = "subtract"
+[[bench.carrier_vertical_real.sizes]]
+n = 64
+variants = ["variants/carrier_vert_real_scalar/target/release/carrier_vert_real_scalar", "variants/carrier_vert_real_vert4/target/release/carrier_vert_real_vert4", "variants/carrier_vert_real_vert8/target/release/carrier_vert_real_vert8"]
+[[bench.carrier_vertical_real.sizes]]
+n = 256
+variants = ["variants/carrier_vert_real_scalar/target/release/carrier_vert_real_scalar", "variants/carrier_vert_real_vert4/target/release/carrier_vert_real_vert4", "variants/carrier_vert_real_vert8/target/release/carrier_vert_real_vert8"]
+[[bench.carrier_vertical_real.sizes]]
+n = 1024
+variants = ["variants/carrier_vert_real_scalar/target/release/carrier_vert_real_scalar", "variants/carrier_vert_real_vert4/target/release/carrier_vert_real_vert4", "variants/carrier_vert_real_vert8/target/release/carrier_vert_real_vert8"]
+[[bench.carrier_vertical_real.sizes]]
+n = 4096
+variants = ["variants/carrier_vert_real_scalar/target/release/carrier_vert_real_scalar", "variants/carrier_vert_real_vert4/target/release/carrier_vert_real_vert4", "variants/carrier_vert_real_vert8/target/release/carrier_vert_real_vert8"]
+[[bench.carrier_vertical_real.sizes]]
+n = 16384
+variants = ["variants/carrier_vert_real_scalar/target/release/carrier_vert_real_scalar", "variants/carrier_vert_real_vert4/target/release/carrier_vert_real_vert4", "variants/carrier_vert_real_vert8/target/release/carrier_vert_real_vert8"]
+
+[bench.carrier_vertical_madd]
+title = "Vertical/SoA SIMD (scalar 1-input vs vertical W-input, per-input = time/W), madd profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_vertical_madd.normalise]
+baseline = "carrier_vert_madd_scalar"
+mode = "subtract"
+[[bench.carrier_vertical_madd.sizes]]
+n = 64
+variants = ["variants/carrier_vert_madd_scalar/target/release/carrier_vert_madd_scalar", "variants/carrier_vert_madd_vert4/target/release/carrier_vert_madd_vert4", "variants/carrier_vert_madd_vert8/target/release/carrier_vert_madd_vert8"]
+[[bench.carrier_vertical_madd.sizes]]
+n = 256
+variants = ["variants/carrier_vert_madd_scalar/target/release/carrier_vert_madd_scalar", "variants/carrier_vert_madd_vert4/target/release/carrier_vert_madd_vert4", "variants/carrier_vert_madd_vert8/target/release/carrier_vert_madd_vert8"]
+[[bench.carrier_vertical_madd.sizes]]
+n = 1024
+variants = ["variants/carrier_vert_madd_scalar/target/release/carrier_vert_madd_scalar", "variants/carrier_vert_madd_vert4/target/release/carrier_vert_madd_vert4", "variants/carrier_vert_madd_vert8/target/release/carrier_vert_madd_vert8"]
+[[bench.carrier_vertical_madd.sizes]]
+n = 4096
+variants = ["variants/carrier_vert_madd_scalar/target/release/carrier_vert_madd_scalar", "variants/carrier_vert_madd_vert4/target/release/carrier_vert_madd_vert4", "variants/carrier_vert_madd_vert8/target/release/carrier_vert_madd_vert8"]
+[[bench.carrier_vertical_madd.sizes]]
+n = 16384
+variants = ["variants/carrier_vert_madd_scalar/target/release/carrier_vert_madd_scalar", "variants/carrier_vert_madd_vert4/target/release/carrier_vert_madd_vert4", "variants/carrier_vert_madd_vert8/target/release/carrier_vert_madd_vert8"]
+
+[bench.carrier_vertical_tight]
+title = "Vertical/SoA SIMD (scalar 1-input vs vertical W-input, per-input = time/W), tight profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_vertical_tight.normalise]
+baseline = "carrier_vert_tight_scalar"
+mode = "subtract"
+[[bench.carrier_vertical_tight.sizes]]
+n = 64
+variants = ["variants/carrier_vert_tight_scalar/target/release/carrier_vert_tight_scalar", "variants/carrier_vert_tight_vert4/target/release/carrier_vert_tight_vert4", "variants/carrier_vert_tight_vert8/target/release/carrier_vert_tight_vert8"]
+[[bench.carrier_vertical_tight.sizes]]
+n = 256
+variants = ["variants/carrier_vert_tight_scalar/target/release/carrier_vert_tight_scalar", "variants/carrier_vert_tight_vert4/target/release/carrier_vert_tight_vert4", "variants/carrier_vert_tight_vert8/target/release/carrier_vert_tight_vert8"]
+[[bench.carrier_vertical_tight.sizes]]
+n = 1024
+variants = ["variants/carrier_vert_tight_scalar/target/release/carrier_vert_tight_scalar", "variants/carrier_vert_tight_vert4/target/release/carrier_vert_tight_vert4", "variants/carrier_vert_tight_vert8/target/release/carrier_vert_tight_vert8"]
+[[bench.carrier_vertical_tight.sizes]]
+n = 4096
+variants = ["variants/carrier_vert_tight_scalar/target/release/carrier_vert_tight_scalar", "variants/carrier_vert_tight_vert4/target/release/carrier_vert_tight_vert4", "variants/carrier_vert_tight_vert8/target/release/carrier_vert_tight_vert8"]
+[[bench.carrier_vertical_tight.sizes]]
+n = 16384
+variants = ["variants/carrier_vert_tight_scalar/target/release/carrier_vert_tight_scalar", "variants/carrier_vert_tight_vert4/target/release/carrier_vert_tight_vert4", "variants/carrier_vert_tight_vert8/target/release/carrier_vert_tight_vert8"]
+
+[bench.carrier_vertical_scatter]
+title = "Vertical/SoA SIMD (scalar 1-input vs vertical W-input, per-input = time/W), scatter profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_vertical_scatter.normalise]
+baseline = "carrier_vert_scatter_scalar"
+mode = "subtract"
+[[bench.carrier_vertical_scatter.sizes]]
+n = 64
+variants = ["variants/carrier_vert_scatter_scalar/target/release/carrier_vert_scatter_scalar", "variants/carrier_vert_scatter_vert4/target/release/carrier_vert_scatter_vert4", "variants/carrier_vert_scatter_vert8/target/release/carrier_vert_scatter_vert8"]
+[[bench.carrier_vertical_scatter.sizes]]
+n = 256
+variants = ["variants/carrier_vert_scatter_scalar/target/release/carrier_vert_scatter_scalar", "variants/carrier_vert_scatter_vert4/target/release/carrier_vert_scatter_vert4", "variants/carrier_vert_scatter_vert8/target/release/carrier_vert_scatter_vert8"]
+[[bench.carrier_vertical_scatter.sizes]]
+n = 1024
+variants = ["variants/carrier_vert_scatter_scalar/target/release/carrier_vert_scatter_scalar", "variants/carrier_vert_scatter_vert4/target/release/carrier_vert_scatter_vert4", "variants/carrier_vert_scatter_vert8/target/release/carrier_vert_scatter_vert8"]
+[[bench.carrier_vertical_scatter.sizes]]
+n = 4096
+variants = ["variants/carrier_vert_scatter_scalar/target/release/carrier_vert_scatter_scalar", "variants/carrier_vert_scatter_vert4/target/release/carrier_vert_scatter_vert4", "variants/carrier_vert_scatter_vert8/target/release/carrier_vert_scatter_vert8"]
+[[bench.carrier_vertical_scatter.sizes]]
+n = 16384
+variants = ["variants/carrier_vert_scatter_scalar/target/release/carrier_vert_scatter_scalar", "variants/carrier_vert_scatter_vert4/target/release/carrier_vert_scatter_vert4", "variants/carrier_vert_scatter_vert8/target/release/carrier_vert_scatter_vert8"]
+
+[bench.carrier_vertical_wideselect]
+title = "Vertical/SoA SIMD (scalar 1-input vs vertical W-input, per-input = time/W), wideselect profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_vertical_wideselect.normalise]
+baseline = "carrier_vert_wideselect_scalar"
+mode = "subtract"
+[[bench.carrier_vertical_wideselect.sizes]]
+n = 64
+variants = ["variants/carrier_vert_wideselect_scalar/target/release/carrier_vert_wideselect_scalar", "variants/carrier_vert_wideselect_vert4/target/release/carrier_vert_wideselect_vert4", "variants/carrier_vert_wideselect_vert8/target/release/carrier_vert_wideselect_vert8"]
+[[bench.carrier_vertical_wideselect.sizes]]
+n = 256
+variants = ["variants/carrier_vert_wideselect_scalar/target/release/carrier_vert_wideselect_scalar", "variants/carrier_vert_wideselect_vert4/target/release/carrier_vert_wideselect_vert4", "variants/carrier_vert_wideselect_vert8/target/release/carrier_vert_wideselect_vert8"]
+[[bench.carrier_vertical_wideselect.sizes]]
+n = 1024
+variants = ["variants/carrier_vert_wideselect_scalar/target/release/carrier_vert_wideselect_scalar", "variants/carrier_vert_wideselect_vert4/target/release/carrier_vert_wideselect_vert4", "variants/carrier_vert_wideselect_vert8/target/release/carrier_vert_wideselect_vert8"]
+[[bench.carrier_vertical_wideselect.sizes]]
+n = 4096
+variants = ["variants/carrier_vert_wideselect_scalar/target/release/carrier_vert_wideselect_scalar", "variants/carrier_vert_wideselect_vert4/target/release/carrier_vert_wideselect_vert4", "variants/carrier_vert_wideselect_vert8/target/release/carrier_vert_wideselect_vert8"]
+[[bench.carrier_vertical_wideselect.sizes]]
+n = 16384
+variants = ["variants/carrier_vert_wideselect_scalar/target/release/carrier_vert_wideselect_scalar", "variants/carrier_vert_wideselect_vert4/target/release/carrier_vert_wideselect_vert4", "variants/carrier_vert_wideselect_vert8/target/release/carrier_vert_wideselect_vert8"]
+
+[bench.carrier_vertical_leaf]
+title = "Vertical/SoA SIMD (scalar 1-input vs vertical W-input, per-input = time/W), leaf profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_vertical_leaf.normalise]
+baseline = "carrier_vert_leaf_scalar"
+mode = "subtract"
+[[bench.carrier_vertical_leaf.sizes]]
+n = 64
+variants = ["variants/carrier_vert_leaf_scalar/target/release/carrier_vert_leaf_scalar", "variants/carrier_vert_leaf_vert4/target/release/carrier_vert_leaf_vert4", "variants/carrier_vert_leaf_vert8/target/release/carrier_vert_leaf_vert8"]
+[[bench.carrier_vertical_leaf.sizes]]
+n = 256
+variants = ["variants/carrier_vert_leaf_scalar/target/release/carrier_vert_leaf_scalar", "variants/carrier_vert_leaf_vert4/target/release/carrier_vert_leaf_vert4", "variants/carrier_vert_leaf_vert8/target/release/carrier_vert_leaf_vert8"]
+[[bench.carrier_vertical_leaf.sizes]]
+n = 1024
+variants = ["variants/carrier_vert_leaf_scalar/target/release/carrier_vert_leaf_scalar", "variants/carrier_vert_leaf_vert4/target/release/carrier_vert_leaf_vert4", "variants/carrier_vert_leaf_vert8/target/release/carrier_vert_leaf_vert8"]
+[[bench.carrier_vertical_leaf.sizes]]
+n = 4096
+variants = ["variants/carrier_vert_leaf_scalar/target/release/carrier_vert_leaf_scalar", "variants/carrier_vert_leaf_vert4/target/release/carrier_vert_leaf_vert4", "variants/carrier_vert_leaf_vert8/target/release/carrier_vert_leaf_vert8"]
+[[bench.carrier_vertical_leaf.sizes]]
+n = 16384
+variants = ["variants/carrier_vert_leaf_scalar/target/release/carrier_vert_leaf_scalar", "variants/carrier_vert_leaf_vert4/target/release/carrier_vert_leaf_vert4", "variants/carrier_vert_leaf_vert8/target/release/carrier_vert_leaf_vert8"]
+
+[bench.carrier_native_ceiling]
+title = "Native ceiling: interpreter vs shape-specialized native madd loop"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_native_ceiling.normalise]
+baseline = "carrier_ceil_interp"
+mode = "subtract"
+[[bench.carrier_native_ceiling.sizes]]
+n = 64
+variants = ["variants/carrier_ceil_interp/target/release/carrier_ceil_interp", "variants/carrier_ceil_native/target/release/carrier_ceil_native"]
+[[bench.carrier_native_ceiling.sizes]]
+n = 256
+variants = ["variants/carrier_ceil_interp/target/release/carrier_ceil_interp", "variants/carrier_ceil_native/target/release/carrier_ceil_native"]
+[[bench.carrier_native_ceiling.sizes]]
+n = 1024
+variants = ["variants/carrier_ceil_interp/target/release/carrier_ceil_interp", "variants/carrier_ceil_native/target/release/carrier_ceil_native"]
+[[bench.carrier_native_ceiling.sizes]]
+n = 4096
+variants = ["variants/carrier_ceil_interp/target/release/carrier_ceil_interp", "variants/carrier_ceil_native/target/release/carrier_ceil_native"]
+[[bench.carrier_native_ceiling.sizes]]
+n = 16384
+variants = ["variants/carrier_ceil_interp/target/release/carrier_ceil_interp", "variants/carrier_ceil_native/target/release/carrier_ceil_native"]
 

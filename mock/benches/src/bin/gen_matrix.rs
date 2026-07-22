@@ -1,165 +1,339 @@
-//! Generate the carrier composition-matrix variant crates and their bench.toml
-//! sections, via the mockspace bench-harness `matrix` generator (the harness
-//! feature that replaces the per-bench Python `gen_carrier_*.py` scripts).
+//! Generate the FULL carrier composition-matrix: every cell family, every axis,
+//! via the mockspace bench-harness `matrix` generator (the harness feature that
+//! replaces the per-bench Python `gen_carrier_*.py` scripts).
 //!
 //! The carrier cells are heterogeneous (wire `Decoded` interpreters, the
-//! predecoded family, the register-VM, SoA SIMD, JIT'd machine code), so the run
-//! is a handful of `MatrixSpec`s, one per homogeneous cell family, each with its
-//! own `lib_template` and axes. This binary constructs them and writes the
-//! variant crates under `variants/` plus the `[bench.*]` sections.
+//! predecoded family, the register-VM, SoA SIMD, JIT'd machine code, a typed
+//! value-representation mini-IR, a stack-bytecode encoding, the optimize stage),
+//! so a single substitution template cannot cover them. Instead one FLEXIBLE
+//! template carries two per-cell substitution values: `{prep}` (everything before
+//! the timed region: program generation, decode/predecode/compile/JIT, scratch
+//! allocation) and `{body}` (the one measured call per iteration, folding into
+//! `acc`). Every cell provides its own `prep`/`body` as full-path Rust, so any
+//! call shape fits. Features (threaded / vertical / jit) flow per cell into the
+//! carrier dependency.
 //!
-//! Run from `mock/benches/`: `cargo run --bin gen_matrix`. Then build the
-//! generated variants (release) and run `vehje-benches <bench-name>`.
+//! Run from `mock/benches/`: `cargo run --bin gen_matrix`. Then build every
+//! generated variant (release) and run each `[bench.*]` via `vehje-benches`.
 //!
-//! IMPORTANT call-shape note: the fidelity-gate refactor made every interpreter
-//! FILL a `results` array and return nothing; the caller folds one
-//! `access::checksum(results)`. The variant templates here use that current shape
-//! (`fn(&d, seed, &mut r); acc ^= checksum(&r)`), unlike the retired Python gens
-//! which used the old returning signature.
+//! Call-shape note: the fidelity-gate refactor made every interpreter FILL a
+//! `results`/scratch array and return nothing (or a checksum); the caller folds
+//! `access::checksum`. The templates here use that current shape.
 
 use std::collections::BTreeMap;
 use std::path::Path;
 
 use mockspace_bench_harness::matrix::{generate, AxisSpec, AxisValue, MatrixSpec};
 
-// Pinned mockspace rev the variant crates depend on (matches mock/benches
-// Cargo.toml). Kept as a rev, not a floating branch, so a regenerated variant is
-// reproducible.
 const MOCKSPACE_REV: &str = "49ff5f55b8413f7046281ae1944130c10509c361";
 const SEED: &str = "0x5eed_d15b_a7c4_0002";
 const SIZES: &[usize] = &[64, 256, 1024, 4096, 16384];
-
-// The six designed program profiles (gen.rs `GenParams::profile`).
 const PROFILES: &[&str] = &["real", "madd", "tight", "scatter", "wideselect", "leaf"];
 
-fn extra_deps() -> Vec<String> {
-    vec![
-        format!(
-            "mockspace-bench-core = {{ git = \"https://github.com/hiisi-digital/mockspace\", rev = \"{MOCKSPACE_REV}\", features = [\"std\"] }}"
-        ),
-        format!(
-            "mockspace-bench-macro = {{ git = \"https://github.com/hiisi-digital/mockspace\", rev = \"{MOCKSPACE_REV}\" }}"
-        ),
-    ]
-}
-
-/// One dispatch shape over the straight-line wire form: its variant-name tag, the
-/// carrier fn it calls, and whether it needs the carrier `threaded` feature.
-struct Shape {
-    tag: &'static str,
-    func: &'static str,
-    feature: Option<&'static str>,
-}
-
-/// Build the shape axis for the wire-dispatch family.
-fn wire_shapes() -> Vec<Shape> {
-    vec![
-        Shape { tag: "switch", func: "interpret", feature: None },
-        Shape { tag: "fntable", func: "interpret_fntable", feature: None },
-        Shape { tag: "ifchain", func: "interpret_ifchain", feature: None },
-        Shape { tag: "ifchainasc", func: "interpret_ifchain_ascending", feature: None },
-        Shape { tag: "ifchainlin", func: "interpret_ifchain_linear", feature: None },
-        Shape { tag: "bittree", func: "interpret_bittree", feature: None },
-        Shape { tag: "threaded", func: "interpret_threaded", feature: Some("threaded") },
-        Shape { tag: "nullfloor", func: "interpret_nulldispatch", feature: None },
-    ]
-}
-
-/// The `lib.rs` template for a wire-dispatch variant. A plain matrix-escaped raw
-/// string: literal Rust braces are `{{` / `}}` (the renderer turns them into
-/// `{` / `}`), and `{name}` / `{fn_name}` / `{profile}` are matrix substitution
-/// keys (profile is supplied per composition via subst, so profile is not a matrix
-/// axis; each profile is its own bench). No Rust `format!` here, to avoid
-/// double-escaping against the matrix renderer.
-fn wire_lib_template() -> String {
-    r#"// generated by gen_matrix. wire-dispatch variant: {name} runs the {fn_name}
-// interpreter over a program from the "{profile}" profile. Only the dispatch fn
-// differs across a bench's variants; the program crosses FFI as bytes and every
-// interpreter fills `results`, then the caller folds one checksum (the current
-// fidelity-gate call shape).
+// The one flexible variant template. Keys: {name}, {prep}, {body}. Literal Rust
+// braces are escaped `{{` / `}}` for the matrix renderer; the {prep}/{body}
+// substitution VALUES are inserted literally (their own braces need no escaping).
+const TEMPLATE: &str = r#"// generated by gen_matrix (full carrier composition matrix).
+use vehje_bench_carrier as c;
 use mockspace_bench_core::{{timed, FfiBenchCall}};
 use mockspace_bench_macro::bench_variant;
+#[allow(unused_imports)]
 use std::sync::OnceLock;
-use vehje_bench_carrier::{{checksum, generate, ir, GenParams, {fn_name}}};
-
-static BYTES: OnceLock<Vec<u8>> = OnceLock::new();
-const ITERS: usize = 16;
 
 #[bench_variant("{name}", sizes = [64, 256, 1024, 4096, 16384])]
 fn run<const N: usize>(input: &[u8; N], output: &mut [u8; 8]) -> FfiBenchCall {{
-    let bytes = BYTES.get_or_init(|| {{
-        let mut gp = GenParams::profile("{profile}").unwrap();
-        gp.node_count = N;
-        ir::encode(&generate(&gp), &ir::REC24)
-    }});
-    let d = ir::Decoded::parse(bytes, ir::REC24).unwrap();
-    let mut results = vec![0u64; d.node_count];
+    {prep}
+    const ITERS: usize = 16;
     timed! {{ run {{
         let mut acc: u64 = 0;
         let mut k = 0usize;
         while k < ITERS {{
-            {fn_name}(&d, input[k % N] as u64 ^ (k as u64), &mut results);
-            acc ^= checksum(&results);
+            let seed = input[k % N] as u64 ^ (k as u64);
+            {body}
             k += 1;
         }}
         output.copy_from_slice(&acc.to_le_bytes());
     }} }}
 }}
-"#
-    .to_string()
+"#;
+
+/// One cell: its variant-name tag, the per-cell `prep` and `body` Rust, and any
+/// carrier features it needs.
+struct Cell {
+    tag: &'static str,
+    prep: String,
+    body: String,
+    features: Vec<&'static str>,
 }
 
-/// A MatrixSpec for the wire-dispatch family at one profile: axis = dispatch
-/// shape; baseline = switch (the labelled expected-winner reference). `profile` is
-/// injected into every shape value's subst so the template keys resolve without
-/// making profile a matrix axis (each profile is its own bench).
-fn wire_dispatch_spec(profile: &str) -> MatrixSpec {
-    let values = wire_shapes()
+fn cell(tag: &'static str, prep: String, body: String, features: &[&'static str]) -> Cell {
+    Cell { tag, prep, body, features: features.to_vec() }
+}
+
+fn extra_deps() -> Vec<String> {
+    vec![
+        format!("mockspace-bench-core = {{ git = \"https://github.com/hiisi-digital/mockspace\", rev = \"{MOCKSPACE_REV}\", features = [\"std\"] }}"),
+        format!("mockspace-bench-macro = {{ git = \"https://github.com/hiisi-digital/mockspace\", rev = \"{MOCKSPACE_REV}\" }}"),
+    ]
+}
+
+/// Build a MatrixSpec whose single axis "cell" enumerates the given cells; the
+/// name_template is `<prefix>_{cell}`. Each cell's prep/body/tag go into subst.
+fn spec(bench: String, title: String, baseline_needle: &str, prefix: &str, cells: Vec<Cell>) -> MatrixSpec {
+    let values = cells
         .into_iter()
-        .map(|s| AxisValue {
-            tag: s.tag.to_string(),
+        .map(|c| AxisValue {
+            tag: c.tag.to_string(),
             subst: BTreeMap::from([
-                ("fn_name".to_string(), s.func.to_string()),
-                ("profile".to_string(), profile.to_string()),
+                ("prep".to_string(), c.prep),
+                ("body".to_string(), c.body),
             ]),
-            features: s.feature.into_iter().map(|f| f.to_string()).collect(),
+            features: c.features.iter().map(|f| f.to_string()).collect(),
         })
         .collect();
     MatrixSpec {
-        bench: format!("carrier_dispatch_{profile}"),
-        title: format!("Dispatch shape over the wire form, {profile} profile (carrier)"),
+        bench,
+        title,
         carrier_dep: "vehje-bench-carrier = {{ path = \"../../carrier\"{carrier_features} }}".to_string(),
         extra_deps: extra_deps(),
         master_seed: SEED.to_string(),
         sizes: SIZES.to_vec(),
-        baseline_contains: Some("switch".to_string()),
+        baseline_contains: Some(baseline_needle.to_string()),
         normalise_mode: Some("subtract".to_string()),
-        name_template: "carrier_disp_{shape}_{profile}".to_string(),
-        lib_template: wire_lib_template(),
-        axes: vec![AxisSpec { name: "shape".to_string(), values }],
+        name_template: format!("{prefix}_{{cell}}"),
+        lib_template: TEMPLATE.to_string(),
+        axes: vec![AxisSpec { name: "cell".to_string(), values }],
     }
 }
 
-fn main() {
-    let out_dir = Path::new("."); // run from mock/benches; variants land in ./variants
-    let mut sections: Vec<String> = Vec::new();
+// ── prep fragments ──
 
-    // Family 1: wire-dispatch, one bench per profile.
-    for profile in PROFILES {
-        let spec = wire_dispatch_spec(profile);
-        match generate(&spec, out_dir) {
+/// Prep for a wire program at `profile`/`layout`: generate, decode, alloc results.
+fn wire_prep(profile: &str, layout: &str) -> String {
+    format!(
+        "static PREP: OnceLock<Vec<u8>> = OnceLock::new(); \
+         let bytes = PREP.get_or_init(|| {{ let mut gp = c::GenParams::profile(\"{profile}\").unwrap(); gp.node_count = N; c::ir::encode(&c::generate(&gp), &c::ir::{layout}) }}); \
+         let d = c::ir::Decoded::parse(bytes, c::ir::{layout}).unwrap(); \
+         let mut r = vec![0u64; d.node_count];"
+    )
+}
+
+/// Prep that also predecodes into `pd`.
+fn predecode_prep(profile: &str) -> String {
+    format!(
+        "static PREP: OnceLock<Vec<u8>> = OnceLock::new(); \
+         let bytes = PREP.get_or_init(|| {{ let mut gp = c::GenParams::profile(\"{profile}\").unwrap(); gp.node_count = N; c::ir::encode(&c::generate(&gp), &c::ir::REC24) }}); \
+         let d = c::ir::Decoded::parse(bytes, c::ir::REC24).unwrap(); \
+         let pd = c::predecode::predecode(&d); \
+         let mut r = vec![0u64; d.node_count];"
+    )
+}
+
+/// Prep producing an owned `Program` at `profile` in `prog`.
+fn program_prep(profile: &str) -> String {
+    format!(
+        "static PREP: OnceLock<c::ir::Program> = OnceLock::new(); \
+         let prog = PREP.get_or_init(|| {{ let mut gp = c::GenParams::profile(\"{profile}\").unwrap(); gp.node_count = N; c::generate(&gp) }});"
+    )
+}
+
+// ── families ──
+
+fn wire_family() -> Vec<MatrixSpec> {
+    let shapes: &[(&str, &str, &[&str])] = &[
+        ("switch", "interpret", &[]),
+        ("fntable", "interpret_fntable", &[]),
+        ("ifchain", "interpret_ifchain", &[]),
+        ("ifchainasc", "interpret_ifchain_ascending", &[]),
+        ("ifchainlin", "interpret_ifchain_linear", &[]),
+        ("bittree", "interpret_bittree", &[]),
+        ("threaded", "interpret_threaded", &["threaded"]),
+        ("nullfloor", "interpret_nulldispatch", &[]),
+    ];
+    PROFILES.iter().map(|p| {
+        let cells = shapes.iter().map(|(tag, f, feats)| {
+            cell(tag, wire_prep(p, "REC24"), format!("c::{f}(&d, seed, &mut r); acc ^= c::checksum(&r);"), feats)
+        }).collect();
+        spec(format!("carrier_dispatch_{p}"), format!("Dispatch shape over the wire form, {p} profile (carrier)"), "switch", &format!("carrier_disp_{p}"), cells)
+    }).collect()
+}
+
+fn predecode_family() -> Vec<MatrixSpec> {
+    PROFILES.iter().map(|p| {
+        let base = predecode_prep(p);
+        let simple = |tag, f: &str| cell(tag, base.clone(), format!("c::predecode::{f}(&pd, seed, &mut r); acc ^= c::checksum(&r);"), &[]);
+        let mut cells = vec![
+            simple("switch", "interpret_predecoded"),
+            simple("fntable", "interpret_predecoded_fntable"),
+            simple("regcache", "interpret_predecoded_regcache"),
+            simple("null", "interpret_predecoded_nulldispatch"),
+            cell("threaded", base.clone(), "c::predecode::interpret_predecoded_threaded(&pd, seed, &mut r); acc ^= c::checksum(&r);".to_string(), &["threaded"]),
+        ];
+        // direct threaded needs resolved handlers (setup, outside timed).
+        cells.push(cell(
+            "direct",
+            format!("{base} let mut hs: Vec<c::predecode::threaded_direct::H> = Vec::new(); c::predecode::resolve_handlers(&pd, &mut hs);"),
+            "c::predecode::interpret_predecoded_direct(&pd, &hs, seed, &mut r); acc ^= c::checksum(&r);".to_string(),
+            &["threaded"],
+        ));
+        spec(format!("carrier_predecode_{p}"), format!("Predecoded dispatch shape, {p} profile (carrier)"), "switch", &format!("carrier_pre_{p}"), cells)
+    }).collect()
+}
+
+fn cfg_family() -> Vec<MatrixSpec> {
+    // Own workload: a nested-loop register-VM kernel sized by N.
+    let blocks = "let blocks = c::cfg::build_nested_loop(N as u64, 4);";
+    let cells = vec![
+        cell("switch", blocks.to_string(), "let (rr, _, _) = c::cfg::interp(&blocks, seed, u64::MAX); acc ^= rr;".to_string(), &[]),
+        cell("fntable", blocks.to_string(), "let (rr, _, _) = c::cfg::interp_fntable(&blocks, seed, u64::MAX); acc ^= rr;".to_string(), &[]),
+        cell("threaded", format!("{blocks} let code = c::cfg_threaded::flatten(&blocks);"), "let (rr, _, _) = c::cfg_threaded::interp_flat(&code, seed, u64::MAX); acc ^= rr;".to_string(), &["threaded"]),
+        cell("trace", format!("{blocks} let trace = c::trace::select_trace(&blocks, 0).expect(\"trace\");"), "let (rr, _, _) = c::trace::interp_traced(&blocks, &trace, seed, u64::MAX); acc ^= rr;".to_string(), &[]),
+    ];
+    vec![spec("carrier_cfg".to_string(), "CFG register-VM dispatch (switch / fntable / threaded / trace)".to_string(), "switch", "carrier_cfg", cells)]
+}
+
+fn layout_family() -> Vec<MatrixSpec> {
+    let layouts: &[(&str, &str)] =
+        &[("rec12", "REC12"), ("rec16", "REC16"), ("rec20", "REC20"), ("rec24", "REC24"), ("rec32", "REC32")];
+    PROFILES.iter().map(|p| {
+        let cells = layouts.iter().map(|(tag, l)| {
+            cell(tag, wire_prep(p, l), "c::interpret(&d, seed, &mut r); acc ^= c::checksum(&r);".to_string(), &[])
+        }).collect();
+        spec(format!("carrier_layout_{p}"), format!("Record layout (REC12..REC32) with fixed switch dispatch, {p} profile"), "rec24", &format!("carrier_lay_{p}"), cells)
+    }).collect()
+}
+
+fn valrepr_family() -> Vec<MatrixSpec> {
+    let base = "static PREP: OnceLock<Vec<c::valrepr::VNode>> = OnceLock::new(); let prog = PREP.get_or_init(|| c::valrepr::gen_valprog(N, 0x1234_5678));";
+    let cells = vec![
+        cell("static", format!("{base} let mut scr = vec![0u64; prog.len()];"), "acc ^= c::valrepr::interp_static(prog, seed as i32, &mut scr);".to_string(), &[]),
+        cell("tagged", format!("{base} let mut tags = vec![0u8; prog.len()]; let mut bits = vec![0u64; prog.len()];"), "acc ^= c::valrepr::interp_tagged(prog, seed as i32, &mut tags, &mut bits);".to_string(), &[]),
+        cell("nanbox", format!("{base} let mut vals = vec![0u64; prog.len()];"), "acc ^= c::valrepr::interp_nanbox(prog, seed as i32, &mut vals);".to_string(), &[]),
+    ];
+    vec![spec("carrier_valrepr".to_string(), "Value representation (static / runtime-tagged / NaN-boxed)".to_string(), "static", "carrier_vr", cells)]
+}
+
+fn residual_family() -> Vec<MatrixSpec> {
+    PROFILES.iter().map(|p| {
+        let cells = vec![
+            cell("register", wire_prep(p, "REC24"), "c::interpret(&d, seed, &mut r); acc ^= c::checksum(&r);".to_string(), &[]),
+            cell(
+                "stack",
+                format!("{} let sp = c::stackbc::compile(prog); let mut st = vec![0u64; 64]; let mut lo = vec![0u64; sp.num_locals];", program_prep(p)),
+                "c::stackbc::interpret_stack(&sp, seed, &mut st, &mut lo); acc ^= c::access::checksum_at(&lo, &sp.out_locals);".to_string(),
+                &[],
+            ),
+        ];
+        spec(format!("carrier_residual_{p}"), format!("Residual encoding: register/SSA vs stack bytecode, {p} profile"), "register", &format!("carrier_res_{p}"), cells)
+    }).collect()
+}
+
+fn optimize_family() -> Vec<MatrixSpec> {
+    // (tag, cse, fold, dce, eqsat): the optimize axis (none / CSE / eqsat /
+    // CSE+eqsat, plus fold, dce, all), each measured by the DOWNSTREAM interp cost
+    // over the resulting (possibly smaller) program.
+    let strategies: &[(&str, bool, bool, bool, bool)] = &[
+        ("none", false, false, false, false),
+        ("cse", true, false, false, false),
+        ("fold", false, true, false, false),
+        ("dce", false, false, true, false),
+        ("eqsat", false, false, false, true),
+        ("cseeqsat", true, false, false, true),
+        ("all", true, true, true, true),
+    ];
+    PROFILES.iter().map(|p| {
+        let cells = strategies.iter().map(|(tag, cse, fold, dce, eqsat)| {
+            let prep = format!(
+                "{} let opt = c::optimize::optimize(prog, {cse}, {fold}, {dce}, {eqsat}); \
+                 let bytes = c::ir::encode(&opt.prog, &c::ir::REC24); \
+                 let d = c::ir::Decoded::parse(&bytes, c::ir::REC24).unwrap(); \
+                 let mut r = vec![0u64; opt.prog.nodes.len().max(1)];",
+                program_prep(p)
+            );
+            cell(tag, prep, "c::interpret(&d, seed, &mut r); acc ^= c::access::checksum_at(&r, &opt.out_ids);".to_string(), &[])
+        }).collect();
+        spec(format!("carrier_optimize_{p}"), format!("Optimize stage (none/CSE/eqsat/CSE+eqsat...), downstream interp, {p} profile"), "none", &format!("carrier_opt_{p}"), cells)
+    }).collect()
+}
+
+fn native_family() -> Vec<MatrixSpec> {
+    // The near-native tier: interp vs direct native codegen vs copy-and-patch
+    // stencil, per profile. copypatch/stencil are jit (aarch64+macos) only.
+    PROFILES.iter().map(|p| {
+        let jit_prep = format!("{} let mut r = vec![0u64; prog.nodes.len()];", program_prep(p));
+        let cells = vec![
+            cell("interp", wire_prep(p, "REC24"), "c::interpret(&d, seed, &mut r); acc ^= c::checksum(&r);".to_string(), &[]),
+            cell("copypatch", format!("{jit_prep} let jit = c::copypatch::JitCode::new(prog).expect(\"jit\");"), "jit.run(seed, &mut r); acc ^= c::checksum(&r);".to_string(), &["jit"]),
+            cell("stencil", format!("{jit_prep} let jit = c::stencil::StencilCode::new(prog).expect(\"jit\");"), "jit.run(seed, &mut r); acc ^= c::checksum(&r);".to_string(), &["jit"]),
+        ];
+        spec(format!("carrier_native_{p}"), format!("Near-native tier: interp vs direct codegen vs copy-and-patch stencil, {p} profile"), "interp", &format!("carrier_nat_{p}"), cells)
+    }).collect()
+}
+
+fn vertical_family() -> Vec<MatrixSpec> {
+    // SoA/SIMD amortization: scalar (1 input/call) vs vertical W=4 / W=8 (W
+    // inputs/call, so per-input cost is time/W). vertical needs the `vertical`
+    // feature (portable_simd).
+    PROFILES.iter().map(|p| {
+        let vprep = format!(
+            "static PREP: OnceLock<c::predecode::Predecoded> = OnceLock::new(); \
+             let pd = PREP.get_or_init(|| {{ let mut gp = c::GenParams::profile(\"{p}\").unwrap(); gp.node_count = N; let bytes = c::ir::encode(&c::generate(&gp), &c::ir::REC24); let d = c::ir::Decoded::parse(&bytes, c::ir::REC24).unwrap(); c::predecode::predecode(&d) }});"
+        );
+        let vbody = |w: usize| format!(
+            "let mut seeds = [0u64; {w}]; for (l, s) in seeds.iter_mut().enumerate() {{ *s = seed ^ (l as u64).wrapping_mul(0x9e37_79b9); }} acc ^= c::vertical::interpret_vertical_checksum::<{w}>(pd, &seeds);"
+        );
+        let cells = vec![
+            cell("scalar", wire_prep(p, "REC24"), "c::interpret(&d, seed, &mut r); acc ^= c::checksum(&r);".to_string(), &[]),
+            cell("vert4", vprep.clone(), vbody(4), &["vertical"]),
+            cell("vert8", vprep.clone(), vbody(8), &["vertical"]),
+        ];
+        spec(format!("carrier_vertical_{p}"), format!("Vertical/SoA SIMD (scalar 1-input vs vertical W-input, per-input = time/W), {p} profile"), "scalar", &format!("carrier_vert_{p}"), cells)
+    }).collect()
+}
+
+fn native_ceiling_family() -> Vec<MatrixSpec> {
+    // The native ceiling floor over the madd-chain program (not a profile): the
+    // interpreter vs the shape-specialized native loop, same program bytes.
+    let prep = "static PREP: OnceLock<Vec<u8>> = OnceLock::new(); let bytes = PREP.get_or_init(|| c::madd_bytes(N / 4, c::ir::REC24)); let d = c::ir::Decoded::parse(bytes, c::ir::REC24).unwrap(); let mut r = vec![0u64; d.node_count];";
+    let cells = vec![
+        cell("interp", prep.to_string(), "for &b in input.iter() { c::interpret(&d, b as u64, &mut r); acc ^= c::checksum(&r); }".to_string(), &[]),
+        cell("native", prep.to_string(), "acc ^= c::native_madd_over_input(&d, input, &mut r);".to_string(), &[]),
+    ];
+    vec![spec("carrier_native_ceiling".to_string(), "Native ceiling: interpreter vs shape-specialized native madd loop".to_string(), "interp", "carrier_ceil", cells)]
+}
+
+fn main() {
+    let out_dir = Path::new(".");
+    let mut all: Vec<MatrixSpec> = Vec::new();
+    all.extend(wire_family());
+    all.extend(predecode_family());
+    all.extend(cfg_family());
+    all.extend(layout_family());
+    all.extend(valrepr_family());
+    all.extend(residual_family());
+    all.extend(optimize_family());
+    all.extend(native_family());
+    all.extend(vertical_family());
+    all.extend(native_ceiling_family());
+
+    let mut sections: Vec<String> = Vec::new();
+    let mut nvariants = 0usize;
+    for s in &all {
+        let bench = s.bench.clone();
+        match generate(s, out_dir) {
             Ok(section) => {
-                println!("generated carrier_dispatch_{profile} ({} variants)", wire_shapes().len());
+                let count = section.matches("/target/release/").count() / SIZES.len();
+                nvariants += count;
+                println!("generated {bench}");
                 sections.push(section);
             }
             Err(e) => {
-                eprintln!("FAILED carrier_dispatch_{profile}: {e}");
+                eprintln!("FAILED {bench}: {e}");
                 std::process::exit(1);
             }
         }
     }
 
-    // Append the sections to bench.toml under a regeneratable marker.
     let toml_path = Path::new("bench.toml");
     let marker = "# >>> carrier_matrix (generated by gen_matrix)";
     let existing = std::fs::read_to_string(toml_path).unwrap_or_default();
@@ -169,5 +343,5 @@ fn main() {
     };
     let body = format!("{base}\n\n{marker}\n{}\n", sections.join("\n"));
     std::fs::write(toml_path, body).expect("write bench.toml");
-    println!("appended {} bench sections to bench.toml", sections.len());
+    println!("\n{} benches, ~{} variants; appended sections to bench.toml", all.len(), nvariants);
 }
