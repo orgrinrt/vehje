@@ -822,3 +822,138 @@ number that justifies the work), and hold every final-like addition to the same 
 and the same honest cost-model measurement, so "final-like" never means "optimized until it is no longer
 the same program." The correctness contract is what keeps the elaborate, realistic carrier honest: every
 cell, naive or final-like, computes the identical result on the identical program, or the bench fails.
+
+## Fifth amendment: audit of the third deliverable's own addenda, and the corrected final synthesis
+
+The third deliverable (`202607221615`) grew four addenda after I last synthesized it: a representativeness
+audit, an IR-representativeness note, a final-like proposal, and a fifth addendum correcting the fourth. I
+audited all four. The headline is corroboration on the thing that matters, several points where its
+addenda are sharper than mine, and one genuine correction to my own fourth amendment that I adopt.
+
+### Strong corroboration: two independent audits found the same confound
+
+Its representativeness addendum reaches the identical core finding as my third amendment, independently and
+with precise line citations: the threaded and flat-threaded interpreters use unchecked raw-pointer access
+(`interp_threaded.rs:67,50`, `predecode.rs:203-204,202`) while switch, fntable, and the flat switch use
+checked indexing (`interp.rs:35,64`, `predecode.rs:67,73`), so the threaded advantage is dispatch plus
+bounds-check elision, and A1/A3 are overstated by an unquantified amount. Two independent reads landing on
+the same bug is the strongest signal the arc has that it is real. Both prescribe the same fix (one shared
+operand-load/result-store primitive used identically by every dispatch cell, checked-vs-unchecked promoted
+to its own axis if interesting). This is now high-confidence, not a hypothesis: fix it before the matrix.
+
+### Sharper points in its addenda that I absorb
+
+- **The if-chain is a strawman as written.** `interpret_ifchain` orders its cascade by ascending opcode, so
+  hot binary ops sit behind cold comparisons, whereas the match-lowering finding it exists to test was
+  about a FREQUENCY-ordered chain. As written it will under-perform and an "if-chain loses" result would be
+  an artifact of the ordering. I flagged the ordering as a documented choice; the third correctly flags it
+  as a result-invalidating strawman. Fix: frequency-order the cascade (and state the ordering is part of
+  the strategy) or carry both orders as a sub-axis. Absorbed.
+- **The setup asymmetry is per-variant, not uniform.** Every cell excludes its setup, but the flat forms
+  exclude parse PLUS predecode while the wire forms exclude only parse, so at a fixed iteration count the
+  flat forms get a strictly larger free ride. I framed predecode as an honest `S` term; the third correctly
+  notes it is an ASYMMETRIC free ride that flatters flat until the `S + k*I` sweep replaces the fixed count.
+  This sharpens my A2 caveat: part of the flat win at fixed iters is the larger excluded setup, which the
+  line fit dissolves. Absorbed.
+- **Straight-line IR structurally understates the dispatch axis.** This is the biggest point I missed. The
+  shared IR is a straight-line DAG evaluated in index order, with no branches or loops. Threaded dispatch's
+  whole advantage is that the indirect branch at each handler tail learns the local opcode-successor
+  distribution, and that is largest in hot LOOP BODIES where a handler sequence repeats. A linear stream
+  never exercises it, so the threaded numbers are understated in exactly the direction that matters for the
+  runtime, and my `op_correlation` profile knob (correlation on a linear stream) is a weaker proxy than real
+  control flow. The IR should carry basic blocks and terminators (branch, loop back-edge, call) so dispatch
+  is measured where it actually earns its keep. Absorbed as a first-class IR extension, higher priority than
+  I had it; it also subsumes the `cfg` module into the shared IR rather than keeping a separate CFG bench.
+- **Ground the form axis in vehje's real tiers.** The third maps the form axis onto vehje's actual
+  tier-tagged residual (cold serialized residual as it crosses the ABI, the predecoded baseline arena the
+  runtime builds on load, native code), so the matrix answers the runtime's real question (how much does
+  building the baseline arena buy over interpreting the residual, and how far short of native does the best
+  baseline interpreter fall, so is the bytecode or native tier worth building) rather than "which record
+  width is fastest." I gestured at native-normalization; this nails it to the shipped ABI contract.
+  Absorbed as the primary reporting lens for the form axis.
+
+### The one correction to my own fourth amendment I adopt
+
+The third's fifth addendum corrects a real error in my fourth amendment (and in its own fourth addendum):
+I framed "final-like" as making the carrier RESEMBLE the shipped tier-tagged runtime. That is the wrong
+posture for a bench. A bench does not conform to the already-chosen shape to validate it; it measures every
+shape on its merits, as equals, including shapes the runtime does not use and might be better off adopting.
+The correction changes three calls:
+
+- **No shape is the privileged baseline.** wire24+switch stays only as a fixed normalization anchor that
+  makes tables readable, explicitly NOT "the default" or "the thing to beat." My fourth amendment said
+  predecode is the baseline and wire-decode is exotic "because that is what a real runtime does"; that
+  pre-decides an answer the measurement should produce. Corrected: every cell is judged against native and
+  against every other cell on merit, and the oracle envelope is the best MEASURED shape regardless of
+  whether the runtime would have picked it.
+- **The fidelity fixes stay, but for the honest reason.** The value arena, control flow, real output sink,
+  typed values, and the shared operand primitive belong not because they make the carrier look like the
+  runtime, but because each removes an ARTIFACT that buries some approach's true merit (store-every-node
+  buries storage-reuse shapes; straight-line buries the loop regime; the mixed operand access measures
+  something other than dispatch). Keep store-every-node and wire-decode-per-node as real measured cells too,
+  not just worst-case references.
+- **The tier mapping is a reporting lens, offered, not imposed.** Useful for reading the numbers for the
+  tiering decision, applied after the fact; it must not constrain what is measured.
+
+I adopt this correction and amend my fourth amendment accordingly: the goal is an artifact-free design-space
+explorer, not a runtime look-alike.
+
+### The beyond-runtime approaches it adds, which I take
+
+The strongest consequence of the design-space-explorer framing is that the most valuable results are the
+ones telling the runtime to do something it is not doing. The third names approaches outside the current
+tier plan, each a first-class cell:
+
+- **Vertical, data-parallel (SoA) interpretation: interpret one program over many inputs at once, SIMD
+  across inputs, one dispatch amortized over a vector of values.** This is the standout idea in any of the
+  three deliverables, because it maps directly onto vehje's real per-record evaluation (the same residual
+  run over a COLUMN of records), so it could dominate exactly the workload the runtime cares about most
+  while being nowhere in the current tier plan. It deserves its own axis (scalar vs vertical), not a
+  footnote, and it is potentially the single largest result the matrix can produce. Fully taken.
+- **Copy-and-patch stencil execution** (the weval / Cranelift lineage): the cheap near-native tier between
+  interpreter and full native, answering whether jumping straight from baseline interpreter to full native
+  skips a tier that is most of the win for a fraction of the cost. Taken.
+- **Computed-goto / token-threading in the Zig cdylib**: Rust cannot express label-as-value computed goto,
+  the Zig side can, and the cross-language cdylib isolation already in place drops a Zig dispatch cell into
+  the same matrix on the same program bytes. Taken; it also closes the gap the "not expressible in Rust"
+  saga (A1) left, from the other direction.
+- **Trace / superblock dispatch** (dispatch per hot straight-line run, not per op) and **alternative
+  residual encodings** (register vs stack bytecode vs the SSA value-graph the carrier uses now): both taken
+  as axes, the residual-encoding one because the runtime's baseline-form choice rests on it and it is
+  currently just assumed.
+
+### What of my synthesis still stands, now reframed
+
+The third's addenda do not supersede my contributions; they reframe them:
+
+- The `S + k*I` line fit synthesized from the second, the warmup-curve regime unification, the `op_weights`
+  generator field and the concrete mechanism-named profiles, and the fused per-stage-plus-per-region
+  cost-model champion all still stand, and the design-space-explorer posture strengthens them: the champion
+  is judged against the true oracle envelope (best measured shape, runtime-agnostic), and the profiles and
+  the control-flow extension together give the program basis the entropy AND the loop structure the
+  dispatch axis needs.
+- The framework-primitives vision (regression cells, floor decomposition, regime modes, isolated
+  cross-product codegen, per-stage sub-timing, oracle/regret reporting) is exactly the right home for a
+  design-space explorer: it measures ALL shapes as equals, including the beyond-runtime ones, and the
+  per-stage sub-timing plus the vertical/SoA and copy-and-patch and Zig-computed-goto cells all slot in as
+  additional declared axes rather than bespoke benches.
+
+### The final word across all three deliverables
+
+The complete design, fusing all three: a **design-space-exploration bench**, not a shipped-shape validator,
+that measures every interpreter shape on its merits against a native ceiling and a null-dispatch floor,
+over one shared program expressed as a **block-structured, typed, control-flow-carrying IR** with a
+**liveness-allocated value arena**, run through a **`S + k*I` cost-model warmup-curve fit** across designed
+program profiles and cache regimes, with **per-stage attribution** decomposing every number into
+compute-plus-structure-plus-dispatch, spanning the full pipeline of composable stages AND the
+**beyond-runtime shapes** (vertical/SoA, copy-and-patch, Zig computed-goto, trace dispatch, alternative
+residual encodings), with every cell fair (one shared operand primitive, no bounds-check confound, no
+strawman ordering), every setup honestly accounted by the line fit, and the whole thing judged by an oracle
+envelope and a per-stage-plus-per-region adaptive selector measured against it, on a framework that makes
+the maximal matrix a declarative axis catalogue emitting a tiered, decision-grade surface. The immediate
+gate before any of it: fix the bounds-check confound both audits found, re-run A1/A3, and stop trusting the
+threaded numbers until they measure dispatch alone. That is the strongest, most honest, most illuminating
+version of the experiment the three deliverables describe together, and it answers the question worth the
+whole apparatus: across the entire space of interpreter shapes, including ones vehje does not build today,
+which composition an adaptive runtime should choose at each point, how close it gets to native, and where
+the shape it currently ships leaves the most on the table.
