@@ -89,6 +89,17 @@ Machine-specific; re-run on target hardware before quoting a parallel multiple.
 cost, cross-validated on value. Design implication (op's call): the bounded e-graph is vindicated on the case
 meant to break it, for the assoc/comm rewrite set; re-run with the real rewrite set when it lands.
 
+### Value representation (new axis, static vs tagged vs NaN-boxed)
+
+`valrepr`: the carrier's fourth designed variant axis, previously unbenched. A mixed int/float program
+interpreted with values raw (type static per node), runtime-tagged, or NaN-boxed, cross-validated. Honest
+scope: monomorphic op sites, so it measures the interpreter-tier representation-CARRYING cost, not the
+megamorphic misprediction cost (a compiled/JIT-tier concern). Finding: the cost is small and regime-dependent.
+Compute-bound (n<=1024) static is marginally fastest (tagged +5-7%, nanbox ~tie); memory-bound (n>=4096) the
+overhead inverts (nanbox 15-17%, tagged 9% FASTER), the tag/box work hiding under memory-load latency
+(hypothesis; no M1 userspace PMU to confirm). Implication (op's call): dynamically-typed values in the
+baseline interpreter are not the liability often assumed; the static-typing win lives in the compiled tier.
+
 ### The 23 port benches
 
 Run + findings filled (`results/<name>/FINDINGS.md`), cross-validated, cost-model lines. Load-bearing ones:
