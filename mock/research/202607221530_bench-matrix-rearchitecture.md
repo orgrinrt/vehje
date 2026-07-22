@@ -287,3 +287,322 @@ drive the results, every number becomes legible against the native ceiling, the 
 is explicit, and the heuristic selectors turn the matrix from "which fixed shape wins" into "does
 adaptive selection beat every fixed shape, and by how much, and where." That is the elaborate,
 meaningful experiment worth building once.
+
+## Amendment: audit of the sibling deliverable, a better framework, and the synthesis
+
+A sibling fork produced `202607221600_bench-composition-rearchitecture.md` ("measure the cost model, not
+a point") independently. It is excellent, and on the central reframe it is stronger than my original
+above. This section audits it honestly, states what I take, leave, share, and replace, then pushes past
+both into a better bench FRAMEWORK and a single synthesized recommendation.
+
+### What the sibling gets more right than my original
+
+1. **The line model `total(k) = S + k*I`, fitted, not sampled.** My original elevated iteration count to
+   a swept axis {1,16,64,256}. The sibling reframes each composition as a LINE in (k, time): a one-time
+   setup intercept `S` plus a per-evaluation slope `I`, measured by sweeping `k` over a geometric ladder
+   and fitting by least squares with a reported R^2. This is strictly better: it turns the predecode
+   break-even into an analytic number (`k > S_predecode / (I_wire - I_flat)`) with a confidence bound
+   instead of a value read off between two sampled points, and the R^2 turns any non-linearity into a
+   finding rather than noise. **I replace my iteration-count axis wholesale with the sibling's
+   line-fit.**
+
+2. **Two reference floors, native AND null-dispatch, for slope decomposition.** My original proposed
+   native-normalization (good) and a heavy-op axis to reveal the dispatch dilution (indirect). The
+   sibling adds a *null-dispatch* interpreter (same operand loads, same result store, same checksum, but
+   every node executed as one fixed op with no dispatch) as an upper-structure floor. Then every slope
+   decomposes cleanly into native-compute + interpretation-structure + dispatch, with dispatch isolated
+   exactly. This is a direct, cleaner solution to my critique #2 than my heavy-op idea. **I take the
+   null-dispatch floor and retire the heavy-op-for-fraction argument** (a heavy op may still be a realism
+   knob, but it is no longer how we measure the dispatch fraction).
+
+3. **Measurement-fidelity fixes I did not have.** Move the checksum out of the hot loop (post-pass fold
+   over the whole results array): removes the per-node hash from the per-evaluation term AND is a
+   stricter cross-validation witness. Decouple the input seed from program size (a fixed seed array
+   indexed by the eval counter, not `input[k % N] ^ k`, which currently ties input to node count and
+   folds the loop counter into the value). Floor every timed region to >=10us so the 42ns CNTVCT quantum
+   does not swamp small programs, and measure `S` in its own rebuild-each-repeat region so it is direct
+   and cross-checks the regression intercept. **I take all three.** These are real soundness gaps my
+   original missed. Honest cost: they shift the A1-A3 absolute numbers, which is correct (those measured
+   dispatch-plus-hash); the relative conclusions must be re-established on the clean signal.
+
+4. **Two cache-state regimes: hot-single and cold-many.** My original varied program *properties*
+   (predictability, locality, arity) but all in the warm-cache steady state. The sibling adds an
+   orthogonal and arguably more important axis: warm (one program run k times, hot icache and predictor,
+   the per-frame regime) versus cold (a batch of distinct programs each run a few times, cold at every
+   boundary, the load-many-small-scripts regime). The dispatch ranking may invert between them, and that
+   inversion maps directly onto the runtime's two real usage patterns. **I take the cold-many regime; it
+   is a dimension I missed entirely.**
+
+5. **Oracle envelope + cost-model selector as the champion pair.** The sibling's oracle envelope (the
+   lower envelope of all measured cells = the theoretical best the space contains) and its cost-model
+   selector (a runtime that holds a small `(S, I)` calibration table, computes predicted `total(k)` at
+   the actual node_count and expected_k, and picks the cheapest, paying the branch and lookup) are more
+   principled than my "decision rule fitted to the tables." The headline becomes how closely the
+   model-driven pick tracks the oracle. **I replace my hand-fitted per-program selector with the
+   sibling's model-driven selector-vs-oracle-envelope framing.**
+
+6. **Fractional-factorial design from the shipped-default centre.** Build the full form-by-dispatch grid
+   only at the canonical (wire24, switch, canonical-shape, hot) centre, then take one-axis slices out.
+   Cleaner experimental design than my "staged build by value," and every interaction reads relative to
+   the shipped default, which is the comparison a reader wants. **I take it, and fold my staging into
+   it.**
+
+### What of mine survives and should be shared into the merged design
+
+- **The concrete, mechanism-named program profiles.** The sibling's shape basis is abstract ("corners of
+  the space"). My named presets are more directly buildable and each targets one mechanism: `P_madd`
+  (single-motif, the clean native-anchor), `P_tight` (predictable+local), `P_scatter`
+  (unpredictable+cache-hostile), `P_wideselect` (arity-heavy, the record-width/spill stress the
+  sibling's basis does not call out), `P_leaf` (decode-bound), `P_real` (balanced). **Contribute these as
+  the concrete instantiation of the sibling's shape-basis corners.**
+- **The `op_weights` generator mechanism.** The sibling says "extend the generator to expose topology and
+  operand-locality" but gives no mechanism. My per-op sampling-weight vector is the minimal, orthogonal
+  way to control arity mix, leaf fraction, and (with a heavy op) op-cost in one field, subsuming
+  `op_vocab`. **Contribute the mechanism.**
+- **The per-region heuristic selector.** Neither the sibling's cost-model selector nor my per-program
+  selector is intra-program adaptive. My per-region selector (segment the program by a cheap forward
+  pass, dispatch each run with the locally-best shape) is a genuinely additional, more ambitious cell.
+  **Keep it, and upgrade it (below) by fusing it with the sibling's cost model.**
+
+### Take / leave / share / replace, at a glance
+
+- **Take from sibling:** the `S + k*I` line-fit reframe; the null-dispatch floor; the three
+  measurement-fidelity fixes; the cold-many regime; the oracle-envelope + cost-model-selector champions;
+  the fractional-factorial-from-centre design.
+- **Replace in mine with sibling's:** my iteration-count axis -> the line fit; my native-only
+  normalization -> the two-floor decomposition; my hand-fitted per-program selector -> the model-driven
+  selector; my staged-by-value build -> the fractional-factorial design.
+- **Share into the merge (mine that the sibling lacks):** the six mechanism-named profiles; the
+  `op_weights` generator field; the per-region selector.
+- **Leave (mine, now redundant):** the heavy-op-as-dispatch-fraction-probe argument (the null-dispatch
+  floor does it better); the discrete iteration points (the line fit subsumes them).
+
+### Beyond both: a better framework for this kind of bench
+
+Both deliverables still describe a matrix of hand-authored cdylib cells with post-hoc analysis. The
+deeper move op is asking for is to make the FRAMEWORK fit the shape of this problem. This class of bench
+("a composable implementation with a setup-plus-per-op cost model, measured across program-property and
+cache-state axes, decomposed against floors, with an adaptive selector validated against an oracle") is
+general enough to deserve first-class harness support, not per-bench scaffolding. A better framework
+provides five primitives:
+
+1. **Regression cells as a first-class bench type.** The bench declares "I am a cost-model cell" and the
+   harness owns the geometric `k`-ladder, the >=10us duration-floor auto-calibration, the least-squares
+   fit, and the reported `(S, I, R^2)`. Authors never hand-roll a `k` sweep or a fit again; the harness
+   emits the line per cell. This generalises the existing throughput-cell type.
+
+2. **Floor decomposition as a harness service.** The bench registers its native and null-dispatch floor
+   cells once; the harness subtracts them and reports every cell's slope as native-compute + structure +
+   dispatch automatically, per form (a null-dispatch floor per form, since wire-decode structure differs
+   from flat structure, a refinement on the sibling's single floor). No bench wires the decomposition.
+
+3. **Regime as a harness execution mode over pure cells.** Make the cell a pure function (program bytes
+   -> checksum) and let the harness drive it warm (one program, `k` evals) or cold (a batch of distinct
+   programs). hot-single and cold-many stop being different cell code and become how the harness runs the
+   same cell. This is what lets the two regimes share one implementation and be provably the same code.
+
+4. **Isolated cross-product codegen from a declarative spec.** The authoring cost of N cdylibs is the
+   reason the matrix feels heavy. A framework primitive takes the orthogonal axis-implementations (the
+   form decoders, the dispatch shapes) declared ONCE as pure pieces and emits the isolated per-cell
+   cdylibs for the requested fractional-factorial cross-product, preserving the per-cell codegen
+   isolation that prevents cross-composition optimizer contamination (the whole reason cells are separate
+   binaries) while removing the hand authoring. The generators already gesture at this; the framework
+   makes it a primitive: declare the axes, get the isolated matrix.
+
+5. **Oracle envelope and selector validation as harness outputs.** Having every cell's `(S, I)` across
+   `(shape, regime, n)`, the harness computes the lower envelope, auto-derives the cost-model selector's
+   calibration table, and reports a candidate selector's REGRET against the envelope as a curve plus its
+   integral (a single scalar: how much adaptivity leaves on the table). Selector validation becomes a
+   framework service, not a bespoke analysis.
+
+Two original refinements that neither deliverable has, enabled by this framework:
+
+- **Unify the two regimes into one warmup-curve fit.** The hot/cold split is really the endpoints of a
+  warmup transient: the first evaluation runs cold (predictor/icache untrained), later evaluations run
+  warm. Instead of two separate benches, fit `total(k) = S + sum_{j<k} I(j)` where `I(j)` decays from a
+  cold slope to a warm asymptote, and extract BOTH the cold-first-eval slope and the warm asymptotic
+  slope from ONE richer `k`-sweep, plus the warmup shape itself. This measures the sibling's two regimes
+  as one continuous curve and additionally reveals how many evaluations it takes each shape to warm up,
+  which is the exact quantity a tiering runtime needs to decide when a program is "hot."
+
+- **The per-region cost-model selector: fuse my per-region idea with the sibling's model.** Segment the
+  program by a cheap forward pass, and for each segment use the fitted `(S, I)` model to pick the
+  per-segment-best dispatch, switching shape at segment boundaries. This is honest (runtime measurement +
+  runtime branch), model-driven (not hand-fitted), AND intra-program adaptive. It is the strongest
+  champion in the space, and if it beats the whole-program cost-model selector on the mixed profiles, it
+  is the genuinely novel result: intra-program strategy selection strictly dominates whole-program
+  selection, which is the "far beyond what these can" op is chasing.
+
+### The synthesized recommendation (the single best proposal)
+
+Build the interpreter-composition bench as a **cost-model matrix on a purpose-built program basis, with
+floor decomposition, two regimes unified as a warmup curve, and a validated adaptive selector**, on a
+framework that provides regression cells, floor decomposition, regime execution modes, isolated
+cross-product codegen, and oracle/regret reporting as primitives. Concretely:
+
+- **Correctness contract (both agree, non-negotiable):** every cell runs the identical `generate()`
+  program per (shape, seed), differs only in memory form and dispatch, and folds the identical post-pass
+  checksum; the harness cross-validates byte-exact before trusting any timing, and asserts distinct
+  shapes yield distinct checksums.
+- **Cells:** form {wire12, wire16, wire24, wire32, flat16} x dispatch {switch, fntable, threaded,
+  ifchain, bittree, perfecthash}, plus the native and per-form null-dispatch floors.
+- **Program basis:** my six mechanism-named profiles, generated via the `op_weights` field plus
+  `op_correlation` and `locality_window`, arranged as the sibling's fractional-factorial corners from the
+  (wire24, switch, P_real) centre.
+- **Regime / amortization:** the `S + k*I` line fit over a geometric `k`-ladder as the core measurement,
+  extended to the warmup-curve fit that yields cold slope, warm slope, and warmup length in one sweep;
+  the cold-many batch regime as the cross-check where the warmup curve's cold end should agree.
+- **Reporting:** every slope decomposed into native + structure + dispatch against the two floors; the
+  predecode break-even computed analytically; every number quoted with its (profile, n, k, regime)
+  regime and its ns-to-cycles-to-IPC sanity line.
+- **Champions:** the oracle envelope; the whole-program cost-model selector measured against it with a
+  regret curve; and the per-region cost-model selector as the ambitious payoff.
+- **Discipline (both agree):** serial runs, >=3 per cell, minimum for throughput and median+spread for
+  regression points, no ranking inside the noise floor, committed CSVs and the tracked `.bench_history`
+  trail travelling with every bench commit, threaded cells honestly recorded as toolchain-blocked if a
+  shape fails to compile rather than worked around.
+
+The net over both originals: the sibling's cost-model rigor and floor decomposition and regime insight,
+plus my concrete profiles and generator mechanism and per-region adaptivity, plus the two refinements
+(warmup-curve unification and the per-region cost-model selector) and the framework primitives that make
+the whole elaborate experiment cheap to author and reusable beyond interpreters. That is the best
+proposal the two deliverables can produce together.
+
+## Second amendment: audit of the third deliverable and the final unified proposal
+
+A third fork landed `202607221615_bench-maximal-composition-matrix.md` ("the maximal composition matrix").
+It is the broadest of the three and it changes the ceiling of the whole exercise. It already adopts the
+cost-model spine from `202607221600`, so the three deliverables now agree on the measurement backbone;
+the third's contribution is breadth and attribution. Audited here, then folded into a single final
+proposal.
+
+### What the third gets that neither my synthesis nor the second had
+
+1. **A composition is a path through an eight-stage pipeline, not a form-by-dispatch pair.** The stages:
+   optimize (none / CSE / bounded eqsat), intern (none / hashed / sharded), record form (five wire strides
+   / flat), value representation (static / tagged / nanbox), operand access (inline / pool-spill /
+   interned-ref), dispatch (switch / fntable / threaded / ifchain / bittree / perfecthash), fusion (none /
+   pairwise), output building (overwrite / cow / reuse). Nearly every isolated carrier bench maps onto one
+   stage. This directly answers op's original expansion ("all of the things we've been benching, in
+   compositions"): it inventories the whole corpus and turns each isolated finding into a composable axis,
+   where my synthesis only composed form x dispatch plus program profiles. **I adopt the pipeline framing
+   as the correct maximal structure. My form-by-dispatch grid becomes its Tier 0 spine.**
+
+2. **Per-stage sub-timing: measure where the time goes within one composition run.** End-to-end time plus
+   a named sub-timing per stage that executes in that path, on one warm state. Build-half stages (decode,
+   optimize, intern) get direct sub-timing via a proposed upstream `timed_stage!` macro and a
+   per-(variant, size, stage) CSV schema; run-half stages (dispatch, operand access, output), which are
+   fused in the hot loop and would be destroyed by an in-loop barrier, get differential attribution
+   against reference floors. **This is the highest-upside timing idea in any of the three, and it
+   generalizes the two-floor decomposition: the run-half differential attribution IS the null-dispatch /
+   inline-only floor differencing, applied per stage.** So the second deliverable's floor decomposition
+   and my native-normalization are the same mechanism the third uses at per-stage granularity. I adopt
+   per-stage sub-timing, with the important note that only the build-half direct sub-timing needs the
+   upstream `timed_stage!` change; the run-half floor-differential attribution works today, so we can
+   start there and add the harness feature for build-half detail.
+
+3. **Extend the IR with a per-node type tag so value representation composes.** valrepr currently runs on a
+   separate mixed-type mini-IR; a type tag on the shared node makes static / tagged / nanbox a real axis
+   over the shared program. **I adopt it as a staged, off-by-default extension** (tag off for the
+   static-canonical spine so the A1-A3 comparison survives up to the checksum move), because it is the only
+   way value representation becomes composable rather than a side bench.
+
+4. **The maximal matrix as definition, tiers as committed evidence.** The full coherent cross is ~20,000
+   cells; the third keeps it maximal-in-definition and runs it in tiers (Tier 0 spine = form x dispatch 36
+   cells; Tier 1 single-axis slices from the shipped-default centre; Tier 2 targeted pairwise for
+   predicted-strong interactions like optimize-by-form and fusion-by-dispatch; Tier 3 full cross on
+   demand). This is a cleaner and more honest resolution of "maximal but readable" than my staged-by-value
+   build or the second's fractional-factorial-as-ceiling. **I adopt the tier structure; my
+   fractional-factorial-from-centre is exactly its Tier 0 plus Tier 1.**
+
+5. **A per-stage adaptive selector.** Beyond the second's whole-program cost-model selector, the third
+   proposes a selector that picks each STAGE independently from the calibration table, composing a path the
+   fixed matrix never enumerated, and tests whether per-stage-composed beats whole-program (i.e. whether
+   the stages are independent). **I adopt it, and observe it is orthogonal to my per-region selector:**
+   per-stage varies the strategy across the pipeline for the whole program; per-region varies one stage
+   (dispatch) across program segments. The strongest possible champion fuses both: per-stage strategy
+   selection with the dispatch stage additionally per-region. That fusion is mine to contribute on top of
+   the third's per-stage idea.
+
+### What of my synthesis survives against the third (share up)
+
+- **The concrete mechanism-named profiles and the `op_weights` generator mechanism.** The third says
+  "extend GenParams with a topology/depth knob" but does not name the arity-heavy or leaf-heavy profiles
+  or give the sampling mechanism. My `P_wideselect` (arity/spill stress), `P_leaf` (decode-bound),
+  `P_madd` (native anchor), and the `op_weights` vector are the concrete instantiation of its shape basis.
+  Share up.
+- **The warmup-curve regime unification.** Neither the second nor the third has it: both keep hot-single
+  and cold-many as two separate regimes. Fitting `total(k) = S + sum_{j<k} I(j)` with `I(j)` decaying from
+  a cold to a warm slope extracts both regimes' slopes AND the warmup length from one k-sweep, and the
+  warmup length is exactly the "when is a program hot" quantity a tiering runtime needs. Keep as a
+  refinement on the third's regime axis.
+- **The better-framework primitives.** My "better framework" section (regression cells, floor
+  decomposition, regime execution modes, isolated cross-product codegen, oracle/regret reporting as
+  first-class harness services) is the natural home for the third's per-stage sub-timing (a sixth
+  primitive) and its tiered on-demand generation. The third proposes the `timed_stage!` harness feature in
+  isolation; my framing makes it one of a coherent set of primitives that turn this whole class of bench
+  into declared-axes-in, decision-grade-surface-out. Keep, and fold `timed_stage!` in as a primitive.
+
+### Take / leave / share / replace against the third
+
+- **Take from the third:** the eight-stage pipeline framing; per-stage sub-timing (build-direct /
+  run-differential); the IR type-tag extension for value-rep (staged, off by default); the maximal-matrix
+  tier structure; the per-stage adaptive selector.
+- **Replace in my synthesis with the third's:** my form-by-dispatch-plus-profiles matrix -> its eight-stage
+  pipeline with form x dispatch as Tier 0; my fractional-factorial-from-centre -> its Tier 0 through Tier 3
+  (same idea, better articulated and open-ended).
+- **Share up (mine/second's that the third should absorb):** the cost-model line fit and two floors (the
+  third already took these from the second); my concrete profiles + `op_weights`; my warmup-curve
+  unification; my framework-primitives framing as the home for its `timed_stage!`; the per-region selector
+  as the fusion partner for its per-stage selector.
+- **Leave / caution:** the full ~20,000-cell cross is a real over-reach risk (a strong interaction can hide
+  in an unrun Tier-3 cell); accept maximal-in-definition but commit evidence outward from Tier 0 on signal,
+  not by trying to fill the space. The `timed_stage!` upstream harness change is the one cross-repo
+  dependency; sequence it after the floor-based run-half attribution (which needs no upstream change) so the
+  matrix is not blocked on it. The IR type tag shifts every absolute number and complicates the layout;
+  stage value-rep composition after the form x dispatch x optimize spine is solid, not up front.
+
+### The final unified proposal (best across all three)
+
+Build the interpreter-composition bench as an **eight-stage pipeline matrix** (the third's breadth,
+answering "compose everything we've benched") measured with the **`S + k*I` cost-model line fit, two
+reference floors, and the post-pass checksum** (the second's rigor), instantiated on **six mechanism-named
+program profiles via an `op_weights` generator field** (mine), with **per-stage attribution** (build-half
+direct via `timed_stage!`, run-half differential via the floors), the **warmup-curve regime fit** that
+yields cold slope, warm slope, and warmup length in one sweep (mine) cross-checked by the **cold-many batch
+regime** (the second's), and a **three-tier champion ladder**: the oracle envelope, the whole-program
+cost-model selector, and a **per-stage-plus-per-region cost-model selector** as the payoff (the third's
+per-stage fused with my per-region). All of it sits on a **cost-model bench framework** that provides
+regression cells, floor decomposition, regime execution modes, isolated cross-product codegen, per-stage
+sub-timing, and oracle/regret reporting as reusable primitives (my framework section, with the third's
+`timed_stage!` as one primitive), so the maximal matrix is a declarative axis catalogue emitting a tiered,
+on-demand, decision-grade surface rather than hand-authored cells.
+
+Rollout, sequenced so nothing blocks on the one upstream change:
+
+1. **Carrier fidelity (all three agree, do first):** move the checksum out of the hot loop, decouple the
+   input seed from program size, floor every timed region to >=10us. These re-baseline A1-A3 on a clean
+   signal.
+2. **Tier 0 spine:** the form x dispatch grid with native and per-form null-dispatch floors, measured as
+   `S + k*I` lines on the `P_real` centre. Subsumes and replaces the original two-axis plan.
+3. **Program basis:** the six profiles via `op_weights` + `op_correlation` + `locality_window`.
+4. **Tier 1 slices, highest-leverage stage first:** optimize (CSE lifted from `cheap_lowering`, then
+   bounded eqsat) is the highest-leverage axis because a pre-pass that shrinks node count changes the
+   working set every downstream stage pays; then intern, fusion, output building.
+5. **Regimes:** the warmup-curve fit as the unified hot/cold measurement, cross-checked by the cold-many
+   batch.
+6. **Per-stage attribution:** run-half floor-differential first (no upstream change), then the
+   `timed_stage!` harness feature for build-half direct sub-timing.
+7. **Value-rep axis:** the IR type-tag extension, off by default, staged after the spine is solid.
+8. **Champions:** oracle envelope, then whole-program cost-model selector, then the per-stage-plus-per-region
+   selector, reporting regret against the envelope.
+
+This is the strongest suggestion the three deliverables produce together: the third's pipeline breadth and
+per-stage attribution, the second's cost-model rigor and floor decomposition and cold regime, my concrete
+profiles and generator mechanism and warmup-curve unification and framework primitives, and a fused
+per-stage-plus-per-region adaptive champion that no single deliverable proposed. It composes the entire
+corpus over one shared IR program, times each stage in place, decomposes every number into
+compute-plus-structure-plus-dispatch, draws the amortization and warmup and working-set crossovers as
+curves rather than points, and asks the one question worth the whole apparatus: can an adaptive runtime,
+choosing each stage (and dispatch per region) from a cheap measured model, beat every fixed composition
+across the entire program-and-regime space, and by how much.
