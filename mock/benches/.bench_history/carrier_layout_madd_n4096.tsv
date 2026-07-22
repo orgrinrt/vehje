@@ -1,0 +1,6 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784758341	d772801	carrier_layout_madd_n4096	carrier_lay_madd_rec12	4096	warm	190790.0	190780.6	191726.7
+1784758341	d772801	carrier_layout_madd_n4096	carrier_lay_madd_rec16	4096	warm	191329.2	191125.2	193165.5
+1784758341	d772801	carrier_layout_madd_n4096	carrier_lay_madd_rec20	4096	warm	191246.2	191227.9	191667.7
+1784758341	d772801	carrier_layout_madd_n4096	carrier_lay_madd_rec24	4096	warm	190767.9	190486.5	191683.0
+1784758341	d772801	carrier_layout_madd_n4096	carrier_lay_madd_rec32	4096	warm	194221.2	194177.9	195145.9

@@ -1,191 +1,155 @@
-# Native ceiling: switch vs fn-table interp vs shape-specialized native, opaque program (carrier)
+# Native ceiling: interpreter vs shape-specialized native madd loop (THROUGHPUT over a byte stream, O(N^2), not comparable to sibling per-execution numbers)
 
-3 variants, 6 samples per variant.
-Baseline: **carrier_ceiling_native**
+2 variants, 6 samples per variant.
+Baseline: **carrier_ceil_interp**
 
 ## Highlights
 
-Baseline for all deltas below: **carrier_ceiling_native**. (Deltas are paired `variant - baseline` medians; `*` marks a CI that excludes zero.)
+Baseline for all deltas below: **carrier_ceil_interp**. (Deltas are paired `variant - baseline` medians; `*` marks a CI that excludes zero.)
 
-### carrier_ceiling_native dominates: 105% faster than the next best (carrier_ceiling_switch)
+### Baseline (carrier_ceil_interp) is the SLOWEST variant; every rival beats it
 
-carrier_ceiling_native (1.51 us) leads carrier_ceiling_switch (3.09 us) by 105%, a clear separation rather than a photo finish. CV 21.2%.
+The declared/defaulted baseline carrier_ceil_interp has the worst median (171.41 us). Every delta is therefore measured against the worst performer, which flatters all rivals and compresses the differences that matter among them (e.g. fastest carrier_ceil_native at 105.52 us).
+
+_Why it matters:_ A baseline picked by accident (often the first variant to run / sort) silently skews every comparison. Re-baseline via `[bench.<name>.normalise]` on a representative variant.
+
+### carrier_ceil_native dominates: 62% faster than the next best (carrier_ceil_interp)
+
+carrier_ceil_native (105.52 us) leads carrier_ceil_interp (171.41 us) by 62%, a clear separation rather than a photo finish. CV 2.4%.
 
 _Why it matters:_ A dominant, well-separated winner is a safe default pick for this workload shape.
 
-### carrier_ceiling_fntable is an outlier: 2.1x slower than the field
+### carrier_ceil_native beats baseline by 38% (significant)
 
-carrier_ceiling_fntable (3.18 us) is 2.1x the fastest (1.51 us), well off the pack.
+carrier_ceil_native is -65.25 us (38%) faster than baseline carrier_ceil_interp, with a CI that excludes zero.
 
-_Why it matters:_ A >2x outlier is almost never the right choice; if it is intentional (e.g. it buys correctness), say so explicitly.
-
-### No variant beats the baseline (carrier_ceiling_native)
-
-The baseline carrier_ceiling_native is the fastest (1.51 us median); no rival improves on it (all deltas are >= 0).
-
-_Why it matters:_ When nothing beats the baseline, the current choice stands; the contenders cost speed for whatever else they buy.
-
-### carrier_ceiling_fntable is inconsistent: worst-20% is 1.5x its best-20%
-
-carrier_ceiling_fntable's best 20% of batches run at 2.93 us but its worst 20% at 4.48 us (1.5x) - a bimodal or bursty profile the median hides.
-
-_Why it matters:_ A fat tail matters for latency budgets even when the median looks fine; a steadier variant may serve better under load.
+_Why it matters:_ A large, significant improvement over the current baseline is a concrete reason to switch.
 
 ## Key findings
 
-- **Baseline (carrier_ceiling_native) is the fastest** at 1507.1 ns median
-- 2 variants significantly slower than baseline
-- Spread: 2.11x (fastest 1507.1 ns, slowest 3181.9 ns)
+- **Fastest: carrier_ceil_native** at 105515.2 ns median (-38.4% vs baseline)
+- 1 variant significantly faster than baseline
+- Spread: 1.62x (fastest 105515.2 ns, slowest 171405.5 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| carrier_ceiling_fntable | 6665ns | 5986ns | 5506ns | 5866ns | 8443ns | +39.73% |
-| carrier_ceiling_native | 4770ns | 4321ns | 4217ns | 4309ns | 5738ns | base |
-| carrier_ceiling_switch | 6399ns | 5900ns | 5439ns | 5896ns | 7633ns | +34.14% |
+| carrier_ceil_interp | 173502ns | 173699ns | 170255ns | 173391ns | 175292ns | base |
+| carrier_ceil_native | 108032ns | 107832ns | 104407ns | 107172ns | 111134ns | -37.73% |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| carrier_ceiling_fntable | 3547ns | 2928ns | 4482ns | +117.59% | 0.018 |
-| carrier_ceiling_native | 1630ns | 1363ns | 1967ns | base | 0.039 |
-| carrier_ceiling_switch | 3347ns | 2852ns | 3984ns | +105.31% | 0.019 |
+| carrier_ceil_interp | 171140ns | 167705ns | 172954ns | base | 0.000 |
+| carrier_ceil_native | 105610ns | 101749ns | 108628ns | -38.29% | 0.001 |
 
 ## Performance model
 
-- Peak throughput: **0.047 Gops/s** (carrier_ceiling_native; best 20% batches)
+- Peak throughput: **0.001 Gops/s** (carrier_ceil_native; best 20% batches)
 - Ops per call: 64
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| carrier_ceiling_fntable | 0.020 | 42.8% |
-| carrier_ceiling_native | 0.042 | 90.5% |
-| carrier_ceiling_switch | 0.021 | 44.1% |
+| carrier_ceil_interp | 0.000 | 59.4% |
+| carrier_ceil_native | 0.001 | 96.4% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| carrier_ceiling_fntable | 6665ns | 6665ns | +39.73% |
-| carrier_ceiling_native | 4770ns | 4770ns | base |
-| carrier_ceiling_switch | 6399ns | 6399ns | +34.14% |
+| carrier_ceil_interp | 173502ns | 173502ns | base |
+| carrier_ceil_native | 108032ns | 108032ns | -37.73% |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| carrier_ceiling_native | 1507ns | base | --- | [1417, 1967] | --- | --- | --- | --- |
-| carrier_ceiling_fntable | 3182ns | +1745.2ns (+115.8%) | [+1490, +2516]ns | [2978, 4482] | YES | 0.0313 | 0.0313 | 0 |
-| carrier_ceiling_switch | 3090ns | +1673.0ns (+111.0%) | [+1461, +2017]ns | [2968, 3984] | YES | 0.0313 | 0.0313 | 0 |
+| carrier_ceil_interp | 171405ns | base | --- | [169061, 172954] | --- | --- | --- | --- |
+| carrier_ceil_native | 105515ns | -65249.6ns (-38.1%) | [-69443, -61899]ns | [102686, 108628] | YES | 0.0313 | 0.0313 | 0 |
 
 ## Per-pass consistency (nonstop e2e, Δ vs baseline)
 
-| Pass | carrier_ceiling_native | carrier_ceiling_fntable | carrier_ceiling_switch |
-|---|---|---|---|
-| 1 | 2327ns | +119.0% | +83.3% |
-| 2 | 1607ns | +140.8% | +130.4% |
-| 3 | 1470ns | +105.9% | +109.9% |
-| 4 | 1363ns | +132.6% | +126.9% |
-| 5 | 1510ns | +111.5% | +104.2% |
-| 6 | 1504ns | +94.6% | +89.6% |
+| Pass | carrier_ceil_interp | carrier_ceil_native |
+|---|---|---|
+| 1 | 171239ns | -39.5% |
+| 2 | 171572ns | -37.1% |
+| 3 | 170417ns | -35.9% |
+| 4 | 173018ns | -41.2% |
+| 5 | 172890ns | -38.7% |
+| 6 | 167705ns | -37.4% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| carrier_ceiling_fntable | 0.257 | moderate+ |
-| carrier_ceiling_native | 0.126 | ok |
-| carrier_ceiling_switch | 0.350 | moderate+ |
+| carrier_ceil_interp | -0.228 | moderate- |
+| carrier_ceil_native | -0.312 | moderate- |
 
 **Consistency summary:**
 
-- **carrier_ceiling_fntable**: won 0/6, lost 6/6
-- **carrier_ceiling_switch**: won 0/6, lost 6/6
+- **carrier_ceil_native**: won 6/6, lost 0/6
 
 ## Bridge overhead per variant
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| carrier_ceiling_fntable | 75.8ns | 3547.3ns | 2.1% |  |
-| carrier_ceiling_native | 5.9ns | 1630.3ns | 0.4% |  |
-| carrier_ceiling_switch | 75.2ns | 3347.1ns | 2.2% |  |
+| carrier_ceil_interp | 169172.3ns | 171140.0ns | 98.9% | HIGH |
+| carrier_ceil_native | 105579.2ns | 105609.7ns | 100.0% | HIGH |
 
 ## Distribution (algo ns)
 
 ```
-carrier_ceiling_fntable (n=6, range 2927.5-4482.4 ns)
-   2927.5 |####################
-   3005.2 |####################
-   3083.0 |
-   3160.7 |########################################
-   3238.5 |
-   3316.2 |
-   3394.0 |
-   3471.7 |
-   3549.5 |
-   3627.2 |
-   3705.0 |
-   3782.7 |
-   3860.5 |####################
-   3938.2 |
-   4016.0 |
-   4093.7 |
-   4171.5 |
-   4249.2 |
-   4327.0 |
-   4404.7 |
+carrier_ceil_interp (n=6, range 167705.4-172953.5 ns)
+  167705.4 |########################################
+  167967.8 |
+  168230.2 |
+  168492.6 |
+  168755.0 |
+  169017.4 |
+  169279.8 |
+  169542.3 |
+  169804.7 |
+  170067.1 |
+  170329.5 |########################################
+  170591.9 |
+  170854.3 |
+  171116.7 |########################################
+  171379.1 |########################################
+  171641.5 |
+  171903.9 |
+  172166.3 |
+  172428.7 |
+  172691.1 |########################################
   (0 below, 1 above range)
 
-carrier_ceiling_native (n=6, range 1363.3-1966.9 ns)
-   1363.3 |####################
-   1393.5 |
-   1423.7 |
-   1453.8 |####################
-   1484.0 |########################################
-   1514.2 |
-   1544.4 |
-   1574.6 |
-   1604.7 |####################
-   1634.9 |
-   1665.1 |
-   1695.3 |
-   1725.5 |
-   1755.6 |
-   1785.8 |
-   1816.0 |
-   1846.2 |
-   1876.4 |
-   1906.5 |
-   1936.7 |
-  (0 below, 1 above range)
-
-carrier_ceiling_switch (n=6, range 2852.1-3983.5 ns)
-   2852.1 |#############
-   2908.7 |
-   2965.2 |
-   3021.8 |
-   3078.4 |########################################
-   3134.9 |
-   3191.5 |
-   3248.1 |
-   3304.7 |
-   3361.2 |
-   3417.8 |
-   3474.4 |
-   3530.9 |
-   3587.5 |
-   3644.1 |
-   3700.7 |#############
-   3757.2 |
-   3813.8 |
-   3870.4 |
-   3926.9 |
+carrier_ceil_native (n=6, range 101749.2-108628.4 ns)
+  101749.2 |########################################
+  102093.2 |
+  102437.1 |
+  102781.1 |
+  103125.0 |
+  103469.0 |########################################
+  103812.9 |
+  104156.9 |
+  104500.9 |
+  104844.8 |########################################
+  105188.8 |
+  105532.7 |
+  105876.7 |########################################
+  106220.6 |
+  106564.6 |
+  106908.6 |
+  107252.5 |
+  107596.5 |
+  107940.4 |########################################
+  108284.4 |
   (0 below, 1 above range)
 
 ```
 
 ## Diagnostics
 
-- **carrier_ceiling_fntable**: CV=21.3% (high variance, measurements may be unstable)
+- **carrier_ceil_interp**: bridge=98.8% of algo (FFI overhead may distort results)
+- **carrier_ceil_native**: bridge=99.9% of algo (FFI overhead may distort results)

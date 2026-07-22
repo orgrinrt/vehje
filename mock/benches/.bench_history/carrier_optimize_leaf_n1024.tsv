@@ -1,0 +1,8 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784759059	d772801	carrier_optimize_leaf_n1024	carrier_opt_leaf_all	1024	warm	11698.3	11675.0	11715.2
+1784759059	d772801	carrier_optimize_leaf_n1024	carrier_opt_leaf_cse	1024	warm	14287.1	14195.9	14599.6
+1784759059	d772801	carrier_optimize_leaf_n1024	carrier_opt_leaf_cseeqsat	1024	warm	17314.6	17266.2	19160.0
+1784759059	d772801	carrier_optimize_leaf_n1024	carrier_opt_leaf_dce	1024	warm	45401.2	44803.1	49204.8
+1784759059	d772801	carrier_optimize_leaf_n1024	carrier_opt_leaf_eqsat	1024	warm	22166.7	22141.5	23526.7
+1784759059	d772801	carrier_optimize_leaf_n1024	carrier_opt_leaf_fold	1024	warm	34083.8	33897.5	34195.4
+1784759059	d772801	carrier_optimize_leaf_n1024	carrier_opt_leaf_none	1024	warm	46846.7	46535.4	49836.7

@@ -354,10 +354,11 @@ fn native_ceiling_family() -> Vec<MatrixSpec> {
     // THROUGHPUT-over-a-byte-stream measurement, not per-execution latency. Its
     // raw ns are NOT on the sibling families' scale and must never be normalized
     // against them. This shape is intentional (the crate's run_over_input /
-    // native_madd_over_input ceiling idiom); do not reshape it. Sizes capped at
-    // 4096 because N=16384 would be ~4.3e9 node-steps per call and blow past the
-    // 300s subprocess timeout.
-    vec![spec_sized("carrier_native_ceiling".to_string(), "Native ceiling: interpreter vs shape-specialized native madd loop (THROUGHPUT over a byte stream, O(N^2), not comparable to sibling per-execution numbers)".to_string(), "interp", "carrier_ceil", cells, vec![64, 256, 1024, 4096])]
+    // native_madd_over_input ceiling idiom); do not reshape it. Sizes stop at
+    // 1024 (matching the JIT native_family): N=4096 is 16x the node-step work of
+    // N=1024 and, with calibrated repeats, exceeds even the 600s driver window
+    // for no additional insight over the 64/256/1024 throughput-ceiling curve.
+    vec![spec_sized("carrier_native_ceiling".to_string(), "Native ceiling: interpreter vs shape-specialized native madd loop (THROUGHPUT over a byte stream, O(N^2), not comparable to sibling per-execution numbers)".to_string(), "interp", "carrier_ceil", cells, vec![64, 256, 1024])]
 }
 
 fn main() {

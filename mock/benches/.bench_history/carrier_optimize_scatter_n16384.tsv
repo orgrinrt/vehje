@@ -1,0 +1,8 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784758975	d772801	carrier_optimize_scatter_n16384	carrier_opt_scatter_all	16384	warm	2261830.4	2260759.8	2269807.9
+1784758975	d772801	carrier_optimize_scatter_n16384	carrier_opt_scatter_cse	16384	warm	2297844.2	2291940.9	2303264.3
+1784758975	d772801	carrier_optimize_scatter_n16384	carrier_opt_scatter_cseeqsat	16384	warm	2261769.2	2260800.9	2277984.2
+1784758975	d772801	carrier_optimize_scatter_n16384	carrier_opt_scatter_dce	16384	warm	2494473.8	2493166.9	2511130.9
+1784758975	d772801	carrier_optimize_scatter_n16384	carrier_opt_scatter_eqsat	16384	warm	2258584.2	2257987.7	2274331.0
+1784758975	d772801	carrier_optimize_scatter_n16384	carrier_opt_scatter_fold	16384	warm	2510127.9	2502243.8	2513829.8
+1784758975	d772801	carrier_optimize_scatter_n16384	carrier_opt_scatter_none	16384	warm	2504908.3	2504643.1	2687029.8

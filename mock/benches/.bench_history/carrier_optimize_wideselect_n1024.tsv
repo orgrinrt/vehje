@@ -1,0 +1,8 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784758989	d772801	carrier_optimize_wideselect_n1024	carrier_opt_wideselect_all	1024	warm	29576.7	29484.6	29631.0
+1784758989	d772801	carrier_optimize_wideselect_n1024	carrier_opt_wideselect_cse	1024	warm	28966.2	28956.7	29374.0
+1784758989	d772801	carrier_optimize_wideselect_n1024	carrier_opt_wideselect_cseeqsat	1024	warm	30349.6	30125.7	30688.2
+1784758989	d772801	carrier_optimize_wideselect_n1024	carrier_opt_wideselect_dce	1024	warm	33453.8	33335.7	34749.8
+1784758989	d772801	carrier_optimize_wideselect_n1024	carrier_opt_wideselect_eqsat	1024	warm	30353.8	30331.0	31047.5
+1784758989	d772801	carrier_optimize_wideselect_n1024	carrier_opt_wideselect_fold	1024	warm	33158.3	33082.5	33274.8
+1784758989	d772801	carrier_optimize_wideselect_n1024	carrier_opt_wideselect_none	1024	warm	33290.0	33152.7	33402.1

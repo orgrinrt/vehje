@@ -5,3 +5,5 @@
 1784673067	304e23d	carrier_native_ceiling_n1024	carrier_ceiling_fntable	1024	warm	41032.9	41017.3	41247.2
 1784673067	304e23d	carrier_native_ceiling_n1024	carrier_ceiling_native	1024	warm	18553.8	18549.8	19031.0
 1784673067	304e23d	carrier_native_ceiling_n1024	carrier_ceiling_switch	1024	warm	38036.7	37992.9	39002.3
+1784764229	d772801	carrier_native_ceiling_n1024	carrier_ceil_interp	1024	warm	43171659.6	43169200.0	43264780.7
+1784764229	d772801	carrier_native_ceiling_n1024	carrier_ceil_native	1024	warm	28963426.7	28958194.8	29077435.6

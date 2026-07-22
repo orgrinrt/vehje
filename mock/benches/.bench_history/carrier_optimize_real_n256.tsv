@@ -1,0 +1,8 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784758708	d772801	carrier_optimize_real_n256	carrier_opt_real_all	256	warm	8490.8	8475.6	8602.1
+1784758708	d772801	carrier_optimize_real_n256	carrier_opt_real_cse	256	warm	8620.4	8611.0	8642.1
+1784758708	d772801	carrier_optimize_real_n256	carrier_opt_real_cseeqsat	256	warm	8520.8	8500.8	8636.2
+1784758708	d772801	carrier_optimize_real_n256	carrier_opt_real_dce	256	warm	9180.8	9143.5	9245.4
+1784758708	d772801	carrier_optimize_real_n256	carrier_opt_real_eqsat	256	warm	8517.9	8486.5	8555.9
+1784758708	d772801	carrier_optimize_real_n256	carrier_opt_real_fold	256	warm	8956.7	8954.6	9005.0
+1784758708	d772801	carrier_optimize_real_n256	carrier_opt_real_none	256	warm	9005.0	9000.9	9155.4

@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784758553	d772801	carrier_valrepr_n1024	carrier_vr_nanbox	1024	warm	33298.3	33228.3	34115.0
+1784758553	d772801	carrier_valrepr_n1024	carrier_vr_static	1024	warm	40410.0	40393.8	40686.7
+1784758553	d772801	carrier_valrepr_n1024	carrier_vr_tagged	1024	warm	36291.7	36226.7	37036.1

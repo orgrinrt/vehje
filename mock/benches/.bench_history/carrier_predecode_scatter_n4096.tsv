@@ -1,0 +1,7 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784757920	d772801	carrier_predecode_scatter_n4096	carrier_pre_scatter_direct	4096	warm	393944.6	389495.4	403162.5
+1784757920	d772801	carrier_predecode_scatter_n4096	carrier_pre_scatter_fntable	4096	warm	582835.0	582662.1	583436.6
+1784757920	d772801	carrier_predecode_scatter_n4096	carrier_pre_scatter_null	4096	warm	101514.2	99782.7	103641.4
+1784757920	d772801	carrier_predecode_scatter_n4096	carrier_pre_scatter_regcache	4096	warm	523373.7	522920.4	533844.1
+1784757920	d772801	carrier_predecode_scatter_n4096	carrier_pre_scatter_switch	4096	warm	509225.4	506760.4	512518.5
+1784757920	d772801	carrier_predecode_scatter_n4096	carrier_pre_scatter_threaded	4096	warm	514920.8	514371.4	525802.7

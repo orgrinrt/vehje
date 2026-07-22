@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784759083	d772801	carrier_native_real_n1024	carrier_nat_real_copypatch	1024	warm	15895.0	15651.9	16025.0
+1784759083	d772801	carrier_native_real_n1024	carrier_nat_real_interp	1024	warm	45024.2	44814.8	53582.2
+1784759083	d772801	carrier_native_real_n1024	carrier_nat_real_stencil	1024	warm	15604.2	15598.5	15966.5

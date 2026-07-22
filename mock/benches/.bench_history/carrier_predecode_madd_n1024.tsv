@@ -1,0 +1,7 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784757841	d772801	carrier_predecode_madd_n1024	carrier_pre_madd_direct	1024	warm	50493.7	50378.3	50837.7
+1784757841	d772801	carrier_predecode_madd_n1024	carrier_pre_madd_fntable	1024	warm	49249.2	49220.4	49737.9
+1784757841	d772801	carrier_predecode_madd_n1024	carrier_pre_madd_null	1024	warm	45588.8	45439.2	46023.6
+1784757841	d772801	carrier_predecode_madd_n1024	carrier_pre_madd_regcache	1024	warm	38067.5	38050.0	38390.2
+1784757841	d772801	carrier_predecode_madd_n1024	carrier_pre_madd_switch	1024	warm	50423.3	50361.2	50663.8
+1784757841	d772801	carrier_predecode_madd_n1024	carrier_pre_madd_threaded	1024	warm	49682.1	49660.4	50495.4

@@ -2058,7 +2058,4 @@ variants = ["variants/carrier_ceil_interp/target/release/carrier_ceil_interp", "
 [[bench.carrier_native_ceiling.sizes]]
 n = 1024
 variants = ["variants/carrier_ceil_interp/target/release/carrier_ceil_interp", "variants/carrier_ceil_native/target/release/carrier_ceil_native"]
-[[bench.carrier_native_ceiling.sizes]]
-n = 4096
-variants = ["variants/carrier_ceil_interp/target/release/carrier_ceil_interp", "variants/carrier_ceil_native/target/release/carrier_ceil_native"]
 

@@ -1,0 +1,7 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784757772	d772801	carrier_predecode_real_n64	carrier_pre_real_direct	64	warm	1637.1	1634.6	1668.6
+1784757772	d772801	carrier_predecode_real_n64	carrier_pre_real_fntable	64	warm	3083.3	3071.4	3090.0
+1784757772	d772801	carrier_predecode_real_n64	carrier_pre_real_null	64	warm	1400.8	1397.7	1419.0
+1784757772	d772801	carrier_predecode_real_n64	carrier_pre_real_regcache	64	warm	2453.8	2452.9	2463.9
+1784757772	d772801	carrier_predecode_real_n64	carrier_pre_real_switch	64	warm	2146.2	2144.8	2156.1
+1784757772	d772801	carrier_predecode_real_n64	carrier_pre_real_threaded	64	warm	1902.5	1898.3	1937.1

@@ -5,3 +5,5 @@
 1784673065	304e23d	carrier_native_ceiling_n64	carrier_ceiling_fntable	64	warm	3192.9	3181.9	4482.4
 1784673065	304e23d	carrier_native_ceiling_n64	carrier_ceiling_native	64	warm	1510.0	1507.1	1966.9
 1784673065	304e23d	carrier_native_ceiling_n64	carrier_ceiling_switch	64	warm	3093.8	3089.8	3983.5
+1784763976	d772801	carrier_native_ceiling_n64	carrier_ceil_interp	64	warm	171571.7	171405.5	172953.5
+1784763976	d772801	carrier_native_ceiling_n64	carrier_ceil_native	64	warm	106003.3	105515.2	108628.4

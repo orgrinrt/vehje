@@ -1,0 +1,9 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784757643	d772801	carrier_dispatch_wideselect_n256	carrier_disp_wideselect_bittree	256	warm	12314.2	12297.1	12386.6
+1784757643	d772801	carrier_dispatch_wideselect_n256	carrier_disp_wideselect_fntable	256	warm	13262.5	13247.5	13384.3
+1784757643	d772801	carrier_dispatch_wideselect_n256	carrier_disp_wideselect_ifchain	256	warm	11417.9	11400.0	11669.5
+1784757643	d772801	carrier_dispatch_wideselect_n256	carrier_disp_wideselect_ifchainasc	256	warm	10831.7	10810.7	11016.2
+1784757643	d772801	carrier_dispatch_wideselect_n256	carrier_disp_wideselect_ifchainlin	256	warm	24426.7	24418.2	24501.2
+1784757643	d772801	carrier_dispatch_wideselect_n256	carrier_disp_wideselect_nullfloor	256	warm	8065.0	8051.2	8123.1
+1784757643	d772801	carrier_dispatch_wideselect_n256	carrier_disp_wideselect_switch	256	warm	10893.7	10860.0	10926.8
+1784757643	d772801	carrier_dispatch_wideselect_n256	carrier_disp_wideselect_threaded	256	warm	12123.3	12067.2	12172.7

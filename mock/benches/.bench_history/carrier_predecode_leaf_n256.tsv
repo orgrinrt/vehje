@@ -1,0 +1,7 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784758022	d772801	carrier_predecode_leaf_n256	carrier_pre_leaf_direct	256	warm	4905.4	4898.3	4960.6
+1784758022	d772801	carrier_predecode_leaf_n256	carrier_pre_leaf_fntable	256	warm	8743.3	8706.6	9009.0
+1784758022	d772801	carrier_predecode_leaf_n256	carrier_pre_leaf_null	256	warm	5139.6	5105.4	5165.0
+1784758022	d772801	carrier_predecode_leaf_n256	carrier_pre_leaf_regcache	256	warm	6742.1	6733.6	6777.3
+1784758022	d772801	carrier_predecode_leaf_n256	carrier_pre_leaf_switch	256	warm	6483.8	6465.9	6592.1
+1784758022	d772801	carrier_predecode_leaf_n256	carrier_pre_leaf_threaded	256	warm	5745.0	5742.3	5776.7

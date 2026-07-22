@@ -1,0 +1,5 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784758057	d772801	carrier_cfg_n256	carrier_cfg_fntable	256	warm	221605.8	221479.8	222575.4
+1784758057	d772801	carrier_cfg_n256	carrier_cfg_switch	256	warm	229052.5	228739.0	230679.8
+1784758057	d772801	carrier_cfg_n256	carrier_cfg_threaded	256	warm	182703.3	182701.6	187912.3
+1784758057	d772801	carrier_cfg_n256	carrier_cfg_trace	256	warm	105833.8	104747.3	109780.8

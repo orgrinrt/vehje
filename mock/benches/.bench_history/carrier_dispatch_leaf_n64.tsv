@@ -1,0 +1,9 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784757722	d772801	carrier_dispatch_leaf_n64	carrier_disp_leaf_bittree	64	warm	2412.1	2408.1	2467.7
+1784757722	d772801	carrier_dispatch_leaf_n64	carrier_disp_leaf_fntable	64	warm	2687.5	2674.8	2696.9
+1784757722	d772801	carrier_dispatch_leaf_n64	carrier_disp_leaf_ifchain	64	warm	2142.5	2141.7	2155.6
+1784757722	d772801	carrier_dispatch_leaf_n64	carrier_disp_leaf_ifchainasc	64	warm	2113.3	2113.1	2176.4
+1784757722	d772801	carrier_dispatch_leaf_n64	carrier_disp_leaf_ifchainlin	64	warm	3030.0	3026.8	3113.1
+1784757722	d772801	carrier_dispatch_leaf_n64	carrier_disp_leaf_nullfloor	64	warm	1661.7	1658.0	1681.9
+1784757722	d772801	carrier_dispatch_leaf_n64	carrier_disp_leaf_switch	64	warm	2149.6	2147.3	2152.5
+1784757722	d772801	carrier_dispatch_leaf_n64	carrier_disp_leaf_threaded	64	warm	2808.3	2802.1	2835.6

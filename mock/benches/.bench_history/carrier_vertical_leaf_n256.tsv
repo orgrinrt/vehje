@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784759604	d772801	carrier_vertical_leaf_n256	carrier_vert_leaf_scalar	256	warm	71930.8	71027.5	72715.6
+1784759604	d772801	carrier_vertical_leaf_n256	carrier_vert_leaf_vert4	256	warm	30212.5	29901.2	31162.7
+1784759604	d772801	carrier_vertical_leaf_n256	carrier_vert_leaf_vert8	256	warm	28152.1	27949.4	30095.4
