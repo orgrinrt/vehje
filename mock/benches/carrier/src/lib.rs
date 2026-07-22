@@ -44,6 +44,7 @@ pub mod interp;
 #[cfg(feature = "threaded")]
 pub mod interp_threaded;
 pub mod ir;
+pub mod liveness;
 pub mod native;
 pub mod optimize;
 pub mod predecode;
