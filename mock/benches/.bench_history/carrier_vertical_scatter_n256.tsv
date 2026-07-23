@@ -2,3 +2,6 @@
 1784759365	d772801	carrier_vertical_scatter_n256	carrier_vert_scatter_scalar	256	warm	82562.9	81518.5	83826.4
 1784759365	d772801	carrier_vertical_scatter_n256	carrier_vert_scatter_vert4	256	warm	35036.2	34582.1	37177.9
 1784759365	d772801	carrier_vertical_scatter_n256	carrier_vert_scatter_vert8	256	warm	30289.2	30099.8	30808.7
+1784796908	74f52f4	carrier_vertical_scatter_n256	carrier_vert_scatter_scalar	256	warm	67465.0	67025.2	68669.8
+1784796908	74f52f4	carrier_vertical_scatter_n256	carrier_vert_scatter_vert4	256	warm	33150.8	33132.9	33531.3
+1784796908	74f52f4	carrier_vertical_scatter_n256	carrier_vert_scatter_vert8	256	warm	28199.6	28081.4	28658.0

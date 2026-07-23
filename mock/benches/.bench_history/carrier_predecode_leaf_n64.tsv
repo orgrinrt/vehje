@@ -5,3 +5,9 @@
 1784758019	d772801	carrier_predecode_leaf_n64	carrier_pre_leaf_regcache	64	warm	1420.4	1420.0	1439.8
 1784758019	d772801	carrier_predecode_leaf_n64	carrier_pre_leaf_switch	64	warm	1364.6	1363.3	1377.5
 1784758019	d772801	carrier_predecode_leaf_n64	carrier_pre_leaf_threaded	64	warm	1285.8	1283.1	1294.6
+1784795235	74f52f4	carrier_predecode_leaf_n64	carrier_pre_leaf_direct	64	warm	976.7	976.2	987.7
+1784795235	74f52f4	carrier_predecode_leaf_n64	carrier_pre_leaf_fntable	64	warm	1820.4	1818.6	1855.0
+1784795235	74f52f4	carrier_predecode_leaf_n64	carrier_pre_leaf_null	64	warm	1102.9	1101.5	1108.2
+1784795235	74f52f4	carrier_predecode_leaf_n64	carrier_pre_leaf_regcache	64	warm	1405.0	1402.7	1426.7
+1784795235	74f52f4	carrier_predecode_leaf_n64	carrier_pre_leaf_switch	64	warm	1356.7	1356.2	1367.2
+1784795235	74f52f4	carrier_predecode_leaf_n64	carrier_pre_leaf_threaded	64	warm	1371.7	1370.8	1386.8

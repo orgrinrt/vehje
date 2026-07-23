@@ -9,47 +9,50 @@ Baseline for all deltas below: **carrier_ceil_interp**. (Deltas are paired `vari
 
 ### Baseline (carrier_ceil_interp) is the SLOWEST variant; every rival beats it
 
-The declared/defaulted baseline carrier_ceil_interp has the worst median (43.17 ms). Every delta is therefore measured against the worst performer, which flatters all rivals and compresses the differences that matter among them (e.g. fastest carrier_ceil_native at 28.96 ms).
+The declared/defaulted baseline carrier_ceil_interp has the worst median (43.07 ms). Every delta is therefore measured against the worst performer, which flatters all rivals and compresses the differences that matter among them (e.g. fastest carrier_ceil_native at 28.88 ms).
 
 _Why it matters:_ A baseline picked by accident (often the first variant to run / sort) silently skews every comparison. Re-baseline via `[bench.<name>.normalise]` on a representative variant.
 
 ### carrier_ceil_native dominates: 49% faster than the next best (carrier_ceil_interp)
 
-carrier_ceil_native (28.96 ms) leads carrier_ceil_interp (43.17 ms) by 49%, a clear separation rather than a photo finish. CV 0.3%.
+carrier_ceil_native (28.88 ms) leads carrier_ceil_interp (43.07 ms) by 49%, a clear separation rather than a photo finish. CV 0.2%.
 
 _Why it matters:_ A dominant, well-separated winner is a safe default pick for this workload shape.
 
 ### carrier_ceil_native beats baseline by 33% (significant)
 
-carrier_ceil_native is -14.24 ms (33%) faster than baseline carrier_ceil_interp, with a CI that excludes zero.
+carrier_ceil_native is -14.18 ms (33%) faster than baseline carrier_ceil_interp, with a CI that excludes zero.
 
 _Why it matters:_ A large, significant improvement over the current baseline is a concrete reason to switch.
 
-### carrier_ceil_interp shows alternating (throttle bounce) (autocorr -0.65)
-
-carrier_ceil_interp's per-pass series has lag-1 autocorrelation -0.65, indicating alternating (throttle bounce). Its timing may not be at steady state.
-
-_Why it matters:_ Autocorrelated samples violate the independence the CIs assume; the interval is optimistic until the drift is warmed out or cooled down.
-
 ## Key findings
 
-- **Fastest: carrier_ceil_native** at 28958194.8 ns median (-32.9% vs baseline)
+- **Fastest: carrier_ceil_native** at 28883421.0 ns median (-32.9% vs baseline)
 - 1 variant significantly faster than baseline
-- Spread: 1.49x (fastest 28958194.8 ns, slowest 43169200.0 ns)
+- Spread: 1.49x (fastest 28883421.0 ns, slowest 43066212.7 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| carrier_ceil_interp | 43197114ns | 43174124ns | 43138197ns | 43168326ns | 43269755ns | base |
-| carrier_ceil_native | 28978627ns | 28962479ns | 28887894ns | 28939830ns | 29082189ns | -32.92% |
+| carrier_ceil_interp | 43092664ns | 43070591ns | 43064922ns | 43069473ns | 43141321ns | base |
+| carrier_ceil_native | 28905051ns | 28887762ns | 28845431ns | 28876035ns | 28978384ns | -32.92% |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| carrier_ceil_interp | 43192181ns | 43133395ns | 43264781ns | base | 0.000 |
-| carrier_ceil_native | 28974091ns | 28883553ns | 29077436ns | -32.92% | 0.000 |
+| carrier_ceil_interp | 43088233ns | 43060537ns | 43136846ns | base | 0.000 |
+| carrier_ceil_native | 28900694ns | 28841155ns | 28973765ns | -32.93% | 0.000 |
+
+## Hardware counters (per call)
+
+| Variant | instructions | cycles | IPC | × base instr |
+|---|---|---|---|---|
+| carrier_ceil_interp | 267802395 | 1176128238 | 0.228 | 1.00× |
+| carrier_ceil_native | 179379007 | 873155847 | 0.205 | 0.67× |
+
+Instructions and cycles are the mean over the variant's samples for the measured region. IPC is instructions per cycle. The instruction ratio isolates whether a variant wins by retiring fewer instructions or by executing the same instructions more efficiently.
 
 ## Performance model
 
@@ -58,40 +61,40 @@ _Why it matters:_ Autocorrelated samples violate the independence the CIs assume
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| carrier_ceil_interp | 0.000 | 66.9% |
-| carrier_ceil_native | 0.000 | 99.7% |
+| carrier_ceil_interp | 0.000 | 67.0% |
+| carrier_ceil_native | 0.000 | 99.9% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| carrier_ceil_interp | 43197114ns | 43197114ns | base |
-| carrier_ceil_native | 28978627ns | 28978627ns | -32.92% |
+| carrier_ceil_interp | 43092664ns | 43092664ns | base |
+| carrier_ceil_native | 28905051ns | 28905051ns | -32.92% |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| carrier_ceil_interp | 43169200ns | base | --- | [43142561, 43264781] | --- | --- | --- | --- |
-| carrier_ceil_native | 28958195ns | -14240346.3ns (-33.0%) | [-14341291, -14072632]ns | [28886642, 29077436] | YES | 0.0313 | 0.0313 | 0 |
+| carrier_ceil_interp | 43066213ns | base | --- | [43061640, 43136846] | --- | --- | --- | --- |
+| carrier_ceil_native | 28883421ns | -14181946.2ns (-32.9%) | [-14245006, -14135665]ns | [28844895, 28973765] | YES | 0.0313 | 0.0313 | 0 |
 
 ## Per-pass consistency (nonstop e2e, Δ vs baseline)
 
 | Pass | carrier_ceil_interp | carrier_ceil_native |
 |---|---|---|
-| 1 | 43171660ns | -32.9% |
-| 2 | 43151727ns | -33.1% |
-| 3 | 43305674ns | -33.1% |
-| 4 | 43133395ns | -32.6% |
-| 5 | 43223887ns | -33.2% |
-| 6 | 43166740ns | -32.7% |
+| 1 | 43117060ns | -33.1% |
+| 2 | 43156632ns | -32.7% |
+| 3 | 43069295ns | -32.9% |
+| 4 | 43060537ns | -32.9% |
+| 5 | 43062742ns | -33.0% |
+| 6 | 43063131ns | -32.9% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| carrier_ceil_interp | -0.654 | HIGH- (thermal bounce) |
-| carrier_ceil_native | -0.460 | moderate- |
+| carrier_ceil_interp | 0.322 | moderate+ |
+| carrier_ceil_native | -0.275 | moderate- |
 
 **Consistency summary:**
 
@@ -101,56 +104,56 @@ _Why it matters:_ Autocorrelated samples violate the independence the CIs assume
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| carrier_ceil_interp | 43143351.7ns | 43192180.6ns | 99.9% | HIGH |
-| carrier_ceil_native | 29172077.2ns | 28974090.8ns | 100.7% | HIGH |
+| carrier_ceil_interp | 43044620.6ns | 43088232.9ns | 99.9% | HIGH |
+| carrier_ceil_native | 28898174.6ns | 28900693.9ns | 100.0% | HIGH |
 
 ## Distribution (algo ns)
 
 ```
-carrier_ceil_interp (n=6, range 43133395.0-43264780.7 ns)
-  43133395.0 |####################
-  43139964.3 |
-  43146533.6 |####################
-  43153102.8 |
-  43159672.1 |
-  43166241.4 |########################################
-  43172810.7 |
-  43179380.0 |
-  43185949.3 |
-  43192518.5 |
-  43199087.8 |
-  43205657.1 |
-  43212226.4 |
-  43218795.7 |####################
-  43225365.0 |
-  43231934.2 |
-  43238503.5 |
-  43245072.8 |
-  43251642.1 |
-  43258211.4 |
+carrier_ceil_interp (n=6, range 43060537.1-43136846.2 ns)
+  43060537.1 |########################################
+  43064352.6 |
+  43068168.0 |#############
+  43071983.5 |
+  43075798.9 |
+  43079614.4 |
+  43083429.8 |
+  43087245.3 |
+  43091060.8 |
+  43094876.2 |
+  43098691.7 |
+  43102507.1 |
+  43106322.6 |
+  43110138.0 |
+  43113953.5 |#############
+  43117769.0 |
+  43121584.4 |
+  43125399.9 |
+  43129215.3 |
+  43133030.8 |
   (0 below, 1 above range)
 
-carrier_ceil_native (n=6, range 28883552.9-29077435.6 ns)
-  28883552.9 |########################################
-  28893247.0 |
-  28902941.2 |
-  28912635.3 |
-  28922329.4 |
-  28932023.6 |
-  28941717.7 |
-  28951411.8 |####################
-  28961106.0 |####################
-  28970800.1 |
-  28980494.2 |
-  28990188.4 |
-  28999882.5 |
-  29009576.7 |
-  29019270.8 |
-  29028964.9 |
-  29038659.1 |
-  29048353.2 |
-  29058047.3 |####################
-  29067741.5 |
+carrier_ceil_native (n=6, range 28841154.6-28973765.4 ns)
+  28841154.6 |####################
+  28847785.1 |####################
+  28854415.7 |
+  28861046.2 |
+  28867676.8 |
+  28874307.3 |####################
+  28880937.8 |
+  28887568.4 |########################################
+  28894198.9 |
+  28900829.5 |
+  28907460.0 |
+  28914090.5 |
+  28920721.1 |
+  28927351.6 |
+  28933982.2 |
+  28940612.7 |
+  28947243.2 |
+  28953873.8 |
+  28960504.3 |
+  28967134.9 |
   (0 below, 1 above range)
 
 ```

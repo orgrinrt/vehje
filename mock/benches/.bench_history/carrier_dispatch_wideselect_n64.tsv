@@ -7,3 +7,11 @@
 1784757639	d772801	carrier_dispatch_wideselect_n64	carrier_disp_wideselect_nullfloor	64	warm	1808.7	1802.9	1819.5
 1784757639	d772801	carrier_dispatch_wideselect_n64	carrier_disp_wideselect_switch	64	warm	2376.2	2373.9	2396.4
 1784757639	d772801	carrier_dispatch_wideselect_n64	carrier_disp_wideselect_threaded	64	warm	2890.0	2886.2	2944.2
+1784794140	2a3f34b	carrier_dispatch_wideselect_n64	carrier_disp_wideselect_bittree	64	warm	2804.2	2783.1	2820.0
+1784794140	2a3f34b	carrier_dispatch_wideselect_n64	carrier_disp_wideselect_fntable	64	warm	3090.8	2922.3	3147.5
+1784794140	2a3f34b	carrier_dispatch_wideselect_n64	carrier_disp_wideselect_ifchain	64	warm	2513.3	2511.2	2527.7
+1784794140	2a3f34b	carrier_dispatch_wideselect_n64	carrier_disp_wideselect_ifchainasc	64	warm	2360.0	2341.2	2395.6
+1784794140	2a3f34b	carrier_dispatch_wideselect_n64	carrier_disp_wideselect_ifchainlin	64	warm	5280.4	5242.5	5432.2
+1784794140	2a3f34b	carrier_dispatch_wideselect_n64	carrier_disp_wideselect_nullfloor	64	warm	1792.5	1791.8	1827.5
+1784794140	2a3f34b	carrier_dispatch_wideselect_n64	carrier_disp_wideselect_switch	64	warm	2396.2	2378.7	2401.4
+1784794140	2a3f34b	carrier_dispatch_wideselect_n64	carrier_disp_wideselect_threaded	64	warm	2915.4	2776.4	2943.8

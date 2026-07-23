@@ -7,3 +7,11 @@
 1784757766	d772801	carrier_dispatch_leaf_n16384	carrier_disp_leaf_nullfloor	16384	warm	568784.6	568452.3	584927.2
 1784757766	d772801	carrier_dispatch_leaf_n16384	carrier_disp_leaf_switch	16384	warm	1061978.3	1061762.7	1067997.7
 1784757766	d772801	carrier_dispatch_leaf_n16384	carrier_disp_leaf_threaded	16384	warm	1244470.0	1243971.4	1247699.6
+1784793845	2a3f34b	carrier_dispatch_leaf_n16384	carrier_disp_leaf_bittree	16384	warm	787149.6	786615.2	791875.4
+1784793845	2a3f34b	carrier_dispatch_leaf_n16384	carrier_disp_leaf_fntable	16384	warm	1154007.5	1153110.0	1160470.2
+1784793845	2a3f34b	carrier_dispatch_leaf_n16384	carrier_disp_leaf_ifchain	16384	warm	1085716.2	1084739.5	1094244.2
+1784793845	2a3f34b	carrier_dispatch_leaf_n16384	carrier_disp_leaf_ifchainasc	16384	warm	1074441.2	1074363.3	1079955.2
+1784793845	2a3f34b	carrier_dispatch_leaf_n16384	carrier_disp_leaf_ifchainlin	16384	warm	984158.8	981541.7	986324.2
+1784793845	2a3f34b	carrier_dispatch_leaf_n16384	carrier_disp_leaf_nullfloor	16384	warm	557529.2	548062.3	577568.3
+1784793845	2a3f34b	carrier_dispatch_leaf_n16384	carrier_disp_leaf_switch	16384	warm	1074970.4	1072624.6	1082697.1
+1784793845	2a3f34b	carrier_dispatch_leaf_n16384	carrier_disp_leaf_threaded	16384	warm	1243298.3	1240599.4	1261543.5

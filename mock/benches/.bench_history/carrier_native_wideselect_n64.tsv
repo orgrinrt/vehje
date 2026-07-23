@@ -2,3 +2,6 @@
 1784759101	d772801	carrier_native_wideselect_n64	carrier_nat_wideselect_copypatch	64	warm	697.1	659.4	794.3
 1784759101	d772801	carrier_native_wideselect_n64	carrier_nat_wideselect_interp	64	warm	2272.5	2226.1	4266.5
 1784759101	d772801	carrier_native_wideselect_n64	carrier_nat_wideselect_stencil	64	warm	781.2	721.0	1220.4
+1784794932	74f52f4	carrier_native_wideselect_n64	carrier_nat_wideselect_copypatch	64	warm	659.2	640.5	672.2
+1784794932	74f52f4	carrier_native_wideselect_n64	carrier_nat_wideselect_direct	64	warm	670.0	646.2	679.0
+1784794932	74f52f4	carrier_native_wideselect_n64	carrier_nat_wideselect_interp	64	warm	2202.9	2197.9	2371.4

@@ -5,3 +5,9 @@
 1784757907	d772801	carrier_predecode_scatter_n256	carrier_pre_scatter_regcache	256	warm	10683.8	10664.0	10738.8
 1784757907	d772801	carrier_predecode_scatter_n256	carrier_pre_scatter_switch	256	warm	9477.9	9460.4	9669.1
 1784757907	d772801	carrier_predecode_scatter_n256	carrier_pre_scatter_threaded	256	warm	9162.1	9148.0	9231.0
+1784795364	74f52f4	carrier_predecode_scatter_n256	carrier_pre_scatter_direct	256	warm	7393.7	7311.0	7491.9
+1784795364	74f52f4	carrier_predecode_scatter_n256	carrier_pre_scatter_fntable	256	warm	12608.8	12567.1	12792.3
+1784795364	74f52f4	carrier_predecode_scatter_n256	carrier_pre_scatter_null	256	warm	5899.6	5896.2	6015.2
+1784795364	74f52f4	carrier_predecode_scatter_n256	carrier_pre_scatter_regcache	256	warm	9837.9	9777.9	10253.3
+1784795364	74f52f4	carrier_predecode_scatter_n256	carrier_pre_scatter_switch	256	warm	8689.2	8680.5	8957.3
+1784795364	74f52f4	carrier_predecode_scatter_n256	carrier_pre_scatter_threaded	256	warm	8718.8	8709.0	8767.0

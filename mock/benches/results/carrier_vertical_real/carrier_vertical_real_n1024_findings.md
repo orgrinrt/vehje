@@ -9,55 +9,59 @@ Baseline for all deltas below: **carrier_vert_real_scalar**. (Deltas are paired 
 
 ### Baseline (carrier_vert_real_scalar) is the SLOWEST variant; every rival beats it
 
-The declared/defaulted baseline carrier_vert_real_scalar has the worst median (322.01 us). Every delta is therefore measured against the worst performer, which flatters all rivals and compresses the differences that matter among them (e.g. fastest carrier_vert_real_vert8 at 122.23 us).
+The declared/defaulted baseline carrier_vert_real_scalar has the worst median (294.84 us). Every delta is therefore measured against the worst performer, which flatters all rivals and compresses the differences that matter among them (e.g. fastest carrier_vert_real_vert8 at 116.59 us).
 
 _Why it matters:_ A baseline picked by accident (often the first variant to run / sort) silently skews every comparison. Re-baseline via `[bench.<name>.normalise]` on a representative variant.
 
-### carrier_vert_real_vert8 dominates: 128% faster than the next best (carrier_vert_real_vert4)
+### carrier_vert_real_vert8 dominates: 127% faster than the next best (carrier_vert_real_vert4)
 
-carrier_vert_real_vert8 (122.23 us) leads carrier_vert_real_vert4 (278.44 us) by 128%, a clear separation rather than a photo finish. CV 9.4%.
+carrier_vert_real_vert8 (116.59 us) leads carrier_vert_real_vert4 (264.91 us) by 127%, a clear separation rather than a photo finish. CV 2.8%.
 
 _Why it matters:_ A dominant, well-separated winner is a safe default pick for this workload shape.
 
-### carrier_vert_real_vert8 beats baseline by 62% (significant)
+### carrier_vert_real_vert8 beats baseline by 61% (significant)
 
-carrier_vert_real_vert8 is -199.20 us (62%) faster than baseline carrier_vert_real_scalar, with a CI that excludes zero.
+carrier_vert_real_vert8 is -179.72 us (61%) faster than baseline carrier_vert_real_scalar, with a CI that excludes zero.
 
 _Why it matters:_ A large, significant improvement over the current baseline is a concrete reason to switch.
 
-### carrier_vert_real_scalar is an outlier: 2.6x slower than the field
+### carrier_vert_real_scalar is an outlier: 2.5x slower than the field
 
-carrier_vert_real_scalar (322.01 us) is 2.6x the fastest (122.23 us), well off the pack.
+carrier_vert_real_scalar (294.84 us) is 2.5x the fastest (116.59 us), well off the pack.
 
 _Why it matters:_ A >2x outlier is almost never the right choice; if it is intentional (e.g. it buys correctness), say so explicitly.
 
-### carrier_vert_real_vert8 is fastest but the noisiest (CV 9.4%)
-
-carrier_vert_real_vert8 wins on median (122.23 us) yet has the highest variance (CV 9.4%), while carrier_vert_real_scalar is the steadiest (CV 0.8%, 322.01 us).
-
-_Why it matters:_ For latency-sensitive or tail-bound paths, the steadier variant can beat the faster-on-average one; weigh peak vs consistency.
-
 ## Key findings
 
-- **Fastest: carrier_vert_real_vert8** at 122226.6 ns median (-62.0% vs baseline)
+- **Fastest: carrier_vert_real_vert8** at 116586.2 ns median (-60.5% vs baseline)
 - 2 variants significantly faster than baseline
-- Spread: 2.63x (fastest 122226.6 ns, slowest 322007.9 ns)
+- Spread: 2.53x (fastest 116586.2 ns, slowest 294839.2 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| carrier_vert_real_scalar | 325680ns | 325003ns | 322980ns | 324552ns | 328722ns | base |
-| carrier_vert_real_vert4 | 280602ns | 280990ns | 243605ns | 280002ns | 300000ns | -13.84% |
-| carrier_vert_real_vert8 | 128102ns | 124794ns | 117057ns | 123090ns | 141143ns | -60.67% |
+| carrier_vert_real_scalar | 296275ns | 297108ns | 287625ns | 295086ns | 302383ns | base |
+| carrier_vert_real_vert4 | 266932ns | 267514ns | 252412ns | 266820ns | 274361ns | -9.90% |
+| carrier_vert_real_vert8 | 119378ns | 119025ns | 114712ns | 118520ns | 122998ns | -59.71% |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| carrier_vert_real_scalar | 322608ns | 319888ns | 325661ns | base | 0.003 |
-| carrier_vert_real_vert4 | 277858ns | 240915ns | 297050ns | -13.87% | 0.004 |
-| carrier_vert_real_vert8 | 125505ns | 114335ns | 138457ns | -61.10% | 0.008 |
+| carrier_vert_real_scalar | 293953ns | 285320ns | 300039ns | base | 0.003 |
+| carrier_vert_real_vert4 | 264293ns | 249860ns | 271555ns | -10.09% | 0.004 |
+| carrier_vert_real_vert8 | 116914ns | 112252ns | 120450ns | -60.23% | 0.009 |
+
+## Hardware counters (per call)
+
+| Variant | instructions | cycles | IPC | × base instr |
+|---|---|---|---|---|
+| carrier_vert_real_scalar | 1838131 | 5273788 | 0.349 | 1.00× |
+| carrier_vert_real_vert4 | 1660588 | 2002954 | 0.829 | 0.90× |
+| carrier_vert_real_vert8 | 730006 | 1412155 | 0.517 | 0.40× |
+
+Instructions and cycles are the mean over the variant's samples for the measured region. IPC is instructions per cycle. The instruction ratio isolates whether a variant wins by retiring fewer instructions or by executing the same instructions more efficiently.
 
 ## Performance model
 
@@ -66,44 +70,44 @@ _Why it matters:_ For latency-sensitive or tail-bound paths, the steadier varian
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| carrier_vert_real_scalar | 0.003 | 35.5% |
-| carrier_vert_real_vert4 | 0.004 | 41.1% |
-| carrier_vert_real_vert8 | 0.008 | 93.5% |
+| carrier_vert_real_scalar | 0.003 | 38.1% |
+| carrier_vert_real_vert4 | 0.004 | 42.4% |
+| carrier_vert_real_vert8 | 0.009 | 96.3% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| carrier_vert_real_scalar | 325680ns | 325680ns | base |
-| carrier_vert_real_vert4 | 280602ns | 280602ns | -13.84% |
-| carrier_vert_real_vert8 | 128102ns | 128102ns | -60.67% |
+| carrier_vert_real_scalar | 296275ns | 296275ns | base |
+| carrier_vert_real_vert4 | 266932ns | 266932ns | -9.90% |
+| carrier_vert_real_vert8 | 119378ns | 119378ns | -59.71% |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| carrier_vert_real_scalar | 322008ns | base | --- | [320157, 325661] | --- | --- | --- | --- |
-| carrier_vert_real_vert4 | 278442ns | -46598.8ns (-14.5%) | [-64545, -23107]ns | [258083, 297050] | YES | 0.0313 | 0.0313 | 0 |
-| carrier_vert_real_vert8 | 122227ns | -199203.1ns (-61.9%) | [-208302, -183804]ns | [115832, 138457] | YES | 0.0313 | 0.0313 | 0 |
+| carrier_vert_real_scalar | 294839ns | base | --- | [286982, 300039] | --- | --- | --- | --- |
+| carrier_vert_real_vert4 | 264907ns | -30818.3ns (-10.5%) | [-41748, -16415]ns | [256417, 271555] | YES | 0.0313 | 0.0313 | 0 |
+| carrier_vert_real_vert8 | 116586ns | -179716.2ns (-61.0%) | [-184782, -166620]ns | [113706, 120450] | YES | 0.0313 | 0.0313 | 0 |
 
 ## Per-pass consistency (nonstop e2e, Δ vs baseline)
 
 | Pass | carrier_vert_real_scalar | carrier_vert_real_vert4 | carrier_vert_real_vert8 |
 |---|---|---|---|
-| 1 | 320426ns | -5.8% | -53.3% |
-| 2 | 319888ns | -8.6% | -61.5% |
-| 3 | 324428ns | -15.0% | -60.7% |
-| 4 | 322640ns | -14.7% | -62.4% |
-| 5 | 321375ns | -25.0% | -64.4% |
-| 6 | 326893ns | -14.0% | -64.1% |
+| 1 | 300577ns | -16.9% | -61.7% |
+| 2 | 295382ns | -10.3% | -60.1% |
+| 3 | 288645ns | -8.3% | -59.2% |
+| 4 | 299501ns | -10.9% | -61.5% |
+| 5 | 294296ns | -10.6% | -61.9% |
+| 6 | 285320ns | -3.1% | -56.9% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| carrier_vert_real_scalar | -0.121 | ok |
-| carrier_vert_real_vert4 | 0.138 | ok |
-| carrier_vert_real_vert8 | 0.087 | ok |
+| carrier_vert_real_scalar | -0.159 | ok |
+| carrier_vert_real_vert4 | -0.080 | ok |
+| carrier_vert_real_vert8 | -0.353 | moderate- |
 
 **Consistency summary:**
 
@@ -114,86 +118,86 @@ _Why it matters:_ For latency-sensitive or tail-bound paths, the steadier varian
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| carrier_vert_real_scalar | 322275.1ns | 322608.5ns | 99.9% | HIGH |
-| carrier_vert_real_vert4 | 256166.2ns | 277858.1ns | 92.2% | HIGH |
-| carrier_vert_real_vert8 | 115624.3ns | 125505.3ns | 92.1% | HIGH |
+| carrier_vert_real_scalar | 298756.8ns | 293953.5ns | 101.6% | HIGH |
+| carrier_vert_real_vert4 | 271109.0ns | 264293.0ns | 102.6% | HIGH |
+| carrier_vert_real_vert8 | 119057.2ns | 116914.1ns | 101.8% | HIGH |
 
 ## Distribution (algo ns)
 
 ```
-carrier_vert_real_scalar (n=6, range 319887.5-325660.6 ns)
-  319887.5 |########################################
-  320176.2 |########################################
-  320464.8 |
-  320753.5 |
-  321042.1 |
-  321330.8 |########################################
-  321619.4 |
-  321908.1 |
-  322196.7 |
-  322485.4 |########################################
-  322774.0 |
-  323062.7 |
-  323351.4 |
-  323640.0 |
-  323928.7 |
-  324217.3 |########################################
-  324506.0 |
-  324794.6 |
-  325083.3 |
-  325371.9 |
+carrier_vert_real_scalar (n=6, range 285320.0-300038.8 ns)
+  285320.0 |########################################
+  286055.9 |
+  286791.9 |
+  287527.8 |
+  288263.8 |########################################
+  288999.7 |
+  289735.6 |
+  290471.6 |
+  291207.5 |
+  291943.4 |
+  292679.4 |
+  293415.3 |
+  294151.2 |########################################
+  294887.2 |########################################
+  295623.1 |
+  296359.1 |
+  297095.0 |
+  297830.9 |
+  298566.9 |
+  299302.8 |########################################
   (0 below, 1 above range)
 
-carrier_vert_real_vert4 (n=6, range 240915.0-297049.6 ns)
-  240915.0 |####################
-  243721.7 |
-  246528.5 |
-  249335.2 |
-  252141.9 |
-  254948.6 |
-  257755.4 |
-  260562.1 |
-  263368.8 |
-  266175.5 |
-  268982.3 |
-  271789.0 |
-  274595.7 |########################################
-  277402.5 |
-  280209.2 |####################
-  283015.9 |
-  285822.6 |
-  288629.4 |
-  291436.1 |####################
-  294242.8 |
+carrier_vert_real_vert4 (n=6, range 249859.6-271555.0 ns)
+  249859.6 |########################################
+  250944.4 |
+  252029.1 |
+  253113.9 |
+  254198.7 |
+  255283.5 |
+  256368.2 |
+  257453.0 |
+  258537.8 |
+  259622.5 |
+  260707.3 |
+  261792.1 |
+  262876.8 |########################################
+  263961.6 |########################################
+  265046.4 |########################################
+  266131.2 |########################################
+  267215.9 |
+  268300.7 |
+  269385.5 |
+  270470.2 |
   (0 below, 1 above range)
 
-carrier_vert_real_vert8 (n=6, range 114335.0-138457.1 ns)
-  114335.0 |########################################
-  115541.1 |
-  116747.2 |########################################
-  117953.3 |
-  119159.4 |
-  120365.5 |########################################
-  121571.6 |
-  122777.7 |########################################
-  123983.8 |
-  125189.9 |
-  126396.1 |########################################
-  127602.2 |
-  128808.3 |
-  130014.4 |
-  131220.5 |
-  132426.6 |
-  133632.7 |
-  134838.8 |
-  136044.9 |
-  137251.0 |
+carrier_vert_real_vert8 (n=6, range 112252.1-120449.9 ns)
+  112252.1 |####################
+  112662.0 |
+  113071.9 |
+  113481.8 |
+  113891.7 |
+  114301.6 |
+  114711.5 |
+  115121.3 |########################################
+  115531.2 |
+  115941.1 |
+  116351.0 |
+  116760.9 |
+  117170.8 |
+  117580.7 |####################
+  117990.6 |####################
+  118400.5 |
+  118810.4 |
+  119220.3 |
+  119630.2 |
+  120040.1 |
   (0 below, 1 above range)
 
 ```
 
 ## Diagnostics
 
-- **carrier_vert_real_scalar**: bridge=99.8% of algo (FFI overhead may distort results)
-- **carrier_vert_real_vert4**: bridge=90.9% of algo (FFI overhead may distort results)
-- **carrier_vert_real_vert8**: bridge=94.7% of algo (FFI overhead may distort results)
+- **carrier_vert_real_scalar**: bridge=101.2% of algo (FFI overhead may distort results)
+- **carrier_vert_real_vert4**: bridge=102.2% of algo (FFI overhead may distort results)
+- **carrier_vert_real_vert8**: bridge=100.2% of algo (FFI overhead may distort results)

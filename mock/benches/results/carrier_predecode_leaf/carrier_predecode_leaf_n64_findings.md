@@ -7,52 +7,71 @@ Baseline: **carrier_pre_leaf_switch**
 
 Baseline for all deltas below: **carrier_pre_leaf_switch**. (Deltas are paired `variant - baseline` medians; `*` marks a CI that excludes zero.)
 
-### carrier_pre_leaf_direct dominates: 11% faster than the next best (carrier_pre_leaf_null)
+### carrier_pre_leaf_direct dominates: 13% faster than the next best (carrier_pre_leaf_null)
 
-carrier_pre_leaf_direct (989 ns) leads carrier_pre_leaf_null (1.10 us) by 11%, a clear separation rather than a photo finish. CV 1.5%.
+carrier_pre_leaf_direct (976 ns) leads carrier_pre_leaf_null (1.10 us) by 13%, a clear separation rather than a photo finish. CV 0.9%.
 
 _Why it matters:_ A dominant, well-separated winner is a safe default pick for this workload shape.
 
 ### carrier_pre_leaf_direct beats baseline by 28% (significant)
 
-carrier_pre_leaf_direct is -378 ns (28%) faster than baseline carrier_pre_leaf_switch, with a CI that excludes zero.
+carrier_pre_leaf_direct is -384 ns (28%) faster than baseline carrier_pre_leaf_switch, with a CI that excludes zero.
 
 _Why it matters:_ A large, significant improvement over the current baseline is a concrete reason to switch.
 
-### Two tiers: {carrier_pre_leaf_direct, carrier_pre_leaf_null, carrier_pre_leaf_threaded, carrier_pre_leaf_switch, carrier_pre_leaf_regcache} vs {carrier_pre_leaf_fntable} (28% apart)
+### Two tiers: {carrier_pre_leaf_direct, carrier_pre_leaf_null, carrier_pre_leaf_switch, carrier_pre_leaf_threaded, carrier_pre_leaf_regcache} vs {carrier_pre_leaf_fntable} (30% apart)
 
-The field splits into a fast tier {carrier_pre_leaf_direct, carrier_pre_leaf_null, carrier_pre_leaf_threaded, carrier_pre_leaf_switch, carrier_pre_leaf_regcache} and a slow tier {carrier_pre_leaf_fntable} with a 28% jump between them - a qualitative difference, not a gradient.
+The field splits into a fast tier {carrier_pre_leaf_direct, carrier_pre_leaf_null, carrier_pre_leaf_switch, carrier_pre_leaf_threaded, carrier_pre_leaf_regcache} and a slow tier {carrier_pre_leaf_fntable} with a 30% jump between them - a qualitative difference, not a gradient.
 
 _Why it matters:_ A tier split usually reflects a mechanism boundary (branchless vs branch, cached vs not); the tier, not the exact rank, is the finding.
 
+### carrier_pre_leaf_threaded's edge over baseline is significant but tiny (21 ns, 1.55%)
+
+carrier_pre_leaf_threaded differs from baseline carrier_pre_leaf_switch by 21 ns (1.55%) - statistically real (CI excludes zero) but small enough to be practically irrelevant.
+
+_Why it matters:_ Statistical significance is not practical significance: a measurable-but-tiny gap should not drive a decision.
+
 ## Key findings
 
-- **Fastest: carrier_pre_leaf_direct** at 988.8 ns median (-27.5% vs baseline)
-- 3 variants significantly faster than baseline
-- 2 variants significantly slower than baseline
-- Spread: 1.83x (fastest 988.8 ns, slowest 1812.5 ns)
+- **Fastest: carrier_pre_leaf_direct** at 976.2 ns median (-28.0% vs baseline)
+- 2 variants significantly faster than baseline
+- 3 variants significantly slower than baseline
+- Spread: 1.86x (fastest 976.2 ns, slowest 1818.6 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| carrier_pre_leaf_direct | 3473ns | 3477ns | 3411ns | 3462ns | 3521ns | -9.92% |
-| carrier_pre_leaf_fntable | 4206ns | 4297ns | 3735ns | 4273ns | 4342ns | +9.11% |
-| carrier_pre_leaf_null | 3528ns | 3568ns | 3286ns | 3558ns | 3605ns | -8.49% |
-| carrier_pre_leaf_regcache | 3907ns | 3889ns | 3872ns | 3885ns | 3957ns | +1.33% |
-| carrier_pre_leaf_switch | 3855ns | 3849ns | 3816ns | 3843ns | 3893ns | base |
-| carrier_pre_leaf_threaded | 3793ns | 3791ns | 3755ns | 3786ns | 3821ns | -1.62% |
+| carrier_pre_leaf_direct | 3410ns | 3409ns | 3377ns | 3401ns | 3439ns | -10.36% |
+| carrier_pre_leaf_fntable | 4178ns | 4247ns | 3704ns | 4232ns | 4335ns | +9.85% |
+| carrier_pre_leaf_null | 3526ns | 3529ns | 3491ns | 3526ns | 3544ns | -7.30% |
+| carrier_pre_leaf_regcache | 3833ns | 3828ns | 3755ns | 3823ns | 3887ns | +0.78% |
+| carrier_pre_leaf_switch | 3804ns | 3793ns | 3788ns | 3792ns | 3830ns | base |
+| carrier_pre_leaf_threaded | 3844ns | 3845ns | 3788ns | 3838ns | 3880ns | +1.06% |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| carrier_pre_leaf_direct | 990ns | 974ns | 1006ns | -27.46% | 0.065 |
-| carrier_pre_leaf_fntable | 1785ns | 1590ns | 1851ns | +30.86% | 0.036 |
-| carrier_pre_leaf_null | 1094ns | 1020ns | 1122ns | -19.83% | 0.059 |
-| carrier_pre_leaf_regcache | 1422ns | 1402ns | 1440ns | +4.23% | 0.045 |
-| carrier_pre_leaf_switch | 1364ns | 1348ns | 1378ns | base | 0.047 |
-| carrier_pre_leaf_threaded | 1285ns | 1275ns | 1295ns | -5.81% | 0.050 |
+| carrier_pre_leaf_direct | 978ns | 970ns | 988ns | -27.76% | 0.065 |
+| carrier_pre_leaf_fntable | 1788ns | 1590ns | 1855ns | +32.11% | 0.036 |
+| carrier_pre_leaf_null | 1102ns | 1094ns | 1108ns | -18.59% | 0.058 |
+| carrier_pre_leaf_regcache | 1406ns | 1378ns | 1427ns | +3.84% | 0.046 |
+| carrier_pre_leaf_switch | 1354ns | 1324ns | 1367ns | base | 0.047 |
+| carrier_pre_leaf_threaded | 1373ns | 1354ns | 1387ns | +1.39% | 0.047 |
+
+## Hardware counters (per call)
+
+| Variant | instructions | cycles | IPC | × base instr |
+|---|---|---|---|---|
+| carrier_pre_leaf_direct | 249478 | 1246503 | 0.200 | 1.03× |
+| carrier_pre_leaf_fntable | 249296 | 1153285 | 0.216 | 1.03× |
+| carrier_pre_leaf_null | 248305 | 1312168 | 0.189 | 1.03× |
+| carrier_pre_leaf_regcache | 251356 | 1452473 | 0.173 | 1.04× |
+| carrier_pre_leaf_switch | 241814 | 1209367 | 0.200 | 1.00× |
+| carrier_pre_leaf_threaded | 244911 | 1275014 | 0.192 | 1.01× |
+
+Instructions and cycles are the mean over the variant's samples for the measured region. IPC is instructions per cycle. The instruction ratio isolates whether a variant wins by retiring fewer instructions or by executing the same instructions more efficiently.
 
 ## Performance model
 
@@ -61,56 +80,56 @@ _Why it matters:_ A tier split usually reflects a mechanism boundary (branchless
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| carrier_pre_leaf_direct | 0.065 | 98.5% |
-| carrier_pre_leaf_fntable | 0.035 | 53.7% |
-| carrier_pre_leaf_null | 0.058 | 88.5% |
-| carrier_pre_leaf_regcache | 0.045 | 68.6% |
-| carrier_pre_leaf_switch | 0.047 | 71.4% |
-| carrier_pre_leaf_threaded | 0.050 | 75.9% |
+| carrier_pre_leaf_direct | 0.066 | 99.3% |
+| carrier_pre_leaf_fntable | 0.035 | 53.3% |
+| carrier_pre_leaf_null | 0.058 | 88.0% |
+| carrier_pre_leaf_regcache | 0.046 | 69.1% |
+| carrier_pre_leaf_switch | 0.047 | 71.5% |
+| carrier_pre_leaf_threaded | 0.047 | 70.7% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| carrier_pre_leaf_direct | 3473ns | 3473ns | -9.92% |
-| carrier_pre_leaf_fntable | 4206ns | 4206ns | +9.11% |
-| carrier_pre_leaf_null | 3528ns | 3528ns | -8.49% |
-| carrier_pre_leaf_regcache | 3907ns | 3907ns | +1.33% |
-| carrier_pre_leaf_switch | 3855ns | 3855ns | base |
-| carrier_pre_leaf_threaded | 3793ns | 3793ns | -1.62% |
+| carrier_pre_leaf_direct | 3410ns | 3410ns | -10.36% |
+| carrier_pre_leaf_fntable | 4178ns | 4178ns | +9.85% |
+| carrier_pre_leaf_null | 3526ns | 3526ns | -7.30% |
+| carrier_pre_leaf_regcache | 3833ns | 3833ns | +0.78% |
+| carrier_pre_leaf_switch | 3804ns | 3804ns | base |
+| carrier_pre_leaf_threaded | 3844ns | 3844ns | +1.06% |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| carrier_pre_leaf_switch | 1363ns | base | --- | [1352, 1378] | --- | --- | --- | --- |
-| carrier_pre_leaf_direct | 989ns | -378.3ns (-27.8%) | [-400, -346]ns | [974, 1006] | YES | 0.0313 | 0.0313 | 0 |
-| carrier_pre_leaf_fntable | 1812ns | +454.2ns (+33.3%) | [+318, +491]ns | [1692, 1851] | YES | 0.0313 | 0.0313 | 0 |
-| carrier_pre_leaf_null | 1100ns | -263.3ns (-19.3%) | [-303, -245]ns | [1059, 1122] | YES | 0.0313 | 0.0313 | 0 |
-| carrier_pre_leaf_regcache | 1420ns | +56.7ns (+4.2%) | [+31, +86]ns | [1406, 1440] | YES | 0.0313 | 0.0313 | 0 |
-| carrier_pre_leaf_threaded | 1283ns | -79.8ns (-5.9%) | [-97, -61]ns | [1278, 1295] | YES | 0.0313 | 0.0313 | 0 |
+| carrier_pre_leaf_switch | 1356ns | base | --- | [1338, 1367] | --- | --- | --- | --- |
+| carrier_pre_leaf_direct | 976ns | -383.9ns (-28.3%) | [-391, -353]ns | [970, 988] | YES | 0.0391 | 0.0313 | 0 |
+| carrier_pre_leaf_fntable | 1819ns | +462.3ns (+34.1%) | [+333, +509]ns | [1692, 1855] | YES | 0.0391 | 0.0313 | 0 |
+| carrier_pre_leaf_null | 1101ns | -255.8ns (-18.9%) | [-264, -235]ns | [1097, 1108] | YES | 0.0391 | 0.0313 | 0 |
+| carrier_pre_leaf_regcache | 1403ns | +54.0ns (+4.0%) | [+21, +81]ns | [1388, 1427] | YES | 0.0391 | 0.0313 | 0 |
+| carrier_pre_leaf_threaded | 1371ns | +21.1ns (+1.6%) | [+1, +34]ns | [1360, 1387] | YES (adj: no) | 0.2188 | 0.2188 | 0 |
 
 ## Per-pass consistency (nonstop e2e, Δ vs baseline)
 
 | Pass | carrier_pre_leaf_switch | carrier_pre_leaf_direct | carrier_pre_leaf_fntable | carrier_pre_leaf_null | carrier_pre_leaf_regcache | carrier_pre_leaf_threaded |
 |---|---|---|---|---|---|---|
-| 1 | 1362ns | -26.9% | +16.7% | -19.4% | +4.3% | -4.3% |
-| 2 | 1387ns | -29.2% | +29.4% | -18.9% | +1.1% | -7.2% |
-| 3 | 1368ns | -28.8% | +32.4% | -19.7% | +4.0% | -6.8% |
-| 4 | 1348ns | -26.0% | +34.5% | -17.0% | +5.3% | -4.6% |
-| 5 | 1365ns | -28.6% | +35.3% | -19.2% | +3.4% | -6.2% |
-| 6 | 1356ns | -25.1% | +36.9% | -24.8% | +7.4% | -5.6% |
+| 1 | 1366ns | -28.5% | +16.4% | -19.5% | +2.3% | +0.3% |
+| 2 | 1368ns | -28.7% | +35.7% | -19.0% | +0.7% | -0.1% |
+| 3 | 1324ns | -25.9% | +40.0% | -16.7% | +6.1% | +2.3% |
+| 4 | 1357ns | -26.7% | +34.2% | -18.4% | +3.2% | +1.9% |
+| 5 | 1356ns | -28.4% | +34.0% | -19.3% | +4.7% | +1.2% |
+| 6 | 1352ns | -28.3% | +32.6% | -18.6% | +6.0% | +2.9% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| carrier_pre_leaf_direct | -0.426 | moderate- |
-| carrier_pre_leaf_fntable | 0.110 | ok |
-| carrier_pre_leaf_null | -0.002 | ok |
-| carrier_pre_leaf_regcache | -0.215 | moderate- |
-| carrier_pre_leaf_switch | -0.036 | ok |
-| carrier_pre_leaf_threaded | 0.040 | ok |
+| carrier_pre_leaf_direct | -0.045 | ok |
+| carrier_pre_leaf_fntable | -0.120 | ok |
+| carrier_pre_leaf_null | -0.239 | moderate- |
+| carrier_pre_leaf_regcache | 0.306 | moderate+ |
+| carrier_pre_leaf_switch | -0.265 | moderate- |
+| carrier_pre_leaf_threaded | -0.111 | ok |
 
 **Consistency summary:**
 
@@ -118,167 +137,167 @@ _Why it matters:_ A tier split usually reflects a mechanism boundary (branchless
 - **carrier_pre_leaf_fntable**: won 0/6, lost 6/6
 - **carrier_pre_leaf_null**: won 6/6, lost 0/6
 - **carrier_pre_leaf_regcache**: won 0/6, lost 6/6
-- **carrier_pre_leaf_threaded**: won 6/6, lost 0/6
+- **carrier_pre_leaf_threaded**: won 1/6, lost 5/6
 
 ## Bridge overhead per variant
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| carrier_pre_leaf_direct | 86663.2ns | 989.6ns | 8757.4% | HIGH |
-| carrier_pre_leaf_fntable | 83774.5ns | 1785.4ns | 4692.3% | HIGH |
-| carrier_pre_leaf_null | 85861.7ns | 1093.8ns | 7850.2% | HIGH |
-| carrier_pre_leaf_regcache | 86330.6ns | 1422.1ns | 6070.8% | HIGH |
-| carrier_pre_leaf_switch | 84340.4ns | 1364.3ns | 6182.0% | HIGH |
-| carrier_pre_leaf_threaded | 86486.3ns | 1285.0ns | 6730.2% | HIGH |
+| carrier_pre_leaf_direct | 86515.9ns | 978.0ns | 8846.4% | HIGH |
+| carrier_pre_leaf_fntable | 83864.8ns | 1788.5ns | 4689.2% | HIGH |
+| carrier_pre_leaf_null | 85999.9ns | 1102.1ns | 7803.3% | HIGH |
+| carrier_pre_leaf_regcache | 86940.9ns | 1405.8ns | 6184.7% | HIGH |
+| carrier_pre_leaf_switch | 83749.8ns | 1353.8ns | 6186.2% | HIGH |
+| carrier_pre_leaf_threaded | 86055.7ns | 1372.6ns | 6269.3% | HIGH |
 
 ## Distribution (algo ns)
 
 ```
-carrier_pre_leaf_direct (n=6, range 973.8-1006.0 ns)
-    973.8 |########################################
-    975.4 |
-    977.0 |
-    978.6 |
-    980.2 |####################
-    981.9 |
-    983.5 |
-    985.1 |
-    986.7 |
-    988.3 |
-    989.9 |
-    991.5 |
-    993.1 |
-    994.8 |####################
-    996.4 |####################
-    998.0 |
-    999.6 |
-   1001.2 |
-   1002.8 |
-   1004.4 |
+carrier_pre_leaf_direct (n=6, range 969.6-987.7 ns)
+    969.6 |########################################
+    970.5 |
+    971.4 |
+    972.3 |
+    973.2 |
+    974.1 |
+    975.0 |####################
+    975.9 |####################
+    976.8 |
+    977.7 |
+    978.7 |
+    979.6 |
+    980.5 |####################
+    981.4 |
+    982.3 |
+    983.2 |
+    984.1 |
+    985.0 |
+    985.9 |
+    986.8 |
   (0 below, 1 above range)
 
-carrier_pre_leaf_fntable (n=6, range 1590.0-1851.5 ns)
-   1590.0 |########################################
-   1603.1 |
-   1616.1 |
-   1629.2 |
-   1642.3 |
-   1655.4 |
-   1668.4 |
-   1681.5 |
-   1694.6 |
-   1707.7 |
-   1720.7 |
-   1733.8 |
-   1746.9 |
-   1759.9 |
-   1773.0 |
-   1786.1 |########################################
-   1799.2 |########################################
-   1812.2 |########################################
-   1825.3 |
-   1838.4 |########################################
+carrier_pre_leaf_fntable (n=6, range 1590.4-1855.0 ns)
+   1590.4 |####################
+   1603.6 |
+   1616.9 |
+   1630.1 |
+   1643.3 |
+   1656.6 |
+   1669.8 |
+   1683.0 |
+   1696.2 |
+   1709.5 |
+   1722.7 |
+   1735.9 |
+   1749.2 |
+   1762.4 |
+   1775.6 |
+   1788.8 |####################
+   1802.1 |
+   1815.3 |########################################
+   1828.5 |
+   1841.8 |####################
   (0 below, 1 above range)
 
-carrier_pre_leaf_null (n=6, range 1019.6-1122.3 ns)
-   1019.6 |####################
-   1024.7 |
-   1029.9 |
-   1035.0 |
-   1040.1 |
-   1045.3 |
-   1050.4 |
-   1055.5 |
-   1060.7 |
-   1065.8 |
-   1071.0 |
-   1076.1 |
-   1081.2 |
-   1086.4 |
-   1091.5 |
-   1096.6 |########################################
-   1101.8 |####################
-   1106.9 |
-   1112.0 |
-   1117.2 |####################
+carrier_pre_leaf_null (n=6, range 1094.2-1108.2 ns)
+   1094.2 |########################################
+   1094.9 |
+   1095.6 |
+   1096.3 |
+   1097.0 |
+   1097.7 |
+   1098.4 |
+   1099.1 |########################################
+   1099.8 |########################################
+   1100.5 |
+   1101.2 |
+   1101.9 |
+   1102.6 |########################################
+   1103.3 |
+   1104.0 |
+   1104.7 |
+   1105.4 |
+   1106.1 |
+   1106.8 |
+   1107.5 |########################################
   (0 below, 1 above range)
 
-carrier_pre_leaf_regcache (n=6, range 1402.5-1439.8 ns)
-   1402.5 |####################
-   1404.4 |
-   1406.2 |
-   1408.1 |
-   1410.0 |####################
-   1411.8 |
-   1413.7 |
-   1415.5 |
-   1417.4 |
+carrier_pre_leaf_regcache (n=6, range 1377.9-1426.7 ns)
+   1377.9 |########################################
+   1380.3 |
+   1382.8 |
+   1385.2 |
+   1387.7 |
+   1390.1 |
+   1392.5 |
+   1395.0 |
+   1397.4 |########################################
+   1399.8 |########################################
+   1402.3 |
+   1404.7 |########################################
+   1407.2 |
+   1409.6 |
+   1412.0 |
+   1414.5 |
+   1416.9 |
    1419.3 |########################################
-   1421.1 |
-   1423.0 |####################
-   1424.8 |
-   1426.7 |
-   1428.6 |
-   1430.4 |
-   1432.3 |
-   1434.2 |
-   1436.0 |
-   1437.9 |
+   1421.8 |
+   1424.2 |
   (0 below, 1 above range)
 
-carrier_pre_leaf_switch (n=6, range 1348.3-1377.5 ns)
-   1348.3 |########################################
-   1349.8 |
-   1351.2 |
-   1352.7 |
-   1354.1 |
-   1355.6 |########################################
-   1357.1 |
-   1358.5 |
-   1360.0 |
-   1361.4 |########################################
+carrier_pre_leaf_switch (n=6, range 1323.8-1367.2 ns)
+   1323.8 |########################################
+   1326.0 |
+   1328.1 |
+   1330.3 |
+   1332.5 |
+   1334.7 |
+   1336.8 |
+   1339.0 |
+   1341.2 |
+   1343.4 |
+   1345.5 |
+   1347.7 |
+   1349.9 |
+   1352.0 |########################################
+   1354.2 |########################################
+   1356.4 |########################################
+   1358.6 |
+   1360.7 |
    1362.9 |
-   1364.4 |########################################
-   1365.8 |
-   1367.3 |########################################
-   1368.7 |
-   1370.2 |
-   1371.7 |
-   1373.1 |
-   1374.6 |
-   1376.0 |
+   1365.1 |########################################
   (0 below, 1 above range)
 
-carrier_pre_leaf_threaded (n=6, range 1274.6-1294.6 ns)
-   1274.6 |####################
-   1275.6 |
-   1276.6 |
-   1277.6 |
-   1278.6 |
-   1279.6 |########################################
-   1280.6 |
-   1281.6 |
-   1282.6 |
-   1283.6 |
-   1284.6 |
-   1285.6 |########################################
-   1286.6 |
-   1287.6 |
-   1288.6 |
-   1289.6 |
-   1290.6 |
-   1291.6 |
-   1292.6 |
-   1293.6 |
+carrier_pre_leaf_threaded (n=6, range 1353.8-1386.8 ns)
+   1353.8 |########################################
+   1355.5 |
+   1357.1 |
+   1358.8 |
+   1360.4 |
+   1362.1 |
+   1363.7 |
+   1365.4 |########################################
+   1367.0 |
+   1368.7 |########################################
+   1370.3 |########################################
+   1372.0 |
+   1373.6 |
+   1375.3 |
+   1376.9 |
+   1378.6 |
+   1380.2 |
+   1381.9 |########################################
+   1383.5 |
+   1385.2 |
   (0 below, 1 above range)
 
 ```
 
 ## Diagnostics
 
-- **carrier_pre_leaf_direct**: bridge=8763.6% of algo (FFI overhead may distort results)
-- **carrier_pre_leaf_fntable**: bridge=4775.6% of algo (FFI overhead may distort results)
-- **carrier_pre_leaf_null**: bridge=7791.4% of algo (FFI overhead may distort results)
-- **carrier_pre_leaf_regcache**: bridge=6090.8% of algo (FFI overhead may distort results)
-- **carrier_pre_leaf_switch**: bridge=6187.8% of algo (FFI overhead may distort results)
-- **carrier_pre_leaf_threaded**: bridge=6736.2% of algo (FFI overhead may distort results)
+- **carrier_pre_leaf_direct**: bridge=8864.2% of algo (FFI overhead may distort results)
+- **carrier_pre_leaf_fntable**: bridge=4752.7% of algo (FFI overhead may distort results)
+- **carrier_pre_leaf_null**: bridge=7789.3% of algo (FFI overhead may distort results)
+- **carrier_pre_leaf_regcache**: bridge=6200.0% of algo (FFI overhead may distort results)
+- **carrier_pre_leaf_switch**: bridge=6182.1% of algo (FFI overhead may distort results)
+- **carrier_pre_leaf_threaded**: bridge=6273.1% of algo (FFI overhead may distort results)

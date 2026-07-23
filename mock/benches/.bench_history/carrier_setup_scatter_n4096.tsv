@@ -1,0 +1,7 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784796095	74f52f4	carrier_setup_scatter_n4096	carrier_setup_scatter_emitcopypatch	4096	warm	1212476.7	1211330.0	1236864.1
+1784796095	74f52f4	carrier_setup_scatter_n4096	carrier_setup_scatter_emitdirect	4096	warm	503875.4	500138.3	514386.4
+1784796095	74f52f4	carrier_setup_scatter_n4096	carrier_setup_scatter_optall	4096	warm	12336128.8	12317713.8	13270405.6
+1784796095	74f52f4	carrier_setup_scatter_n4096	carrier_setup_scatter_parse	4096	warm	0.0	0.0	0.0
+1784796095	74f52f4	carrier_setup_scatter_n4096	carrier_setup_scatter_predecode	4096	warm	142751.2	142075.2	143192.3
+1784796095	74f52f4	carrier_setup_scatter_n4096	carrier_setup_scatter_stackcompile	4096	warm	332906.2	331842.2	340902.1

@@ -5,3 +5,9 @@
 1784757881	d772801	carrier_predecode_tight_n4096	carrier_pre_tight_regcache	4096	warm	141427.5	140793.4	143555.5
 1784757881	d772801	carrier_predecode_tight_n4096	carrier_pre_tight_switch	4096	warm	149018.7	148452.0	152569.4
 1784757881	d772801	carrier_predecode_tight_n4096	carrier_pre_tight_threaded	4096	warm	146122.1	145185.4	149452.5
+1784795431	74f52f4	carrier_predecode_tight_n4096	carrier_pre_tight_direct	4096	warm	148554.6	148525.0	148987.5
+1784795431	74f52f4	carrier_predecode_tight_n4096	carrier_pre_tight_fntable	4096	warm	178216.2	178128.7	180118.8
+1784795431	74f52f4	carrier_predecode_tight_n4096	carrier_pre_tight_null	4096	warm	131697.9	131398.8	132880.0
+1784795431	74f52f4	carrier_predecode_tight_n4096	carrier_pre_tight_regcache	4096	warm	141357.5	141010.6	142226.9
+1784795431	74f52f4	carrier_predecode_tight_n4096	carrier_pre_tight_switch	4096	warm	141033.8	141002.1	142497.9
+1784795431	74f52f4	carrier_predecode_tight_n4096	carrier_pre_tight_threaded	4096	warm	146125.4	145106.0	147241.9

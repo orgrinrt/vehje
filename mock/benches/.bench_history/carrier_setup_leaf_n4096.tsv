@@ -1,0 +1,7 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784795635	74f52f4	carrier_setup_leaf_n4096	carrier_setup_leaf_emitcopypatch	4096	warm	599853.8	593064.8	605033.8
+1784795635	74f52f4	carrier_setup_leaf_n4096	carrier_setup_leaf_emitdirect	4096	warm	204236.2	203420.6	205006.9
+1784795635	74f52f4	carrier_setup_leaf_n4096	carrier_setup_leaf_optall	4096	warm	2982122.1	2937877.1	3059673.8
+1784795635	74f52f4	carrier_setup_leaf_n4096	carrier_setup_leaf_parse	4096	warm	0.0	0.0	0.0
+1784795635	74f52f4	carrier_setup_leaf_n4096	carrier_setup_leaf_predecode	4096	warm	188653.7	188209.4	216224.0
+1784795635	74f52f4	carrier_setup_leaf_n4096	carrier_setup_leaf_stackcompile	4096	warm	290070.0	284800.4	321909.3

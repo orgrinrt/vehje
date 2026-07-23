@@ -7,3 +7,11 @@
 1784757643	d772801	carrier_dispatch_wideselect_n256	carrier_disp_wideselect_nullfloor	256	warm	8065.0	8051.2	8123.1
 1784757643	d772801	carrier_dispatch_wideselect_n256	carrier_disp_wideselect_switch	256	warm	10893.7	10860.0	10926.8
 1784757643	d772801	carrier_dispatch_wideselect_n256	carrier_disp_wideselect_threaded	256	warm	12123.3	12067.2	12172.7
+1784794144	2a3f34b	carrier_dispatch_wideselect_n256	carrier_disp_wideselect_bittree	256	warm	12212.9	12195.6	12339.3
+1784794144	2a3f34b	carrier_dispatch_wideselect_n256	carrier_disp_wideselect_fntable	256	warm	12800.4	12347.0	13230.2
+1784794144	2a3f34b	carrier_dispatch_wideselect_n256	carrier_disp_wideselect_ifchain	256	warm	10798.3	10791.0	11081.6
+1784794144	2a3f34b	carrier_dispatch_wideselect_n256	carrier_disp_wideselect_ifchainasc	256	warm	10645.0	10105.6	10752.9
+1784794144	2a3f34b	carrier_dispatch_wideselect_n256	carrier_disp_wideselect_ifchainlin	256	warm	23961.7	23917.5	24018.8
+1784794144	2a3f34b	carrier_dispatch_wideselect_n256	carrier_disp_wideselect_nullfloor	256	warm	7916.2	7866.6	8001.5
+1784794144	2a3f34b	carrier_dispatch_wideselect_n256	carrier_disp_wideselect_switch	256	warm	10505.8	10415.4	10602.2
+1784794144	2a3f34b	carrier_dispatch_wideselect_n256	carrier_disp_wideselect_threaded	256	warm	11749.6	11686.0	12026.9

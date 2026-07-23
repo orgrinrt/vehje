@@ -2,3 +2,6 @@
 1784759096	d772801	carrier_native_scatter_n64	carrier_nat_scatter_copypatch	64	warm	595.4	593.3	605.8
 1784759096	d772801	carrier_native_scatter_n64	carrier_nat_scatter_interp	64	warm	2298.8	2281.5	2782.9
 1784759096	d772801	carrier_native_scatter_n64	carrier_nat_scatter_stencil	64	warm	578.3	576.6	933.8
+1784794894	74f52f4	carrier_native_scatter_n64	carrier_nat_scatter_copypatch	64	warm	557.5	553.4	637.1
+1784794894	74f52f4	carrier_native_scatter_n64	carrier_nat_scatter_direct	64	warm	583.3	564.5	611.5
+1784794894	74f52f4	carrier_native_scatter_n64	carrier_nat_scatter_interp	64	warm	2247.9	2233.4	2455.4

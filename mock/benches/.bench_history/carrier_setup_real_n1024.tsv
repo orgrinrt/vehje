@@ -1,0 +1,13 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784790839	23926d5	carrier_setup_real_n1024	carrier_setup_real_emitcopypatch	1024	warm	183800.0	182574.4	195240.4
+1784790839	23926d5	carrier_setup_real_n1024	carrier_setup_real_emitdirect	1024	warm	59461.2	58257.9	66153.8
+1784790839	23926d5	carrier_setup_real_n1024	carrier_setup_real_optall	1024	warm	2475033.3	2472843.8	2497199.1
+1784790839	23926d5	carrier_setup_real_n1024	carrier_setup_real_parse	1024	warm	0.0	0.0	0.0
+1784790839	23926d5	carrier_setup_real_n1024	carrier_setup_real_predecode	1024	warm	35604.2	35221.2	36068.1
+1784790839	23926d5	carrier_setup_real_n1024	carrier_setup_real_stackcompile	1024	warm	77860.0	77477.7	79417.7
+1784795812	74f52f4	carrier_setup_real_n1024	carrier_setup_real_emitcopypatch	1024	warm	283660.8	283018.1	284440.8
+1784795812	74f52f4	carrier_setup_real_n1024	carrier_setup_real_emitdirect	1024	warm	70171.2	69373.3	74376.2
+1784795812	74f52f4	carrier_setup_real_n1024	carrier_setup_real_optall	1024	warm	2459557.5	2424422.5	2462492.3
+1784795812	74f52f4	carrier_setup_real_n1024	carrier_setup_real_parse	1024	warm	0.0	0.0	0.0
+1784795812	74f52f4	carrier_setup_real_n1024	carrier_setup_real_predecode	1024	warm	35719.6	34890.0	35949.6
+1784795812	74f52f4	carrier_setup_real_n1024	carrier_setup_real_stackcompile	1024	warm	80911.2	80213.1	81795.2

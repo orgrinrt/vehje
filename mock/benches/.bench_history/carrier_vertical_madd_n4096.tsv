@@ -2,3 +2,6 @@
 1784759264	d772801	carrier_vertical_madd_n4096	carrier_vert_madd_scalar	4096	warm	1573769.2	1573591.9	1579252.0
 1784759264	d772801	carrier_vertical_madd_n4096	carrier_vert_madd_vert4	4096	warm	839433.8	838252.9	840113.8
 1784759264	d772801	carrier_vertical_madd_n4096	carrier_vert_madd_vert8	4096	warm	575080.8	575070.0	578783.9
+1784796747	74f52f4	carrier_vertical_madd_n4096	carrier_vert_madd_scalar	4096	warm	1528124.6	1527420.6	1531363.9
+1784796747	74f52f4	carrier_vertical_madd_n4096	carrier_vert_madd_vert4	4096	warm	846394.6	845374.4	856590.2
+1784796747	74f52f4	carrier_vertical_madd_n4096	carrier_vert_madd_vert8	4096	warm	579213.7	578402.2	585298.9

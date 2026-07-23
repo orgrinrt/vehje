@@ -1,0 +1,7 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784796465	74f52f4	carrier_setup_wideselect_n4096	carrier_setup_wideselect_emitcopypatch	4096	warm	1278510.4	1277679.4	1308685.6
+1784796465	74f52f4	carrier_setup_wideselect_n4096	carrier_setup_wideselect_emitdirect	4096	warm	377028.8	376526.7	400143.8
+1784796465	74f52f4	carrier_setup_wideselect_n4096	carrier_setup_wideselect_optall	4096	warm	10894012.5	10822842.3	10963438.6
+1784796465	74f52f4	carrier_setup_wideselect_n4096	carrier_setup_wideselect_parse	4096	warm	0.0	0.0	0.0
+1784796465	74f52f4	carrier_setup_wideselect_n4096	carrier_setup_wideselect_predecode	4096	warm	168194.6	165251.2	171824.0
+1784796465	74f52f4	carrier_setup_wideselect_n4096	carrier_setup_wideselect_stackcompile	4096	warm	399540.0	396627.5	417721.0

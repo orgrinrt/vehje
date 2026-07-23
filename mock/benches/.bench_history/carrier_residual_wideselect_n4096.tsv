@@ -1,3 +1,5 @@
 # schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
 1784758666	d772801	carrier_residual_wideselect_n4096	carrier_res_wideselect_register	4096	warm	470986.7	463586.5	486873.3
 1784758666	d772801	carrier_residual_wideselect_n4096	carrier_res_wideselect_stack	4096	warm	575777.9	572223.9	579148.3
+1784795593	74f52f4	carrier_residual_wideselect_n4096	carrier_res_wideselect_register	4096	warm	349085.8	345208.3	357231.7
+1784795593	74f52f4	carrier_residual_wideselect_n4096	carrier_res_wideselect_stack	4096	warm	579554.6	578736.1	582921.5

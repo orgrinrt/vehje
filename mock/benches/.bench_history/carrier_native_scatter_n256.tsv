@@ -2,3 +2,6 @@
 1784759097	d772801	carrier_native_scatter_n256	carrier_nat_scatter_copypatch	256	warm	3733.3	3697.5	3848.3
 1784759097	d772801	carrier_native_scatter_n256	carrier_nat_scatter_interp	256	warm	11548.8	11384.0	11760.9
 1784759097	d772801	carrier_native_scatter_n256	carrier_nat_scatter_stencil	256	warm	3762.5	3619.8	4574.5
+1784794896	74f52f4	carrier_native_scatter_n256	carrier_nat_scatter_copypatch	256	warm	3532.9	3476.1	3830.0
+1784794896	74f52f4	carrier_native_scatter_n256	carrier_nat_scatter_direct	256	warm	3789.6	3618.9	3864.8
+1784794896	74f52f4	carrier_native_scatter_n256	carrier_nat_scatter_interp	256	warm	11131.7	10545.7	11207.1

@@ -7,39 +7,39 @@ Baseline: **carrier_vr_static**
 
 Baseline for all deltas below: **carrier_vr_static**. (Deltas are paired `variant - baseline` medians; `*` marks a CI that excludes zero.)
 
-### Baseline (carrier_vr_static) is the SLOWEST variant; every rival beats it
-
-The declared/defaulted baseline carrier_vr_static has the worst median (2.43 us). Every delta is therefore measured against the worst performer, which flatters all rivals and compresses the differences that matter among them (e.g. fastest carrier_vr_nanbox at 2.19 us).
-
-_Why it matters:_ A baseline picked by accident (often the first variant to run / sort) silently skews every comparison. Re-baseline via `[bench.<name>.normalise]` on a representative variant.
-
-### carrier_vr_tagged is inconsistent: worst-20% is 1.6x its best-20%
-
-carrier_vr_tagged's best 20% of batches run at 2.14 us but its worst 20% at 3.33 us (1.6x) - a bimodal or bursty profile the median hides.
-
-_Why it matters:_ A fat tail matters for latency budgets even when the median looks fine; a steadier variant may serve better under load.
+No notable statistical pattern fired: the variants do not separate meaningfully on this run.
 
 ## Key findings
 
-- **Fastest: carrier_vr_nanbox** at 2191.2 ns median (-9.7% vs baseline)
-- 1 variant significantly faster than baseline
-- Spread: 1.11x (fastest 2191.2 ns, slowest 2425.7 ns)
+- **Fastest: carrier_vr_nanbox** at 2086.5 ns median (-3.9% vs baseline)
+- 1 variant significantly slower than baseline
+- Spread: 1.09x (fastest 2086.5 ns, slowest 2281.1 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| carrier_vr_nanbox | 4590ns | 4632ns | 4219ns | 4513ns | 4891ns | -3.07% |
-| carrier_vr_static | 4736ns | 4729ns | 4620ns | 4702ns | 4844ns | base |
-| carrier_vr_tagged | 5190ns | 4704ns | 4434ns | 4644ns | 6387ns | +9.60% |
+| carrier_vr_nanbox | 4416ns | 4410ns | 4215ns | 4368ns | 4588ns | -3.58% |
+| carrier_vr_static | 4580ns | 4535ns | 4293ns | 4526ns | 4804ns | base |
+| carrier_vr_tagged | 4565ns | 4611ns | 4249ns | 4548ns | 4749ns | -0.32% |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| carrier_vr_nanbox | 2184ns | 2005ns | 2334ns | -9.72% | 0.029 |
-| carrier_vr_static | 2419ns | 2354ns | 2469ns | base | 0.026 |
-| carrier_vr_tagged | 2601ns | 2142ns | 3329ns | +7.55% | 0.025 |
+| carrier_vr_nanbox | 2075ns | 1996ns | 2122ns | -3.34% | 0.031 |
+| carrier_vr_static | 2146ns | 2054ns | 2199ns | base | 0.030 |
+| carrier_vr_tagged | 2243ns | 2110ns | 2330ns | +4.53% | 0.029 |
+
+## Hardware counters (per call)
+
+| Variant | instructions | cycles | IPC | × base instr |
+|---|---|---|---|---|
+| carrier_vr_nanbox | 266969 | 1603120 | 0.167 | 1.00× |
+| carrier_vr_static | 266360 | 1142690 | 0.233 | 1.00× |
+| carrier_vr_tagged | 270822 | 1577392 | 0.172 | 1.02× |
+
+Instructions and cycles are the mean over the variant's samples for the measured region. IPC is instructions per cycle. The instruction ratio isolates whether a variant wins by retiring fewer instructions or by executing the same instructions more efficiently.
 
 ## Performance model
 
@@ -48,135 +48,134 @@ _Why it matters:_ A fat tail matters for latency budgets even when the median lo
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| carrier_vr_nanbox | 0.029 | 91.5% |
-| carrier_vr_static | 0.026 | 82.7% |
-| carrier_vr_tagged | 0.028 | 86.5% |
+| carrier_vr_nanbox | 0.031 | 95.7% |
+| carrier_vr_static | 0.029 | 92.0% |
+| carrier_vr_tagged | 0.028 | 87.5% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| carrier_vr_nanbox | 4590ns | 4590ns | -3.07% |
-| carrier_vr_static | 4736ns | 4736ns | base |
-| carrier_vr_tagged | 5190ns | 5190ns | +9.60% |
+| carrier_vr_nanbox | 4416ns | 4416ns | -3.58% |
+| carrier_vr_static | 4580ns | 4580ns | base |
+| carrier_vr_tagged | 4565ns | 4565ns | -0.32% |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| carrier_vr_static | 2426ns | base | --- | [2361, 2469] | --- | --- | --- | --- |
-| carrier_vr_nanbox | 2191ns | -262.1ns (-10.8%) | [-344, -99]ns | [2026, 2334] | YES (adj: no) | 0.0625 | 0.0313 | 0 |
-| carrier_vr_tagged | 2319ns | no significant difference | [-220, +869]ns | [2156, 3329] | no | 0.6875 | 0.6875 | 0 |
+| carrier_vr_static | 2170ns | base | --- | [2070, 2199] | --- | --- | --- | --- |
+| carrier_vr_nanbox | 2086ns | no significant difference | [-137, +0]ns | [2016, 2122] | no | 0.2188 | 0.2188 | 0 |
+| carrier_vr_tagged | 2281ns | +99.0ns (+4.6%) | [+33, +160]ns | [2119, 2330] | YES (adj: no) | 0.0625 | 0.0313 | 0 |
 
 ## Per-pass consistency (nonstop e2e, Δ vs baseline)
 
 | Pass | carrier_vr_static | carrier_vr_nanbox | carrier_vr_tagged |
 |---|---|---|---|
-| 1 | 2354ns | -14.8% | -9.0% |
-| 2 | 2471ns | -13.8% | -7.9% |
-| 3 | 2467ns | -5.5% | +16.7% |
-| 4 | 2398ns | -2.6% | -9.5% |
-| 5 | 2368ns | -13.6% | -0.2% |
-| 6 | 2454ns | -8.2% | +54.0% |
+| 1 | 2085ns | +2.8% | +1.2% |
+| 2 | 2170ns | -3.3% | +6.9% |
+| 3 | 2170ns | -4.0% | +7.8% |
+| 4 | 2213ns | -5.6% | +1.9% |
+| 5 | 2185ns | -6.8% | +5.6% |
+| 6 | 2054ns | -2.8% | +3.7% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| carrier_vr_nanbox | -0.060 | ok |
-| carrier_vr_static | -0.191 | ok |
-| carrier_vr_tagged | -0.118 | ok |
+| carrier_vr_nanbox | 0.340 | moderate+ |
+| carrier_vr_static | -0.016 | ok |
+| carrier_vr_tagged | -0.172 | ok |
 
 **Consistency summary:**
 
-- **carrier_vr_nanbox**: won 6/6, lost 0/6
-- **carrier_vr_tagged**: won 4/6, lost 2/6
+- **carrier_vr_nanbox**: won 5/6, lost 1/6
+- **carrier_vr_tagged**: won 0/6, lost 6/6
 
 ## Bridge overhead per variant
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| carrier_vr_nanbox | 87901.9ns | 2183.5ns | 4025.7% | HIGH |
-| carrier_vr_static | 86715.1ns | 2418.6ns | 3585.4% | HIGH |
-| carrier_vr_tagged | 91467.3ns | 2601.2ns | 3516.3% | HIGH |
+| carrier_vr_nanbox | 85716.0ns | 2074.5ns | 4131.8% | HIGH |
+| carrier_vr_static | 85729.1ns | 2146.2ns | 3994.4% | HIGH |
+| carrier_vr_tagged | 86188.1ns | 2243.4ns | 3841.8% | HIGH |
 
 ## Distribution (algo ns)
 
 ```
-carrier_vr_nanbox (n=6, range 2005.4-2333.5 ns)
-   2005.4 |########################################
-   2021.8 |
-   2038.2 |########################################
-   2054.6 |
-   2071.0 |
-   2087.4 |
-   2103.8 |
-   2120.2 |########################################
-   2136.6 |
-   2153.0 |
-   2169.4 |
-   2185.9 |
-   2202.3 |
-   2218.7 |
-   2235.1 |
-   2251.5 |########################################
-   2267.9 |
-   2284.3 |
-   2300.7 |
-   2317.1 |########################################
+carrier_vr_nanbox (n=6, range 1995.8-2121.5 ns)
+   1995.8 |####################
+   2002.1 |
+   2008.4 |
+   2014.7 |
+   2020.9 |
+   2027.2 |
+   2033.5 |####################
+   2039.8 |
+   2046.1 |
+   2052.4 |
+   2058.7 |
+   2064.9 |
+   2071.2 |
+   2077.5 |
+   2083.8 |########################################
+   2090.1 |
+   2096.4 |####################
+   2102.6 |
+   2108.9 |
+   2115.2 |
   (0 below, 1 above range)
 
-carrier_vr_static (n=6, range 2353.8-2468.9 ns)
-   2353.8 |########################################
-   2359.6 |
-   2365.3 |########################################
-   2371.1 |
-   2376.8 |
-   2382.6 |
-   2388.3 |
-   2394.1 |########################################
-   2399.9 |
-   2405.6 |
-   2411.4 |
-   2417.1 |
-   2422.9 |
-   2428.6 |
-   2434.4 |
-   2440.2 |
-   2445.9 |
-   2451.7 |########################################
-   2457.4 |
-   2463.2 |########################################
+carrier_vr_static (n=6, range 2053.8-2198.9 ns)
+   2053.8 |####################
+   2061.1 |
+   2068.3 |
+   2075.6 |
+   2082.8 |####################
+   2090.1 |
+   2097.3 |
+   2104.6 |
+   2111.9 |
+   2119.1 |
+   2126.4 |
+   2133.6 |
+   2140.9 |
+   2148.1 |
+   2155.4 |
+   2162.7 |
+   2169.9 |########################################
+   2177.2 |
+   2184.4 |####################
+   2191.7 |
   (0 below, 1 above range)
 
-carrier_vr_tagged (n=6, range 2142.5-3329.2 ns)
-   2142.5 |########################################
-   2201.8 |
-   2261.2 |####################
-   2320.5 |####################
-   2379.8 |
-   2439.2 |
-   2498.5 |
-   2557.8 |
-   2617.2 |
-   2676.5 |
-   2735.8 |
-   2795.2 |
-   2854.5 |####################
-   2913.8 |
-   2973.2 |
-   3032.5 |
-   3091.8 |
-   3151.2 |
-   3210.5 |
-   3269.8 |
+carrier_vr_tagged (n=6, range 2109.6-2330.0 ns)
+   2109.6 |########################################
+   2120.6 |########################################
+   2131.6 |
+   2142.7 |
+   2153.7 |
+   2164.7 |
+   2175.7 |
+   2186.7 |
+   2197.8 |
+   2208.8 |
+   2219.8 |
+   2230.8 |
+   2241.8 |
+   2252.9 |########################################
+   2263.9 |
+   2274.9 |
+   2285.9 |
+   2296.9 |########################################
+   2308.0 |
+   2319.0 |########################################
   (0 below, 1 above range)
 
 ```
 
 ## Diagnostics
 
-- **carrier_vr_nanbox**: bridge=3992.0% of algo (FFI overhead may distort results)
-- **carrier_vr_static**: bridge=3563.7% of algo (FFI overhead may distort results)
-- **carrier_vr_tagged**: CV=22.3% (high variance, measurements may be unstable)
-- **carrier_vr_tagged**: bridge=3810.6% of algo (FFI overhead may distort results)
+- **carrier_vr_nanbox**: bridge=4103.7% of algo (FFI overhead may distort results)
+- **carrier_vr_static**: bridge=3951.5% of algo (FFI overhead may distort results)
+- **carrier_vr_tagged**: bridge=3782.8% of algo (FFI overhead may distort results)

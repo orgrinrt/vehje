@@ -1,4 +1,4 @@
-# Residual encoding: register/SSA vs stack bytecode, madd profile
+# Residual encoding: predecoded register/SSA vs stack bytecode, madd profile
 
 2 variants, 6 samples per variant.
 Baseline: **carrier_res_madd_register**
@@ -7,79 +7,94 @@ Baseline: **carrier_res_madd_register**
 
 Baseline for all deltas below: **carrier_res_madd_register**. (Deltas are paired `variant - baseline` medians; `*` marks a CI that excludes zero.)
 
-### carrier_res_madd_register dominates: 98% faster than the next best (carrier_res_madd_stack)
+### carrier_res_madd_register dominates: 129% faster than the next best (carrier_res_madd_stack)
 
-carrier_res_madd_register (47.00 us) leads carrier_res_madd_stack (93.07 us) by 98%, a clear separation rather than a photo finish. CV 2.8%.
+carrier_res_madd_register (41.43 us) leads carrier_res_madd_stack (94.80 us) by 129%, a clear separation rather than a photo finish. CV 4.1%.
 
 _Why it matters:_ A dominant, well-separated winner is a safe default pick for this workload shape.
 
+### carrier_res_madd_stack shows alternating (throttle bounce) (autocorr -0.63)
+
+carrier_res_madd_stack's per-pass series has lag-1 autocorrelation -0.63, indicating alternating (throttle bounce). Its timing may not be at steady state.
+
+_Why it matters:_ Autocorrelated samples violate the independence the CIs assume; the interval is optimistic until the drift is warmed out or cooled down.
+
 ### No variant beats the baseline (carrier_res_madd_register)
 
-The baseline carrier_res_madd_register is the fastest (47.00 us median); no rival improves on it (all deltas are >= 0).
+The baseline carrier_res_madd_register is the fastest (41.43 us median); no rival improves on it (all deltas are >= 0).
 
 _Why it matters:_ When nothing beats the baseline, the current choice stands; the contenders cost speed for whatever else they buy.
 
 ## Key findings
 
-- **Baseline (carrier_res_madd_register) is the fastest** at 47001.8 ns median
+- **Baseline (carrier_res_madd_register) is the fastest** at 41430.0 ns median
 - 1 variant significantly slower than baseline
-- Spread: 1.98x (fastest 47001.8 ns, slowest 93069.1 ns)
+- Spread: 2.29x (fastest 41430.0 ns, slowest 94798.8 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| carrier_res_madd_register | 49715ns | 49184ns | 48740ns | 49151ns | 51047ns | base |
-| carrier_res_madd_stack | 95190ns | 95366ns | 91251ns | 95038ns | 97387ns | +91.47% |
+| carrier_res_madd_register | 43687ns | 43855ns | 40991ns | 43424ns | 45430ns | base |
+| carrier_res_madd_stack | 97944ns | 97312ns | 95422ns | 96809ns | 100907ns | +124.20% |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| carrier_res_madd_register | 47452ns | 46575ns | 48740ns | base | 0.022 |
-| carrier_res_madd_stack | 92770ns | 89092ns | 94810ns | +95.50% | 0.011 |
+| carrier_res_madd_register | 41209ns | 38586ns | 42901ns | base | 0.025 |
+| carrier_res_madd_stack | 95405ns | 93105ns | 98262ns | +131.51% | 0.011 |
+
+## Hardware counters (per call)
+
+| Variant | instructions | cycles | IPC | × base instr |
+|---|---|---|---|---|
+| carrier_res_madd_register | 460013 | 1034162 | 0.445 | 1.00× |
+| carrier_res_madd_stack | 599569 | 2381450 | 0.252 | 1.30× |
+
+Instructions and cycles are the mean over the variant's samples for the measured region. IPC is instructions per cycle. The instruction ratio isolates whether a variant wins by retiring fewer instructions or by executing the same instructions more efficiently.
 
 ## Performance model
 
-- Peak throughput: **0.022 Gops/s** (carrier_res_madd_register; best 20% batches)
+- Peak throughput: **0.027 Gops/s** (carrier_res_madd_register; best 20% batches)
 - Ops per call: 1024
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| carrier_res_madd_register | 0.022 | 99.1% |
-| carrier_res_madd_stack | 0.011 | 50.0% |
+| carrier_res_madd_register | 0.025 | 93.1% |
+| carrier_res_madd_stack | 0.011 | 40.7% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| carrier_res_madd_register | 49715ns | 49715ns | base |
-| carrier_res_madd_stack | 95190ns | 95190ns | +91.47% |
+| carrier_res_madd_register | 43687ns | 43687ns | base |
+| carrier_res_madd_stack | 97944ns | 97944ns | +124.20% |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| carrier_res_madd_register | 47002ns | base | --- | [46615, 48740] | --- | --- | --- | --- |
-| carrier_res_madd_stack | 93069ns | +45445.0ns (+96.7%) | [+42722, +47786]ns | [90431, 94810] | YES | 0.0313 | 0.0313 | 0 |
+| carrier_res_madd_register | 41430ns | base | --- | [39296, 42901] | --- | --- | --- | --- |
+| carrier_res_madd_stack | 94799ns | +53422.8ns (+128.9%) | [+51574, +57590]ns | [93153, 98262] | YES | 0.0313 | 0.0313 | 0 |
 
 ## Per-pass consistency (nonstop e2e, Δ vs baseline)
 
 | Pass | carrier_res_madd_register | carrier_res_madd_stack |
 |---|---|---|
-| 1 | 47064ns | +95.0% |
-| 2 | 47135ns | +103.6% |
-| 3 | 46575ns | +100.3% |
-| 4 | 50346ns | +86.0% |
-| 5 | 46940ns | +89.8% |
-| 6 | 46654ns | +99.0% |
+| 1 | 38586ns | +142.6% |
+| 2 | 40007ns | +148.5% |
+| 3 | 41635ns | +123.6% |
+| 4 | 44166ns | +117.4% |
+| 5 | 41338ns | +134.9% |
+| 6 | 41522ns | +124.5% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| carrier_res_madd_register | -0.312 | moderate- |
-| carrier_res_madd_stack | -0.173 | ok |
+| carrier_res_madd_register | 0.249 | moderate+ |
+| carrier_res_madd_stack | -0.628 | HIGH- (thermal bounce) |
 
 **Consistency summary:**
 
@@ -89,61 +104,61 @@ _Why it matters:_ When nothing beats the baseline, the current choice stands; th
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| carrier_res_madd_register | 95080.8ns | 47452.3ns | 200.4% | HIGH |
-| carrier_res_madd_stack | 98227.9ns | 92769.9ns | 105.9% | HIGH |
+| carrier_res_madd_register | 110412.2ns | 41209.0ns | 267.9% | HIGH |
+| carrier_res_madd_stack | 96138.8ns | 95404.8ns | 100.8% | HIGH |
 
 ## Distribution (algo ns)
 
 ```
-carrier_res_madd_register (n=6, range 46575.4-48740.2 ns)
-  46575.4 |########################################
-  46683.6 |
-  46791.9 |
-  46900.1 |####################
-  47008.4 |####################
-  47116.6 |####################
-  47224.8 |
-  47333.1 |
-  47441.3 |
-  47549.6 |
-  47657.8 |
-  47766.0 |
-  47874.3 |
-  47982.5 |
-  48090.8 |
-  48199.0 |
-  48307.2 |
-  48415.5 |
-  48523.7 |
-  48632.0 |
+carrier_res_madd_register (n=6, range 38585.8-42900.6 ns)
+  38585.8 |########################################
+  38801.5 |
+  39017.3 |
+  39233.0 |
+  39448.8 |
+  39664.5 |
+  39880.2 |########################################
+  40096.0 |
+  40311.7 |
+  40527.5 |
+  40743.2 |
+  40958.9 |
+  41174.7 |########################################
+  41390.4 |########################################
+  41606.2 |########################################
+  41821.9 |
+  42037.6 |
+  42253.4 |
+  42469.1 |
+  42684.9 |
   (0 below, 1 above range)
 
-carrier_res_madd_stack (n=6, range 89091.7-94809.8 ns)
-  89091.7 |########################################
-  89377.6 |
-  89663.5 |
-  89949.4 |
-  90235.3 |
-  90521.2 |
-  90807.1 |
-  91093.0 |
-  91378.9 |
-  91664.8 |########################################
-  91950.8 |
-  92236.7 |
-  92522.6 |
-  92808.5 |########################################
-  93094.4 |########################################
-  93380.3 |########################################
-  93666.2 |
-  93952.1 |
-  94238.0 |
-  94523.9 |
+carrier_res_madd_stack (n=6, range 93105.4-98262.5 ns)
+  93105.4 |########################################
+  93363.3 |####################
+  93621.1 |
+  93879.0 |
+  94136.8 |
+  94394.7 |
+  94652.5 |
+  94910.4 |
+  95168.2 |
+  95426.1 |
+  95683.9 |
+  95941.8 |####################
+  96199.7 |
+  96457.5 |
+  96715.4 |
+  96973.2 |####################
+  97231.1 |
+  97488.9 |
+  97746.8 |
+  98004.6 |
   (0 below, 1 above range)
 
 ```
 
 ## Diagnostics
 
-- **carrier_res_madd_register**: bridge=200.1% of algo (FFI overhead may distort results)
-- **carrier_res_madd_stack**: bridge=105.9% of algo (FFI overhead may distort results)
+- **carrier_res_madd_register**: bridge=273.5% of algo (FFI overhead may distort results)
+- **carrier_res_madd_stack**: bridge=100.8% of algo (FFI overhead may distort results)

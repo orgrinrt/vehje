@@ -7,3 +7,11 @@
 1784757722	d772801	carrier_dispatch_leaf_n64	carrier_disp_leaf_nullfloor	64	warm	1661.7	1658.0	1681.9
 1784757722	d772801	carrier_dispatch_leaf_n64	carrier_disp_leaf_switch	64	warm	2149.6	2147.3	2152.5
 1784757722	d772801	carrier_dispatch_leaf_n64	carrier_disp_leaf_threaded	64	warm	2808.3	2802.1	2835.6
+1784793803	2a3f34b	carrier_dispatch_leaf_n64	carrier_disp_leaf_bittree	64	warm	2230.0	2202.5	2352.1
+1784793803	2a3f34b	carrier_dispatch_leaf_n64	carrier_disp_leaf_fntable	64	warm	2337.5	2336.7	2559.3
+1784793803	2a3f34b	carrier_dispatch_leaf_n64	carrier_disp_leaf_ifchain	64	warm	2052.9	1991.8	2125.2
+1784793803	2a3f34b	carrier_dispatch_leaf_n64	carrier_disp_leaf_ifchainasc	64	warm	2101.7	1989.8	2105.8
+1784793803	2a3f34b	carrier_dispatch_leaf_n64	carrier_disp_leaf_ifchainlin	64	warm	3075.0	3021.9	3093.8
+1784793803	2a3f34b	carrier_dispatch_leaf_n64	carrier_disp_leaf_nullfloor	64	warm	1565.8	1538.3	1632.5
+1784793803	2a3f34b	carrier_dispatch_leaf_n64	carrier_disp_leaf_switch	64	warm	2005.4	1944.0	2134.4
+1784793803	2a3f34b	carrier_dispatch_leaf_n64	carrier_disp_leaf_threaded	64	warm	2737.9	2651.2	2754.2

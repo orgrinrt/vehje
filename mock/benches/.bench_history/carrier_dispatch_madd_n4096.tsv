@@ -7,3 +7,11 @@
 1784757460	d772801	carrier_dispatch_madd_n4096	carrier_disp_madd_nullfloor	4096	warm	163556.7	162050.5	166168.5
 1784757460	d772801	carrier_dispatch_madd_n4096	carrier_disp_madd_switch	4096	warm	199642.1	199325.0	201109.8
 1784757460	d772801	carrier_dispatch_madd_n4096	carrier_disp_madd_threaded	4096	warm	214828.3	214322.5	215857.1
+1784793868	2a3f34b	carrier_dispatch_madd_n4096	carrier_disp_madd_bittree	4096	warm	178974.2	177956.9	180943.3
+1784793868	2a3f34b	carrier_dispatch_madd_n4096	carrier_disp_madd_fntable	4096	warm	216536.7	215149.0	219472.7
+1784793868	2a3f34b	carrier_dispatch_madd_n4096	carrier_disp_madd_ifchain	4096	warm	197873.8	197455.2	200370.2
+1784793868	2a3f34b	carrier_dispatch_madd_n4096	carrier_disp_madd_ifchainasc	4096	warm	196359.2	195877.7	196556.9
+1784793868	2a3f34b	carrier_dispatch_madd_n4096	carrier_disp_madd_ifchainlin	4096	warm	171886.7	170973.0	174888.5
+1784793868	2a3f34b	carrier_dispatch_madd_n4096	carrier_disp_madd_nullfloor	4096	warm	160444.2	160063.4	163371.5
+1784793868	2a3f34b	carrier_dispatch_madd_n4096	carrier_disp_madd_switch	4096	warm	200500.8	200429.3	201534.6
+1784793868	2a3f34b	carrier_dispatch_madd_n4096	carrier_disp_madd_threaded	4096	warm	215437.1	214338.5	216628.8

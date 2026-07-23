@@ -1,3 +1,5 @@
 # schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
 1784758604	d772801	carrier_residual_madd_n1024	carrier_res_madd_register	1024	warm	47063.7	47001.8	48740.2
 1784758604	d772801	carrier_residual_madd_n1024	carrier_res_madd_stack	1024	warm	93300.4	93069.1	94809.8
+1784795513	74f52f4	carrier_residual_madd_n1024	carrier_res_madd_register	1024	warm	41522.5	41430.0	42900.6
+1784795513	74f52f4	carrier_residual_madd_n1024	carrier_res_madd_stack	1024	warm	96002.1	94798.8	98262.5

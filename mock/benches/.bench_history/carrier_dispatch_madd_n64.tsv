@@ -7,3 +7,11 @@
 1784757445	d772801	carrier_dispatch_madd_n64	carrier_disp_madd_nullfloor	64	warm	1979.2	1976.5	1994.6
 1784757445	d772801	carrier_dispatch_madd_n64	carrier_disp_madd_switch	64	warm	2694.2	2692.3	2718.3
 1784757445	d772801	carrier_dispatch_madd_n64	carrier_disp_madd_threaded	64	warm	2953.8	2951.5	2983.9
+1784793853	2a3f34b	carrier_dispatch_madd_n64	carrier_disp_madd_bittree	64	warm	2543.3	2408.6	2590.4
+1784793853	2a3f34b	carrier_dispatch_madd_n64	carrier_disp_madd_fntable	64	warm	2891.7	2887.5	2913.5
+1784793853	2a3f34b	carrier_dispatch_madd_n64	carrier_disp_madd_ifchain	64	warm	2657.9	2642.1	2717.9
+1784793853	2a3f34b	carrier_dispatch_madd_n64	carrier_disp_madd_ifchainasc	64	warm	2607.9	2606.2	2682.1
+1784793853	2a3f34b	carrier_dispatch_madd_n64	carrier_disp_madd_ifchainlin	64	warm	2452.1	2334.8	2484.6
+1784793853	2a3f34b	carrier_dispatch_madd_n64	carrier_disp_madd_nullfloor	64	warm	1917.5	1831.2	1953.7
+1784793853	2a3f34b	carrier_dispatch_madd_n64	carrier_disp_madd_switch	64	warm	2610.8	2606.4	2665.0
+1784793853	2a3f34b	carrier_dispatch_madd_n64	carrier_disp_madd_threaded	64	warm	2939.6	2787.9	3003.3

@@ -5,3 +5,9 @@
 1784758013	d772801	carrier_predecode_wideselect_n16384	carrier_pre_wideselect_regcache	16384	warm	1807547.9	1805262.9	1809549.1
 1784758013	d772801	carrier_predecode_wideselect_n16384	carrier_pre_wideselect_switch	16384	warm	1694576.2	1693088.5	1704283.1
 1784758013	d772801	carrier_predecode_wideselect_n16384	carrier_pre_wideselect_threaded	16384	warm	1696129.6	1690355.2	1714323.8
+1784795497	74f52f4	carrier_predecode_wideselect_n16384	carrier_pre_wideselect_direct	16384	warm	1382227.5	1380686.4	1384025.8
+1784795497	74f52f4	carrier_predecode_wideselect_n16384	carrier_pre_wideselect_fntable	16384	warm	1943937.9	1943358.1	1952721.4
+1784795497	74f52f4	carrier_predecode_wideselect_n16384	carrier_pre_wideselect_null	16384	warm	477744.6	473591.2	498227.9
+1784795497	74f52f4	carrier_predecode_wideselect_n16384	carrier_pre_wideselect_regcache	16384	warm	1824053.3	1818438.1	1830321.4
+1784795497	74f52f4	carrier_predecode_wideselect_n16384	carrier_pre_wideselect_switch	16384	warm	1732703.3	1732306.9	1742272.1
+1784795497	74f52f4	carrier_predecode_wideselect_n16384	carrier_pre_wideselect_threaded	16384	warm	1747429.2	1746303.4	1751557.9

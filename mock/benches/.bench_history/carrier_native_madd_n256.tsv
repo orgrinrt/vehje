@@ -2,3 +2,6 @@
 1784759087	d772801	carrier_native_madd_n256	carrier_nat_madd_copypatch	256	warm	7597.5	7544.8	7691.0
 1784759087	d772801	carrier_native_madd_n256	carrier_nat_madd_interp	256	warm	12622.5	12509.1	12925.0
 1784759087	d772801	carrier_native_madd_n256	carrier_nat_madd_stencil	256	warm	7437.9	7383.3	8094.8
+1784794857	74f52f4	carrier_native_madd_n256	carrier_nat_madd_copypatch	256	warm	7280.0	7272.1	7306.6
+1784794857	74f52f4	carrier_native_madd_n256	carrier_nat_madd_direct	256	warm	7097.9	6850.0	7272.1
+1784794857	74f52f4	carrier_native_madd_n256	carrier_nat_madd_interp	256	warm	11710.0	11330.9	12079.4

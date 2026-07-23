@@ -5,3 +5,9 @@
 1784758025	d772801	carrier_predecode_leaf_n1024	carrier_pre_leaf_regcache	1024	warm	27956.7	27619.4	29202.9
 1784758025	d772801	carrier_predecode_leaf_n1024	carrier_pre_leaf_switch	1024	warm	26132.9	26096.1	27681.5
 1784758025	d772801	carrier_predecode_leaf_n1024	carrier_pre_leaf_threaded	1024	warm	22913.3	22898.5	23217.9
+1784795241	74f52f4	carrier_predecode_leaf_n1024	carrier_pre_leaf_direct	1024	warm	20042.1	19972.1	20187.0
+1784795241	74f52f4	carrier_predecode_leaf_n1024	carrier_pre_leaf_fntable	1024	warm	55659.6	54821.2	57461.6
+1784795241	74f52f4	carrier_predecode_leaf_n1024	carrier_pre_leaf_null	1024	warm	20219.2	20049.4	20471.0
+1784795241	74f52f4	carrier_predecode_leaf_n1024	carrier_pre_leaf_regcache	1024	warm	27147.9	27061.8	28364.0
+1784795241	74f52f4	carrier_predecode_leaf_n1024	carrier_pre_leaf_switch	1024	warm	25743.3	25676.7	26178.5
+1784795241	74f52f4	carrier_predecode_leaf_n1024	carrier_pre_leaf_threaded	1024	warm	25779.2	25728.3	25937.3

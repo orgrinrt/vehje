@@ -1,328 +1,314 @@
 # Optimize stage (none/CSE/eqsat/CSE+eqsat...), downstream interp, tight profile
 
-7 variants, 6 samples per variant.
+6 variants, 6 samples per variant.
 Baseline: **carrier_opt_tight_none**
 
 ## Highlights
 
 Baseline for all deltas below: **carrier_opt_tight_none**. (Deltas are paired `variant - baseline` medians; `*` marks a CI that excludes zero.)
 
-### carrier_opt_tight_all dominates: 1165% faster than the next best (carrier_opt_tight_fold)
+### carrier_opt_tight_all dominates: 1128% faster than the next best (carrier_opt_tight_fold)
 
-carrier_opt_tight_all (7.96 us) leads carrier_opt_tight_fold (100.71 us) by 1165%, a clear separation rather than a photo finish. CV 2.9%.
+carrier_opt_tight_all (8.26 us) leads carrier_opt_tight_fold (101.48 us) by 1128%, a clear separation rather than a photo finish. CV 3.5%.
 
 _Why it matters:_ A dominant, well-separated winner is a safe default pick for this workload shape.
 
-### carrier_opt_tight_all beats baseline by 95% (significant)
+### carrier_opt_tight_all beats baseline by 94% (significant)
 
-carrier_opt_tight_all is -144.94 us (95%) faster than baseline carrier_opt_tight_none, with a CI that excludes zero.
+carrier_opt_tight_all is -144.13 us (94%) faster than baseline carrier_opt_tight_none, with a CI that excludes zero.
 
 _Why it matters:_ A large, significant improvement over the current baseline is a concrete reason to switch.
 
-### carrier_opt_tight_eqsat is an outlier: 56.6x slower than the field
+### carrier_opt_tight_dce is an outlier: 18.7x slower than the field
 
-carrier_opt_tight_eqsat (450.80 us) is 56.6x the fastest (7.96 us), well off the pack.
+carrier_opt_tight_dce (154.27 us) is 18.7x the fastest (8.26 us), well off the pack.
 
 _Why it matters:_ A >2x outlier is almost never the right choice; if it is intentional (e.g. it buys correctness), say so explicitly.
 
-### Two tiers: {carrier_opt_tight_all} vs {carrier_opt_tight_fold, carrier_opt_tight_cse, carrier_opt_tight_none, carrier_opt_tight_dce, carrier_opt_tight_cseeqsat, carrier_opt_tight_eqsat} (1165% apart)
+### carrier_opt_tight_all shows alternating (throttle bounce) (autocorr -0.63)
 
-The field splits into a fast tier {carrier_opt_tight_all} and a slow tier {carrier_opt_tight_fold, carrier_opt_tight_cse, carrier_opt_tight_none, carrier_opt_tight_dce, carrier_opt_tight_cseeqsat, carrier_opt_tight_eqsat} with a 1165% jump between them - a qualitative difference, not a gradient.
+carrier_opt_tight_all's per-pass series has lag-1 autocorrelation -0.63, indicating alternating (throttle bounce). Its timing may not be at steady state.
+
+_Why it matters:_ Autocorrelated samples violate the independence the CIs assume; the interval is optimistic until the drift is warmed out or cooled down.
+
+### Two tiers: {carrier_opt_tight_all} vs {carrier_opt_tight_fold, carrier_opt_tight_canon, carrier_opt_tight_cse, carrier_opt_tight_none, carrier_opt_tight_dce} (1128% apart)
+
+The field splits into a fast tier {carrier_opt_tight_all} and a slow tier {carrier_opt_tight_fold, carrier_opt_tight_canon, carrier_opt_tight_cse, carrier_opt_tight_none, carrier_opt_tight_dce} with a 1128% jump between them - a qualitative difference, not a gradient.
 
 _Why it matters:_ A tier split usually reflects a mechanism boundary (branchless vs branch, cached vs not); the tier, not the exact rank, is the finding.
 
-### Wide spread: slowest is 56.6x the fastest
+### Wide spread: slowest is 18.7x the fastest
 
-Fastest carrier_opt_tight_all (7.96 us) to slowest carrier_opt_tight_eqsat (450.80 us): 56.6x. The strategy choice matters a lot for this workload.
+Fastest carrier_opt_tight_all (8.26 us) to slowest carrier_opt_tight_dce (154.27 us): 18.7x. The strategy choice matters a lot for this workload.
 
 _Why it matters:_ A wide field means the strategy is load-bearing here; getting it right (or wrong) has large consequences.
 
 ## Key findings
 
-- **Fastest: carrier_opt_tight_all** at 7960.6 ns median (-94.8% vs baseline)
+- **Fastest: carrier_opt_tight_all** at 8264.6 ns median (-94.6% vs baseline)
 - 3 variants significantly faster than baseline
-- 2 variants significantly slower than baseline
-- Spread: 56.63x (fastest 7960.6 ns, slowest 450798.8 ns)
+- Spread: 18.67x (fastest 8264.6 ns, slowest 154266.0 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| carrier_opt_tight_all | 10303ns | 10171ns | 10022ns | 10137ns | 10693ns | -93.37% |
-| carrier_opt_tight_cse | 150271ns | 149922ns | 147711ns | 149521ns | 152676ns | -3.29% |
-| carrier_opt_tight_cseeqsat | 452909ns | 451403ns | 449983ns | 451346ns | 456716ns | +191.46% |
-| carrier_opt_tight_dce | 157216ns | 157654ns | 152773ns | 156612ns | 160343ns | +1.17% |
-| carrier_opt_tight_eqsat | 455802ns | 453300ns | 450698ns | 452919ns | 462677ns | +193.33% |
-| carrier_opt_tight_fold | 104142ns | 103125ns | 101505ns | 102673ns | 107663ns | -32.98% |
-| carrier_opt_tight_none | 155391ns | 155495ns | 150280ns | 154431ns | 159386ns | base |
+| carrier_opt_tight_all | 10595ns | 10545ns | 10202ns | 10451ns | 11007ns | -93.16% |
+| carrier_opt_tight_canon | 146822ns | 146978ns | 143930ns | 146925ns | 148115ns | -5.24% |
+| carrier_opt_tight_cse | 151783ns | 151608ns | 148972ns | 150738ns | 154755ns | -2.04% |
+| carrier_opt_tight_dce | 156752ns | 156650ns | 154595ns | 156056ns | 158873ns | +1.17% |
+| carrier_opt_tight_fold | 104302ns | 103855ns | 101838ns | 103216ns | 107164ns | -32.68% |
+| carrier_opt_tight_none | 154943ns | 155024ns | 151859ns | 154142ns | 157685ns | base |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| carrier_opt_tight_all | 8046ns | 7879ns | 8292ns | -94.74% | 0.509 |
-| carrier_opt_tight_cse | 147805ns | 145488ns | 150160ns | -3.45% | 0.028 |
-| carrier_opt_tight_cseeqsat | 450378ns | 447664ns | 454056ns | +194.19% | 0.009 |
-| carrier_opt_tight_dce | 154584ns | 150530ns | 157758ns | +0.98% | 0.026 |
-| carrier_opt_tight_eqsat | 453269ns | 448482ns | 459994ns | +196.08% | 0.009 |
-| carrier_opt_tight_fold | 101754ns | 99339ns | 105095ns | -33.53% | 0.040 |
-| carrier_opt_tight_none | 153091ns | 148116ns | 157055ns | base | 0.027 |
+| carrier_opt_tight_all | 8287ns | 7952ns | 8615ns | -94.57% | 0.494 |
+| carrier_opt_tight_canon | 144407ns | 141722ns | 145570ns | -5.33% | 0.028 |
+| carrier_opt_tight_cse | 149329ns | 146451ns | 152332ns | -2.10% | 0.027 |
+| carrier_opt_tight_dce | 154260ns | 151870ns | 156316ns | +1.13% | 0.027 |
+| carrier_opt_tight_fold | 101945ns | 99477ns | 104816ns | -33.17% | 0.040 |
+| carrier_opt_tight_none | 152536ns | 149606ns | 155185ns | base | 0.027 |
+
+## Hardware counters (per call)
+
+| Variant | instructions | cycles | IPC | × base instr |
+|---|---|---|---|---|
+| carrier_opt_tight_all | 304190 | 1400115 | 0.217 | 0.32× |
+| carrier_opt_tight_canon | 907310 | 4084214 | 0.222 | 0.96× |
+| carrier_opt_tight_cse | 929322 | 4171391 | 0.223 | 0.98× |
+| carrier_opt_tight_dce | 959683 | 4319684 | 0.222 | 1.02× |
+| carrier_opt_tight_fold | 638684 | 3933678 | 0.162 | 0.68× |
+| carrier_opt_tight_none | 945398 | 4319626 | 0.219 | 1.00× |
+
+Instructions and cycles are the mean over the variant's samples for the measured region. IPC is instructions per cycle. The instruction ratio isolates whether a variant wins by retiring fewer instructions or by executing the same instructions more efficiently.
 
 ## Performance model
 
-- Peak throughput: **0.520 Gops/s** (carrier_opt_tight_all; best 20% batches)
+- Peak throughput: **0.515 Gops/s** (carrier_opt_tight_all; best 20% batches)
 - Ops per call: 4096
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| carrier_opt_tight_all | 0.515 | 99.0% |
-| carrier_opt_tight_cse | 0.028 | 5.3% |
-| carrier_opt_tight_cseeqsat | 0.009 | 1.8% |
-| carrier_opt_tight_dce | 0.026 | 5.1% |
-| carrier_opt_tight_eqsat | 0.009 | 1.7% |
-| carrier_opt_tight_fold | 0.041 | 7.8% |
-| carrier_opt_tight_none | 0.027 | 5.1% |
+| carrier_opt_tight_all | 0.496 | 96.2% |
+| carrier_opt_tight_canon | 0.028 | 5.5% |
+| carrier_opt_tight_cse | 0.027 | 5.3% |
+| carrier_opt_tight_dce | 0.027 | 5.2% |
+| carrier_opt_tight_fold | 0.040 | 7.8% |
+| carrier_opt_tight_none | 0.027 | 5.2% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| carrier_opt_tight_all | 10303ns | 10303ns | -93.37% |
-| carrier_opt_tight_cse | 150271ns | 150271ns | -3.29% |
-| carrier_opt_tight_cseeqsat | 452909ns | 452909ns | +191.46% |
-| carrier_opt_tight_dce | 157216ns | 157216ns | +1.17% |
-| carrier_opt_tight_eqsat | 455802ns | 455802ns | +193.33% |
-| carrier_opt_tight_fold | 104142ns | 104142ns | -32.98% |
-| carrier_opt_tight_none | 155391ns | 155391ns | base |
+| carrier_opt_tight_all | 10595ns | 10595ns | -93.16% |
+| carrier_opt_tight_canon | 146822ns | 146822ns | -5.24% |
+| carrier_opt_tight_cse | 151783ns | 151783ns | -2.04% |
+| carrier_opt_tight_dce | 156752ns | 156752ns | +1.17% |
+| carrier_opt_tight_fold | 104302ns | 104302ns | -32.68% |
+| carrier_opt_tight_none | 154943ns | 154943ns | base |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| carrier_opt_tight_none | 153217ns | base | --- | [149000, 157055] | --- | --- | --- | --- |
-| carrier_opt_tight_all | 7961ns | -144940.5ns (-94.6%) | [-149079, -141116]ns | [7884, 8292] | YES | 0.0469 | 0.0313 | 0 |
-| carrier_opt_tight_cse | 147285ns | -4632.6ns (-3.0%) | [-9949, -1275]ns | [145970, 150160] | YES (adj: no) | 0.2625 | 0.2188 | 0 |
-| carrier_opt_tight_cseeqsat | 449061ns | +297529.2ns (+194.2%) | [+291276, +303058]ns | [448018, 454056] | YES | 0.0469 | 0.0313 | 0 |
-| carrier_opt_tight_dce | 154802ns | no significant difference | [-4455, +6435]ns | [151192, 157758] | no | 0.6875 | 0.6875 | 0 |
-| carrier_opt_tight_eqsat | 450799ns | +299030.0ns (+195.2%) | [+295591, +305912]ns | [449013, 459994] | YES | 0.0469 | 0.0313 | 0 |
-| carrier_opt_tight_fold | 100711ns | -50172.9ns (-32.7%) | [-57050, -46788]ns | [99456, 105095] | YES | 0.0469 | 0.0313 | 0 |
+| carrier_opt_tight_none | 152581ns | base | --- | [149842, 155185] | --- | --- | --- | --- |
+| carrier_opt_tight_all | 8265ns | -144133.3ns (-94.5%) | [-146753, -141860]ns | [7982, 8615] | YES (adj: no) | 0.0521 | 0.0313 | 0 |
+| carrier_opt_tight_canon | 144663ns | -7464.8ns (-4.9%) | [-11743, -5180]ns | [142988, 145570] | YES (adj: no) | 0.0521 | 0.0313 | 0 |
+| carrier_opt_tight_cse | 149137ns | no significant difference | [-7056, +1225]ns | [146516, 152332] | no | 0.6875 | 0.6875 | 0 |
+| carrier_opt_tight_dce | 154266ns | no significant difference | [-445, +3332]ns | [152197, 156316] | no | 0.6875 | 0.6875 | 0 |
+| carrier_opt_tight_fold | 101483ns | -49914.2ns (-32.7%) | [-53946, -47915]ns | [99535, 104816] | YES (adj: no) | 0.0521 | 0.0313 | 0 |
 
 ## Per-pass consistency (nonstop e2e, Δ vs baseline)
 
-| Pass | carrier_opt_tight_none | carrier_opt_tight_all | carrier_opt_tight_cse | carrier_opt_tight_cseeqsat | carrier_opt_tight_dce | carrier_opt_tight_eqsat | carrier_opt_tight_fold |
-|---|---|---|---|---|---|---|---|
-| 1 | 149885ns | -94.7% | -2.3% | +199.1% | +1.3% | +199.9% | -30.4% |
-| 2 | 152554ns | -94.4% | -3.8% | +194.4% | +2.1% | +195.0% | -33.8% |
-| 3 | 148116ns | -94.7% | +0.3% | +205.7% | +6.5% | +204.9% | -32.9% |
-| 4 | 154755ns | -94.9% | -1.9% | +189.3% | +2.0% | +189.8% | -35.1% |
-| 5 | 159355ns | -95.0% | -8.7% | +181.8% | -5.5% | +187.3% | -37.5% |
-| 6 | 153881ns | -94.8% | -3.9% | +195.9% | -0.1% | +200.4% | -31.2% |
+| Pass | carrier_opt_tight_none | carrier_opt_tight_all | carrier_opt_tight_canon | carrier_opt_tight_cse | carrier_opt_tight_dce | carrier_opt_tight_fold |
+|---|---|---|---|---|---|---|
+| 1 | 149606ns | -94.6% | -3.4% | -2.1% | +2.1% | -31.3% |
+| 2 | 152135ns | -94.5% | -4.6% | +0.0% | -0.2% | -33.1% |
+| 3 | 153935ns | -94.7% | -5.1% | -2.9% | +1.4% | -35.4% |
+| 4 | 153026ns | -94.5% | -5.7% | -4.2% | +2.3% | -34.9% |
+| 5 | 150079ns | -94.7% | -3.5% | +1.6% | +1.6% | -32.6% |
+| 6 | 156435ns | -94.4% | -9.4% | -4.9% | -0.4% | -31.7% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| carrier_opt_tight_all | -0.430 | moderate- |
-| carrier_opt_tight_cse | -0.234 | moderate- |
-| carrier_opt_tight_cseeqsat | -0.220 | moderate- |
-| carrier_opt_tight_dce | 0.017 | ok |
-| carrier_opt_tight_eqsat | 0.295 | moderate+ |
-| carrier_opt_tight_fold | -0.083 | ok |
-| carrier_opt_tight_none | 0.147 | ok |
+| carrier_opt_tight_all | -0.633 | HIGH- (thermal bounce) |
+| carrier_opt_tight_canon | -0.005 | ok |
+| carrier_opt_tight_cse | -0.544 | HIGH- (thermal bounce) |
+| carrier_opt_tight_dce | -0.144 | ok |
+| carrier_opt_tight_fold | 0.104 | ok |
+| carrier_opt_tight_none | -0.295 | moderate- |
 
 **Consistency summary:**
 
 - **carrier_opt_tight_all**: won 6/6, lost 0/6
-- **carrier_opt_tight_cse**: won 5/6, lost 1/6
-- **carrier_opt_tight_cseeqsat**: won 0/6, lost 6/6
-- **carrier_opt_tight_dce**: won 1/6, lost 4/6
-- **carrier_opt_tight_eqsat**: won 0/6, lost 6/6
+- **carrier_opt_tight_canon**: won 6/6, lost 0/6
+- **carrier_opt_tight_cse**: won 4/6, lost 1/6
+- **carrier_opt_tight_dce**: won 2/6, lost 4/6
 - **carrier_opt_tight_fold**: won 6/6, lost 0/6
 
 ## Bridge overhead per variant
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| carrier_opt_tight_all | 88344.5ns | 8045.8ns | 1098.0% | HIGH |
-| carrier_opt_tight_cse | 148495.7ns | 147805.1ns | 100.5% | HIGH |
-| carrier_opt_tight_cseeqsat | 452638.4ns | 450378.4ns | 100.5% | HIGH |
-| carrier_opt_tight_dce | 155196.0ns | 154583.8ns | 100.4% | HIGH |
-| carrier_opt_tight_eqsat | 454851.6ns | 453268.6ns | 100.3% | HIGH |
-| carrier_opt_tight_fold | 102257.6ns | 101753.9ns | 100.5% | HIGH |
-| carrier_opt_tight_none | 153329.2ns | 153090.8ns | 100.2% | HIGH |
+| carrier_opt_tight_all | 89652.5ns | 8287.1ns | 1081.8% | HIGH |
+| carrier_opt_tight_canon | 145309.2ns | 144406.9ns | 100.6% | HIGH |
+| carrier_opt_tight_cse | 150140.4ns | 149328.5ns | 100.5% | HIGH |
+| carrier_opt_tight_dce | 155139.6ns | 154259.7ns | 100.6% | HIGH |
+| carrier_opt_tight_fold | 102603.6ns | 101944.6ns | 100.6% | HIGH |
+| carrier_opt_tight_none | 153122.3ns | 152536.0ns | 100.4% | HIGH |
 
 ## Distribution (algo ns)
 
 ```
-carrier_opt_tight_all (n=6, range 7879.2-8292.3 ns)
-   7879.2 |########################################
-   7899.9 |####################
-   7920.5 |
-   7941.2 |
-   7961.8 |
-   7982.5 |
-   8003.1 |####################
-   8023.8 |####################
-   8044.4 |
-   8065.1 |
-   8085.8 |
-   8106.4 |
-   8127.1 |
-   8147.7 |
-   8168.4 |
-   8189.0 |
-   8209.7 |
-   8230.3 |
-   8251.0 |
-   8271.6 |
+carrier_opt_tight_all (n=6, range 7951.7-8614.8 ns)
+   7951.7 |########################################
+   7984.9 |########################################
+   8018.0 |
+   8051.2 |
+   8084.3 |########################################
+   8117.5 |
+   8150.6 |
+   8183.8 |
+   8216.9 |
+   8250.1 |
+   8283.2 |
+   8316.4 |
+   8349.6 |
+   8382.7 |
+   8415.9 |########################################
+   8449.0 |########################################
+   8482.2 |
+   8515.3 |
+   8548.5 |
+   8581.6 |
   (0 below, 1 above range)
 
-carrier_opt_tight_cse (n=6, range 145487.9-150159.8 ns)
-  145487.9 |########################################
-  145721.5 |
-  145955.1 |
-  146188.7 |
-  146422.3 |########################################
-  146655.9 |########################################
-  146889.5 |
-  147123.1 |
-  147356.7 |
-  147590.3 |
-  147823.8 |########################################
-  148057.4 |
-  148291.0 |########################################
-  148524.6 |
-  148758.2 |
-  148991.8 |
-  149225.4 |
-  149459.0 |
-  149692.6 |
-  149926.2 |
+carrier_opt_tight_canon (n=6, range 141722.5-145570.4 ns)
+  141722.5 |########################################
+  141914.9 |
+  142107.3 |
+  142299.7 |
+  142492.1 |
+  142684.5 |
+  142876.9 |
+  143069.3 |
+  143261.7 |
+  143454.1 |
+  143646.5 |
+  143838.8 |
+  144031.2 |
+  144223.6 |########################################
+  144416.0 |########################################
+  144608.4 |########################################
+  144800.8 |
+  144993.2 |########################################
+  145185.6 |
+  145378.0 |
   (0 below, 1 above range)
 
-carrier_opt_tight_cseeqsat (n=6, range 447664.2-454056.1 ns)
-  447664.2 |####################
-  447983.8 |
-  448303.4 |####################
-  448623.0 |
-  448942.6 |########################################
-  449262.2 |
-  449581.8 |
-  449901.3 |
-  450220.9 |
-  450540.5 |
-  450860.1 |
-  451179.7 |
-  451499.3 |
-  451818.9 |
-  452138.5 |
-  452458.1 |####################
-  452777.7 |
-  453097.3 |
-  453416.9 |
-  453736.5 |
+carrier_opt_tight_cse (n=6, range 146450.8-152332.1 ns)
+  146450.8 |########################################
+  146744.9 |
+  147038.9 |
+  147333.0 |
+  147627.1 |
+  147921.1 |
+  148215.2 |
+  148509.3 |####################
+  148803.3 |
+  149097.4 |
+  149391.5 |####################
+  149685.5 |
+  149979.6 |
+  150273.6 |
+  150567.7 |
+  150861.8 |
+  151155.8 |
+  151449.9 |
+  151744.0 |
+  152038.0 |####################
   (0 below, 1 above range)
 
-carrier_opt_tight_dce (n=6, range 150529.6-157758.1 ns)
-  150529.6 |########################################
-  150891.0 |
-  151252.5 |
-  151613.9 |########################################
-  151975.3 |
-  152336.7 |
-  152698.1 |
-  153059.6 |
-  153421.0 |
-  153782.4 |########################################
-  154143.8 |
-  154505.3 |
-  154866.7 |
-  155228.1 |
-  155589.5 |########################################
-  155951.0 |
-  156312.4 |
-  156673.8 |
-  157035.2 |
-  157396.7 |########################################
+carrier_opt_tight_dce (n=6, range 151870.0-156316.0 ns)
+  151870.0 |########################################
+  152092.3 |
+  152314.6 |########################################
+  152536.9 |########################################
+  152759.2 |
+  152981.5 |
+  153203.8 |
+  153426.1 |
+  153648.4 |
+  153870.7 |
+  154093.0 |
+  154315.3 |
+  154537.6 |
+  154759.9 |
+  154982.2 |
+  155204.5 |
+  155426.8 |
+  155649.1 |########################################
+  155871.4 |########################################
+  156093.7 |
   (0 below, 1 above range)
 
-carrier_opt_tight_eqsat (n=6, range 448482.1-459993.5 ns)
-  448482.1 |########################################
-  449057.7 |########################################
-  449633.2 |########################################
-  450208.8 |
-  450784.4 |
-  451360.0 |########################################
-  451935.5 |
-  452511.1 |
-  453086.7 |
-  453662.3 |
-  454237.8 |
-  454813.4 |
-  455389.0 |
-  455964.5 |
-  456540.1 |
-  457115.7 |
-  457691.3 |########################################
-  458266.8 |
-  458842.4 |
-  459418.0 |
+carrier_opt_tight_fold (n=6, range 99476.7-104815.9 ns)
+  99476.7 |########################################
+  99743.7 |
+  100010.6 |
+  100277.6 |
+  100544.5 |
+  100811.5 |
+  101078.4 |####################
+  101345.4 |
+  101612.4 |####################
+  101879.3 |
+  102146.3 |
+  102413.2 |
+  102680.2 |####################
+  102947.1 |
+  103214.1 |
+  103481.1 |
+  103748.0 |
+  104015.0 |
+  104281.9 |
+  104548.9 |
   (0 below, 1 above range)
 
-carrier_opt_tight_fold (n=6, range 99339.2-105094.8 ns)
-  99339.2 |########################################
-  99627.0 |
-  99914.8 |
-  100202.5 |####################
-  100490.3 |
-  100778.1 |####################
-  101065.9 |
-  101353.6 |
-  101641.4 |
-  101929.2 |
-  102217.0 |
-  102504.8 |
-  102792.5 |
-  103080.3 |
-  103368.1 |
-  103655.9 |
-  103943.6 |
-  104231.4 |####################
-  104519.2 |
-  104807.0 |
-  (0 below, 1 above range)
-
-carrier_opt_tight_none (n=6, range 148115.8-157054.8 ns)
-  148115.8 |########################################
-  148562.8 |
-  149009.7 |
-  149456.6 |########################################
-  149903.6 |
-  150350.5 |
-  150797.5 |
-  151244.4 |
-  151691.4 |
-  152138.3 |########################################
-  152585.3 |
-  153032.2 |
-  153479.2 |########################################
-  153926.1 |
-  154373.1 |########################################
-  154820.0 |
-  155267.0 |
-  155713.9 |
-  156160.9 |
-  156607.8 |
+carrier_opt_tight_none (n=6, range 149605.8-155185.2 ns)
+  149605.8 |########################################
+  149884.8 |########################################
+  150163.7 |
+  150442.7 |
+  150721.7 |
+  151000.6 |
+  151279.6 |
+  151558.6 |
+  151837.6 |
+  152116.5 |########################################
+  152395.5 |
+  152674.5 |
+  152953.4 |########################################
+  153232.4 |
+  153511.4 |
+  153790.4 |########################################
+  154069.3 |
+  154348.3 |
+  154627.3 |
+  154906.2 |
   (0 below, 1 above range)
 
 ```
 
 ## Diagnostics
 
-- **carrier_opt_tight_all**: bridge=1104.2% of algo (FFI overhead may distort results)
-- **carrier_opt_tight_cse**: bridge=100.4% of algo (FFI overhead may distort results)
-- **carrier_opt_tight_cseeqsat**: bridge=100.4% of algo (FFI overhead may distort results)
-- **carrier_opt_tight_dce**: bridge=100.5% of algo (FFI overhead may distort results)
-- **carrier_opt_tight_eqsat**: bridge=100.4% of algo (FFI overhead may distort results)
-- **carrier_opt_tight_fold**: bridge=100.3% of algo (FFI overhead may distort results)
-- **carrier_opt_tight_none**: bridge=100.4% of algo (FFI overhead may distort results)
+- **carrier_opt_tight_all**: bridge=1082.3% of algo (FFI overhead may distort results)
+- **carrier_opt_tight_canon**: bridge=100.7% of algo (FFI overhead may distort results)
+- **carrier_opt_tight_cse**: bridge=100.6% of algo (FFI overhead may distort results)
+- **carrier_opt_tight_dce**: bridge=100.7% of algo (FFI overhead may distort results)
+- **carrier_opt_tight_fold**: bridge=100.7% of algo (FFI overhead may distort results)
+- **carrier_opt_tight_none**: bridge=100.3% of algo (FFI overhead may distort results)

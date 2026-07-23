@@ -1,303 +1,296 @@
 # Optimize stage (none/CSE/eqsat/CSE+eqsat...), downstream interp, wideselect profile
 
-7 variants, 6 samples per variant.
+6 variants, 6 samples per variant.
 Baseline: **carrier_opt_wideselect_none**
 
 ## Highlights
 
 Baseline for all deltas below: **carrier_opt_wideselect_none**. (Deltas are paired `variant - baseline` medians; `*` marks a CI that excludes zero.)
 
-### carrier_opt_wideselect_all beats baseline by 27% (significant)
+### carrier_opt_wideselect_canon beats baseline by 33% (significant)
 
-carrier_opt_wideselect_all is -115.85 us (27%) faster than baseline carrier_opt_wideselect_none, with a CI that excludes zero.
+carrier_opt_wideselect_canon is -132.09 us (33%) faster than baseline carrier_opt_wideselect_none, with a CI that excludes zero.
 
 _Why it matters:_ A large, significant improvement over the current baseline is a concrete reason to switch.
 
+### carrier_opt_wideselect_cse shows alternating (throttle bounce) (autocorr -0.63)
+
+carrier_opt_wideselect_cse's per-pass series has lag-1 autocorrelation -0.63, indicating alternating (throttle bounce). Its timing may not be at steady state.
+
+_Why it matters:_ Autocorrelated samples violate the independence the CIs assume; the interval is optimistic until the drift is warmed out or cooled down.
+
+### Two tiers: {carrier_opt_wideselect_canon, carrier_opt_wideselect_cse, carrier_opt_wideselect_all} vs {carrier_opt_wideselect_dce, carrier_opt_wideselect_none, carrier_opt_wideselect_fold} (37% apart)
+
+The field splits into a fast tier {carrier_opt_wideselect_canon, carrier_opt_wideselect_cse, carrier_opt_wideselect_all} and a slow tier {carrier_opt_wideselect_dce, carrier_opt_wideselect_none, carrier_opt_wideselect_fold} with a 37% jump between them - a qualitative difference, not a gradient.
+
+_Why it matters:_ A tier split usually reflects a mechanism boundary (branchless vs branch, cached vs not); the tier, not the exact rank, is the finding.
+
 ## Key findings
 
-- **Fastest: carrier_opt_wideselect_all** at 316989.0 ns median (-25.1% vs baseline)
-- 4 variants significantly faster than baseline
-- Spread: 1.36x (fastest 316989.0 ns, slowest 429768.3 ns)
+- **Fastest: carrier_opt_wideselect_canon** at 272268.5 ns median (-32.3% vs baseline)
+- 3 variants significantly faster than baseline
+- Spread: 1.52x (fastest 272268.5 ns, slowest 414240.8 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| carrier_opt_wideselect_all | 314708ns | 320041ns | 275741ns | 311570ns | 338897ns | -26.02% |
-| carrier_opt_wideselect_cse | 348857ns | 346694ns | 319803ns | 343203ns | 371864ns | -18.00% |
-| carrier_opt_wideselect_cseeqsat | 319745ns | 330017ns | 263402ns | 317017ns | 352008ns | -24.84% |
-| carrier_opt_wideselect_dce | 423615ns | 417979ns | 393485ns | 412894ns | 454762ns | -0.42% |
-| carrier_opt_wideselect_eqsat | 335306ns | 328478ns | 276114ns | 320342ns | 387349ns | -21.18% |
-| carrier_opt_wideselect_fold | 430332ns | 432897ns | 405154ns | 429888ns | 443589ns | +1.15% |
-| carrier_opt_wideselect_none | 425422ns | 426386ns | 370742ns | 424548ns | 454074ns | base |
+| carrier_opt_wideselect_all | 291822ns | 287925ns | 264228ns | 281873ns | 320544ns | -27.56% |
+| carrier_opt_wideselect_canon | 282416ns | 274752ns | 261374ns | 272926ns | 307172ns | -29.90% |
+| carrier_opt_wideselect_cse | 293238ns | 286969ns | 270366ns | 284160ns | 318292ns | -27.21% |
+| carrier_opt_wideselect_dce | 398933ns | 393590ns | 372105ns | 388321ns | 428266ns | -0.98% |
+| carrier_opt_wideselect_fold | 416804ns | 417231ns | 393537ns | 412644ns | 434676ns | +3.46% |
+| carrier_opt_wideselect_none | 402872ns | 404390ns | 392370ns | 401867ns | 409631ns | base |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| carrier_opt_wideselect_all | 311847ns | 272775ns | 336193ns | -26.19% | 0.013 |
-| carrier_opt_wideselect_cse | 346114ns | 317627ns | 369189ns | -18.07% | 0.012 |
-| carrier_opt_wideselect_cseeqsat | 316771ns | 260424ns | 348793ns | -25.02% | 0.013 |
-| carrier_opt_wideselect_dce | 420818ns | 390184ns | 451718ns | -0.39% | 0.010 |
-| carrier_opt_wideselect_eqsat | 332397ns | 273869ns | 384399ns | -21.32% | 0.012 |
-| carrier_opt_wideselect_fold | 427413ns | 402112ns | 440706ns | +1.17% | 0.010 |
-| carrier_opt_wideselect_none | 422473ns | 368537ns | 451354ns | base | 0.010 |
+| carrier_opt_wideselect_all | 289236ns | 261936ns | 317787ns | -27.76% | 0.014 |
+| carrier_opt_wideselect_canon | 279929ns | 259070ns | 304504ns | -30.09% | 0.015 |
+| carrier_opt_wideselect_cse | 290778ns | 267826ns | 315671ns | -27.38% | 0.014 |
+| carrier_opt_wideselect_dce | 396387ns | 369872ns | 425406ns | -1.00% | 0.010 |
+| carrier_opt_wideselect_fold | 414077ns | 391195ns | 431809ns | +3.42% | 0.010 |
+| carrier_opt_wideselect_none | 400398ns | 389990ns | 406975ns | base | 0.010 |
+
+## Hardware counters (per call)
+
+| Variant | instructions | cycles | IPC | × base instr |
+|---|---|---|---|---|
+| carrier_opt_wideselect_all | 1806270 | 3779006 | 0.478 | 0.72× |
+| carrier_opt_wideselect_canon | 1743571 | 3828010 | 0.455 | 0.70× |
+| carrier_opt_wideselect_cse | 1814374 | 3829020 | 0.474 | 0.73× |
+| carrier_opt_wideselect_dce | 2484880 | 4346910 | 0.572 | 0.99× |
+| carrier_opt_wideselect_fold | 2577258 | 4338388 | 0.594 | 1.03× |
+| carrier_opt_wideselect_none | 2497506 | 4345474 | 0.575 | 1.00× |
+
+Instructions and cycles are the mean over the variant's samples for the measured region. IPC is instructions per cycle. The instruction ratio isolates whether a variant wins by retiring fewer instructions or by executing the same instructions more efficiently.
 
 ## Performance model
 
-- Peak throughput: **0.016 Gops/s** (carrier_opt_wideselect_cseeqsat; best 20% batches)
+- Peak throughput: **0.016 Gops/s** (carrier_opt_wideselect_canon; best 20% batches)
 - Ops per call: 4096
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| carrier_opt_wideselect_all | 0.013 | 82.2% |
-| carrier_opt_wideselect_cse | 0.012 | 75.8% |
-| carrier_opt_wideselect_cseeqsat | 0.013 | 79.6% |
-| carrier_opt_wideselect_dce | 0.010 | 62.7% |
-| carrier_opt_wideselect_eqsat | 0.013 | 80.0% |
-| carrier_opt_wideselect_fold | 0.010 | 60.6% |
-| carrier_opt_wideselect_none | 0.010 | 61.6% |
+| carrier_opt_wideselect_all | 0.014 | 90.8% |
+| carrier_opt_wideselect_canon | 0.015 | 95.2% |
+| carrier_opt_wideselect_cse | 0.014 | 91.0% |
+| carrier_opt_wideselect_dce | 0.010 | 66.2% |
+| carrier_opt_wideselect_fold | 0.010 | 62.5% |
+| carrier_opt_wideselect_none | 0.010 | 64.4% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| carrier_opt_wideselect_all | 314708ns | 314708ns | -26.02% |
-| carrier_opt_wideselect_cse | 348857ns | 348857ns | -18.00% |
-| carrier_opt_wideselect_cseeqsat | 319745ns | 319745ns | -24.84% |
-| carrier_opt_wideselect_dce | 423615ns | 423615ns | -0.42% |
-| carrier_opt_wideselect_eqsat | 335306ns | 335306ns | -21.18% |
-| carrier_opt_wideselect_fold | 430332ns | 430332ns | +1.15% |
-| carrier_opt_wideselect_none | 425422ns | 425422ns | base |
+| carrier_opt_wideselect_all | 291822ns | 291822ns | -27.56% |
+| carrier_opt_wideselect_canon | 282416ns | 282416ns | -29.90% |
+| carrier_opt_wideselect_cse | 293238ns | 293238ns | -27.21% |
+| carrier_opt_wideselect_dce | 398933ns | 398933ns | -0.98% |
+| carrier_opt_wideselect_fold | 416804ns | 416804ns | +3.46% |
+| carrier_opt_wideselect_none | 402872ns | 402872ns | base |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| carrier_opt_wideselect_none | 423096ns | base | --- | [392969, 451354] | --- | --- | --- | --- |
-| carrier_opt_wideselect_all | 316989ns | -115845.1ns (-27.4%) | [-130579, -85454]ns | [282359, 336193] | YES (adj: no) | 0.0625 | 0.0313 | 0 |
-| carrier_opt_wideselect_cse | 343624ns | -84161.7ns (-19.9%) | [-121135, -23780]ns | [325530, 369189] | YES (adj: no) | 0.0625 | 0.0313 | 0 |
-| carrier_opt_wideselect_cseeqsat | 327124ns | -95972.7ns (-22.7%) | [-148864, -72268]ns | [274397, 348793] | YES (adj: no) | 0.0625 | 0.0313 | 0 |
-| carrier_opt_wideselect_dce | 415607ns | no significant difference | [-47351, +40481]ns | [395130, 451718] | no | 1.0000 | 1.0000 | 0 |
-| carrier_opt_wideselect_eqsat | 325346ns | -110250.2ns (-26.1%) | [-140433, -19543]ns | [287447, 384399] | YES (adj: no) | 0.3281 | 0.2188 | 0 |
-| carrier_opt_wideselect_fold | 429768ns | no significant difference | [-10648, +22730]ns | [411764, 440706] | no | 0.8250 | 0.6875 | 0 |
+| carrier_opt_wideselect_none | 402038ns | base | --- | [392182, 406975] | --- | --- | --- | --- |
+| carrier_opt_wideselect_all | 285273ns | -121534.1ns (-30.2%) | [-137557, -74395]ns | [264648, 317787] | YES (adj: no) | 0.0521 | 0.0313 | 0 |
+| carrier_opt_wideselect_canon | 272269ns | -132091.0ns (-32.9%) | [-135635, -93681]ns | [263016, 304504] | YES (adj: no) | 0.0521 | 0.0313 | 0 |
+| carrier_opt_wideselect_cse | 284702ns | -111333.1ns (-27.7%) | [-126225, -91303]ns | [271960, 315671] | YES (adj: no) | 0.0521 | 0.0313 | 0 |
+| carrier_opt_wideselect_dce | 391050ns | no significant difference | [-29542, +24644]ns | [372706, 425406] | no | 1.0000 | 1.0000 | 0 |
+| carrier_opt_wideselect_fold | 414241ns | no significant difference | [-9805, +35606]ns | [396180, 431809] | no | 1.0000 | 1.0000 | 0 |
 
 ## Per-pass consistency (nonstop e2e, Δ vs baseline)
 
-| Pass | carrier_opt_wideselect_none | carrier_opt_wideselect_all | carrier_opt_wideselect_cse | carrier_opt_wideselect_cseeqsat | carrier_opt_wideselect_dce | carrier_opt_wideselect_eqsat | carrier_opt_wideselect_fold |
-|---|---|---|---|---|---|---|---|
-| 1 | 368537ns | -26.0% | -5.9% | -21.8% | +12.2% | +15.4% | +9.1% |
-| 2 | 417401ns | -30.1% | -6.2% | -15.4% | -4.2% | -34.4% | +1.0% |
-| 3 | 418884ns | -17.9% | -20.4% | -19.5% | +8.6% | -22.9% | +2.8% |
-| 4 | 464348ns | -29.2% | -26.2% | -25.8% | -16.0% | -26.0% | -3.4% |
-| 5 | 438360ns | -26.6% | -27.5% | -40.6% | -4.7% | -31.3% | -1.2% |
-| 6 | 427309ns | -27.0% | -19.4% | -25.8% | +4.9% | -23.3% | +0.3% |
+| Pass | carrier_opt_wideselect_none | carrier_opt_wideselect_all | carrier_opt_wideselect_canon | carrier_opt_wideselect_cse | carrier_opt_wideselect_dce | carrier_opt_wideselect_fold |
+|---|---|---|---|---|---|---|
+| 1 | 402080ns | -30.8% | -33.1% | -27.6% | -6.6% | -2.7% |
+| 2 | 389990ns | -17.7% | -33.6% | -28.6% | +5.2% | +9.8% |
+| 3 | 411535ns | -29.0% | -33.0% | -20.6% | +7.0% | -2.1% |
+| 4 | 401995ns | -34.8% | -26.1% | -31.3% | +0.6% | -0.2% |
+| 5 | 402415ns | -33.6% | -33.7% | -24.3% | -8.1% | +8.2% |
+| 6 | 394374ns | -20.2% | -20.9% | -32.1% | -4.2% | +7.9% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| carrier_opt_wideselect_all | 0.256 | moderate+ |
-| carrier_opt_wideselect_cse | -0.118 | ok |
-| carrier_opt_wideselect_cseeqsat | -0.198 | ok |
-| carrier_opt_wideselect_dce | -0.473 | moderate- |
-| carrier_opt_wideselect_eqsat | -0.391 | moderate- |
-| carrier_opt_wideselect_fold | 0.282 | moderate+ |
-| carrier_opt_wideselect_none | 0.178 | ok |
+| carrier_opt_wideselect_all | -0.097 | ok |
+| carrier_opt_wideselect_canon | -0.189 | ok |
+| carrier_opt_wideselect_cse | -0.629 | HIGH- (thermal bounce) |
+| carrier_opt_wideselect_dce | 0.260 | moderate+ |
+| carrier_opt_wideselect_fold | -0.224 | moderate- |
+| carrier_opt_wideselect_none | -0.448 | moderate- |
 
 **Consistency summary:**
 
 - **carrier_opt_wideselect_all**: won 6/6, lost 0/6
+- **carrier_opt_wideselect_canon**: won 6/6, lost 0/6
 - **carrier_opt_wideselect_cse**: won 6/6, lost 0/6
-- **carrier_opt_wideselect_cseeqsat**: won 6/6, lost 0/6
 - **carrier_opt_wideselect_dce**: won 3/6, lost 3/6
-- **carrier_opt_wideselect_eqsat**: won 5/6, lost 1/6
-- **carrier_opt_wideselect_fold**: won 2/6, lost 4/6
+- **carrier_opt_wideselect_fold**: won 3/6, lost 3/6
 
 ## Bridge overhead per variant
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| carrier_opt_wideselect_all | 312655.8ns | 311846.9ns | 100.3% | HIGH |
-| carrier_opt_wideselect_cse | 347234.3ns | 346114.1ns | 100.3% | HIGH |
-| carrier_opt_wideselect_cseeqsat | 317084.9ns | 316771.3ns | 100.1% | HIGH |
-| carrier_opt_wideselect_dce | 421099.4ns | 420818.5ns | 100.1% | HIGH |
-| carrier_opt_wideselect_eqsat | 421411.5ns | 332397.4ns | 126.8% | HIGH |
-| carrier_opt_wideselect_fold | 428526.6ns | 427412.6ns | 100.3% | HIGH |
-| carrier_opt_wideselect_none | 423429.8ns | 422472.9ns | 100.2% | HIGH |
+| carrier_opt_wideselect_all | 290008.7ns | 289236.0ns | 100.3% | HIGH |
+| carrier_opt_wideselect_canon | 280256.2ns | 279929.2ns | 100.1% | HIGH |
+| carrier_opt_wideselect_cse | 291994.1ns | 290777.6ns | 100.4% | HIGH |
+| carrier_opt_wideselect_dce | 397909.7ns | 396387.1ns | 100.4% | HIGH |
+| carrier_opt_wideselect_fold | 415399.9ns | 414076.8ns | 100.3% | HIGH |
+| carrier_opt_wideselect_none | 402194.2ns | 400398.1ns | 100.4% | HIGH |
 
 ## Distribution (algo ns)
 
 ```
-carrier_opt_wideselect_all (n=6, range 272774.6-336192.7 ns)
-  272774.6 |########################################
-  275945.5 |
-  279116.4 |
-  282287.3 |
-  285458.2 |
-  288629.1 |
-  291800.0 |########################################
-  294970.9 |
-  298141.8 |
-  301312.7 |
-  304483.7 |
-  307654.6 |
-  310825.5 |########################################
-  313996.4 |
-  317167.3 |
-  320338.2 |########################################
-  323509.1 |
-  326680.0 |########################################
-  329850.9 |
-  333021.8 |
+carrier_opt_wideselect_all (n=6, range 261936.2-317786.7 ns)
+  261936.2 |########################################
+  264728.7 |########################################
+  267521.2 |
+  270313.8 |
+  273106.3 |
+  275898.8 |########################################
+  278691.3 |
+  281483.9 |
+  284276.4 |
+  287068.9 |
+  289861.4 |########################################
+  292653.9 |
+  295446.5 |
+  298239.0 |
+  301031.5 |
+  303824.0 |
+  306616.6 |
+  309409.1 |
+  312201.6 |########################################
+  314994.1 |
   (0 below, 1 above range)
 
-carrier_opt_wideselect_cse (n=6, range 317626.7-369189.2 ns)
-  317626.7 |########################################
-  320204.8 |
-  322782.9 |
-  325361.1 |
-  327939.2 |
-  330517.3 |
-  333095.4 |########################################
-  335673.6 |
-  338251.7 |
-  340829.8 |########################################
-  343407.9 |########################################
-  345986.0 |########################################
-  348564.2 |
-  351142.3 |
-  353720.4 |
-  356298.5 |
-  358876.7 |
-  361454.8 |
-  364032.9 |
-  366611.0 |
+carrier_opt_wideselect_canon (n=6, range 259070.4-304503.5 ns)
+  259070.4 |########################################
+  261342.1 |
+  263613.7 |
+  265885.4 |########################################
+  268157.0 |########################################
+  270428.7 |
+  272700.3 |
+  274972.0 |########################################
+  277243.7 |
+  279515.3 |
+  281787.0 |
+  284058.6 |
+  286330.3 |
+  288601.9 |
+  290873.6 |
+  293145.3 |
+  295416.9 |########################################
+  297688.6 |
+  299960.2 |
+  302231.9 |
   (0 below, 1 above range)
 
-carrier_opt_wideselect_cseeqsat (n=6, range 260424.2-348793.3 ns)
-  260424.2 |########################################
-  264842.7 |
-  269261.1 |
-  273679.6 |
-  278098.0 |
-  282516.5 |
-  286934.9 |########################################
-  291353.4 |
-  295771.9 |
-  300190.3 |
-  304608.8 |
-  309027.2 |
-  313445.7 |########################################
-  317864.1 |
-  322282.6 |
-  326701.1 |
-  331119.5 |
-  335538.0 |########################################
-  339956.4 |
-  344374.9 |########################################
+carrier_opt_wideselect_cse (n=6, range 267826.2-315671.5 ns)
+  267826.2 |########################################
+  270218.5 |
+  272610.7 |
+  275003.0 |########################################
+  277395.2 |########################################
+  279787.5 |
+  282179.8 |
+  284572.0 |
+  286964.3 |
+  289356.6 |########################################
+  291748.8 |
+  294141.1 |
+  296533.4 |
+  298925.6 |
+  301317.9 |
+  303710.1 |########################################
+  306102.4 |
+  308494.7 |
+  310886.9 |
+  313279.2 |
   (0 below, 1 above range)
 
-carrier_opt_wideselect_dce (n=6, range 390183.8-451717.9 ns)
-  390183.8 |########################################
-  393260.5 |
-  396337.2 |
-  399413.9 |########################################
-  402490.6 |
-  405567.3 |
-  408644.0 |
-  411720.7 |########################################
-  414797.4 |########################################
-  417874.1 |
-  420950.8 |
-  424027.6 |
-  427104.3 |
-  430181.0 |
-  433257.7 |
-  436334.4 |
-  439411.1 |
-  442487.8 |
-  445564.5 |########################################
-  448641.2 |
+carrier_opt_wideselect_dce (n=6, range 369872.1-425406.1 ns)
+  369872.1 |####################
+  372648.8 |
+  375425.5 |########################################
+  378202.2 |
+  380978.9 |
+  383755.6 |
+  386532.3 |
+  389309.0 |
+  392085.7 |
+  394862.4 |
+  397639.1 |
+  400415.8 |
+  403192.5 |####################
+  405969.2 |
+  408745.9 |####################
+  411522.6 |
+  414299.3 |
+  417076.0 |
+  419852.7 |
+  422629.4 |
   (0 below, 1 above range)
 
-carrier_opt_wideselect_eqsat (n=6, range 273869.2-384399.0 ns)
-  273869.2 |########################################
-  279395.7 |
-  284922.2 |
-  290448.7 |
-  295975.2 |########################################
-  301501.6 |
-  307028.1 |
-  312554.6 |
-  318081.1 |########################################
-  323607.6 |########################################
-  329134.1 |
-  334660.6 |
-  340187.1 |########################################
-  345713.5 |
-  351240.0 |
-  356766.5 |
-  362293.0 |
-  367819.5 |
-  373346.0 |
-  378872.5 |
+carrier_opt_wideselect_fold (n=6, range 391195.0-431809.2 ns)
+  391195.0 |########################################
+  393225.7 |
+  395256.4 |
+  397287.1 |
+  399317.8 |########################################
+  401348.5 |########################################
+  403379.3 |
+  405410.0 |
+  407440.7 |
+  409471.4 |
+  411502.1 |
+  413532.8 |
+  415563.5 |
+  417594.2 |
+  419624.9 |
+  421655.7 |
+  423686.4 |########################################
+  425717.1 |
+  427747.8 |########################################
+  429778.5 |
   (0 below, 1 above range)
 
-carrier_opt_wideselect_fold (n=6, range 402111.7-440705.6 ns)
-  402111.7 |########################################
-  404041.4 |
-  405971.1 |
-  407900.8 |
-  409830.5 |
-  411760.2 |
-  413689.9 |
-  415619.6 |
-  417549.3 |
-  419479.0 |
-  421408.7 |########################################
-  423338.3 |
-  425268.0 |
-  427197.7 |########################################
-  429127.4 |########################################
-  431057.1 |
-  432986.8 |########################################
-  434916.5 |
-  436846.2 |
-  438775.9 |
-  (0 below, 1 above range)
-
-carrier_opt_wideselect_none (n=6, range 368536.7-451353.5 ns)
-  368536.7 |########################################
-  372677.5 |
-  376818.4 |
-  380959.2 |
-  385100.1 |
-  389240.9 |
-  393381.8 |
-  397522.6 |
-  401663.4 |
-  405804.3 |
-  409945.1 |
-  414086.0 |########################################
-  418226.8 |########################################
-  422367.7 |
-  426508.5 |########################################
-  430649.3 |
-  434790.2 |########################################
-  438931.0 |
-  443071.9 |
-  447212.7 |
+carrier_opt_wideselect_none (n=6, range 389990.4-406974.8 ns)
+  389990.4 |#############
+  390839.6 |
+  391688.8 |
+  392538.1 |
+  393387.3 |
+  394236.5 |#############
+  395085.7 |
+  395934.9 |
+  396784.2 |
+  397633.4 |
+  398482.6 |
+  399331.8 |
+  400181.0 |
+  401030.3 |
+  401879.5 |########################################
+  402728.7 |
+  403577.9 |
+  404427.1 |
+  405276.4 |
+  406125.6 |
   (0 below, 1 above range)
 
 ```
 
 ## Diagnostics
 
-- **carrier_opt_wideselect_all**: bridge=100.3% of algo (FFI overhead may distort results)
-- **carrier_opt_wideselect_cse**: bridge=100.3% of algo (FFI overhead may distort results)
-- **carrier_opt_wideselect_cseeqsat**: bridge=100.2% of algo (FFI overhead may distort results)
-- **carrier_opt_wideselect_dce**: bridge=99.9% of algo (FFI overhead may distort results)
-- **carrier_opt_wideselect_eqsat**: bridge=100.4% of algo (FFI overhead may distort results)
-- **carrier_opt_wideselect_fold**: bridge=100.3% of algo (FFI overhead may distort results)
+- **carrier_opt_wideselect_all**: bridge=100.4% of algo (FFI overhead may distort results)
+- **carrier_opt_wideselect_canon**: bridge=100.1% of algo (FFI overhead may distort results)
+- **carrier_opt_wideselect_cse**: bridge=100.6% of algo (FFI overhead may distort results)
+- **carrier_opt_wideselect_dce**: bridge=100.2% of algo (FFI overhead may distort results)
+- **carrier_opt_wideselect_fold**: bridge=100.4% of algo (FFI overhead may distort results)
 - **carrier_opt_wideselect_none**: bridge=100.3% of algo (FFI overhead may distort results)

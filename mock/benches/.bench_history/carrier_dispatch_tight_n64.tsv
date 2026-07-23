@@ -7,3 +7,11 @@
 1784757494	d772801	carrier_dispatch_tight_n64	carrier_disp_tight_nullfloor	64	warm	1829.6	1828.8	1844.6
 1784757494	d772801	carrier_dispatch_tight_n64	carrier_disp_tight_switch	64	warm	2259.2	2254.8	2292.5
 1784757494	d772801	carrier_dispatch_tight_n64	carrier_disp_tight_threaded	64	warm	2897.5	2895.2	2981.1
+1784794093	2a3f34b	carrier_dispatch_tight_n64	carrier_disp_tight_bittree	64	warm	2519.6	2387.7	2528.3
+1784794093	2a3f34b	carrier_dispatch_tight_n64	carrier_disp_tight_fntable	64	warm	3065.8	2905.4	3078.1
+1784794093	2a3f34b	carrier_dispatch_tight_n64	carrier_disp_tight_ifchain	64	warm	2272.1	2138.2	2276.1
+1784794093	2a3f34b	carrier_dispatch_tight_n64	carrier_disp_tight_ifchainasc	64	warm	2257.9	2131.1	2274.6
+1784794093	2a3f34b	carrier_dispatch_tight_n64	carrier_disp_tight_ifchainlin	64	warm	3856.7	3641.1	3973.5
+1784794093	2a3f34b	carrier_dispatch_tight_n64	carrier_disp_tight_nullfloor	64	warm	1811.2	1712.1	1846.2
+1784794093	2a3f34b	carrier_dispatch_tight_n64	carrier_disp_tight_switch	64	warm	2227.5	2136.8	2303.9
+1784794093	2a3f34b	carrier_dispatch_tight_n64	carrier_disp_tight_threaded	64	warm	2927.5	2776.8	2938.9

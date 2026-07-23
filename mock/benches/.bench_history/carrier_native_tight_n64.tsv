@@ -2,3 +2,6 @@
 1784759091	d772801	carrier_native_tight_n64	carrier_nat_tight_copypatch	64	warm	810.4	802.7	1065.7
 1784759091	d772801	carrier_native_tight_n64	carrier_nat_tight_interp	64	warm	2093.8	2087.5	2206.7
 1784759091	d772801	carrier_native_tight_n64	carrier_nat_tight_stencil	64	warm	834.2	819.6	863.3
+1784794917	74f52f4	carrier_native_tight_n64	carrier_nat_tight_copypatch	64	warm	793.3	792.9	875.4
+1784794917	74f52f4	carrier_native_tight_n64	carrier_nat_tight_direct	64	warm	875.0	845.4	892.5
+1784794917	74f52f4	carrier_native_tight_n64	carrier_nat_tight_interp	64	warm	2260.4	2171.1	2291.5

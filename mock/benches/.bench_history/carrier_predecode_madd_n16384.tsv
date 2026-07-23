@@ -5,3 +5,9 @@
 1784757864	d772801	carrier_predecode_madd_n16384	carrier_pre_madd_regcache	16384	warm	1010238.7	990537.2	1025360.8
 1784757864	d772801	carrier_predecode_madd_n16384	carrier_pre_madd_switch	16384	warm	767267.9	766400.4	772276.9
 1784757864	d772801	carrier_predecode_madd_n16384	carrier_pre_madd_threaded	16384	warm	759237.5	758250.8	764882.7
+1784795297	74f52f4	carrier_predecode_madd_n16384	carrier_pre_madd_direct	16384	warm	771957.1	771890.2	772687.1
+1784795297	74f52f4	carrier_predecode_madd_n16384	carrier_pre_madd_fntable	16384	warm	774794.6	774737.3	780941.4
+1784795297	74f52f4	carrier_predecode_madd_n16384	carrier_pre_madd_null	16384	warm	694356.2	694341.8	699361.2
+1784795297	74f52f4	carrier_predecode_madd_n16384	carrier_pre_madd_regcache	16384	warm	1064596.2	1062686.6	1129881.2
+1784795297	74f52f4	carrier_predecode_madd_n16384	carrier_pre_madd_switch	16384	warm	767137.1	766603.6	771212.9
+1784795297	74f52f4	carrier_predecode_madd_n16384	carrier_pre_madd_threaded	16384	warm	768347.5	767787.5	769976.8

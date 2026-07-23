@@ -6,3 +6,9 @@
 1784759056	d772801	carrier_optimize_leaf_n256	carrier_opt_leaf_eqsat	256	warm	4517.9	4513.3	4560.8
 1784759056	d772801	carrier_optimize_leaf_n256	carrier_opt_leaf_fold	256	warm	8677.1	8655.0	8744.0
 1784759056	d772801	carrier_optimize_leaf_n256	carrier_opt_leaf_none	256	warm	8810.4	8785.6	9929.8
+1784794959	74f52f4	carrier_optimize_leaf_n256	carrier_opt_leaf_all	256	warm	3493.7	3493.5	3559.2
+1784794959	74f52f4	carrier_optimize_leaf_n256	carrier_opt_leaf_canon	256	warm	3935.4	3739.4	3981.7
+1784794959	74f52f4	carrier_optimize_leaf_n256	carrier_opt_leaf_cse	256	warm	3858.7	3742.1	3923.6
+1784794959	74f52f4	carrier_optimize_leaf_n256	carrier_opt_leaf_dce	256	warm	8712.9	8272.5	9041.7
+1784794959	74f52f4	carrier_optimize_leaf_n256	carrier_opt_leaf_fold	256	warm	8615.4	8471.0	8707.1
+1784794959	74f52f4	carrier_optimize_leaf_n256	carrier_opt_leaf_none	256	warm	8624.2	8622.3	9220.5

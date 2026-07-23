@@ -1,4 +1,4 @@
-# Near-native tier: interp vs direct codegen vs copy-and-patch stencil, madd profile (JIT window caps sizes at 1024)
+# Near-native tier: interp vs direct instruction-selection vs copy-and-patch stencil, madd profile
 
 3 variants, 6 samples per variant.
 Baseline: **carrier_nat_madd_interp**
@@ -9,191 +9,183 @@ Baseline for all deltas below: **carrier_nat_madd_interp**. (Deltas are paired `
 
 ### Baseline (carrier_nat_madd_interp) is the SLOWEST variant; every rival beats it
 
-The declared/defaulted baseline carrier_nat_madd_interp has the worst median (12.51 us). Every delta is therefore measured against the worst performer, which flatters all rivals and compresses the differences that matter among them (e.g. fastest carrier_nat_madd_stencil at 7.38 us).
+The declared/defaulted baseline carrier_nat_madd_interp has the worst median (11.33 us). Every delta is therefore measured against the worst performer, which flatters all rivals and compresses the differences that matter among them (e.g. fastest carrier_nat_madd_direct at 6.85 us).
 
 _Why it matters:_ A baseline picked by accident (often the first variant to run / sort) silently skews every comparison. Re-baseline via `[bench.<name>.normalise]` on a representative variant.
 
-### carrier_nat_madd_stencil beats baseline by 41% (significant)
+### carrier_nat_madd_direct beats baseline by 40% (significant)
 
-carrier_nat_madd_stencil is -5.09 us (41%) faster than baseline carrier_nat_madd_interp, with a CI that excludes zero.
+carrier_nat_madd_direct is -4.49 us (40%) faster than baseline carrier_nat_madd_interp, with a CI that excludes zero.
 
 _Why it matters:_ A large, significant improvement over the current baseline is a concrete reason to switch.
 
-### carrier_nat_madd_stencil is fastest but the noisiest (CV 8.2%)
-
-carrier_nat_madd_stencil wins on median (7.38 us) yet has the highest variance (CV 8.2%), while carrier_nat_madd_copypatch is the steadiest (CV 4.8%, 7.54 us).
-
-_Why it matters:_ For latency-sensitive or tail-bound paths, the steadier variant can beat the faster-on-average one; weigh peak vs consistency.
-
-### carrier_nat_madd_interp shows alternating (throttle bounce) (autocorr -0.65)
-
-carrier_nat_madd_interp's per-pass series has lag-1 autocorrelation -0.65, indicating alternating (throttle bounce). Its timing may not be at steady state.
-
-_Why it matters:_ Autocorrelated samples violate the independence the CIs assume; the interval is optimistic until the drift is warmed out or cooled down.
-
-### Speed leader carrier_nat_madd_stencil vs stability leader carrier_nat_madd_copypatch (+2% speed for 1.7x steadier)
-
-carrier_nat_madd_stencil is fastest (7.38 us, CV 8.2%); carrier_nat_madd_copypatch gives up 2.2% median for 1.7x lower variance (CV 4.8%).
-
-_Why it matters:_ The pick depends on priority: peak throughput vs predictable latency. Both are defensible; name which the workload needs.
-
 ## Key findings
 
-- **Fastest: carrier_nat_madd_stencil** at 7383.3 ns median (-41.0% vs baseline)
+- **Fastest: carrier_nat_madd_direct** at 6850.0 ns median (-39.5% vs baseline)
 - 2 variants significantly faster than baseline
-- Spread: 1.69x (fastest 7383.3 ns, slowest 12509.1 ns)
+- Spread: 1.65x (fastest 6850.0 ns, slowest 11330.9 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| carrier_nat_madd_copypatch | 9946ns | 10092ns | 8908ns | 10052ns | 10305ns | -32.87% |
-| carrier_nat_madd_interp | 14816ns | 15146ns | 13360ns | 14699ns | 15719ns | base |
-| carrier_nat_madd_stencil | 10015ns | 9901ns | 8921ns | 9815ns | 10862ns | -32.40% |
+| carrier_nat_madd_copypatch | 9401ns | 9696ns | 8757ns | 9390ns | 9738ns | -31.76% |
+| carrier_nat_madd_direct | 9208ns | 9163ns | 8761ns | 9039ns | 9686ns | -33.15% |
+| carrier_nat_madd_interp | 13775ns | 13663ns | 13118ns | 13481ns | 14545ns | base |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| carrier_nat_madd_copypatch | 7415ns | 6652ns | 7691ns | -39.43% | 0.035 |
-| carrier_nat_madd_interp | 12242ns | 11140ns | 12925ns | base | 0.021 |
-| carrier_nat_madd_stencil | 7487ns | 6670ns | 8095ns | -38.84% | 0.034 |
+| carrier_nat_madd_copypatch | 7038ns | 6530ns | 7307ns | -38.54% | 0.036 |
+| carrier_nat_madd_direct | 6901ns | 6572ns | 7272ns | -39.74% | 0.037 |
+| carrier_nat_madd_interp | 11451ns | 10942ns | 12079ns | base | 0.022 |
+
+## Hardware counters (per call)
+
+| Variant | instructions | cycles | IPC | × base instr |
+|---|---|---|---|---|
+| carrier_nat_madd_copypatch | 302400 | 557184 | 0.543 | 0.97× |
+| carrier_nat_madd_direct | 296817 | 529264 | 0.561 | 0.96× |
+| carrier_nat_madd_interp | 310489 | 1325712 | 0.234 | 1.00× |
+
+Instructions and cycles are the mean over the variant's samples for the measured region. IPC is instructions per cycle. The instruction ratio isolates whether a variant wins by retiring fewer instructions or by executing the same instructions more efficiently.
 
 ## Performance model
 
-- Peak throughput: **0.038 Gops/s** (carrier_nat_madd_copypatch; best 20% batches)
+- Peak throughput: **0.039 Gops/s** (carrier_nat_madd_copypatch; best 20% batches)
 - Ops per call: 256
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| carrier_nat_madd_copypatch | 0.034 | 88.2% |
-| carrier_nat_madd_interp | 0.020 | 53.2% |
-| carrier_nat_madd_stencil | 0.035 | 90.1% |
+| carrier_nat_madd_copypatch | 0.035 | 89.8% |
+| carrier_nat_madd_direct | 0.037 | 95.3% |
+| carrier_nat_madd_interp | 0.023 | 57.6% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| carrier_nat_madd_copypatch | 9946ns | 9946ns | -32.87% |
-| carrier_nat_madd_interp | 14816ns | 14816ns | base |
-| carrier_nat_madd_stencil | 10015ns | 10015ns | -32.40% |
+| carrier_nat_madd_copypatch | 9401ns | 9401ns | -31.76% |
+| carrier_nat_madd_direct | 9208ns | 9208ns | -33.15% |
+| carrier_nat_madd_interp | 13775ns | 13775ns | base |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| carrier_nat_madd_interp | 12509ns | base | --- | [11293, 12925] | --- | --- | --- | --- |
-| carrier_nat_madd_copypatch | 7545ns | -4964.3ns (-39.7%) | [-5407, -4110]ns | [7010, 7691] | YES | 0.0313 | 0.0313 | 0 |
-| carrier_nat_madd_stencil | 7383ns | -5093.9ns (-40.7%) | [-5871, -3299]ns | [6984, 8095] | YES | 0.0313 | 0.0313 | 0 |
+| carrier_nat_madd_interp | 11331ns | base | --- | [10944, 12079] | --- | --- | --- | --- |
+| carrier_nat_madd_copypatch | 7272ns | -4420.6ns (-39.0%) | [-4775, -4045]ns | [6535, 7307] | YES | 0.0313 | 0.0313 | 0 |
+| carrier_nat_madd_direct | 6850ns | -4490.7ns (-39.6%) | [-4807, -4354]ns | [6580, 7272] | YES | 0.0313 | 0.0313 | 0 |
 
 ## Per-pass consistency (nonstop e2e, Δ vs baseline)
 
-| Pass | carrier_nat_madd_interp | carrier_nat_madd_copypatch | carrier_nat_madd_stencil |
+| Pass | carrier_nat_madd_interp | carrier_nat_madd_copypatch | carrier_nat_madd_direct |
 |---|---|---|---|
-| 1 | 11140ns | -40.3% | -22.0% |
-| 2 | 13168ns | -41.8% | -49.3% |
-| 3 | 11446ns | -32.6% | -36.2% |
-| 4 | 12682ns | -41.9% | -41.4% |
-| 5 | 12396ns | -39.6% | -40.9% |
-| 6 | 12622ns | -39.8% | -40.6% |
+| 1 | 10952ns | -40.3% | -39.7% |
+| 2 | 10946ns | -40.3% | -39.8% |
+| 3 | 11710ns | -37.8% | -39.4% |
+| 4 | 12105ns | -39.9% | -40.5% |
+| 5 | 12054ns | -39.2% | -39.1% |
+| 6 | 10942ns | -33.6% | -39.9% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| carrier_nat_madd_copypatch | -0.156 | ok |
-| carrier_nat_madd_interp | -0.646 | HIGH- (thermal bounce) |
-| carrier_nat_madd_stencil | -0.374 | moderate- |
+| carrier_nat_madd_copypatch | 0.425 | moderate+ |
+| carrier_nat_madd_direct | 0.134 | ok |
+| carrier_nat_madd_interp | 0.233 | moderate+ |
 
 **Consistency summary:**
 
 - **carrier_nat_madd_copypatch**: won 6/6, lost 0/6
-- **carrier_nat_madd_stencil**: won 6/6, lost 0/6
+- **carrier_nat_madd_direct**: won 6/6, lost 0/6
 
 ## Bridge overhead per variant
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| carrier_nat_madd_copypatch | 91371.3ns | 7415.1ns | 1232.2% | HIGH |
-| carrier_nat_madd_interp | 90897.6ns | 12242.3ns | 742.5% | HIGH |
-| carrier_nat_madd_stencil | 93039.2ns | 7487.5ns | 1242.6% | HIGH |
+| carrier_nat_madd_copypatch | 94393.8ns | 7037.8ns | 1341.2% | HIGH |
+| carrier_nat_madd_direct | 89777.8ns | 6900.8ns | 1301.0% | HIGH |
+| carrier_nat_madd_interp | 89855.1ns | 11451.4ns | 784.7% | HIGH |
 
 ## Distribution (algo ns)
 
 ```
-carrier_nat_madd_copypatch (n=6, range 6651.7-7691.0 ns)
-   6651.7 |########################################
-   6703.7 |
-   6755.6 |
-   6807.6 |
-   6859.6 |
-   6911.5 |
-   6963.5 |
-   7015.5 |
-   7067.4 |
-   7119.4 |
-   7171.4 |
-   7223.3 |
-   7275.3 |
-   7327.2 |########################################
-   7379.2 |
-   7431.2 |
-   7483.1 |########################################
-   7535.1 |
-   7587.1 |########################################
-   7639.0 |########################################
+carrier_nat_madd_copypatch (n=6, range 6530.4-7306.6 ns)
+   6530.4 |########################################
+   6569.2 |
+   6608.0 |
+   6646.8 |
+   6685.6 |
+   6724.5 |
+   6763.3 |
+   6802.1 |
+   6840.9 |
+   6879.7 |
+   6918.5 |
+   6957.3 |
+   6996.1 |
+   7035.0 |
+   7073.8 |
+   7112.6 |
+   7151.4 |
+   7190.2 |
+   7229.0 |####################
+   7267.8 |########################################
   (0 below, 1 above range)
 
-carrier_nat_madd_interp (n=6, range 11139.6-12925.0 ns)
-  11139.6 |########################################
-  11228.9 |
-  11318.1 |
-  11407.4 |########################################
-  11496.7 |
-  11586.0 |
-  11675.2 |
-  11764.5 |
-  11853.8 |
-  11943.0 |
-  12032.3 |
-  12121.6 |
-  12210.8 |
-  12300.1 |
-  12389.4 |########################################
-  12478.6 |
-  12567.9 |########################################
-  12657.2 |########################################
-  12746.5 |
-  12835.7 |
+carrier_nat_madd_direct (n=6, range 6572.5-7272.1 ns)
+   6572.5 |########################################
+   6607.5 |
+   6642.5 |
+   6677.4 |
+   6712.4 |
+   6747.4 |
+   6782.4 |
+   6817.4 |
+   6852.3 |
+   6887.3 |
+   6922.3 |
+   6957.3 |
+   6992.3 |
+   7027.2 |
+   7062.2 |
+   7097.2 |#############
+   7132.2 |
+   7167.2 |
+   7202.1 |#############
+   7237.1 |
   (0 below, 1 above range)
 
-carrier_nat_madd_stencil (n=6, range 6670.0-8094.8 ns)
-   6670.0 |########################################
-   6741.2 |
-   6812.5 |
-   6883.7 |
-   6955.0 |
-   7026.2 |
-   7097.4 |
-   7168.7 |
-   7239.9 |########################################
-   7311.2 |########################################
-   7382.4 |########################################
-   7453.6 |########################################
-   7524.9 |
-   7596.1 |
-   7667.4 |
-   7738.6 |
-   7809.8 |
-   7881.1 |
-   7952.3 |
-   8023.6 |
+carrier_nat_madd_interp (n=6, range 10941.7-12079.4 ns)
+  10941.7 |########################################
+  10998.6 |
+  11055.5 |
+  11112.4 |
+  11169.2 |
+  11226.1 |
+  11283.0 |
+  11339.9 |
+  11396.8 |
+  11453.7 |
+  11510.5 |
+  11567.4 |
+  11624.3 |
+  11681.2 |#############
+  11738.1 |
+  11795.0 |
+  11851.9 |
+  11908.7 |
+  11965.6 |
+  12022.5 |#############
   (0 below, 1 above range)
 
 ```
 
 ## Diagnostics
 
-- **carrier_nat_madd_copypatch**: bridge=1199.3% of algo (FFI overhead may distort results)
-- **carrier_nat_madd_interp**: bridge=715.7% of algo (FFI overhead may distort results)
-- **carrier_nat_madd_stencil**: bridge=1233.2% of algo (FFI overhead may distort results)
+- **carrier_nat_madd_copypatch**: bridge=1293.4% of algo (FFI overhead may distort results)
+- **carrier_nat_madd_direct**: bridge=1312.2% of algo (FFI overhead may distort results)
+- **carrier_nat_madd_interp**: bridge=779.8% of algo (FFI overhead may distort results)

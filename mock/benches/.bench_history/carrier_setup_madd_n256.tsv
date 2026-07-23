@@ -1,0 +1,7 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784795700	74f52f4	carrier_setup_madd_n256	carrier_setup_madd_emitcopypatch	256	warm	58408.7	57239.8	59021.1
+1784795700	74f52f4	carrier_setup_madd_n256	carrier_setup_madd_emitdirect	256	warm	16997.1	16798.9	17105.6
+1784795700	74f52f4	carrier_setup_madd_n256	carrier_setup_madd_optall	256	warm	370272.1	368489.8	376902.2
+1784795700	74f52f4	carrier_setup_madd_n256	carrier_setup_madd_parse	256	warm	0.0	0.0	0.0
+1784795700	74f52f4	carrier_setup_madd_n256	carrier_setup_madd_predecode	256	warm	10905.4	10535.8	10961.5
+1784795700	74f52f4	carrier_setup_madd_n256	carrier_setup_madd_stackcompile	256	warm	23477.5	22771.7	24411.2

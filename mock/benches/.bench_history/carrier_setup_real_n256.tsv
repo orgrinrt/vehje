@@ -1,0 +1,13 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784790827	23926d5	carrier_setup_real_n256	carrier_setup_real_emitcopypatch	256	warm	37417.9	36738.8	38857.9
+1784790827	23926d5	carrier_setup_real_n256	carrier_setup_real_emitdirect	256	warm	15685.4	15626.5	15738.3
+1784790827	23926d5	carrier_setup_real_n256	carrier_setup_real_optall	256	warm	603244.2	602985.8	607285.0
+1784790827	23926d5	carrier_setup_real_n256	carrier_setup_real_parse	256	warm	0.0	0.0	0.0
+1784790827	23926d5	carrier_setup_real_n256	carrier_setup_real_predecode	256	warm	9238.7	9199.5	9970.2
+1784790827	23926d5	carrier_setup_real_n256	carrier_setup_real_stackcompile	256	warm	23662.5	23144.8	24089.2
+1784795800	74f52f4	carrier_setup_real_n256	carrier_setup_real_emitcopypatch	256	warm	67390.8	66935.0	68193.9
+1784795800	74f52f4	carrier_setup_real_n256	carrier_setup_real_emitdirect	256	warm	16829.2	16817.3	17160.8
+1784795800	74f52f4	carrier_setup_real_n256	carrier_setup_real_optall	256	warm	600428.3	599227.2	601622.1
+1784795800	74f52f4	carrier_setup_real_n256	carrier_setup_real_parse	256	warm	0.0	0.0	0.0
+1784795800	74f52f4	carrier_setup_real_n256	carrier_setup_real_predecode	256	warm	10189.2	10096.2	10249.4
+1784795800	74f52f4	carrier_setup_real_n256	carrier_setup_real_stackcompile	256	warm	24410.4	24259.6	24723.6

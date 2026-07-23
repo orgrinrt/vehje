@@ -5,3 +5,9 @@
 1784757846	d772801	carrier_predecode_madd_n4096	carrier_pre_madd_regcache	4096	warm	146873.7	146574.4	153868.4
 1784757846	d772801	carrier_predecode_madd_n4096	carrier_pre_madd_switch	4096	warm	189609.2	189584.6	201887.7
 1784757846	d772801	carrier_predecode_madd_n4096	carrier_pre_madd_threaded	4096	warm	191403.3	189711.2	197759.3
+1784795279	74f52f4	carrier_predecode_madd_n4096	carrier_pre_madd_direct	4096	warm	190533.8	190306.0	191512.5
+1784795279	74f52f4	carrier_predecode_madd_n4096	carrier_pre_madd_fntable	4096	warm	191920.8	191690.2	192430.6
+1784795279	74f52f4	carrier_predecode_madd_n4096	carrier_pre_madd_null	4096	warm	172154.2	172059.4	173904.6
+1784795279	74f52f4	carrier_predecode_madd_n4096	carrier_pre_madd_regcache	4096	warm	145633.8	145585.0	146813.5
+1784795279	74f52f4	carrier_predecode_madd_n4096	carrier_pre_madd_switch	4096	warm	189796.2	189780.4	193103.8
+1784795279	74f52f4	carrier_predecode_madd_n4096	carrier_pre_madd_threaded	4096	warm	189304.6	189096.0	190656.6

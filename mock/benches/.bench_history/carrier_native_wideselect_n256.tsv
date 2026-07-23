@@ -2,3 +2,6 @@
 1784759102	d772801	carrier_native_wideselect_n256	carrier_nat_wideselect_copypatch	256	warm	4068.8	4063.2	4121.1
 1784759102	d772801	carrier_native_wideselect_n256	carrier_nat_wideselect_interp	256	warm	10807.9	10782.9	11572.1
 1784759102	d772801	carrier_native_wideselect_n256	carrier_nat_wideselect_stencil	256	warm	4068.3	3900.8	4084.9
+1784794933	74f52f4	carrier_native_wideselect_n256	carrier_nat_wideselect_copypatch	256	warm	3662.5	3659.3	4021.4
+1784794933	74f52f4	carrier_native_wideselect_n256	carrier_nat_wideselect_direct	256	warm	4011.2	3936.6	4011.9
+1784794933	74f52f4	carrier_native_wideselect_n256	carrier_nat_wideselect_interp	256	warm	10318.3	10316.6	10476.9

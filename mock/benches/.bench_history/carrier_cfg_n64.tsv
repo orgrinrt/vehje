@@ -3,3 +3,7 @@
 1784758053	d772801	carrier_cfg_n64	carrier_cfg_switch	64	warm	60421.7	60224.2	60989.4
 1784758053	d772801	carrier_cfg_n64	carrier_cfg_threaded	64	warm	49407.9	48107.9	51778.9
 1784758053	d772801	carrier_cfg_n64	carrier_cfg_trace	64	warm	27885.8	27252.3	28118.8
+1784793538	2a3f34b	carrier_cfg_n64	carrier_cfg_fntable	64	warm	57064.6	57020.0	58435.4
+1784793538	2a3f34b	carrier_cfg_n64	carrier_cfg_switch	64	warm	57725.8	57208.1	59352.9
+1784793538	2a3f34b	carrier_cfg_n64	carrier_cfg_threaded	64	warm	47025.8	46824.4	48170.2
+1784793538	2a3f34b	carrier_cfg_n64	carrier_cfg_trace	64	warm	26247.9	26233.6	27754.2

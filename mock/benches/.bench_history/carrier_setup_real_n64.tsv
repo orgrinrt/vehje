@@ -1,0 +1,13 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784790823	23926d5	carrier_setup_real_n64	carrier_setup_real_emitcopypatch	64	warm	9272.5	9073.1	9801.7
+1784790823	23926d5	carrier_setup_real_n64	carrier_setup_real_emitdirect	64	warm	3945.4	3932.7	4081.2
+1784790823	23926d5	carrier_setup_real_n64	carrier_setup_real_optall	64	warm	153985.4	153324.8	155231.5
+1784790823	23926d5	carrier_setup_real_n64	carrier_setup_real_parse	64	warm	0.0	0.0	0.0
+1784790823	23926d5	carrier_setup_real_n64	carrier_setup_real_predecode	64	warm	3437.1	3419.8	3493.1
+1784790823	23926d5	carrier_setup_real_n64	carrier_setup_real_stackcompile	64	warm	9120.0	8966.0	10292.0
+1784795795	74f52f4	carrier_setup_real_n64	carrier_setup_real_emitcopypatch	64	warm	15170.0	15158.1	15343.0
+1784795795	74f52f4	carrier_setup_real_n64	carrier_setup_real_emitdirect	64	warm	4256.2	4187.4	4326.4
+1784795795	74f52f4	carrier_setup_real_n64	carrier_setup_real_optall	64	warm	156178.3	155739.1	157920.6
+1784795795	74f52f4	carrier_setup_real_n64	carrier_setup_real_parse	64	warm	0.0	0.0	0.0
+1784795795	74f52f4	carrier_setup_real_n64	carrier_setup_real_predecode	64	warm	3464.6	3446.9	3499.8
+1784795795	74f52f4	carrier_setup_real_n64	carrier_setup_real_stackcompile	64	warm	9590.0	9555.0	9753.3

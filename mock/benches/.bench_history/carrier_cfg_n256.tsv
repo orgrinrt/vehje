@@ -3,3 +3,7 @@
 1784758057	d772801	carrier_cfg_n256	carrier_cfg_switch	256	warm	229052.5	228739.0	230679.8
 1784758057	d772801	carrier_cfg_n256	carrier_cfg_threaded	256	warm	182703.3	182701.6	187912.3
 1784758057	d772801	carrier_cfg_n256	carrier_cfg_trace	256	warm	105833.8	104747.3	109780.8
+1784793542	2a3f34b	carrier_cfg_n256	carrier_cfg_fntable	256	warm	221707.5	219704.4	230542.2
+1784793542	2a3f34b	carrier_cfg_n256	carrier_cfg_switch	256	warm	228906.7	225854.6	231055.6
+1784793542	2a3f34b	carrier_cfg_n256	carrier_cfg_threaded	256	warm	179992.1	179860.4	180505.2
+1784793542	2a3f34b	carrier_cfg_n256	carrier_cfg_trace	256	warm	100406.2	100163.5	101299.5

@@ -6,3 +6,9 @@
 1784758897	d772801	carrier_optimize_scatter_n64	carrier_opt_scatter_eqsat	64	warm	2204.6	2202.1	2270.9
 1784758897	d772801	carrier_optimize_scatter_n64	carrier_opt_scatter_fold	64	warm	2201.7	2192.5	2253.9
 1784758897	d772801	carrier_optimize_scatter_n64	carrier_opt_scatter_none	64	warm	2312.5	2305.4	2352.1
+1784795079	74f52f4	carrier_optimize_scatter_n64	carrier_opt_scatter_all	64	warm	2159.2	2146.7	2171.4
+1784795079	74f52f4	carrier_optimize_scatter_n64	carrier_opt_scatter_canon	64	warm	2240.4	2231.2	2248.8
+1784795079	74f52f4	carrier_optimize_scatter_n64	carrier_opt_scatter_cse	64	warm	2010.8	1988.8	2241.0
+1784795079	74f52f4	carrier_optimize_scatter_n64	carrier_opt_scatter_dce	64	warm	2271.2	2254.6	2301.2
+1784795079	74f52f4	carrier_optimize_scatter_n64	carrier_opt_scatter_fold	64	warm	2143.8	2140.7	2165.4
+1784795079	74f52f4	carrier_optimize_scatter_n64	carrier_opt_scatter_none	64	warm	2260.4	2241.2	2296.8

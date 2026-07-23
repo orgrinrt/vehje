@@ -2,3 +2,6 @@
 1784759080	d772801	carrier_native_real_n64	carrier_nat_real_copypatch	64	warm	551.2	549.4	1100.8
 1784759080	d772801	carrier_native_real_n64	carrier_nat_real_interp	64	warm	2385.4	2339.6	2612.7
 1784759080	d772801	carrier_native_real_n64	carrier_nat_real_stencil	64	warm	615.0	608.4	668.8
+1784794872	74f52f4	carrier_native_real_n64	carrier_nat_real_copypatch	64	warm	627.1	626.2	647.5
+1784794872	74f52f4	carrier_native_real_n64	carrier_nat_real_direct	64	warm	591.2	587.2	635.6
+1784794872	74f52f4	carrier_native_real_n64	carrier_nat_real_interp	64	warm	2195.4	2192.1	2438.3

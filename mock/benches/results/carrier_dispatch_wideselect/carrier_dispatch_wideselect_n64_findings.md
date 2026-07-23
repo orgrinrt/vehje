@@ -9,151 +9,160 @@ Baseline for all deltas below: **carrier_disp_wideselect_switch**. (Deltas are p
 
 ### carrier_disp_wideselect_nullfloor dominates: 31% faster than the next best (carrier_disp_wideselect_ifchainasc)
 
-carrier_disp_wideselect_nullfloor (1.80 us) leads carrier_disp_wideselect_ifchainasc (2.37 us) by 31%, a clear separation rather than a photo finish. CV 0.9%.
+carrier_disp_wideselect_nullfloor (1.79 us) leads carrier_disp_wideselect_ifchainasc (2.34 us) by 31%, a clear separation rather than a photo finish. CV 3.1%.
 
 _Why it matters:_ A dominant, well-separated winner is a safe default pick for this workload shape.
 
 ### carrier_disp_wideselect_nullfloor beats baseline by 24% (significant)
 
-carrier_disp_wideselect_nullfloor is -575 ns (24%) faster than baseline carrier_disp_wideselect_switch, with a CI that excludes zero.
+carrier_disp_wideselect_nullfloor is -566 ns (24%) faster than baseline carrier_disp_wideselect_switch, with a CI that excludes zero.
 
 _Why it matters:_ A large, significant improvement over the current baseline is a concrete reason to switch.
 
 ### carrier_disp_wideselect_ifchainlin is an outlier: 2.9x slower than the field
 
-carrier_disp_wideselect_ifchainlin (5.29 us) is 2.9x the fastest (1.80 us), well off the pack.
+carrier_disp_wideselect_ifchainlin (5.24 us) is 2.9x the fastest (1.79 us), well off the pack.
 
 _Why it matters:_ A >2x outlier is almost never the right choice; if it is intentional (e.g. it buys correctness), say so explicitly.
 
-### carrier_disp_wideselect_fntable shows alternating (throttle bounce) (autocorr -0.74)
+### carrier_disp_wideselect_bittree shows alternating (throttle bounce) (autocorr -0.80)
 
-carrier_disp_wideselect_fntable's per-pass series has lag-1 autocorrelation -0.74, indicating alternating (throttle bounce). Its timing may not be at steady state.
+carrier_disp_wideselect_bittree's per-pass series has lag-1 autocorrelation -0.80, indicating alternating (throttle bounce). Its timing may not be at steady state.
 
 _Why it matters:_ Autocorrelated samples violate the independence the CIs assume; the interval is optimistic until the drift is warmed out or cooled down.
 
-### Two tiers: {carrier_disp_wideselect_nullfloor, carrier_disp_wideselect_ifchainasc, carrier_disp_wideselect_switch, carrier_disp_wideselect_ifchain, carrier_disp_wideselect_bittree, carrier_disp_wideselect_threaded, carrier_disp_wideselect_fntable} vs {carrier_disp_wideselect_ifchainlin} (73% apart)
+### Two tiers: {carrier_disp_wideselect_nullfloor, carrier_disp_wideselect_ifchainasc, carrier_disp_wideselect_switch, carrier_disp_wideselect_ifchain, carrier_disp_wideselect_threaded, carrier_disp_wideselect_bittree, carrier_disp_wideselect_fntable} vs {carrier_disp_wideselect_ifchainlin} (79% apart)
 
-The field splits into a fast tier {carrier_disp_wideselect_nullfloor, carrier_disp_wideselect_ifchainasc, carrier_disp_wideselect_switch, carrier_disp_wideselect_ifchain, carrier_disp_wideselect_bittree, carrier_disp_wideselect_threaded, carrier_disp_wideselect_fntable} and a slow tier {carrier_disp_wideselect_ifchainlin} with a 73% jump between them - a qualitative difference, not a gradient.
+The field splits into a fast tier {carrier_disp_wideselect_nullfloor, carrier_disp_wideselect_ifchainasc, carrier_disp_wideselect_switch, carrier_disp_wideselect_ifchain, carrier_disp_wideselect_threaded, carrier_disp_wideselect_bittree, carrier_disp_wideselect_fntable} and a slow tier {carrier_disp_wideselect_ifchainlin} with a 79% jump between them - a qualitative difference, not a gradient.
 
 _Why it matters:_ A tier split usually reflects a mechanism boundary (branchless vs branch, cached vs not); the tier, not the exact rank, is the finding.
 
-### carrier_disp_wideselect_ifchainasc's comparison is tie-heavy (17% tied pairs)
+### carrier_disp_wideselect_ifchainasc's edge over baseline is significant but tiny (-28 ns, 1.18%)
 
-17% of paired samples for carrier_disp_wideselect_ifchainasc are exact ties vs baseline, weakening the sign test - the timer resolution may be coarser than the effect.
-
-_Why it matters:_ A high tie rate means the difference is at or below measurement resolution; trust it less and consider a heavier workload per call.
-
-### carrier_disp_wideselect_ifchainasc's edge over baseline is significant but tiny (-6 ns, 0.24%)
-
-carrier_disp_wideselect_ifchainasc differs from baseline carrier_disp_wideselect_switch by -6 ns (0.24%) - statistically real (CI excludes zero) but small enough to be practically irrelevant.
+carrier_disp_wideselect_ifchainasc differs from baseline carrier_disp_wideselect_switch by -28 ns (1.18%) - statistically real (CI excludes zero) but small enough to be practically irrelevant.
 
 _Why it matters:_ Statistical significance is not practical significance: a measurable-but-tiny gap should not drive a decision.
 
 ## Key findings
 
-- **Fastest: carrier_disp_wideselect_nullfloor** at 1802.9 ns median (-24.1% vs baseline)
+- **Fastest: carrier_disp_wideselect_nullfloor** at 1791.8 ns median (-24.7% vs baseline)
 - 1 variant significantly faster than baseline
-- 5 variants significantly slower than baseline
-- Spread: 2.94x (fastest 1802.9 ns, slowest 5291.6 ns)
+- 4 variants significantly slower than baseline
+- Spread: 2.93x (fastest 1791.8 ns, slowest 5242.5 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| carrier_disp_wideselect_bittree | 5395ns | 5425ns | 5268ns | 5382ns | 5477ns | +8.17% |
-| carrier_disp_wideselect_fntable | 5658ns | 5657ns | 5523ns | 5624ns | 5775ns | +13.45% |
-| carrier_disp_wideselect_ifchain | 5083ns | 5086ns | 4998ns | 5077ns | 5135ns | +1.93% |
-| carrier_disp_wideselect_ifchainasc | 4835ns | 4879ns | 4438ns | 4867ns | 4986ns | -3.04% |
-| carrier_disp_wideselect_ifchainlin | 7879ns | 7873ns | 7736ns | 7859ns | 7981ns | +58.00% |
-| carrier_disp_wideselect_nullfloor | 4392ns | 4379ns | 4292ns | 4362ns | 4488ns | -11.93% |
-| carrier_disp_wideselect_switch | 4987ns | 4969ns | 4910ns | 4955ns | 5073ns | base |
-| carrier_disp_wideselect_threaded | 5520ns | 5519ns | 5399ns | 5480ns | 5642ns | +10.70% |
+| carrier_disp_wideselect_bittree | 5315ns | 5279ns | 5153ns | 5247ns | 5497ns | +11.87% |
+| carrier_disp_wideselect_fntable | 5277ns | 5281ns | 4917ns | 5166ns | 5624ns | +11.08% |
+| carrier_disp_wideselect_ifchain | 4809ns | 4994ns | 4362ns | 4785ns | 5069ns | +1.23% |
+| carrier_disp_wideselect_ifchainasc | 4664ns | 4764ns | 4306ns | 4612ns | 4920ns | -1.83% |
+| carrier_disp_wideselect_ifchainlin | 7632ns | 7643ns | 6944ns | 7606ns | 8015ns | +60.65% |
+| carrier_disp_wideselect_nullfloor | 4278ns | 4326ns | 4012ns | 4318ns | 4352ns | -9.94% |
+| carrier_disp_wideselect_switch | 4751ns | 4890ns | 4340ns | 4737ns | 4976ns | base |
+| carrier_disp_wideselect_threaded | 5158ns | 5127ns | 4742ns | 5039ns | 5544ns | +8.57% |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| carrier_disp_wideselect_bittree | 2815ns | 2760ns | 2873ns | +18.37% | 0.023 |
-| carrier_disp_wideselect_fntable | 3068ns | 3002ns | 3129ns | +29.00% | 0.021 |
-| carrier_disp_wideselect_ifchain | 2513ns | 2491ns | 2534ns | +5.66% | 0.025 |
-| carrier_disp_wideselect_ifchainasc | 2329ns | 2074ns | 2398ns | -2.05% | 0.027 |
-| carrier_disp_wideselect_ifchainlin | 5306ns | 5249ns | 5366ns | +123.13% | 0.012 |
-| carrier_disp_wideselect_nullfloor | 1802ns | 1780ns | 1820ns | -24.24% | 0.036 |
-| carrier_disp_wideselect_switch | 2378ns | 2360ns | 2396ns | base | 0.027 |
-| carrier_disp_wideselect_threaded | 2898ns | 2856ns | 2944ns | +21.88% | 0.022 |
+| carrier_disp_wideselect_bittree | 2786ns | 2752ns | 2820ns | +20.24% | 0.023 |
+| carrier_disp_wideselect_fntable | 2936ns | 2722ns | 3148ns | +26.70% | 0.022 |
+| carrier_disp_wideselect_ifchain | 2418ns | 2212ns | 2528ns | +4.36% | 0.026 |
+| carrier_disp_wideselect_ifchainasc | 2282ns | 2089ns | 2396ns | -1.53% | 0.028 |
+| carrier_disp_wideselect_ifchainlin | 5207ns | 4758ns | 5432ns | +124.73% | 0.012 |
+| carrier_disp_wideselect_nullfloor | 1778ns | 1662ns | 1828ns | -23.26% | 0.036 |
+| carrier_disp_wideselect_switch | 2317ns | 2147ns | 2401ns | base | 0.028 |
+| carrier_disp_wideselect_threaded | 2766ns | 2572ns | 2944ns | +19.38% | 0.023 |
+
+## Hardware counters (per call)
+
+| Variant | instructions | cycles | IPC | × base instr |
+|---|---|---|---|---|
+| carrier_disp_wideselect_bittree | 254969 | 1253353 | 0.203 | 0.99× |
+| carrier_disp_wideselect_fntable | 272714 | 1552170 | 0.176 | 1.06× |
+| carrier_disp_wideselect_ifchain | 261942 | 1395244 | 0.188 | 1.01× |
+| carrier_disp_wideselect_ifchainasc | 263604 | 1474170 | 0.179 | 1.02× |
+| carrier_disp_wideselect_ifchainlin | 269837 | 1660841 | 0.162 | 1.04× |
+| carrier_disp_wideselect_nullfloor | 257971 | 1603142 | 0.161 | 1.00× |
+| carrier_disp_wideselect_switch | 258374 | 1407267 | 0.184 | 1.00× |
+| carrier_disp_wideselect_threaded | 272257 | 1678255 | 0.162 | 1.05× |
+
+Instructions and cycles are the mean over the variant's samples for the measured region. IPC is instructions per cycle. The instruction ratio isolates whether a variant wins by retiring fewer instructions or by executing the same instructions more efficiently.
 
 ## Performance model
 
-- Peak throughput: **0.036 Gops/s** (carrier_disp_wideselect_nullfloor; best 20% batches)
+- Peak throughput: **0.039 Gops/s** (carrier_disp_wideselect_nullfloor; best 20% batches)
 - Ops per call: 64
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| carrier_disp_wideselect_bittree | 0.023 | 63.5% |
-| carrier_disp_wideselect_fntable | 0.021 | 58.1% |
-| carrier_disp_wideselect_ifchain | 0.026 | 70.9% |
-| carrier_disp_wideselect_ifchainasc | 0.027 | 75.1% |
-| carrier_disp_wideselect_ifchainlin | 0.012 | 33.6% |
-| carrier_disp_wideselect_nullfloor | 0.035 | 98.7% |
-| carrier_disp_wideselect_switch | 0.027 | 75.0% |
-| carrier_disp_wideselect_threaded | 0.022 | 61.7% |
+| carrier_disp_wideselect_bittree | 0.023 | 59.7% |
+| carrier_disp_wideselect_fntable | 0.022 | 56.9% |
+| carrier_disp_wideselect_ifchain | 0.025 | 66.2% |
+| carrier_disp_wideselect_ifchainasc | 0.027 | 71.0% |
+| carrier_disp_wideselect_ifchainlin | 0.012 | 31.7% |
+| carrier_disp_wideselect_nullfloor | 0.036 | 92.8% |
+| carrier_disp_wideselect_switch | 0.027 | 69.9% |
+| carrier_disp_wideselect_threaded | 0.023 | 59.9% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| carrier_disp_wideselect_bittree | 5395ns | 5395ns | +8.17% |
-| carrier_disp_wideselect_fntable | 5658ns | 5658ns | +13.45% |
-| carrier_disp_wideselect_ifchain | 5083ns | 5083ns | +1.93% |
-| carrier_disp_wideselect_ifchainasc | 4835ns | 4835ns | -3.04% |
-| carrier_disp_wideselect_ifchainlin | 7879ns | 7879ns | +58.00% |
-| carrier_disp_wideselect_nullfloor | 4392ns | 4392ns | -11.93% |
-| carrier_disp_wideselect_switch | 4987ns | 4987ns | base |
-| carrier_disp_wideselect_threaded | 5520ns | 5520ns | +10.70% |
+| carrier_disp_wideselect_bittree | 5315ns | 5315ns | +11.87% |
+| carrier_disp_wideselect_fntable | 5277ns | 5277ns | +11.08% |
+| carrier_disp_wideselect_ifchain | 4809ns | 4809ns | +1.23% |
+| carrier_disp_wideselect_ifchainasc | 4664ns | 4664ns | -1.83% |
+| carrier_disp_wideselect_ifchainlin | 7632ns | 7632ns | +60.65% |
+| carrier_disp_wideselect_nullfloor | 4278ns | 4278ns | -9.94% |
+| carrier_disp_wideselect_switch | 4751ns | 4751ns | base |
+| carrier_disp_wideselect_threaded | 5158ns | 5158ns | +8.57% |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| carrier_disp_wideselect_switch | 2374ns | base | --- | [2364, 2396] | --- | --- | --- | --- |
-| carrier_disp_wideselect_bittree | 2805ns | +410.5ns (+17.3%) | [+393, +507]ns | [2767, 2873] | YES | 0.0365 | 0.0313 | 0 |
-| carrier_disp_wideselect_fntable | 3060ns | +681.9ns (+28.7%) | [+649, +737]ns | [3013, 3129] | YES | 0.0365 | 0.0313 | 0 |
-| carrier_disp_wideselect_ifchain | 2509ns | +138.5ns (+5.8%) | [+105, +160]ns | [2495, 2534] | YES | 0.0365 | 0.0313 | 0 |
-| carrier_disp_wideselect_ifchainasc | 2370ns | no significant difference | [-175, +34]ns | [2220, 2398] | no | 1.0000 | 1.0000 | **1** (17%, HIGH) |
-| carrier_disp_wideselect_ifchainlin | 5292ns | +2905.8ns (+122.4%) | [+2884, +2994]ns | [5260, 5366] | YES | 0.0365 | 0.0313 | 0 |
-| carrier_disp_wideselect_nullfloor | 1803ns | -574.8ns (-24.2%) | [-595, -560]ns | [1782, 1820] | YES | 0.0365 | 0.0313 | 0 |
-| carrier_disp_wideselect_threaded | 2886ns | +512.1ns (+21.6%) | [+471, +578]ns | [2865, 2944] | YES | 0.0365 | 0.0313 | 0 |
+| carrier_disp_wideselect_switch | 2379ns | base | --- | [2171, 2401] | --- | --- | --- | --- |
+| carrier_disp_wideselect_bittree | 2783ns | +418.6ns (+17.6%) | [+404, +584]ns | [2755, 2820] | YES | 0.0438 | 0.0313 | 0 |
+| carrier_disp_wideselect_fntable | 2922ns | +551.7ns (+23.2%) | [+342, +963]ns | [2737, 3148] | YES | 0.0438 | 0.0313 | 0 |
+| carrier_disp_wideselect_ifchain | 2511ns | no significant difference | [-63, +254]ns | [2216, 2528] | no | 0.2552 | 0.2188 | 0 |
+| carrier_disp_wideselect_ifchainasc | 2341ns | no significant difference | [-178, +100]ns | [2108, 2396] | no | 0.6875 | 0.6875 | 0 |
+| carrier_disp_wideselect_ifchainlin | 5242ns | +2906.8ns (+122.2%) | [+2727, +3036]ns | [4947, 5432] | YES | 0.0438 | 0.0313 | 0 |
+| carrier_disp_wideselect_nullfloor | 1792ns | -565.8ns (-23.8%) | [-621, -430]ns | [1715, 1828] | YES | 0.0438 | 0.0313 | 0 |
+| carrier_disp_wideselect_threaded | 2776ns | +452.8ns (+19.0%) | [+232, +662]ns | [2578, 2944] | YES | 0.0438 | 0.0313 | 0 |
 
 ## Per-pass consistency (nonstop e2e, Δ vs baseline)
 
 | Pass | carrier_disp_wideselect_switch | carrier_disp_wideselect_bittree | carrier_disp_wideselect_fntable | carrier_disp_wideselect_ifchain | carrier_disp_wideselect_ifchainasc | carrier_disp_wideselect_ifchainlin | carrier_disp_wideselect_nullfloor | carrier_disp_wideselect_threaded |
 |---|---|---|---|---|---|---|---|---|
-| 1 | 2381ns | +15.9% | +28.0% | +5.5% | -12.9% | +121.4% | -25.3% | +21.4% |
-| 2 | 2376ns | +17.3% | +29.3% | +6.8% | -0.5% | +124.2% | -23.6% | +20.2% |
-| 3 | 2368ns | +17.2% | +26.8% | +5.9% | +0.8% | +128.3% | -23.6% | +21.8% |
-| 4 | 2412ns | +17.0% | +30.8% | +3.3% | -1.8% | +119.3% | -24.4% | +19.1% |
-| 5 | 2360ns | +21.1% | +28.1% | +5.9% | +2.1% | +122.4% | -23.9% | +24.9% |
-| 6 | 2372ns | +21.8% | +30.9% | +6.7% | +0.0% | +123.2% | -24.7% | +24.0% |
+| 1 | 2361ns | +17.0% | +16.6% | -6.0% | -11.5% | +120.4% | -24.1% | +9.4% |
+| 2 | 2407ns | +17.3% | +29.6% | +4.6% | -3.5% | +119.4% | -26.5% | +23.1% |
+| 3 | 2147ns | +28.5% | +48.0% | +18.2% | -0.9% | +121.6% | -15.2% | +35.8% |
+| 4 | 2396ns | +17.0% | +13.6% | +4.7% | +0.8% | +127.6% | -25.2% | +22.1% |
+| 5 | 2195ns | +25.4% | +40.8% | +0.8% | +8.2% | +133.9% | -24.3% | +17.2% |
+| 6 | 2396ns | +17.5% | +14.9% | +4.9% | -1.5% | +125.8% | -23.4% | +10.1% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| carrier_disp_wideselect_bittree | 0.454 | moderate+ |
-| carrier_disp_wideselect_fntable | -0.744 | HIGH- (thermal bounce) |
-| carrier_disp_wideselect_ifchain | 0.022 | ok |
-| carrier_disp_wideselect_ifchainasc | 0.022 | ok |
-| carrier_disp_wideselect_ifchainlin | 0.100 | ok |
-| carrier_disp_wideselect_nullfloor | -0.053 | ok |
-| carrier_disp_wideselect_switch | -0.513 | HIGH- (thermal bounce) |
-| carrier_disp_wideselect_threaded | 0.325 | moderate+ |
+| carrier_disp_wideselect_bittree | -0.796 | HIGH- (thermal bounce) |
+| carrier_disp_wideselect_fntable | -0.449 | moderate- |
+| carrier_disp_wideselect_ifchain | -0.287 | moderate- |
+| carrier_disp_wideselect_ifchainasc | -0.158 | ok |
+| carrier_disp_wideselect_ifchainlin | -0.560 | HIGH- (thermal bounce) |
+| carrier_disp_wideselect_nullfloor | -0.431 | moderate- |
+| carrier_disp_wideselect_switch | -0.664 | HIGH- (thermal bounce) |
+| carrier_disp_wideselect_threaded | 0.065 | ok |
 
 **Consistency summary:**
 
 - **carrier_disp_wideselect_bittree**: won 0/6, lost 6/6
 - **carrier_disp_wideselect_fntable**: won 0/6, lost 6/6
-- **carrier_disp_wideselect_ifchain**: won 0/6, lost 6/6
-- **carrier_disp_wideselect_ifchainasc**: won 3/6, lost 2/6
+- **carrier_disp_wideselect_ifchain**: won 1/6, lost 5/6
+- **carrier_disp_wideselect_ifchainasc**: won 4/6, lost 2/6
 - **carrier_disp_wideselect_ifchainlin**: won 0/6, lost 6/6
 - **carrier_disp_wideselect_nullfloor**: won 6/6, lost 0/6
 - **carrier_disp_wideselect_threaded**: won 0/6, lost 6/6
@@ -162,211 +171,211 @@ _Why it matters:_ Statistical significance is not practical significance: a meas
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| carrier_disp_wideselect_bittree | 87574.4ns | 2814.9ns | 3111.1% | HIGH |
-| carrier_disp_wideselect_fntable | 87199.0ns | 3067.6ns | 2842.6% | HIGH |
-| carrier_disp_wideselect_ifchain | 86424.5ns | 2512.5ns | 3439.7% | HIGH |
-| carrier_disp_wideselect_ifchainasc | 86079.7ns | 2329.2ns | 3695.6% | HIGH |
-| carrier_disp_wideselect_ifchainlin | 86776.2ns | 5306.1ns | 1635.4% | HIGH |
-| carrier_disp_wideselect_nullfloor | 86608.3ns | 1801.6ns | 4807.3% | HIGH |
-| carrier_disp_wideselect_switch | 85998.4ns | 2378.1ns | 3616.3% | HIGH |
-| carrier_disp_wideselect_threaded | 88324.5ns | 2898.4ns | 3047.4% | HIGH |
+| carrier_disp_wideselect_bittree | 86458.9ns | 2786.0ns | 3103.4% | HIGH |
+| carrier_disp_wideselect_fntable | 86776.1ns | 2935.7ns | 2955.9% | HIGH |
+| carrier_disp_wideselect_ifchain | 85920.9ns | 2418.2ns | 3553.1% | HIGH |
+| carrier_disp_wideselect_ifchainasc | 85843.5ns | 2281.5ns | 3762.5% | HIGH |
+| carrier_disp_wideselect_ifchainlin | 87279.5ns | 5207.1ns | 1676.2% | HIGH |
+| carrier_disp_wideselect_nullfloor | 86796.4ns | 1778.2ns | 4881.2% | HIGH |
+| carrier_disp_wideselect_switch | 85550.4ns | 2317.1ns | 3692.2% | HIGH |
+| carrier_disp_wideselect_threaded | 87763.6ns | 2766.0ns | 3172.9% | HIGH |
 
 ## Distribution (algo ns)
 
 ```
-carrier_disp_wideselect_bittree (n=6, range 2760.0-2873.1 ns)
-   2760.0 |########################################
+carrier_disp_wideselect_bittree (n=6, range 2752.1-2820.0 ns)
+   2752.1 |########################################
+   2755.5 |########################################
+   2758.9 |########################################
+   2762.3 |
    2765.7 |
-   2771.3 |########################################
-   2777.0 |
-   2782.6 |########################################
-   2788.3 |
-   2793.9 |
+   2769.1 |
+   2772.5 |
+   2775.9 |
+   2779.3 |
+   2782.7 |
+   2786.1 |
+   2789.4 |
+   2792.8 |
+   2796.2 |
    2799.6 |
-   2805.2 |
-   2810.9 |
-   2816.6 |########################################
-   2822.2 |
-   2827.9 |
-   2833.5 |
-   2839.2 |
-   2844.8 |
-   2850.5 |
-   2856.1 |########################################
-   2861.8 |
-   2867.4 |
+   2803.0 |########################################
+   2806.4 |
+   2809.8 |
+   2813.2 |########################################
+   2816.6 |
   (0 below, 1 above range)
 
-carrier_disp_wideselect_fntable (n=6, range 3001.7-3129.3 ns)
-   3001.7 |########################################
-   3008.1 |
-   3014.5 |
-   3020.8 |########################################
-   3027.2 |
-   3033.6 |
-   3040.0 |
-   3046.4 |########################################
-   3052.8 |
-   3059.1 |
-   3065.5 |
-   3071.9 |########################################
-   3078.3 |
-   3084.7 |
-   3091.1 |
-   3097.4 |########################################
-   3103.8 |
-   3110.2 |
-   3116.6 |
-   3123.0 |
+carrier_disp_wideselect_fntable (n=6, range 2721.7-3147.5 ns)
+   2721.7 |####################
+   2743.0 |########################################
+   2764.3 |
+   2785.6 |
+   2806.9 |
+   2828.1 |
+   2849.4 |
+   2870.7 |
+   2892.0 |
+   2913.3 |
+   2934.6 |
+   2955.9 |
+   2977.2 |
+   2998.5 |
+   3019.8 |
+   3041.1 |
+   3062.3 |
+   3083.6 |####################
+   3104.9 |####################
+   3126.2 |
   (0 below, 1 above range)
 
-carrier_disp_wideselect_ifchain (n=6, range 2490.8-2533.8 ns)
-   2490.8 |########################################
-   2492.9 |
-   2495.1 |
-   2497.2 |########################################
-   2499.4 |
-   2501.5 |
-   2503.7 |
-   2505.8 |########################################
-   2508.0 |
-   2510.1 |
-   2512.3 |########################################
-   2514.4 |
-   2516.6 |
-   2518.7 |
-   2520.9 |
-   2523.0 |
-   2525.2 |
-   2527.3 |
-   2529.5 |########################################
-   2531.6 |
+carrier_disp_wideselect_ifchain (n=6, range 2212.5-2527.7 ns)
+   2212.5 |########################################
+   2228.3 |
+   2244.0 |
+   2259.8 |
+   2275.5 |
+   2291.3 |
+   2307.1 |
+   2322.8 |
+   2338.6 |
+   2354.3 |
+   2370.1 |
+   2385.9 |
+   2401.6 |
+   2417.4 |
+   2433.1 |
+   2448.9 |
+   2464.7 |
+   2480.4 |
+   2496.2 |####################
+   2511.9 |########################################
   (0 below, 1 above range)
 
-carrier_disp_wideselect_ifchainasc (n=6, range 2074.2-2398.1 ns)
-   2074.2 |####################
-   2090.4 |
-   2106.6 |
-   2122.8 |
-   2139.0 |
-   2155.2 |
-   2171.4 |
-   2187.6 |
-   2203.8 |
-   2220.0 |
-   2236.2 |
-   2252.4 |
-   2268.6 |
-   2284.8 |
-   2301.0 |
-   2317.2 |
-   2333.4 |
-   2349.6 |####################
-   2365.8 |########################################
-   2382.0 |####################
+carrier_disp_wideselect_ifchainasc (n=6, range 2088.8-2395.6 ns)
+   2088.8 |########################################
+   2104.1 |
+   2119.5 |########################################
+   2134.8 |
+   2150.2 |
+   2165.5 |
+   2180.8 |
+   2196.2 |
+   2211.5 |
+   2226.9 |
+   2242.2 |
+   2257.5 |
+   2272.9 |
+   2288.2 |
+   2303.6 |
+   2318.9 |########################################
+   2334.2 |
+   2349.6 |########################################
+   2364.9 |########################################
+   2380.3 |
   (0 below, 1 above range)
 
-carrier_disp_wideselect_ifchainlin (n=6, range 5249.2-5366.2 ns)
-   5249.2 |####################
-   5255.1 |
-   5260.9 |
-   5266.8 |####################
-   5272.6 |
-   5278.5 |
-   5284.3 |
-   5290.2 |########################################
-   5296.0 |
-   5301.9 |
-   5307.7 |
-   5313.6 |
-   5319.4 |
-   5325.3 |####################
+carrier_disp_wideselect_ifchainlin (n=6, range 4757.9-5432.2 ns)
+   4757.9 |########################################
+   4791.6 |
+   4825.3 |
+   4859.1 |
+   4892.8 |
+   4926.5 |
+   4960.2 |
+   4993.9 |
+   5027.6 |
+   5061.4 |
+   5095.1 |
+   5128.8 |########################################
+   5162.5 |
+   5196.2 |########################################
+   5229.9 |
+   5263.7 |########################################
+   5297.4 |
    5331.1 |
-   5337.0 |
-   5342.8 |
-   5348.7 |
-   5354.5 |
-   5360.4 |
+   5364.8 |
+   5398.5 |########################################
   (0 below, 1 above range)
 
-carrier_disp_wideselect_nullfloor (n=6, range 1779.6-1819.5 ns)
-   1779.6 |########################################
-   1781.6 |
-   1783.6 |########################################
-   1785.6 |
-   1787.6 |
-   1789.6 |
-   1791.6 |
-   1793.6 |
-   1795.6 |########################################
-   1797.6 |
-   1799.6 |
-   1801.6 |
-   1803.6 |
-   1805.6 |
-   1807.6 |########################################
-   1809.6 |
-   1811.6 |
-   1813.6 |
-   1815.6 |########################################
-   1817.6 |
+carrier_disp_wideselect_nullfloor (n=6, range 1662.1-1827.5 ns)
+   1662.1 |####################
+   1670.4 |
+   1678.6 |
+   1686.9 |
+   1695.2 |
+   1703.4 |
+   1711.7 |
+   1720.0 |
+   1728.3 |
+   1736.5 |
+   1744.8 |
+   1753.1 |
+   1761.3 |####################
+   1769.6 |
+   1777.9 |
+   1786.2 |########################################
+   1794.4 |
+   1802.7 |
+   1811.0 |
+   1819.2 |####################
   (0 below, 1 above range)
 
-carrier_disp_wideselect_switch (n=6, range 2360.0-2396.4 ns)
-   2360.0 |########################################
-   2361.8 |
-   2363.6 |
-   2365.5 |
-   2367.3 |########################################
-   2369.1 |
-   2370.9 |########################################
-   2372.8 |
-   2374.6 |########################################
-   2376.4 |
-   2378.2 |
-   2380.0 |########################################
-   2381.9 |
-   2383.7 |
-   2385.5 |
-   2387.3 |
-   2389.2 |
-   2391.0 |
-   2392.8 |
-   2394.6 |
+carrier_disp_wideselect_switch (n=6, range 2146.7-2401.4 ns)
+   2146.7 |####################
+   2159.4 |
+   2172.2 |
+   2184.9 |####################
+   2197.6 |
+   2210.4 |
+   2223.1 |
+   2235.9 |
+   2248.6 |
+   2261.3 |
+   2274.1 |
+   2286.8 |
+   2299.5 |
+   2312.3 |
+   2325.0 |
+   2337.8 |
+   2350.5 |####################
+   2363.2 |
+   2376.0 |
+   2388.7 |########################################
   (0 below, 1 above range)
 
-carrier_disp_wideselect_threaded (n=6, range 2856.2-2944.2 ns)
-   2856.2 |########################################
-   2860.6 |
-   2865.0 |
-   2869.4 |########################################
-   2873.8 |
-   2878.2 |########################################
-   2882.6 |
-   2887.0 |########################################
-   2891.4 |
-   2895.8 |
-   2900.2 |
-   2904.6 |
-   2909.0 |
-   2913.4 |
-   2917.8 |
-   2922.2 |
-   2926.6 |
-   2931.0 |
-   2935.4 |
-   2939.8 |########################################
+carrier_disp_wideselect_threaded (n=6, range 2572.5-2943.8 ns)
+   2572.5 |########################################
+   2591.1 |
+   2609.6 |
+   2628.2 |####################
+   2646.8 |
+   2665.3 |
+   2683.9 |
+   2702.4 |
+   2721.0 |
+   2739.6 |
+   2758.1 |
+   2776.7 |
+   2795.2 |
+   2813.8 |
+   2832.4 |
+   2850.9 |
+   2869.5 |
+   2888.1 |
+   2906.6 |########################################
+   2925.2 |
   (0 below, 1 above range)
 
 ```
 
 ## Diagnostics
 
-- **carrier_disp_wideselect_bittree**: bridge=3111.1% of algo (FFI overhead may distort results)
-- **carrier_disp_wideselect_fntable**: bridge=2849.6% of algo (FFI overhead may distort results)
-- **carrier_disp_wideselect_ifchain**: bridge=3445.4% of algo (FFI overhead may distort results)
-- **carrier_disp_wideselect_ifchainasc**: bridge=3632.5% of algo (FFI overhead may distort results)
-- **carrier_disp_wideselect_ifchainlin**: bridge=1636.7% of algo (FFI overhead may distort results)
-- **carrier_disp_wideselect_nullfloor**: bridge=4806.0% of algo (FFI overhead may distort results)
-- **carrier_disp_wideselect_switch**: bridge=3630.1% of algo (FFI overhead may distort results)
-- **carrier_disp_wideselect_threaded**: bridge=3059.6% of algo (FFI overhead may distort results)
+- **carrier_disp_wideselect_bittree**: bridge=3107.1% of algo (FFI overhead may distort results)
+- **carrier_disp_wideselect_fntable**: bridge=2970.8% of algo (FFI overhead may distort results)
+- **carrier_disp_wideselect_ifchain**: bridge=3418.6% of algo (FFI overhead may distort results)
+- **carrier_disp_wideselect_ifchainasc**: bridge=3665.6% of algo (FFI overhead may distort results)
+- **carrier_disp_wideselect_ifchainlin**: bridge=1672.8% of algo (FFI overhead may distort results)
+- **carrier_disp_wideselect_nullfloor**: bridge=4844.9% of algo (FFI overhead may distort results)
+- **carrier_disp_wideselect_switch**: bridge=3598.3% of algo (FFI overhead may distort results)
+- **carrier_disp_wideselect_threaded**: bridge=3162.4% of algo (FFI overhead may distort results)

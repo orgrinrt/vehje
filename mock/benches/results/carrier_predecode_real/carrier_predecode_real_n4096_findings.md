@@ -7,64 +7,83 @@ Baseline: **carrier_pre_real_switch**
 
 Baseline for all deltas below: **carrier_pre_real_switch**. (Deltas are paired `variant - baseline` medians; `*` marks a CI that excludes zero.)
 
-### carrier_pre_real_null dominates: 268% faster than the next best (carrier_pre_real_direct)
+### carrier_pre_real_null dominates: 279% faster than the next best (carrier_pre_real_direct)
 
-carrier_pre_real_null (102.85 us) leads carrier_pre_real_direct (378.88 us) by 268%, a clear separation rather than a photo finish. CV 2.4%.
+carrier_pre_real_null (103.19 us) leads carrier_pre_real_direct (391.32 us) by 279%, a clear separation rather than a photo finish. CV 2.6%.
 
 _Why it matters:_ A dominant, well-separated winner is a safe default pick for this workload shape.
 
-### carrier_pre_real_null beats baseline by 79% (significant)
+### carrier_pre_real_null beats baseline by 80% (significant)
 
-carrier_pre_real_null is -386.04 us (79%) faster than baseline carrier_pre_real_switch, with a CI that excludes zero.
+carrier_pre_real_null is -397.38 us (80%) faster than baseline carrier_pre_real_switch, with a CI that excludes zero.
 
 _Why it matters:_ A large, significant improvement over the current baseline is a concrete reason to switch.
 
-### carrier_pre_real_fntable is an outlier: 5.3x slower than the field
+### carrier_pre_real_fntable is an outlier: 5.6x slower than the field
 
-carrier_pre_real_fntable (542.75 us) is 5.3x the fastest (102.85 us), well off the pack.
+carrier_pre_real_fntable (573.94 us) is 5.6x the fastest (103.19 us), well off the pack.
 
 _Why it matters:_ A >2x outlier is almost never the right choice; if it is intentional (e.g. it buys correctness), say so explicitly.
 
-### Two tiers: {carrier_pre_real_null} vs {carrier_pre_real_direct, carrier_pre_real_threaded, carrier_pre_real_switch, carrier_pre_real_regcache, carrier_pre_real_fntable} (268% apart)
+### carrier_pre_real_null shows alternating (throttle bounce) (autocorr -0.79)
 
-The field splits into a fast tier {carrier_pre_real_null} and a slow tier {carrier_pre_real_direct, carrier_pre_real_threaded, carrier_pre_real_switch, carrier_pre_real_regcache, carrier_pre_real_fntable} with a 268% jump between them - a qualitative difference, not a gradient.
+carrier_pre_real_null's per-pass series has lag-1 autocorrelation -0.79, indicating alternating (throttle bounce). Its timing may not be at steady state.
+
+_Why it matters:_ Autocorrelated samples violate the independence the CIs assume; the interval is optimistic until the drift is warmed out or cooled down.
+
+### Two tiers: {carrier_pre_real_null} vs {carrier_pre_real_direct, carrier_pre_real_threaded, carrier_pre_real_switch, carrier_pre_real_regcache, carrier_pre_real_fntable} (279% apart)
+
+The field splits into a fast tier {carrier_pre_real_null} and a slow tier {carrier_pre_real_direct, carrier_pre_real_threaded, carrier_pre_real_switch, carrier_pre_real_regcache, carrier_pre_real_fntable} with a 279% jump between them - a qualitative difference, not a gradient.
 
 _Why it matters:_ A tier split usually reflects a mechanism boundary (branchless vs branch, cached vs not); the tier, not the exact rank, is the finding.
 
-### Wide spread: slowest is 5.3x the fastest
+### Wide spread: slowest is 5.6x the fastest
 
-Fastest carrier_pre_real_null (102.85 us) to slowest carrier_pre_real_fntable (542.75 us): 5.3x. The strategy choice matters a lot for this workload.
+Fastest carrier_pre_real_null (103.19 us) to slowest carrier_pre_real_fntable (573.94 us): 5.6x. The strategy choice matters a lot for this workload.
 
 _Why it matters:_ A wide field means the strategy is load-bearing here; getting it right (or wrong) has large consequences.
 
 ## Key findings
 
-- **Fastest: carrier_pre_real_null** at 102847.1 ns median (-78.9% vs baseline)
+- **Fastest: carrier_pre_real_null** at 103190.9 ns median (-79.3% vs baseline)
 - 2 variants significantly faster than baseline
 - 1 variant significantly slower than baseline
-- Spread: 5.28x (fastest 102847.1 ns, slowest 542749.6 ns)
+- Spread: 5.56x (fastest 103190.9 ns, slowest 573938.8 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| carrier_pre_real_direct | 378441ns | 381102ns | 356912ns | 376185ns | 392590ns | -22.33% |
-| carrier_pre_real_fntable | 547678ns | 545058ns | 524474ns | 542226ns | 567457ns | +12.41% |
-| carrier_pre_real_null | 104786ns | 105109ns | 100951ns | 104184ns | 107605ns | -78.49% |
-| carrier_pre_real_regcache | 507775ns | 509613ns | 465671ns | 502763ns | 536347ns | +4.22% |
-| carrier_pre_real_switch | 487236ns | 489344ns | 445881ns | 482807ns | 514556ns | base |
-| carrier_pre_real_threaded | 461944ns | 465115ns | 391089ns | 451730ns | 512692ns | -5.19% |
+| carrier_pre_real_direct | 393189ns | 393456ns | 374309ns | 391472ns | 405205ns | -21.45% |
+| carrier_pre_real_fntable | 573090ns | 576148ns | 560909ns | 571268ns | 581913ns | +14.49% |
+| carrier_pre_real_null | 104877ns | 105411ns | 100898ns | 104216ns | 107859ns | -79.05% |
+| carrier_pre_real_regcache | 507889ns | 504946ns | 485903ns | 501719ns | 528138ns | +1.47% |
+| carrier_pre_real_switch | 500551ns | 501281ns | 489793ns | 497467ns | 510557ns | base |
+| carrier_pre_real_threaded | 496994ns | 498181ns | 453430ns | 492074ns | 526158ns | -0.71% |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| carrier_pre_real_direct | 376223ns | 354567ns | 390426ns | -22.43% | 0.011 |
-| carrier_pre_real_fntable | 545354ns | 522202ns | 565065ns | +12.44% | 0.008 |
-| carrier_pre_real_null | 102527ns | 98770ns | 105273ns | -78.86% | 0.040 |
-| carrier_pre_real_regcache | 505534ns | 463340ns | 534100ns | +4.23% | 0.008 |
-| carrier_pre_real_switch | 485005ns | 443692ns | 512342ns | base | 0.008 |
-| carrier_pre_real_threaded | 459773ns | 388919ns | 510519ns | -5.20% | 0.009 |
+| carrier_pre_real_direct | 391015ns | 372146ns | 403061ns | -21.54% | 0.010 |
+| carrier_pre_real_fntable | 570872ns | 558504ns | 579757ns | +14.54% | 0.007 |
+| carrier_pre_real_null | 102664ns | 98769ns | 105582ns | -79.40% | 0.040 |
+| carrier_pre_real_regcache | 505683ns | 483505ns | 525951ns | +1.46% | 0.008 |
+| carrier_pre_real_switch | 498383ns | 487638ns | 508351ns | base | 0.008 |
+| carrier_pre_real_threaded | 494830ns | 451268ns | 524007ns | -0.71% | 0.008 |
+
+## Hardware counters (per call)
+
+| Variant | instructions | cycles | IPC | × base instr |
+|---|---|---|---|---|
+| carrier_pre_real_direct | 2502159 | 2240725 | 1.117 | 0.79× |
+| carrier_pre_real_fntable | 3567826 | 3377883 | 1.056 | 1.13× |
+| carrier_pre_real_null | 668636 | 2904234 | 0.230 | 0.21× |
+| carrier_pre_real_regcache | 3211702 | 3868361 | 0.830 | 1.02× |
+| carrier_pre_real_switch | 3160575 | 2880986 | 1.097 | 1.00× |
+| carrier_pre_real_threaded | 3145464 | 2961853 | 1.062 | 1.00× |
+
+Instructions and cycles are the mean over the variant's samples for the measured region. IPC is instructions per cycle. The instruction ratio isolates whether a variant wins by retiring fewer instructions or by executing the same instructions more efficiently.
 
 ## Performance model
 
@@ -73,224 +92,224 @@ _Why it matters:_ A wide field means the strategy is load-bearing here; getting 
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| carrier_pre_real_direct | 0.011 | 26.1% |
-| carrier_pre_real_fntable | 0.008 | 18.2% |
-| carrier_pre_real_null | 0.040 | 96.0% |
-| carrier_pre_real_regcache | 0.008 | 19.5% |
-| carrier_pre_real_switch | 0.008 | 20.3% |
-| carrier_pre_real_threaded | 0.009 | 21.3% |
+| carrier_pre_real_direct | 0.010 | 25.2% |
+| carrier_pre_real_fntable | 0.007 | 17.2% |
+| carrier_pre_real_null | 0.040 | 95.7% |
+| carrier_pre_real_regcache | 0.008 | 19.6% |
+| carrier_pre_real_switch | 0.008 | 19.8% |
+| carrier_pre_real_threaded | 0.008 | 19.9% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| carrier_pre_real_direct | 378441ns | 378441ns | -22.33% |
-| carrier_pre_real_fntable | 547678ns | 547678ns | +12.41% |
-| carrier_pre_real_null | 104786ns | 104786ns | -78.49% |
-| carrier_pre_real_regcache | 507775ns | 507775ns | +4.22% |
-| carrier_pre_real_switch | 487236ns | 487236ns | base |
-| carrier_pre_real_threaded | 461944ns | 461944ns | -5.19% |
+| carrier_pre_real_direct | 393189ns | 393189ns | -21.45% |
+| carrier_pre_real_fntable | 573090ns | 573090ns | +14.49% |
+| carrier_pre_real_null | 104877ns | 104877ns | -79.05% |
+| carrier_pre_real_regcache | 507889ns | 507889ns | +1.47% |
+| carrier_pre_real_switch | 500551ns | 500551ns | base |
+| carrier_pre_real_threaded | 496994ns | 496994ns | -0.71% |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| carrier_pre_real_switch | 487104ns | base | --- | [455568, 512342] | --- | --- | --- | --- |
-| carrier_pre_real_direct | 378879ns | -113703.7ns (-23.3%) | [-130957, -81685]ns | [359363, 390426] | YES (adj: no) | 0.0521 | 0.0313 | 0 |
-| carrier_pre_real_fntable | 542750ns | +52438.8ns (+10.8%) | [+37834, +90776]ns | [528249, 565065] | YES (adj: no) | 0.0521 | 0.0313 | 0 |
-| carrier_pre_real_null | 102847ns | -386037.3ns (-79.3%) | [-410632, -350765]ns | [99459, 105273] | YES (adj: no) | 0.0521 | 0.0313 | 0 |
-| carrier_pre_real_regcache | 507388ns | no significant difference | [-11050, +60959]ns | [475114, 534100] | no | 0.2734 | 0.2188 | 0 |
-| carrier_pre_real_threaded | 462945ns | no significant difference | [-75553, +49254]ns | [405853, 510519] | no | 0.6875 | 0.6875 | 0 |
+| carrier_pre_real_switch | 499135ns | base | --- | [487665, 508351] | --- | --- | --- | --- |
+| carrier_pre_real_direct | 391317ns | -109532.9ns (-21.9%) | [-121339, -91235]ns | [378665, 403061] | YES (adj: no) | 0.0521 | 0.0313 | 0 |
+| carrier_pre_real_fntable | 573939ns | +75687.3ns (+15.2%) | [+57464, +84314]ns | [558920, 579757] | YES (adj: no) | 0.0521 | 0.0313 | 0 |
+| carrier_pre_real_null | 103191ns | -397380.6ns (-79.6%) | [-405160, -384618]ns | [99219, 105582] | YES (adj: no) | 0.0521 | 0.0313 | 0 |
+| carrier_pre_real_regcache | 502780ns | no significant difference | [-13162, +22735]ns | [488317, 525951] | no | 0.8594 | 0.6875 | 0 |
+| carrier_pre_real_threaded | 495994ns | no significant difference | [-30954, +25856]ns | [464489, 524007] | no | 1.0000 | 1.0000 | 0 |
 
 ## Per-pass consistency (nonstop e2e, Δ vs baseline)
 
 | Pass | carrier_pre_real_switch | carrier_pre_real_direct | carrier_pre_real_fntable | carrier_pre_real_null | carrier_pre_real_regcache | carrier_pre_real_threaded |
 |---|---|---|---|---|---|---|
-| 1 | 467443ns | -24.1% | +14.3% | -77.8% | +16.1% | -16.8% |
-| 2 | 495369ns | -23.6% | +9.8% | -79.4% | +0.7% | -14.7% |
-| 3 | 515611ns | -22.2% | +10.9% | -79.7% | +0.0% | -8.7% |
-| 4 | 478839ns | -20.8% | +9.1% | -79.1% | +9.8% | +5.9% |
-| 5 | 509072ns | -28.5% | +6.3% | -80.6% | -4.4% | -10.5% |
-| 6 | 443692ns | -14.4% | +25.9% | -76.1% | +4.4% | +15.8% |
+| 1 | 508665ns | -23.6% | +12.7% | -79.7% | +4.1% | +2.5% |
+| 2 | 495076ns | -17.9% | +16.1% | -78.8% | -0.4% | -2.3% |
+| 3 | 503194ns | -20.6% | +15.9% | -80.4% | +3.8% | -5.1% |
+| 4 | 487638ns | -23.7% | +14.7% | -78.2% | +5.1% | +8.0% |
+| 5 | 487692ns | -19.3% | +18.2% | -79.6% | +1.1% | -7.5% |
+| 6 | 508037ns | -24.2% | +9.9% | -79.7% | -4.8% | +0.0% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| carrier_pre_real_direct | 0.004 | ok |
-| carrier_pre_real_fntable | -0.382 | moderate- |
-| carrier_pre_real_null | -0.283 | moderate- |
-| carrier_pre_real_regcache | 0.077 | ok |
-| carrier_pre_real_switch | -0.325 | moderate- |
-| carrier_pre_real_threaded | 0.195 | ok |
+| carrier_pre_real_direct | -0.183 | ok |
+| carrier_pre_real_fntable | -0.442 | moderate- |
+| carrier_pre_real_null | -0.785 | HIGH- (thermal bounce) |
+| carrier_pre_real_regcache | -0.116 | ok |
+| carrier_pre_real_switch | -0.194 | ok |
+| carrier_pre_real_threaded | -0.620 | HIGH- (thermal bounce) |
 
 **Consistency summary:**
 
 - **carrier_pre_real_direct**: won 6/6, lost 0/6
 - **carrier_pre_real_fntable**: won 0/6, lost 6/6
 - **carrier_pre_real_null**: won 6/6, lost 0/6
-- **carrier_pre_real_regcache**: won 1/6, lost 4/6
-- **carrier_pre_real_threaded**: won 4/6, lost 2/6
+- **carrier_pre_real_regcache**: won 2/6, lost 4/6
+- **carrier_pre_real_threaded**: won 3/6, lost 2/6
 
 ## Bridge overhead per variant
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| carrier_pre_real_direct | 391395.4ns | 376222.7ns | 104.0% | HIGH |
-| carrier_pre_real_fntable | 576233.1ns | 545354.4ns | 105.7% | HIGH |
-| carrier_pre_real_null | 112900.5ns | 102526.5ns | 110.1% | HIGH |
-| carrier_pre_real_regcache | 516518.8ns | 505534.0ns | 102.2% | HIGH |
-| carrier_pre_real_switch | 527961.0ns | 485004.6ns | 108.9% | HIGH |
-| carrier_pre_real_threaded | 469339.0ns | 459772.5ns | 102.1% | HIGH |
+| carrier_pre_real_direct | 405403.9ns | 391014.6ns | 103.7% | HIGH |
+| carrier_pre_real_fntable | 564596.9ns | 570871.9ns | 98.9% | HIGH |
+| carrier_pre_real_null | 114414.7ns | 102664.0ns | 111.4% | HIGH |
+| carrier_pre_real_regcache | 516672.4ns | 505682.6ns | 102.2% | HIGH |
+| carrier_pre_real_switch | 505759.1ns | 498383.5ns | 101.5% | HIGH |
+| carrier_pre_real_threaded | 505375.2ns | 494829.9ns | 102.1% | HIGH |
 
 ## Distribution (algo ns)
 
 ```
-carrier_pre_real_direct (n=6, range 354567.1-390426.2 ns)
-  354567.1 |####################
-  356360.1 |
-  358153.0 |
-  359946.0 |
-  361738.9 |
-  363531.9 |####################
-  365324.8 |
-  367117.8 |
-  368910.8 |
-  370703.7 |
-  372496.7 |
-  374289.6 |
-  376082.6 |
-  377875.5 |########################################
-  379668.5 |####################
-  381461.5 |
-  383254.4 |
-  385047.4 |
-  386840.3 |
-  388633.3 |
+carrier_pre_real_direct (n=6, range 372145.8-403061.5 ns)
+  372145.8 |########################################
+  373691.6 |
+  375237.4 |
+  376783.1 |
+  378328.9 |
+  379874.7 |
+  381420.5 |
+  382966.3 |
+  384512.1 |########################################
+  386057.8 |
+  387603.6 |########################################
+  389149.4 |
+  390695.2 |
+  392241.0 |
+  393786.8 |########################################
+  395332.5 |
+  396878.3 |
+  398424.1 |########################################
+  399969.9 |
+  401515.7 |
   (0 below, 1 above range)
 
-carrier_pre_real_fntable (n=6, range 522201.7-565064.6 ns)
-  522201.7 |########################################
-  524344.8 |
-  526488.0 |
-  528631.1 |
-  530774.3 |
-  532917.4 |########################################
-  535060.6 |
-  537203.7 |
-  539346.9 |########################################
-  541490.0 |
-  543633.2 |########################################
-  545776.3 |
-  547919.4 |
-  550062.6 |
-  552205.7 |
-  554348.9 |
-  556492.0 |########################################
-  558635.2 |
-  560778.3 |
-  562921.5 |
+carrier_pre_real_fntable (n=6, range 558504.2-579756.9 ns)
+  558504.2 |########################################
+  559566.8 |
+  560629.5 |
+  561692.1 |
+  562754.7 |
+  563817.4 |
+  564880.0 |
+  565942.6 |
+  567005.3 |
+  568067.9 |
+  569130.5 |
+  570193.2 |
+  571255.8 |
+  572318.5 |####################
+  573381.1 |
+  574443.7 |####################
+  575506.4 |####################
+  576569.0 |
+  577631.6 |
+  578694.3 |
   (0 below, 1 above range)
 
-carrier_pre_real_null (n=6, range 98769.6-105273.1 ns)
-  98769.6 |########################################
-  99094.8 |
-  99420.0 |
-  99745.1 |
-  100070.3 |########################################
-  100395.5 |
-  100720.7 |
-  101045.8 |
-  101371.0 |
-  101696.2 |########################################
-  102021.4 |
-  102346.5 |
-  102671.7 |
-  102996.9 |
-  103322.1 |
-  103647.2 |########################################
-  103972.4 |
-  104297.6 |
-  104622.8 |########################################
-  104947.9 |
+carrier_pre_real_null (n=6, range 98768.7-105582.3 ns)
+  98768.7 |########################################
+  99109.4 |
+  99450.1 |########################################
+  99790.7 |
+  100131.4 |
+  100472.1 |
+  100812.8 |
+  101153.5 |
+  101494.1 |
+  101834.8 |
+  102175.5 |
+  102516.2 |
+  102856.9 |########################################
+  103197.5 |########################################
+  103538.2 |
+  103878.9 |
+  104219.6 |
+  104560.3 |########################################
+  104900.9 |
+  105241.6 |
   (0 below, 1 above range)
 
-carrier_pre_real_regcache (n=6, range 463339.6-534100.0 ns)
-  463339.6 |########################################
-  466877.6 |
-  470415.6 |
-  473953.7 |
-  477491.7 |
-  481029.7 |
-  484567.7 |########################################
-  488105.7 |
-  491643.8 |
-  495181.8 |
-  498719.8 |########################################
-  502257.8 |
-  505795.8 |
-  509333.9 |
-  512871.9 |########################################
-  516409.9 |
-  519947.9 |
-  523485.9 |########################################
-  527024.0 |
-  530562.0 |
+carrier_pre_real_regcache (n=6, range 483505.4-525951.1 ns)
+  483505.4 |####################
+  485627.7 |
+  487750.0 |
+  489872.2 |
+  491994.5 |########################################
+  494116.8 |
+  496239.1 |
+  498361.4 |
+  500483.7 |
+  502605.9 |
+  504728.2 |
+  506850.5 |
+  508972.8 |
+  511095.1 |####################
+  513217.4 |
+  515339.6 |
+  517461.9 |
+  519584.2 |
+  521706.5 |####################
+  523828.8 |
   (0 below, 1 above range)
 
-carrier_pre_real_switch (n=6, range 443692.5-512341.8 ns)
-  443692.5 |########################################
-  447125.0 |
-  450557.4 |
-  453989.9 |
-  457422.4 |
-  460854.8 |
-  464287.3 |########################################
-  467719.8 |
-  471152.2 |
-  474584.7 |
-  478017.2 |########################################
-  481449.6 |
-  484882.1 |
-  488314.6 |
-  491747.0 |
-  495179.5 |########################################
-  498612.0 |
-  502044.4 |
-  505476.9 |
-  508909.4 |########################################
+carrier_pre_real_switch (n=6, range 487637.9-508350.8 ns)
+  487637.9 |########################################
+  488673.5 |
+  489709.2 |
+  490744.8 |
+  491780.5 |
+  492816.1 |
+  493851.8 |
+  494887.4 |####################
+  495923.1 |
+  496958.7 |
+  497994.4 |
+  499030.0 |
+  500065.7 |
+  501101.3 |
+  502137.0 |
+  503172.6 |####################
+  504208.3 |
+  505243.9 |
+  506279.6 |
+  507315.2 |####################
   (0 below, 1 above range)
 
-carrier_pre_real_threaded (n=6, range 388919.2-510519.4 ns)
-  388919.2 |########################################
-  394999.2 |
-  401079.2 |
-  407159.2 |
-  413239.2 |
-  419319.2 |########################################
-  425399.3 |
-  431479.3 |
-  437559.3 |
-  443639.3 |
-  449719.3 |########################################
-  455799.3 |
-  461879.3 |
-  467959.3 |########################################
-  474039.3 |
-  480119.4 |
-  486199.4 |
-  492279.4 |
-  498359.4 |
-  504439.4 |########################################
+carrier_pre_real_threaded (n=6, range 451267.9-524007.1 ns)
+  451267.9 |########################################
+  454904.9 |
+  458541.8 |
+  462178.8 |
+  465815.7 |
+  469452.7 |
+  473089.7 |
+  476726.6 |########################################
+  480363.6 |########################################
+  484000.5 |
+  487637.5 |
+  491274.5 |
+  494911.4 |
+  498548.4 |
+  502185.3 |
+  505822.3 |########################################
+  509459.3 |
+  513096.2 |
+  516733.2 |
+  520370.1 |########################################
   (0 below, 1 above range)
 
 ```
 
 ## Diagnostics
 
-- **carrier_pre_real_direct**: bridge=103.8% of algo (FFI overhead may distort results)
-- **carrier_pre_real_fntable**: bridge=107.3% of algo (FFI overhead may distort results)
-- **carrier_pre_real_null**: bridge=110.3% of algo (FFI overhead may distort results)
+- **carrier_pre_real_direct**: bridge=103.7% of algo (FFI overhead may distort results)
+- **carrier_pre_real_fntable**: bridge=98.5% of algo (FFI overhead may distort results)
+- **carrier_pre_real_null**: bridge=111.5% of algo (FFI overhead may distort results)
 - **carrier_pre_real_regcache**: bridge=102.2% of algo (FFI overhead may distort results)
-- **carrier_pre_real_switch**: bridge=109.3% of algo (FFI overhead may distort results)
-- **carrier_pre_real_threaded**: bridge=102.1% of algo (FFI overhead may distort results)
+- **carrier_pre_real_switch**: bridge=101.3% of algo (FFI overhead may distort results)
+- **carrier_pre_real_threaded**: bridge=102.3% of algo (FFI overhead may distort results)

@@ -6,3 +6,9 @@
 1784758806	d772801	carrier_optimize_madd_n4096	carrier_opt_madd_eqsat	4096	warm	890894.2	890549.2	897203.3
 1784758806	d772801	carrier_optimize_madd_n4096	carrier_opt_madd_fold	4096	warm	105902.9	105831.0	106335.0
 1784758806	d772801	carrier_optimize_madd_n4096	carrier_opt_madd_none	4096	warm	163258.3	163015.4	167456.2
+1784794993	74f52f4	carrier_optimize_madd_n4096	carrier_opt_madd_all	4096	warm	7533.8	7355.9	7642.1
+1784794993	74f52f4	carrier_optimize_madd_n4096	carrier_opt_madd_canon	4096	warm	153885.8	153449.5	154732.3
+1784794993	74f52f4	carrier_optimize_madd_n4096	carrier_opt_madd_cse	4096	warm	156456.7	156010.2	158589.2
+1784794993	74f52f4	carrier_optimize_madd_n4096	carrier_opt_madd_dce	4096	warm	158167.1	157787.3	159668.8
+1784794993	74f52f4	carrier_optimize_madd_n4096	carrier_opt_madd_fold	4096	warm	103972.9	102784.5	105678.3
+1784794993	74f52f4	carrier_optimize_madd_n4096	carrier_opt_madd_none	4096	warm	165901.2	165775.0	167271.5

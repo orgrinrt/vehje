@@ -23,3 +23,11 @@
 1784757348	d772801	carrier_dispatch_real_n64	carrier_disp_real_nullfloor	64	warm	1600.8	1576.8	1696.5
 1784757348	d772801	carrier_dispatch_real_n64	carrier_disp_real_switch	64	warm	2388.3	2361.1	2467.9
 1784757348	d772801	carrier_dispatch_real_n64	carrier_disp_real_threaded	64	warm	2823.7	2815.2	2849.8
+1784793899	2a3f34b	carrier_dispatch_real_n64	carrier_disp_real_bittree	64	warm	2840.8	2728.5	2919.3
+1784793899	2a3f34b	carrier_dispatch_real_n64	carrier_disp_real_fntable	64	warm	3075.8	3061.2	3087.3
+1784793899	2a3f34b	carrier_dispatch_real_n64	carrier_disp_real_ifchain	64	warm	2369.2	2250.0	2393.9
+1784793899	2a3f34b	carrier_dispatch_real_n64	carrier_disp_real_ifchainasc	64	warm	2413.8	2400.9	2434.6
+1784793899	2a3f34b	carrier_dispatch_real_n64	carrier_disp_real_ifchainlin	64	warm	5100.8	4886.6	5242.7
+1784793899	2a3f34b	carrier_dispatch_real_n64	carrier_disp_real_nullfloor	64	warm	1702.1	1700.8	1707.9
+1784793899	2a3f34b	carrier_dispatch_real_n64	carrier_disp_real_switch	64	warm	2410.0	2404.8	2427.7
+1784793899	2a3f34b	carrier_dispatch_real_n64	carrier_disp_real_threaded	64	warm	2842.5	2814.2	2858.2

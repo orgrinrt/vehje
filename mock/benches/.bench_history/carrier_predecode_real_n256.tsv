@@ -5,3 +5,9 @@
 1784757775	d772801	carrier_predecode_real_n256	carrier_pre_real_regcache	256	warm	10893.3	10889.3	10959.8
 1784757775	d772801	carrier_predecode_real_n256	carrier_pre_real_switch	256	warm	9568.3	9568.3	9855.7
 1784757775	d772801	carrier_predecode_real_n256	carrier_pre_real_threaded	256	warm	9273.8	9262.1	9405.9
+1784795304	74f52f4	carrier_predecode_real_n256	carrier_pre_real_direct	256	warm	7967.9	7933.9	8005.5
+1784795304	74f52f4	carrier_predecode_real_n256	carrier_pre_real_fntable	256	warm	13641.2	13611.5	13762.1
+1784795304	74f52f4	carrier_predecode_real_n256	carrier_pre_real_null	256	warm	6592.9	6584.8	6637.7
+1784795305	74f52f4	carrier_predecode_real_n256	carrier_pre_real_regcache	256	warm	10883.7	10881.0	10938.1
+1784795305	74f52f4	carrier_predecode_real_n256	carrier_pre_real_switch	256	warm	9465.8	9462.5	9568.8
+1784795305	74f52f4	carrier_predecode_real_n256	carrier_pre_real_threaded	256	warm	9363.3	9258.8	9451.9

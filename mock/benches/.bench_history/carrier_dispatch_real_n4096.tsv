@@ -23,3 +23,11 @@
 1784757371	d772801	carrier_dispatch_real_n4096	carrier_disp_real_nullfloor	4096	warm	116325.8	115975.2	119948.4
 1784757371	d772801	carrier_dispatch_real_n4096	carrier_disp_real_switch	4096	warm	613025.0	607815.0	621397.5
 1784757371	d772801	carrier_dispatch_real_n4096	carrier_disp_real_threaded	4096	warm	652525.8	652392.7	670736.2
+1784793921	2a3f34b	carrier_dispatch_real_n4096	carrier_disp_real_bittree	4096	warm	232265.0	220170.0	301296.9
+1784793921	2a3f34b	carrier_dispatch_real_n4096	carrier_disp_real_fntable	4096	warm	555081.2	553571.2	562617.7
+1784793921	2a3f34b	carrier_dispatch_real_n4096	carrier_disp_real_ifchain	4096	warm	579766.2	577601.2	590515.8
+1784793921	2a3f34b	carrier_dispatch_real_n4096	carrier_disp_real_ifchainasc	4096	warm	563732.9	563608.8	568106.1
+1784793921	2a3f34b	carrier_dispatch_real_n4096	carrier_disp_real_ifchainlin	4096	warm	481564.2	480337.7	501169.0
+1784793921	2a3f34b	carrier_dispatch_real_n4096	carrier_disp_real_nullfloor	4096	warm	115327.9	115297.7	116238.8
+1784793921	2a3f34b	carrier_dispatch_real_n4096	carrier_disp_real_switch	4096	warm	567929.6	557683.1	574597.3
+1784793921	2a3f34b	carrier_dispatch_real_n4096	carrier_disp_real_threaded	4096	warm	649132.5	639562.5	653427.9

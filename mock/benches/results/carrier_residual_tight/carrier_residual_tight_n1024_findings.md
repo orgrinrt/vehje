@@ -1,4 +1,4 @@
-# Residual encoding: register/SSA vs stack bytecode, tight profile
+# Residual encoding: predecoded register/SSA vs stack bytecode, tight profile
 
 2 variants, 6 samples per variant.
 Baseline: **carrier_res_tight_register**
@@ -7,79 +7,94 @@ Baseline: **carrier_res_tight_register**
 
 Baseline for all deltas below: **carrier_res_tight_register**. (Deltas are paired `variant - baseline` medians; `*` marks a CI that excludes zero.)
 
-### carrier_res_tight_register dominates: 127% faster than the next best (carrier_res_tight_stack)
+### carrier_res_tight_register dominates: 217% faster than the next best (carrier_res_tight_stack)
 
-carrier_res_tight_register (42.48 us) leads carrier_res_tight_stack (96.24 us) by 127%, a clear separation rather than a photo finish. CV 2.8%.
+carrier_res_tight_register (31.44 us) leads carrier_res_tight_stack (99.56 us) by 217%, a clear separation rather than a photo finish. CV 2.5%.
 
 _Why it matters:_ A dominant, well-separated winner is a safe default pick for this workload shape.
 
 ### No variant beats the baseline (carrier_res_tight_register)
 
-The baseline carrier_res_tight_register is the fastest (42.48 us median); no rival improves on it (all deltas are >= 0).
+The baseline carrier_res_tight_register is the fastest (31.44 us median); no rival improves on it (all deltas are >= 0).
 
 _Why it matters:_ When nothing beats the baseline, the current choice stands; the contenders cost speed for whatever else they buy.
 
+### Wide spread: slowest is 3.2x the fastest
+
+Fastest carrier_res_tight_register (31.44 us) to slowest carrier_res_tight_stack (99.56 us): 3.2x. The strategy choice matters a lot for this workload.
+
+_Why it matters:_ A wide field means the strategy is load-bearing here; getting it right (or wrong) has large consequences.
+
 ## Key findings
 
-- **Baseline (carrier_res_tight_register) is the fastest** at 42479.8 ns median
+- **Baseline (carrier_res_tight_register) is the fastest** at 31439.4 ns median
 - 1 variant significantly slower than baseline
-- Spread: 2.27x (fastest 42479.8 ns, slowest 96235.2 ns)
+- Spread: 3.17x (fastest 31439.4 ns, slowest 99564.4 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| carrier_res_tight_register | 45413ns | 44650ns | 44397ns | 44582ns | 47166ns | base |
-| carrier_res_tight_stack | 97832ns | 98675ns | 94153ns | 97251ns | 100544ns | +115.43% |
+| carrier_res_tight_register | 34258ns | 33818ns | 33331ns | 33786ns | 35428ns | base |
+| carrier_res_tight_stack | 103218ns | 102354ns | 99811ns | 101836ns | 106993ns | +201.30% |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| carrier_res_tight_register | 43153ns | 42193ns | 44785ns | base | 0.024 |
-| carrier_res_tight_stack | 95519ns | 91990ns | 98207ns | +121.35% | 0.011 |
+| carrier_res_tight_register | 31808ns | 30929ns | 32896ns | base | 0.032 |
+| carrier_res_tight_stack | 100622ns | 97355ns | 104500ns | +216.34% | 0.010 |
+
+## Hardware counters (per call)
+
+| Variant | instructions | cycles | IPC | × base instr |
+|---|---|---|---|---|
+| carrier_res_tight_register | 398830 | 1126377 | 0.354 | 1.00× |
+| carrier_res_tight_stack | 606565 | 2377404 | 0.255 | 1.52× |
+
+Instructions and cycles are the mean over the variant's samples for the measured region. IPC is instructions per cycle. The instruction ratio isolates whether a variant wins by retiring fewer instructions or by executing the same instructions more efficiently.
 
 ## Performance model
 
-- Peak throughput: **0.024 Gops/s** (carrier_res_tight_register; best 20% batches)
+- Peak throughput: **0.033 Gops/s** (carrier_res_tight_register; best 20% batches)
 - Ops per call: 1024
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| carrier_res_tight_register | 0.024 | 99.3% |
-| carrier_res_tight_stack | 0.011 | 43.8% |
+| carrier_res_tight_register | 0.033 | 98.4% |
+| carrier_res_tight_stack | 0.010 | 31.1% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| carrier_res_tight_register | 45413ns | 45413ns | base |
-| carrier_res_tight_stack | 97832ns | 97832ns | +115.43% |
+| carrier_res_tight_register | 34258ns | 34258ns | base |
+| carrier_res_tight_stack | 103218ns | 103218ns | +201.30% |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| carrier_res_tight_register | 42480ns | base | --- | [42194, 44785] | --- | --- | --- | --- |
-| carrier_res_tight_stack | 96235ns | +52536.2ns (+123.7%) | [+49834, +54727]ns | [92114, 98207] | YES | 0.0313 | 0.0313 | 0 |
+| carrier_res_tight_register | 31439ns | base | --- | [31089, 32896] | --- | --- | --- | --- |
+| carrier_res_tight_stack | 99564ns | +67260.0ns (+213.9%) | [+66121, +73061]ns | [97802, 104500] | YES | 0.0313 | 0.0313 | 0 |
 
 ## Per-pass consistency (nonstop e2e, Δ vs baseline)
 
 | Pass | carrier_res_tight_register | carrier_res_tight_stack |
 |---|---|---|
-| 1 | 45205ns | +114.7% |
-| 2 | 42364ns | +117.1% |
-| 3 | 42595ns | +130.1% |
-| 4 | 44365ns | +121.8% |
-| 5 | 42195ns | +118.6% |
-| 6 | 42193ns | +126.1% |
+| 1 | 30929ns | +214.8% |
+| 2 | 31609ns | +223.1% |
+| 3 | 31270ns | +241.7% |
+| 4 | 31250ns | +214.4% |
+| 5 | 33087ns | +204.1% |
+| 6 | 32706ns | +201.2% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| carrier_res_tight_register | -0.248 | moderate- |
-| carrier_res_tight_stack | -0.403 | moderate- |
+| carrier_res_tight_register | 0.264 | moderate+ |
+| carrier_res_tight_stack | -0.165 | ok |
 
 **Consistency summary:**
 
@@ -89,61 +104,61 @@ _Why it matters:_ When nothing beats the baseline, the current choice stands; th
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| carrier_res_tight_register | 110327.8ns | 43152.8ns | 255.7% | HIGH |
-| carrier_res_tight_stack | 95525.6ns | 95518.5ns | 100.0% | HIGH |
+| carrier_res_tight_register | 95417.2ns | 31808.4ns | 300.0% | HIGH |
+| carrier_res_tight_stack | 96620.4ns | 100622.4ns | 96.0% | HIGH |
 
 ## Distribution (algo ns)
 
 ```
-carrier_res_tight_register (n=6, range 42193.3-44784.8 ns)
-  42193.3 |########################################
-  42322.9 |####################
-  42452.5 |
-  42582.0 |####################
-  42711.6 |
-  42841.2 |
-  42970.8 |
-  43100.3 |
-  43229.9 |
-  43359.5 |
-  43489.1 |
-  43618.6 |
-  43748.2 |
-  43877.8 |
-  44007.4 |
-  44136.9 |
-  44266.5 |####################
-  44396.1 |
-  44525.7 |
-  44655.2 |
+carrier_res_tight_register (n=6, range 30929.2-32896.4 ns)
+  30929.2 |####################
+  31027.6 |
+  31125.9 |
+  31224.3 |########################################
+  31322.7 |
+  31421.0 |
+  31519.4 |####################
+  31617.7 |
+  31716.1 |
+  31814.5 |
+  31912.8 |
+  32011.2 |
+  32109.5 |
+  32207.9 |
+  32306.3 |
+  32404.6 |
+  32503.0 |
+  32601.4 |
+  32699.7 |####################
+  32798.1 |
   (0 below, 1 above range)
 
-carrier_res_tight_stack (n=6, range 91990.0-98206.9 ns)
-  91990.0 |########################################
-  92300.8 |
-  92611.7 |
-  92922.5 |
-  93233.4 |
-  93544.2 |
-  93855.1 |
-  94165.9 |
-  94476.8 |
-  94787.6 |
-  95098.4 |
-  95409.3 |####################
-  95720.1 |
-  96031.0 |
-  96341.8 |
-  96652.7 |
-  96963.5 |####################
-  97274.4 |
-  97585.2 |
-  97896.1 |####################
+carrier_res_tight_stack (n=6, range 97355.0-104500.2 ns)
+  97355.0 |########################################
+  97712.3 |
+  98069.5 |########################################
+  98426.8 |########################################
+  98784.0 |
+  99141.3 |
+  99498.6 |
+  99855.8 |
+  100213.1 |
+  100570.3 |########################################
+  100927.6 |
+  101284.9 |
+  101642.1 |
+  101999.4 |########################################
+  102356.6 |
+  102713.9 |
+  103071.2 |
+  103428.4 |
+  103785.7 |
+  104142.9 |
   (0 below, 1 above range)
 
 ```
 
 ## Diagnostics
 
-- **carrier_res_tight_register**: bridge=269.1% of algo (FFI overhead may distort results)
-- **carrier_res_tight_stack**: bridge=99.9% of algo (FFI overhead may distort results)
+- **carrier_res_tight_register**: bridge=300.2% of algo (FFI overhead may distort results)
+- **carrier_res_tight_stack**: bridge=95.7% of algo (FFI overhead may distort results)

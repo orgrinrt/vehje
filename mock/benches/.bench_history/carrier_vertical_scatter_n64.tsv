@@ -2,3 +2,6 @@
 1784759363	d772801	carrier_vertical_scatter_n64	carrier_vert_scatter_scalar	64	warm	19641.2	19544.0	21972.8
 1784759363	d772801	carrier_vertical_scatter_n64	carrier_vert_scatter_vert4	64	warm	7440.8	7436.2	7628.5
 1784759363	d772801	carrier_vertical_scatter_n64	carrier_vert_scatter_vert8	64	warm	6957.5	6897.9	7153.9
+1784796907	74f52f4	carrier_vertical_scatter_n64	carrier_vert_scatter_scalar	64	warm	16336.7	16185.0	16764.3
+1784796907	74f52f4	carrier_vertical_scatter_n64	carrier_vert_scatter_vert4	64	warm	7401.2	7383.5	7748.9
+1784796907	74f52f4	carrier_vertical_scatter_n64	carrier_vert_scatter_vert8	64	warm	6792.1	6664.6	7136.1

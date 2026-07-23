@@ -23,3 +23,11 @@
 1784757352	d772801	carrier_dispatch_real_n256	carrier_disp_real_nullfloor	256	warm	7175.4	7106.0	7793.8
 1784757352	d772801	carrier_dispatch_real_n256	carrier_disp_real_switch	256	warm	10635.0	10354.0	10708.5
 1784757352	d772801	carrier_dispatch_real_n256	carrier_disp_real_threaded	256	warm	11670.0	11487.1	12187.3
+1784793903	2a3f34b	carrier_dispatch_real_n256	carrier_disp_real_bittree	256	warm	13245.4	12945.8	13345.4
+1784793903	2a3f34b	carrier_dispatch_real_n256	carrier_disp_real_fntable	256	warm	13910.0	13874.1	13982.3
+1784793903	2a3f34b	carrier_dispatch_real_n256	carrier_disp_real_ifchain	256	warm	10982.9	10974.0	11224.2
+1784793903	2a3f34b	carrier_dispatch_real_n256	carrier_disp_real_ifchainasc	256	warm	11096.7	11090.0	11166.9
+1784793903	2a3f34b	carrier_dispatch_real_n256	carrier_disp_real_ifchainlin	256	warm	22071.7	22005.8	22475.8
+1784793903	2a3f34b	carrier_dispatch_real_n256	carrier_disp_real_nullfloor	256	warm	7763.8	7689.6	7788.8
+1784793903	2a3f34b	carrier_dispatch_real_n256	carrier_disp_real_switch	256	warm	11055.4	11048.8	11483.0
+1784793903	2a3f34b	carrier_dispatch_real_n256	carrier_disp_real_threaded	256	warm	12418.8	12264.2	12582.7

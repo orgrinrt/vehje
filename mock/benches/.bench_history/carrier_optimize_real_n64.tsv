@@ -6,3 +6,9 @@
 1784758705	d772801	carrier_optimize_real_n64	carrier_opt_real_eqsat	64	warm	2117.5	2103.9	2138.6
 1784758705	d772801	carrier_optimize_real_n64	carrier_opt_real_fold	64	warm	2222.5	2221.1	2245.2
 1784758705	d772801	carrier_optimize_real_n64	carrier_opt_real_none	64	warm	2210.0	2210.0	2226.4
+1784795009	74f52f4	carrier_optimize_real_n64	carrier_opt_real_all	64	warm	1765.4	1720.2	1804.4
+1784795009	74f52f4	carrier_optimize_real_n64	carrier_opt_real_canon	64	warm	2000.8	1983.3	2017.7
+1784795009	74f52f4	carrier_optimize_real_n64	carrier_opt_real_cse	64	warm	1949.2	1887.5	2021.7
+1784795009	74f52f4	carrier_optimize_real_n64	carrier_opt_real_dce	64	warm	2105.0	2042.9	2188.9
+1784795009	74f52f4	carrier_optimize_real_n64	carrier_opt_real_fold	64	warm	1939.2	1931.2	2091.2
+1784795009	74f52f4	carrier_optimize_real_n64	carrier_opt_real_none	64	warm	2130.8	2076.7	2179.1

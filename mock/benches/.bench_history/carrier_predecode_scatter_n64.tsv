@@ -5,3 +5,9 @@
 1784757904	d772801	carrier_predecode_scatter_n64	carrier_pre_scatter_regcache	64	warm	2440.0	2438.8	2466.1
 1784757904	d772801	carrier_predecode_scatter_n64	carrier_pre_scatter_switch	64	warm	2163.8	2163.6	2203.6
 1784757904	d772801	carrier_predecode_scatter_n64	carrier_pre_scatter_threaded	64	warm	1822.5	1821.7	1834.3
+1784795362	74f52f4	carrier_predecode_scatter_n64	carrier_pre_scatter_direct	64	warm	1486.7	1474.6	1525.2
+1784795362	74f52f4	carrier_predecode_scatter_n64	carrier_pre_scatter_fntable	64	warm	2948.7	2929.8	3036.1
+1784795362	74f52f4	carrier_predecode_scatter_n64	carrier_pre_scatter_null	64	warm	1353.8	1335.7	1374.6
+1784795362	74f52f4	carrier_predecode_scatter_n64	carrier_pre_scatter_regcache	64	warm	2312.9	2304.2	2365.2
+1784795362	74f52f4	carrier_predecode_scatter_n64	carrier_pre_scatter_switch	64	warm	2002.1	2000.8	2086.9
+1784795362	74f52f4	carrier_predecode_scatter_n64	carrier_pre_scatter_threaded	64	warm	1727.9	1717.1	1747.1

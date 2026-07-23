@@ -23,3 +23,11 @@
 1784757438	d772801	carrier_dispatch_real_n16384	carrier_disp_real_nullfloor	16384	warm	566261.7	560587.3	622529.2
 1784757438	d772801	carrier_dispatch_real_n16384	carrier_disp_real_switch	16384	warm	2613982.5	2613287.3	2618328.4
 1784757438	d772801	carrier_dispatch_real_n16384	carrier_disp_real_threaded	16384	warm	2925125.0	2920849.6	2926546.0
+1784793987	2a3f34b	carrier_dispatch_real_n16384	carrier_disp_real_bittree	16384	warm	2634964.6	2601153.4	2685137.7
+1784793987	2a3f34b	carrier_dispatch_real_n16384	carrier_disp_real_fntable	16384	warm	2351568.8	2351441.9	2358529.0
+1784793987	2a3f34b	carrier_dispatch_real_n16384	carrier_disp_real_ifchain	16384	warm	2612188.8	2609904.6	2635032.5
+1784793987	2a3f34b	carrier_dispatch_real_n16384	carrier_disp_real_ifchainasc	16384	warm	2622717.1	2619924.6	2637532.7
+1784793987	2a3f34b	carrier_dispatch_real_n16384	carrier_disp_real_ifchainlin	16384	warm	3225370.8	3221318.1	3230288.5
+1784793987	2a3f34b	carrier_dispatch_real_n16384	carrier_disp_real_nullfloor	16384	warm	530253.8	517854.2	557952.9
+1784793987	2a3f34b	carrier_dispatch_real_n16384	carrier_disp_real_switch	16384	warm	2625687.9	2622947.7	2634199.0
+1784793987	2a3f34b	carrier_dispatch_real_n16384	carrier_disp_real_threaded	16384	warm	2925307.1	2923065.9	2934526.0

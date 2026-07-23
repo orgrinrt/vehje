@@ -9,57 +9,74 @@ Baseline for all deltas below: **carrier_cfg_switch**. (Deltas are paired `varia
 
 ### Baseline (carrier_cfg_switch) is the SLOWEST variant; every rival beats it
 
-The declared/defaulted baseline carrier_cfg_switch has the worst median (228.74 us). Every delta is therefore measured against the worst performer, which flatters all rivals and compresses the differences that matter among them (e.g. fastest carrier_cfg_trace at 104.75 us).
+The declared/defaulted baseline carrier_cfg_switch has the worst median (225.85 us). Every delta is therefore measured against the worst performer, which flatters all rivals and compresses the differences that matter among them (e.g. fastest carrier_cfg_trace at 100.16 us).
 
 _Why it matters:_ A baseline picked by accident (often the first variant to run / sort) silently skews every comparison. Re-baseline via `[bench.<name>.normalise]` on a representative variant.
 
-### carrier_cfg_trace dominates: 74% faster than the next best (carrier_cfg_threaded)
+### carrier_cfg_trace dominates: 80% faster than the next best (carrier_cfg_threaded)
 
-carrier_cfg_trace (104.75 us) leads carrier_cfg_threaded (182.70 us) by 74%, a clear separation rather than a photo finish. CV 3.7%.
+carrier_cfg_trace (100.16 us) leads carrier_cfg_threaded (179.86 us) by 80%, a clear separation rather than a photo finish. CV 1.3%.
 
 _Why it matters:_ A dominant, well-separated winner is a safe default pick for this workload shape.
 
-### carrier_cfg_trace beats baseline by 54% (significant)
+### carrier_cfg_trace beats baseline by 56% (significant)
 
-carrier_cfg_trace is -122.94 us (54%) faster than baseline carrier_cfg_switch, with a CI that excludes zero.
+carrier_cfg_trace is -125.54 us (56%) faster than baseline carrier_cfg_switch, with a CI that excludes zero.
 
 _Why it matters:_ A large, significant improvement over the current baseline is a concrete reason to switch.
 
-### carrier_cfg_switch is an outlier: 2.2x slower than the field
+### carrier_cfg_switch is an outlier: 2.3x slower than the field
 
-carrier_cfg_switch (228.74 us) is 2.2x the fastest (104.75 us), well off the pack.
+carrier_cfg_switch (225.85 us) is 2.3x the fastest (100.16 us), well off the pack.
 
 _Why it matters:_ A >2x outlier is almost never the right choice; if it is intentional (e.g. it buys correctness), say so explicitly.
 
-### Two tiers: {carrier_cfg_trace} vs {carrier_cfg_threaded, carrier_cfg_fntable, carrier_cfg_switch} (74% apart)
+### carrier_cfg_switch shows alternating (throttle bounce) (autocorr -0.82)
 
-The field splits into a fast tier {carrier_cfg_trace} and a slow tier {carrier_cfg_threaded, carrier_cfg_fntable, carrier_cfg_switch} with a 74% jump between them - a qualitative difference, not a gradient.
+carrier_cfg_switch's per-pass series has lag-1 autocorrelation -0.82, indicating alternating (throttle bounce). Its timing may not be at steady state.
+
+_Why it matters:_ Autocorrelated samples violate the independence the CIs assume; the interval is optimistic until the drift is warmed out or cooled down.
+
+### Two tiers: {carrier_cfg_trace} vs {carrier_cfg_threaded, carrier_cfg_fntable, carrier_cfg_switch} (80% apart)
+
+The field splits into a fast tier {carrier_cfg_trace} and a slow tier {carrier_cfg_threaded, carrier_cfg_fntable, carrier_cfg_switch} with a 80% jump between them - a qualitative difference, not a gradient.
 
 _Why it matters:_ A tier split usually reflects a mechanism boundary (branchless vs branch, cached vs not); the tier, not the exact rank, is the finding.
 
 ## Key findings
 
-- **Fastest: carrier_cfg_trace** at 104747.3 ns median (-54.2% vs baseline)
-- 3 variants significantly faster than baseline
-- Spread: 2.18x (fastest 104747.3 ns, slowest 228739.0 ns)
+- **Fastest: carrier_cfg_trace** at 100163.5 ns median (-55.7% vs baseline)
+- 2 variants significantly faster than baseline
+- Spread: 2.25x (fastest 100163.5 ns, slowest 225854.6 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| carrier_cfg_fntable | 224243ns | 224108ns | 223212ns | 223884ns | 225297ns | -2.75% |
-| carrier_cfg_switch | 230580ns | 231342ns | 224102ns | 231002ns | 233186ns | base |
-| carrier_cfg_threaded | 184219ns | 185272ns | 176450ns | 182735ns | 190330ns | -20.11% |
-| carrier_cfg_trace | 107629ns | 107078ns | 101268ns | 106581ns | 112381ns | -53.32% |
+| carrier_cfg_fntable | 223922ns | 221878ns | 216319ns | 220363ns | 233063ns | -2.05% |
+| carrier_cfg_switch | 228609ns | 228036ns | 224392ns | 226862ns | 233337ns | base |
+| carrier_cfg_threaded | 181004ns | 182068ns | 178218ns | 180813ns | 182685ns | -20.82% |
+| carrier_cfg_trace | 102141ns | 102301ns | 100118ns | 101934ns | 103462ns | -55.32% |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| carrier_cfg_fntable | 221487ns | 220303ns | 222575ns | -2.82% | 0.001 |
-| carrier_cfg_switch | 227913ns | 221314ns | 230680ns | base | 0.001 |
-| carrier_cfg_threaded | 181753ns | 174108ns | 187912ns | -20.25% | 0.001 |
-| carrier_cfg_trace | 105197ns | 98973ns | 109781ns | -53.84% | 0.002 |
+| carrier_cfg_fntable | 221643ns | 214193ns | 230542ns | -2.10% | 0.001 |
+| carrier_cfg_switch | 226402ns | 222259ns | 231056ns | base | 0.001 |
+| carrier_cfg_threaded | 178816ns | 176009ns | 180505ns | -21.02% | 0.001 |
+| carrier_cfg_trace | 100006ns | 98025ns | 101300ns | -55.83% | 0.003 |
+
+## Hardware counters (per call)
+
+| Variant | instructions | cycles | IPC | × base instr |
+|---|---|---|---|---|
+| carrier_cfg_fntable | 1384557 | 3246008 | 0.427 | 0.98× |
+| carrier_cfg_switch | 1419871 | 2974956 | 0.477 | 1.00× |
+| carrier_cfg_threaded | 1126498 | 2170273 | 0.519 | 0.79× |
+| carrier_cfg_trace | 638277 | 2482908 | 0.257 | 0.45× |
+
+Instructions and cycles are the mean over the variant's samples for the measured region. IPC is instructions per cycle. The instruction ratio isolates whether a variant wins by retiring fewer instructions or by executing the same instructions more efficiently.
 
 ## Performance model
 
@@ -68,48 +85,48 @@ _Why it matters:_ A tier split usually reflects a mechanism boundary (branchless
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| carrier_cfg_fntable | 0.001 | 44.7% |
-| carrier_cfg_switch | 0.001 | 43.3% |
-| carrier_cfg_threaded | 0.001 | 54.2% |
-| carrier_cfg_trace | 0.002 | 94.5% |
+| carrier_cfg_fntable | 0.001 | 44.6% |
+| carrier_cfg_switch | 0.001 | 43.4% |
+| carrier_cfg_threaded | 0.001 | 54.5% |
+| carrier_cfg_trace | 0.003 | 97.9% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| carrier_cfg_fntable | 224243ns | 224243ns | -2.75% |
-| carrier_cfg_switch | 230580ns | 230580ns | base |
-| carrier_cfg_threaded | 184219ns | 184219ns | -20.11% |
-| carrier_cfg_trace | 107629ns | 107629ns | -53.32% |
+| carrier_cfg_fntable | 223922ns | 223922ns | -2.05% |
+| carrier_cfg_switch | 228609ns | 228609ns | base |
+| carrier_cfg_threaded | 181004ns | 181004ns | -20.82% |
+| carrier_cfg_trace | 102141ns | 102141ns | -55.32% |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| carrier_cfg_switch | 228739ns | base | --- | [224321, 230680] | --- | --- | --- | --- |
-| carrier_cfg_fntable | 221480ns | -7100.2ns (-3.1%) | [-9623, -2556]ns | [220405, 222575] | YES (adj: no) | 0.2188 | 0.2188 | 0 |
-| carrier_cfg_threaded | 182702ns | -46777.8ns (-20.5%) | [-51572, -40131]ns | [174645, 187912] | YES | 0.0469 | 0.0313 | 0 |
-| carrier_cfg_trace | 104747ns | -122943.4ns (-53.7%) | [-127110, -118096]ns | [101063, 109781] | YES | 0.0469 | 0.0313 | 0 |
+| carrier_cfg_switch | 225855ns | base | --- | [222296, 231056] | --- | --- | --- | --- |
+| carrier_cfg_fntable | 219704ns | no significant difference | [-11655, +3757]ns | [214682, 230542] | no | 0.2188 | 0.2188 | 0 |
+| carrier_cfg_threaded | 179860ns | -47031.2ns (-20.8%) | [-53020, -42707]ns | [176082, 180505] | YES | 0.0469 | 0.0313 | 0 |
+| carrier_cfg_trace | 100164ns | -125536.7ns (-55.6%) | [-130866, -122785]ns | [98556, 101300] | YES | 0.0469 | 0.0313 | 0 |
 
 ## Per-pass consistency (nonstop e2e, Δ vs baseline)
 
 | Pass | carrier_cfg_switch | carrier_cfg_fntable | carrier_cfg_threaded | carrier_cfg_trace |
 |---|---|---|---|---|
-| 1 | 221314ns | +0.4% | -21.3% | -55.3% |
-| 2 | 227328ns | -2.6% | -15.2% | -51.5% |
-| 3 | 231980ns | -4.5% | -21.1% | -55.5% |
-| 4 | 229052ns | -2.7% | -20.2% | -54.7% |
-| 5 | 228425ns | -3.6% | -20.0% | -52.1% |
-| 6 | 229379ns | -3.9% | -23.6% | -53.9% |
+| 1 | 222333ns | -0.3% | -19.2% | -55.9% |
+| 2 | 232401ns | -6.3% | -24.3% | -56.8% |
+| 3 | 222802ns | -3.9% | -19.2% | -54.9% |
+| 4 | 229710ns | -2.5% | -21.6% | -56.5% |
+| 5 | 222259ns | -3.2% | -20.7% | -55.4% |
+| 6 | 228907ns | +3.6% | -21.0% | -55.4% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| carrier_cfg_fntable | -0.105 | ok |
-| carrier_cfg_switch | 0.116 | ok |
-| carrier_cfg_threaded | -0.328 | moderate- |
-| carrier_cfg_trace | -0.474 | moderate- |
+| carrier_cfg_fntable | -0.292 | moderate- |
+| carrier_cfg_switch | -0.821 | HIGH- (thermal bounce) |
+| carrier_cfg_threaded | -0.575 | HIGH- (thermal bounce) |
+| carrier_cfg_trace | -0.272 | moderate- |
 
 **Consistency summary:**
 
@@ -121,104 +138,104 @@ _Why it matters:_ A tier split usually reflects a mechanism boundary (branchless
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| carrier_cfg_fntable | 221539.9ns | 221486.9ns | 100.0% | HIGH |
-| carrier_cfg_switch | 227839.8ns | 227913.2ns | 100.0% | HIGH |
-| carrier_cfg_threaded | 181719.0ns | 181752.8ns | 100.0% | HIGH |
-| carrier_cfg_trace | 105161.8ns | 105196.9ns | 100.0% | HIGH |
+| carrier_cfg_fntable | 221491.4ns | 221643.0ns | 99.9% | HIGH |
+| carrier_cfg_switch | 226065.9ns | 226402.1ns | 99.9% | HIGH |
+| carrier_cfg_threaded | 178918.6ns | 178815.8ns | 100.1% | HIGH |
+| carrier_cfg_trace | 99906.2ns | 100006.3ns | 99.9% | HIGH |
 
 ## Distribution (algo ns)
 
 ```
-carrier_cfg_fntable (n=6, range 220302.9-222575.4 ns)
-  220302.9 |########################################
-  220416.5 |########################################
-  220530.1 |
-  220643.8 |
-  220757.4 |
-  220871.0 |
-  220984.6 |
-  221098.3 |
-  221211.9 |
-  221325.5 |########################################
-  221439.2 |
-  221552.8 |########################################
-  221666.4 |
-  221780.0 |
-  221893.7 |
-  222007.3 |
-  222120.9 |########################################
-  222234.5 |
-  222348.2 |
-  222461.8 |
+carrier_cfg_fntable (n=6, range 214192.9-230542.2 ns)
+  214192.9 |########################################
+  215010.4 |########################################
+  215827.8 |
+  216645.3 |
+  217462.8 |########################################
+  218280.2 |
+  219097.7 |
+  219915.2 |
+  220732.6 |
+  221550.1 |########################################
+  222367.6 |
+  223185.0 |
+  224002.5 |########################################
+  224820.0 |
+  225637.4 |
+  226454.9 |
+  227272.4 |
+  228089.8 |
+  228907.3 |
+  229724.8 |
   (0 below, 1 above range)
 
-carrier_cfg_switch (n=6, range 221314.2-230679.8 ns)
-  221314.2 |########################################
-  221782.5 |
-  222250.8 |
-  222719.0 |
-  223187.3 |
-  223655.6 |
-  224123.9 |
-  224592.2 |
-  225060.4 |
-  225528.7 |
-  225997.0 |
-  226465.3 |
-  226933.6 |########################################
-  227401.8 |
-  227870.1 |
-  228338.4 |########################################
-  228806.7 |########################################
-  229275.0 |########################################
-  229743.2 |
-  230211.5 |
+carrier_cfg_switch (n=6, range 222259.2-231055.6 ns)
+  222259.2 |########################################
+  222699.0 |####################
+  223138.8 |
+  223578.7 |
+  224018.5 |
+  224458.3 |
+  224898.1 |
+  225337.9 |
+  225777.8 |
+  226217.6 |
+  226657.4 |
+  227097.2 |
+  227537.0 |
+  227976.9 |
+  228416.7 |
+  228856.5 |####################
+  229296.3 |####################
+  229736.1 |
+  230176.0 |
+  230615.8 |
   (0 below, 1 above range)
 
-carrier_cfg_threaded (n=6, range 174107.9-187912.3 ns)
-  174107.9 |#############
-  174798.1 |#############
-  175488.3 |
-  176178.6 |
-  176868.8 |
-  177559.0 |
-  178249.2 |
-  178939.4 |
-  179629.7 |
-  180319.9 |
-  181010.1 |
-  181700.3 |
-  182390.5 |########################################
-  183080.8 |
-  183771.0 |
-  184461.2 |
-  185151.4 |
-  185841.6 |
-  186531.9 |
-  187222.1 |
+carrier_cfg_threaded (n=6, range 176009.2-180505.2 ns)
+  176009.2 |########################################
+  176234.0 |
+  176458.8 |
+  176683.6 |
+  176908.4 |
+  177133.2 |
+  177358.0 |
+  177582.8 |
+  177807.6 |
+  178032.4 |
+  178257.2 |
+  178482.0 |
+  178706.8 |
+  178931.6 |
+  179156.4 |
+  179381.2 |
+  179606.0 |####################
+  179830.8 |####################
+  180055.6 |####################
+  180280.4 |
   (0 below, 1 above range)
 
-carrier_cfg_trace (n=6, range 98972.9-109780.8 ns)
-  98972.9 |########################################
-  99513.3 |
-  100053.7 |
-  100594.1 |
-  101134.5 |
-  101674.9 |
-  102215.3 |
-  102755.7 |########################################
-  103296.1 |########################################
-  103836.5 |
-  104376.8 |
-  104917.2 |
-  105457.6 |########################################
-  105998.0 |
-  106538.4 |
-  107078.8 |
-  107619.2 |
-  108159.6 |
-  108700.0 |
-  109240.4 |########################################
+carrier_cfg_trace (n=6, range 98025.4-101299.5 ns)
+  98025.4 |####################
+  98189.1 |
+  98352.8 |
+  98516.5 |
+  98680.2 |
+  98843.9 |
+  99007.6 |####################
+  99171.4 |
+  99335.1 |
+  99498.8 |
+  99662.5 |
+  99826.2 |####################
+  99989.9 |
+  100153.6 |
+  100317.3 |########################################
+  100481.0 |
+  100644.7 |
+  100808.4 |
+  100972.1 |
+  101135.8 |
   (0 below, 1 above range)
 
 ```
@@ -226,6 +243,6 @@ carrier_cfg_trace (n=6, range 98972.9-109780.8 ns)
 ## Diagnostics
 
 - **carrier_cfg_fntable**: bridge=99.9% of algo (FFI overhead may distort results)
-- **carrier_cfg_switch**: bridge=100.1% of algo (FFI overhead may distort results)
-- **carrier_cfg_threaded**: bridge=100.0% of algo (FFI overhead may distort results)
-- **carrier_cfg_trace**: bridge=100.0% of algo (FFI overhead may distort results)
+- **carrier_cfg_switch**: bridge=100.2% of algo (FFI overhead may distort results)
+- **carrier_cfg_threaded**: bridge=99.8% of algo (FFI overhead may distort results)
+- **carrier_cfg_trace**: bridge=99.7% of algo (FFI overhead may distort results)

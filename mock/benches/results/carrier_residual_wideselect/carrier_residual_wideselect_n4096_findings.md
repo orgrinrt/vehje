@@ -1,4 +1,4 @@
-# Residual encoding: register/SSA vs stack bytecode, wideselect profile
+# Residual encoding: predecoded register/SSA vs stack bytecode, wideselect profile
 
 2 variants, 6 samples per variant.
 Baseline: **carrier_res_wideselect_register**
@@ -7,79 +7,94 @@ Baseline: **carrier_res_wideselect_register**
 
 Baseline for all deltas below: **carrier_res_wideselect_register**. (Deltas are paired `variant - baseline` medians; `*` marks a CI that excludes zero.)
 
-### carrier_res_wideselect_register dominates: 23% faster than the next best (carrier_res_wideselect_stack)
+### carrier_res_wideselect_register dominates: 68% faster than the next best (carrier_res_wideselect_stack)
 
-carrier_res_wideselect_register (463.59 us) leads carrier_res_wideselect_stack (572.22 us) by 23%, a clear separation rather than a photo finish. CV 3.6%.
+carrier_res_wideselect_register (345.21 us) leads carrier_res_wideselect_stack (578.74 us) by 68%, a clear separation rather than a photo finish. CV 5.2%.
 
 _Why it matters:_ A dominant, well-separated winner is a safe default pick for this workload shape.
 
+### carrier_res_wideselect_register is fastest but the noisiest (CV 5.2%)
+
+carrier_res_wideselect_register wins on median (345.21 us) yet has the highest variance (CV 5.2%), while carrier_res_wideselect_stack is the steadiest (CV 0.4%, 578.74 us).
+
+_Why it matters:_ For latency-sensitive or tail-bound paths, the steadier variant can beat the faster-on-average one; weigh peak vs consistency.
+
 ### No variant beats the baseline (carrier_res_wideselect_register)
 
-The baseline carrier_res_wideselect_register is the fastest (463.59 us median); no rival improves on it (all deltas are >= 0).
+The baseline carrier_res_wideselect_register is the fastest (345.21 us median); no rival improves on it (all deltas are >= 0).
 
 _Why it matters:_ When nothing beats the baseline, the current choice stands; the contenders cost speed for whatever else they buy.
 
 ## Key findings
 
-- **Baseline (carrier_res_wideselect_register) is the fastest** at 463586.5 ns median
+- **Baseline (carrier_res_wideselect_register) is the fastest** at 345208.3 ns median
 - 1 variant significantly slower than baseline
-- Spread: 1.23x (fastest 463586.5 ns, slowest 572223.9 ns)
+- Spread: 1.68x (fastest 345208.3 ns, slowest 578736.1 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| carrier_res_wideselect_register | 468872ns | 466482ns | 448905ns | 461619ns | 489735ns | base |
-| carrier_res_wideselect_stack | 573751ns | 574839ns | 558461ns | 573338ns | 582015ns | +22.37% |
+| carrier_res_wideselect_register | 342427ns | 348082ns | 312659ns | 340699ns | 359902ns | base |
+| carrier_res_wideselect_stack | 582821ns | 581950ns | 580346ns | 581481ns | 586069ns | +70.20% |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| carrier_res_wideselect_register | 466200ns | 446693ns | 486873ns | base | 0.009 |
-| carrier_res_wideselect_stack | 571100ns | 555800ns | 579148ns | +22.50% | 0.007 |
+| carrier_res_wideselect_register | 339632ns | 309828ns | 357232ns | base | 0.012 |
+| carrier_res_wideselect_stack | 579658ns | 577024ns | 582922ns | +70.67% | 0.007 |
+
+## Hardware counters (per call)
+
+| Variant | instructions | cycles | IPC | × base instr |
+|---|---|---|---|---|
+| carrier_res_wideselect_register | 2180668 | 2226671 | 0.979 | 1.00× |
+| carrier_res_wideselect_stack | 3620370 | 9228198 | 0.392 | 1.66× |
+
+Instructions and cycles are the mean over the variant's samples for the measured region. IPC is instructions per cycle. The instruction ratio isolates whether a variant wins by retiring fewer instructions or by executing the same instructions more efficiently.
 
 ## Performance model
 
-- Peak throughput: **0.009 Gops/s** (carrier_res_wideselect_register; best 20% batches)
+- Peak throughput: **0.013 Gops/s** (carrier_res_wideselect_register; best 20% batches)
 - Ops per call: 4096
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| carrier_res_wideselect_register | 0.009 | 96.4% |
-| carrier_res_wideselect_stack | 0.007 | 78.1% |
+| carrier_res_wideselect_register | 0.012 | 89.8% |
+| carrier_res_wideselect_stack | 0.007 | 53.5% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| carrier_res_wideselect_register | 468872ns | 468872ns | base |
-| carrier_res_wideselect_stack | 573751ns | 573751ns | +22.37% |
+| carrier_res_wideselect_register | 342427ns | 342427ns | base |
+| carrier_res_wideselect_stack | 582821ns | 582821ns | +70.20% |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| carrier_res_wideselect_register | 463586ns | base | --- | [448141, 486873] | --- | --- | --- | --- |
-| carrier_res_wideselect_stack | 572224ns | +101696.3ns (+21.9%) | [+81995, +131007]ns | [561927, 579148] | YES | 0.0313 | 0.0313 | 0 |
+| carrier_res_wideselect_register | 345208ns | base | --- | [316457, 357232] | --- | --- | --- | --- |
+| carrier_res_wideselect_stack | 578736ns | +234742.5ns (+68.0%) | [+220083, +265250]ns | [577315, 582922] | YES | 0.0313 | 0.0313 | 0 |
 
 ## Per-pass consistency (nonstop e2e, Δ vs baseline)
 
 | Pass | carrier_res_wideselect_register | carrier_res_wideselect_stack |
 |---|---|---|
-| 1 | 489493ns | +16.2% |
-| 2 | 470987ns | +18.0% |
-| 3 | 446693ns | +29.2% |
-| 4 | 456186ns | +24.5% |
-| 5 | 449589ns | +29.2% |
-| 6 | 484253ns | +18.9% |
+| 1 | 349086ns | +65.6% |
+| 2 | 341331ns | +70.5% |
+| 3 | 309828ns | +88.4% |
+| 4 | 323086ns | +79.4% |
+| 5 | 352096ns | +64.0% |
+| 6 | 362368ns | +59.2% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| carrier_res_wideselect_register | 0.048 | ok |
-| carrier_res_wideselect_stack | -0.146 | ok |
+| carrier_res_wideselect_register | 0.278 | moderate+ |
+| carrier_res_wideselect_stack | 0.293 | moderate+ |
 
 **Consistency summary:**
 
@@ -89,61 +104,61 @@ _Why it matters:_ When nothing beats the baseline, the current choice stands; th
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| carrier_res_wideselect_register | 466355.1ns | 466200.3ns | 100.0% | HIGH |
-| carrier_res_wideselect_stack | 568704.6ns | 571099.9ns | 99.6% | HIGH |
+| carrier_res_wideselect_register | 352712.3ns | 339632.3ns | 103.9% | HIGH |
+| carrier_res_wideselect_stack | 572352.4ns | 579657.5ns | 98.7% | HIGH |
 
 ## Distribution (algo ns)
 
 ```
-carrier_res_wideselect_register (n=6, range 446692.9-486873.3 ns)
-  446692.9 |########################################
-  448701.9 |########################################
-  450710.9 |
-  452720.0 |
-  454729.0 |########################################
-  456738.0 |
-  458747.0 |
-  460756.0 |
-  462765.1 |
-  464774.1 |
-  466783.1 |
-  468792.1 |
-  470801.1 |########################################
-  472810.2 |
-  474819.2 |
-  476828.2 |
-  478837.2 |
-  480846.2 |
-  482855.3 |########################################
-  484864.3 |
+carrier_res_wideselect_register (n=6, range 309827.9-357231.7 ns)
+  309827.9 |########################################
+  312198.1 |
+  314568.3 |
+  316938.5 |
+  319308.7 |
+  321678.8 |########################################
+  324049.0 |
+  326419.2 |
+  328789.4 |
+  331159.6 |
+  333529.8 |
+  335900.0 |
+  338270.2 |
+  340640.3 |########################################
+  343010.5 |
+  345380.7 |
+  347750.9 |########################################
+  350121.1 |########################################
+  352491.3 |
+  354861.5 |
   (0 below, 1 above range)
 
-carrier_res_wideselect_stack (n=6, range 555800.4-579148.3 ns)
-  555800.4 |########################################
-  556967.8 |
-  558135.2 |
-  559302.6 |
-  560470.0 |
-  561637.4 |
-  562804.8 |
-  563972.2 |
-  565139.6 |
-  566307.0 |
-  567474.4 |########################################
-  568641.8 |########################################
-  569809.2 |
-  570976.6 |
-  572144.0 |
-  573311.4 |
-  574478.8 |
-  575646.2 |########################################
-  576813.6 |########################################
-  577981.0 |
+carrier_res_wideselect_stack (n=6, range 577024.2-582921.5 ns)
+  577024.2 |########################################
+  577319.1 |########################################
+  577613.9 |
+  577908.8 |########################################
+  578203.7 |
+  578498.5 |
+  578793.4 |
+  579088.3 |
+  579383.1 |########################################
+  579678.0 |
+  579972.8 |
+  580267.7 |
+  580562.6 |
+  580857.4 |
+  581152.3 |
+  581447.2 |
+  581742.0 |########################################
+  582036.9 |
+  582331.8 |
+  582626.6 |
   (0 below, 1 above range)
 
 ```
 
 ## Diagnostics
 
-- **carrier_res_wideselect_register**: bridge=99.7% of algo (FFI overhead may distort results)
-- **carrier_res_wideselect_stack**: bridge=99.5% of algo (FFI overhead may distort results)
+- **carrier_res_wideselect_register**: bridge=101.7% of algo (FFI overhead may distort results)
+- **carrier_res_wideselect_stack**: bridge=99.1% of algo (FFI overhead may distort results)

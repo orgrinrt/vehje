@@ -9,61 +9,65 @@ Baseline for all deltas below: **carrier_vert_scatter_scalar**. (Deltas are pair
 
 ### Baseline (carrier_vert_scatter_scalar) is the SLOWEST variant; every rival beats it
 
-The declared/defaulted baseline carrier_vert_scatter_scalar has the worst median (20.77 ms). Every delta is therefore measured against the worst performer, which flatters all rivals and compresses the differences that matter among them (e.g. fastest carrier_vert_scatter_vert8 at 3.51 ms).
+The declared/defaulted baseline carrier_vert_scatter_scalar has the worst median (17.06 ms). Every delta is therefore measured against the worst performer, which flatters all rivals and compresses the differences that matter among them (e.g. fastest carrier_vert_scatter_vert8 at 3.56 ms).
 
 _Why it matters:_ A baseline picked by accident (often the first variant to run / sort) silently skews every comparison. Re-baseline via `[bench.<name>.normalise]` on a representative variant.
 
-### carrier_vert_scatter_vert8 dominates: 56% faster than the next best (carrier_vert_scatter_vert4)
+### carrier_vert_scatter_vert8 dominates: 57% faster than the next best (carrier_vert_scatter_vert4)
 
-carrier_vert_scatter_vert8 (3.51 ms) leads carrier_vert_scatter_vert4 (5.49 ms) by 56%, a clear separation rather than a photo finish. CV 0.2%.
+carrier_vert_scatter_vert8 (3.56 ms) leads carrier_vert_scatter_vert4 (5.58 ms) by 57%, a clear separation rather than a photo finish. CV 0.2%.
 
 _Why it matters:_ A dominant, well-separated winner is a safe default pick for this workload shape.
 
-### carrier_vert_scatter_vert8 beats baseline by 83% (significant)
+### carrier_vert_scatter_vert8 beats baseline by 79% (significant)
 
-carrier_vert_scatter_vert8 is -17.25 ms (83%) faster than baseline carrier_vert_scatter_scalar, with a CI that excludes zero.
+carrier_vert_scatter_vert8 is -13.51 ms (79%) faster than baseline carrier_vert_scatter_scalar, with a CI that excludes zero.
 
 _Why it matters:_ A large, significant improvement over the current baseline is a concrete reason to switch.
 
-### carrier_vert_scatter_scalar is an outlier: 5.9x slower than the field
+### carrier_vert_scatter_scalar is an outlier: 4.8x slower than the field
 
-carrier_vert_scatter_scalar (20.77 ms) is 5.9x the fastest (3.51 ms), well off the pack.
+carrier_vert_scatter_scalar (17.06 ms) is 4.8x the fastest (3.56 ms), well off the pack.
 
 _Why it matters:_ A >2x outlier is almost never the right choice; if it is intentional (e.g. it buys correctness), say so explicitly.
 
-### carrier_vert_scatter_vert8 shows warm-up / thermal drift (autocorr +0.57)
+### Wide spread: slowest is 4.8x the fastest
 
-carrier_vert_scatter_vert8's per-pass series has lag-1 autocorrelation +0.57, indicating warm-up / thermal drift. Its timing may not be at steady state.
-
-_Why it matters:_ Autocorrelated samples violate the independence the CIs assume; the interval is optimistic until the drift is warmed out or cooled down.
-
-### Wide spread: slowest is 5.9x the fastest
-
-Fastest carrier_vert_scatter_vert8 (3.51 ms) to slowest carrier_vert_scatter_scalar (20.77 ms): 5.9x. The strategy choice matters a lot for this workload.
+Fastest carrier_vert_scatter_vert8 (3.56 ms) to slowest carrier_vert_scatter_scalar (17.06 ms): 4.8x. The strategy choice matters a lot for this workload.
 
 _Why it matters:_ A wide field means the strategy is load-bearing here; getting it right (or wrong) has large consequences.
 
 ## Key findings
 
-- **Fastest: carrier_vert_scatter_vert8** at 3512692.1 ns median (-83.1% vs baseline)
+- **Fastest: carrier_vert_scatter_vert8** at 3556316.0 ns median (-79.2% vs baseline)
 - 2 variants significantly faster than baseline
-- Spread: 5.91x (fastest 3512692.1 ns, slowest 20773526.2 ns)
+- Spread: 4.80x (fastest 3556316.0 ns, slowest 17062805.2 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| carrier_vert_scatter_scalar | 20773847ns | 20777295ns | 20696920ns | 20766512ns | 20823313ns | base |
-| carrier_vert_scatter_vert4 | 5485968ns | 5491562ns | 5446832ns | 5489469ns | 5500285ns | -73.59% |
-| carrier_vert_scatter_vert8 | 3516102ns | 3515898ns | 3507473ns | 3514350ns | 3523044ns | -83.07% |
+| carrier_vert_scatter_scalar | 17158612ns | 17066976ns | 16990258ns | 17061233ns | 17388858ns | base |
+| carrier_vert_scatter_vert4 | 5590475ns | 5581489ns | 5572656ns | 5579646ns | 5615628ns | -67.42% |
+| carrier_vert_scatter_vert8 | 3558164ns | 3559921ns | 3541172ns | 3557947ns | 3566987ns | -79.26% |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| carrier_vert_scatter_scalar | 20769951ns | 20693674ns | 20819008ns | base | 0.001 |
-| carrier_vert_scatter_vert4 | 5482676ns | 5443764ns | 5496805ns | -73.60% | 0.003 |
-| carrier_vert_scatter_vert8 | 3512884ns | 3504529ns | 3519519ns | -83.09% | 0.005 |
+| carrier_vert_scatter_scalar | 17154363ns | 16986002ns | 17384452ns | base | 0.001 |
+| carrier_vert_scatter_vert4 | 5586565ns | 5568892ns | 5611686ns | -67.43% | 0.003 |
+| carrier_vert_scatter_vert8 | 3554637ns | 3538189ns | 3563315ns | -79.28% | 0.005 |
+
+## Hardware counters (per call)
+
+| Variant | instructions | cycles | IPC | × base instr |
+|---|---|---|---|---|
+| carrier_vert_scatter_scalar | 105748665 | 84847263 | 1.246 | 1.00× |
+| carrier_vert_scatter_vert4 | 34610471 | 32143559 | 1.077 | 0.33× |
+| carrier_vert_scatter_vert8 | 22368702 | 22597142 | 0.990 | 0.21× |
+
+Instructions and cycles are the mean over the variant's samples for the measured region. IPC is instructions per cycle. The instruction ratio isolates whether a variant wins by retiring fewer instructions or by executing the same instructions more efficiently.
 
 ## Performance model
 
@@ -72,44 +76,44 @@ _Why it matters:_ A wide field means the strategy is load-bearing here; getting 
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| carrier_vert_scatter_scalar | 0.001 | 16.9% |
-| carrier_vert_scatter_vert4 | 0.003 | 63.9% |
-| carrier_vert_scatter_vert8 | 0.005 | 99.8% |
+| carrier_vert_scatter_scalar | 0.001 | 20.7% |
+| carrier_vert_scatter_vert4 | 0.003 | 63.4% |
+| carrier_vert_scatter_vert8 | 0.005 | 99.5% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| carrier_vert_scatter_scalar | 20773847ns | 20773847ns | base |
-| carrier_vert_scatter_vert4 | 5485968ns | 5485968ns | -73.59% |
-| carrier_vert_scatter_vert8 | 3516102ns | 3516102ns | -83.07% |
+| carrier_vert_scatter_scalar | 17158612ns | 17158612ns | base |
+| carrier_vert_scatter_vert4 | 5590475ns | 5590475ns | -67.42% |
+| carrier_vert_scatter_vert8 | 3558164ns | 3558164ns | -79.26% |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| carrier_vert_scatter_scalar | 20773526ns | base | --- | [20717320, 20819008] | --- | --- | --- | --- |
-| carrier_vert_scatter_vert4 | 5488395ns | -15299632.1ns (-73.6%) | [-15333268, -15228925]ns | [5462829, 5496805] | YES | 0.0313 | 0.0313 | 0 |
-| carrier_vert_scatter_vert8 | 3512692ns | -17254006.9ns (-83.1%) | [-17307655, -17209541]ns | [3506440, 3519519] | YES | 0.0313 | 0.0313 | 0 |
+| carrier_vert_scatter_scalar | 17062805ns | base | --- | [17015831, 17384452] | --- | --- | --- | --- |
+| carrier_vert_scatter_vert4 | 5577486ns | -11490652.7ns (-67.3%) | [-11772767, -11439976]ns | [5570522, 5611686] | YES | 0.0313 | 0.0313 | 0 |
+| carrier_vert_scatter_vert8 | 3556316ns | -13508741.7ns (-79.2%) | [-13837919, -13452517]ns | [3544281, 3563315] | YES | 0.0313 | 0.0313 | 0 |
 
 ## Per-pass consistency (nonstop e2e, Δ vs baseline)
 
 | Pass | carrier_vert_scatter_scalar | carrier_vert_scatter_vert4 | carrier_vert_scatter_vert8 |
 |---|---|---|---|
-| 1 | 20768005ns | -73.8% | -83.1% |
-| 2 | 20779047ns | -73.5% | -83.1% |
-| 3 | 20829533ns | -73.6% | -83.1% |
-| 4 | 20740966ns | -73.5% | -83.1% |
-| 5 | 20693674ns | -73.5% | -83.1% |
-| 6 | 20808483ns | -73.7% | -83.1% |
+| 1 | 17639444ns | -68.1% | -79.8% |
+| 2 | 17068707ns | -67.4% | -79.2% |
+| 3 | 17045660ns | -67.3% | -79.1% |
+| 4 | 17056903ns | -67.3% | -79.1% |
+| 5 | 16986002ns | -67.2% | -79.0% |
+| 6 | 17129460ns | -67.3% | -79.3% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| carrier_vert_scatter_scalar | -0.164 | ok |
-| carrier_vert_scatter_vert4 | -0.296 | moderate- |
-| carrier_vert_scatter_vert8 | 0.568 | HIGH+ (drift/warm-up) |
+| carrier_vert_scatter_scalar | -0.004 | ok |
+| carrier_vert_scatter_vert4 | -0.108 | ok |
+| carrier_vert_scatter_vert8 | -0.202 | moderate- |
 
 **Consistency summary:**
 
@@ -120,87 +124,86 @@ _Why it matters:_ A wide field means the strategy is load-bearing here; getting 
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| carrier_vert_scatter_scalar | 20781124.2ns | 20769951.4ns | 100.1% | HIGH |
-| carrier_vert_scatter_vert4 | 5500753.4ns | 5482676.4ns | 100.3% | HIGH |
-| carrier_vert_scatter_vert8 | 3592850.8ns | 3512883.8ns | 102.3% | HIGH |
+| carrier_vert_scatter_scalar | 17155718.2ns | 17154362.9ns | 100.0% | HIGH |
+| carrier_vert_scatter_vert4 | 5588862.1ns | 5586564.6ns | 100.0% | HIGH |
+| carrier_vert_scatter_vert8 | 3646901.6ns | 3554637.3ns | 102.6% | HIGH |
 
 ## Distribution (algo ns)
 
 ```
-carrier_vert_scatter_scalar (n=6, range 20693674.2-20819008.1 ns)
-  20693674.2 |########################################
-  20699940.9 |
-  20706207.6 |
-  20712474.3 |
-  20718741.0 |
-  20725007.7 |
-  20731274.4 |
-  20737541.1 |########################################
-  20743807.8 |
-  20750074.5 |
-  20756341.1 |
-  20762607.8 |########################################
-  20768874.5 |
-  20775141.2 |########################################
-  20781407.9 |
-  20787674.6 |
-  20793941.3 |
-  20800208.0 |
-  20806474.7 |########################################
-  20812741.4 |
+carrier_vert_scatter_scalar (n=6, range 16986002.5-17384452.3 ns)
+  16986002.5 |########################################
+  17005925.0 |
+  17025847.5 |########################################
+  17045770.0 |########################################
+  17065692.5 |########################################
+  17085614.9 |
+  17105537.4 |
+  17125459.9 |########################################
+  17145382.4 |
+  17165304.9 |
+  17185227.4 |
+  17205149.9 |
+  17225072.4 |
+  17244994.9 |
+  17264917.4 |
+  17284839.8 |
+  17304762.3 |
+  17324684.8 |
+  17344607.3 |
+  17364529.8 |
   (0 below, 1 above range)
 
-carrier_vert_scatter_vert4 (n=6, range 5443763.8-5496804.6 ns)
-  5443763.8 |####################
-  5446415.8 |
-  5449067.9 |
-  5451719.9 |
-  5454372.0 |
-  5457024.0 |
-  5459676.0 |
-  5462328.1 |
-  5464980.1 |
-  5467632.2 |
-  5470284.2 |
-  5472936.2 |
-  5475588.3 |
-  5478240.3 |
-  5480892.4 |####################
-  5483544.4 |
-  5486196.4 |########################################
-  5488848.5 |####################
-  5491500.5 |
-  5494152.6 |
+carrier_vert_scatter_vert4 (n=6, range 5568892.1-5611685.6 ns)
+  5568892.1 |########################################
+  5571031.8 |########################################
+  5573171.4 |
+  5575311.1 |########################################
+  5577450.8 |########################################
+  5579590.5 |
+  5581730.1 |
+  5583869.8 |
+  5586009.5 |
+  5588149.2 |
+  5590288.8 |
+  5592428.5 |
+  5594568.2 |
+  5596707.9 |
+  5598847.5 |
+  5600987.2 |########################################
+  5603126.9 |
+  5605266.6 |
+  5607406.2 |
+  5609545.9 |
   (0 below, 1 above range)
 
-carrier_vert_scatter_vert8 (n=6, range 3504529.2-3519519.3 ns)
-  3504529.2 |########################################
-  3505278.7 |
-  3506028.2 |
-  3506777.7 |
-  3507527.2 |
-  3508276.7 |########################################
-  3509026.2 |
-  3509775.8 |
-  3510525.3 |########################################
-  3511274.8 |
-  3512024.3 |
-  3512773.8 |
-  3513523.3 |
-  3514272.8 |########################################
-  3515022.3 |
-  3515771.8 |
-  3516521.3 |
-  3517270.8 |
-  3518020.3 |
-  3518769.8 |########################################
+carrier_vert_scatter_vert8 (n=6, range 3538188.7-3563314.5 ns)
+  3538188.7 |########################################
+  3539445.0 |
+  3540701.3 |
+  3541957.6 |
+  3543213.9 |
+  3544470.2 |
+  3545726.5 |
+  3546982.7 |
+  3548239.0 |
+  3549495.3 |########################################
+  3550751.6 |
+  3552007.9 |
+  3553264.2 |
+  3554520.5 |########################################
+  3555776.8 |
+  3557033.1 |########################################
+  3558289.4 |
+  3559545.7 |########################################
+  3560802.0 |
+  3562058.3 |
   (0 below, 1 above range)
 
 ```
 
 ## Diagnostics
 
-- **carrier_vert_scatter_scalar**: bridge=100.0% of algo (FFI overhead may distort results)
-- **carrier_vert_scatter_vert4**: bridge=100.3% of algo (FFI overhead may distort results)
-- **carrier_vert_scatter_vert8**: autocorrelation=0.57 (measurement drift or warm-up artifact)
-- **carrier_vert_scatter_vert8**: bridge=102.3% of algo (FFI overhead may distort results)
+- **carrier_vert_scatter_scalar**: bridge=100.1% of algo (FFI overhead may distort results)
+- **carrier_vert_scatter_vert4**: bridge=100.2% of algo (FFI overhead may distort results)
+- **carrier_vert_scatter_vert8**: bridge=102.6% of algo (FFI overhead may distort results)

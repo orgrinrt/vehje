@@ -7,3 +7,11 @@
 1784757660	d772801	carrier_dispatch_wideselect_n4096	carrier_disp_wideselect_nullfloor	4096	warm	120014.6	119276.2	121559.2
 1784757660	d772801	carrier_dispatch_wideselect_n4096	carrier_disp_wideselect_switch	4096	warm	483257.1	478680.2	487163.8
 1784757660	d772801	carrier_dispatch_wideselect_n4096	carrier_disp_wideselect_threaded	4096	warm	467330.8	452805.2	508370.8
+1784794160	2a3f34b	carrier_dispatch_wideselect_n4096	carrier_disp_wideselect_bittree	4096	warm	194967.1	191413.2	210654.0
+1784794160	2a3f34b	carrier_dispatch_wideselect_n4096	carrier_disp_wideselect_fntable	4096	warm	455052.5	452455.7	461997.7
+1784794160	2a3f34b	carrier_dispatch_wideselect_n4096	carrier_disp_wideselect_ifchain	4096	warm	460548.3	458782.7	471692.1
+1784794160	2a3f34b	carrier_dispatch_wideselect_n4096	carrier_disp_wideselect_ifchainasc	4096	warm	440920.4	433013.6	463812.1
+1784794160	2a3f34b	carrier_dispatch_wideselect_n4096	carrier_disp_wideselect_ifchainlin	4096	warm	547252.5	532053.6	554573.8
+1784794160	2a3f34b	carrier_dispatch_wideselect_n4096	carrier_disp_wideselect_nullfloor	4096	warm	118125.0	118038.9	121167.1
+1784794160	2a3f34b	carrier_dispatch_wideselect_n4096	carrier_disp_wideselect_switch	4096	warm	459979.2	452328.0	466048.6
+1784794160	2a3f34b	carrier_dispatch_wideselect_n4096	carrier_disp_wideselect_threaded	4096	warm	460990.8	446404.5	509743.3

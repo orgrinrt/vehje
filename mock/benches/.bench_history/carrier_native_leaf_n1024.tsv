@@ -2,3 +2,6 @@
 1784759111	d772801	carrier_native_leaf_n1024	carrier_nat_leaf_copypatch	1024	warm	14614.2	14133.2	14834.3
 1784759111	d772801	carrier_native_leaf_n1024	carrier_nat_leaf_interp	1024	warm	60704.2	60699.2	65621.2
 1784759111	d772801	carrier_native_leaf_n1024	carrier_nat_leaf_stencil	1024	warm	14644.2	14180.7	14844.1
+1784794843	74f52f4	carrier_native_leaf_n1024	carrier_nat_leaf_copypatch	1024	warm	13465.8	13420.8	14530.8
+1784794843	74f52f4	carrier_native_leaf_n1024	carrier_nat_leaf_direct	1024	warm	14300.0	13838.8	14585.2
+1784794843	74f52f4	carrier_native_leaf_n1024	carrier_nat_leaf_interp	1024	warm	62983.3	61296.7	64340.8

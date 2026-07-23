@@ -5,3 +5,9 @@
 1784757874	d772801	carrier_predecode_tight_n256	carrier_pre_tight_regcache	256	warm	8937.1	8928.0	9059.6
 1784757874	d772801	carrier_predecode_tight_n256	carrier_pre_tight_switch	256	warm	8950.4	8933.5	9041.0
 1784757874	d772801	carrier_predecode_tight_n256	carrier_pre_tight_threaded	256	warm	9500.8	9496.0	9566.7
+1784795423	74f52f4	carrier_predecode_tight_n256	carrier_pre_tight_direct	256	warm	9554.6	9543.8	9611.0
+1784795423	74f52f4	carrier_predecode_tight_n256	carrier_pre_tight_fntable	256	warm	9233.8	9231.9	9329.0
+1784795423	74f52f4	carrier_predecode_tight_n256	carrier_pre_tight_null	256	warm	7867.5	7770.4	7874.6
+1784795423	74f52f4	carrier_predecode_tight_n256	carrier_pre_tight_regcache	256	warm	8536.2	8535.0	8561.2
+1784795424	74f52f4	carrier_predecode_tight_n256	carrier_pre_tight_switch	256	warm	8730.4	8709.3	8777.9
+1784795424	74f52f4	carrier_predecode_tight_n256	carrier_pre_tight_threaded	256	warm	8969.6	8965.2	9074.8

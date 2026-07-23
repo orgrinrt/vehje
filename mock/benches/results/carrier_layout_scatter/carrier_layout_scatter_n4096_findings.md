@@ -7,256 +7,262 @@ Baseline: **carrier_lay_scatter_rec24**
 
 Baseline for all deltas below: **carrier_lay_scatter_rec24**. (Deltas are paired `variant - baseline` medians; `*` marks a CI that excludes zero.)
 
-### Baseline (carrier_lay_scatter_rec24) is the SLOWEST variant; every rival beats it
+### carrier_lay_scatter_rec16 shows alternating (throttle bounce) (autocorr -0.80)
 
-The declared/defaulted baseline carrier_lay_scatter_rec24 has the worst median (608.20 us). Every delta is therefore measured against the worst performer, which flatters all rivals and compresses the differences that matter among them (e.g. fastest carrier_lay_scatter_rec32 at 576.15 us).
-
-_Why it matters:_ A baseline picked by accident (often the first variant to run / sort) silently skews every comparison. Re-baseline via `[bench.<name>.normalise]` on a representative variant.
-
-### carrier_lay_scatter_rec32 is fastest but the noisiest (CV 6.4%)
-
-carrier_lay_scatter_rec32 wins on median (576.15 us) yet has the highest variance (CV 6.4%), while carrier_lay_scatter_rec20 is the steadiest (CV 3.1%, 592.91 us).
-
-_Why it matters:_ For latency-sensitive or tail-bound paths, the steadier variant can beat the faster-on-average one; weigh peak vs consistency.
-
-### carrier_lay_scatter_rec16 shows alternating (throttle bounce) (autocorr -0.60)
-
-carrier_lay_scatter_rec16's per-pass series has lag-1 autocorrelation -0.60, indicating alternating (throttle bounce). Its timing may not be at steady state.
+carrier_lay_scatter_rec16's per-pass series has lag-1 autocorrelation -0.80, indicating alternating (throttle bounce). Its timing may not be at steady state.
 
 _Why it matters:_ Autocorrelated samples violate the independence the CIs assume; the interval is optimistic until the drift is warmed out or cooled down.
 
 ### Whole-field spread is below the measurement noise floor
 
-The fastest-to-slowest gap (32.05 us) is smaller than the fastest variant's own run-to-run std-dev (36.61 us); the ranking is inside the noise.
+The fastest-to-slowest gap (10.07 us) is smaller than the fastest variant's own run-to-run std-dev (13.02 us); the ranking is inside the noise.
 
 _Why it matters:_ When the spread is below resolution, any apparent ordering is likely noise; increase work per call before trusting a winner.
 
-### Speed leader carrier_lay_scatter_rec32 vs stability leader carrier_lay_scatter_rec20 (+3% speed for 2.0x steadier)
+### No variant beats the baseline (carrier_lay_scatter_rec24)
 
-carrier_lay_scatter_rec32 is fastest (576.15 us, CV 6.4%); carrier_lay_scatter_rec20 gives up 2.9% median for 2.0x lower variance (CV 3.1%).
+The baseline carrier_lay_scatter_rec24 is the fastest (576.66 us median); no rival improves on it (all deltas are >= 0).
 
-_Why it matters:_ The pick depends on priority: peak throughput vs predictable latency. Both are defensible; name which the workload needs.
+_Why it matters:_ When nothing beats the baseline, the current choice stands; the contenders cost speed for whatever else they buy.
+
+### Whole field within 1.7% of the fastest
+
+All 5 variants sit between 576.66 us and 586.73 us - a 1.7% band - though some paired differences are still significant.
+
+_Why it matters:_ Small but real gaps: worth taking only where this path is hot enough that a few percent compounds.
 
 ## Key findings
 
-- **Fastest: carrier_lay_scatter_rec32** at 576148.3 ns median (-5.3% vs baseline)
-- Spread: 1.06x (fastest 576148.3 ns, slowest 608198.6 ns)
+- **Baseline (carrier_lay_scatter_rec24) is the fastest** at 576662.3 ns median
+- Spread: 1.02x (fastest 576662.3 ns, slowest 586730.8 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| carrier_lay_scatter_rec12 | 573350ns | 585723ns | 519685ns | 576326ns | 595719ns | -3.99% |
-| carrier_lay_scatter_rec16 | 583852ns | 585959ns | 540422ns | 576458ns | 616658ns | -2.23% |
-| carrier_lay_scatter_rec20 | 592291ns | 596142ns | 566480ns | 587929ns | 611741ns | -0.82% |
-| carrier_lay_scatter_rec24 | 597161ns | 610884ns | 553003ns | 596845ns | 619715ns | base |
-| carrier_lay_scatter_rec32 | 580883ns | 578949ns | 519610ns | 574323ns | 621360ns | -2.73% |
+| carrier_lay_scatter_rec12 | 580828ns | 582163ns | 571780ns | 578767ns | 588443ns | +0.53% |
+| carrier_lay_scatter_rec16 | 579528ns | 580459ns | 556550ns | 576885ns | 594982ns | +0.30% |
+| carrier_lay_scatter_rec20 | 589948ns | 589859ns | 578319ns | 586924ns | 600299ns | +2.11% |
+| carrier_lay_scatter_rec24 | 577776ns | 579954ns | 551861ns | 578689ns | 589364ns | base |
+| carrier_lay_scatter_rec32 | 580471ns | 581801ns | 563769ns | 579817ns | 589803ns | +0.47% |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| carrier_lay_scatter_rec12 | 570344ns | 517065ns | 592461ns | -4.00% | 0.007 |
-| carrier_lay_scatter_rec16 | 580947ns | 537850ns | 613738ns | -2.21% | 0.007 |
-| carrier_lay_scatter_rec20 | 589482ns | 563837ns | 609070ns | -0.77% | 0.007 |
-| carrier_lay_scatter_rec24 | 594079ns | 549603ns | 616369ns | base | 0.007 |
-| carrier_lay_scatter_rec32 | 578044ns | 517266ns | 618074ns | -2.70% | 0.007 |
+| carrier_lay_scatter_rec12 | 577721ns | 568665ns | 585482ns | +0.53% | 0.007 |
+| carrier_lay_scatter_rec16 | 576664ns | 554109ns | 592256ns | +0.34% | 0.007 |
+| carrier_lay_scatter_rec20 | 586812ns | 575262ns | 597109ns | +2.11% | 0.007 |
+| carrier_lay_scatter_rec24 | 574698ns | 549389ns | 586261ns | base | 0.007 |
+| carrier_lay_scatter_rec32 | 577351ns | 560502ns | 586786ns | +0.46% | 0.007 |
+
+## Hardware counters (per call)
+
+| Variant | instructions | cycles | IPC | × base instr |
+|---|---|---|---|---|
+| carrier_lay_scatter_rec12 | 3619244 | 4762682 | 0.760 | 1.00× |
+| carrier_lay_scatter_rec16 | 3631158 | 4705615 | 0.772 | 1.01× |
+| carrier_lay_scatter_rec20 | 3696557 | 4704883 | 0.786 | 1.02× |
+| carrier_lay_scatter_rec24 | 3609568 | 4704966 | 0.767 | 1.00× |
+| carrier_lay_scatter_rec32 | 3637210 | 4704770 | 0.773 | 1.01× |
+
+Instructions and cycles are the mean over the variant's samples for the measured region. IPC is instructions per cycle. The instruction ratio isolates whether a variant wins by retiring fewer instructions or by executing the same instructions more efficiently.
 
 ## Performance model
 
-- Peak throughput: **0.008 Gops/s** (carrier_lay_scatter_rec12; best 20% batches)
+- Peak throughput: **0.007 Gops/s** (carrier_lay_scatter_rec24; best 20% batches)
 - Ops per call: 4096
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| carrier_lay_scatter_rec12 | 0.007 | 88.8% |
-| carrier_lay_scatter_rec16 | 0.007 | 88.7% |
-| carrier_lay_scatter_rec20 | 0.007 | 87.2% |
-| carrier_lay_scatter_rec24 | 0.007 | 85.0% |
-| carrier_lay_scatter_rec32 | 0.007 | 89.7% |
+| carrier_lay_scatter_rec12 | 0.007 | 94.9% |
+| carrier_lay_scatter_rec16 | 0.007 | 95.1% |
+| carrier_lay_scatter_rec20 | 0.007 | 93.6% |
+| carrier_lay_scatter_rec24 | 0.007 | 95.3% |
+| carrier_lay_scatter_rec32 | 0.007 | 94.9% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| carrier_lay_scatter_rec12 | 573350ns | 573350ns | -3.99% |
-| carrier_lay_scatter_rec16 | 583852ns | 583852ns | -2.23% |
-| carrier_lay_scatter_rec20 | 592291ns | 592291ns | -0.82% |
-| carrier_lay_scatter_rec24 | 597161ns | 597161ns | base |
-| carrier_lay_scatter_rec32 | 580883ns | 580883ns | -2.73% |
+| carrier_lay_scatter_rec12 | 580828ns | 580828ns | +0.53% |
+| carrier_lay_scatter_rec16 | 579528ns | 579528ns | +0.30% |
+| carrier_lay_scatter_rec20 | 589948ns | 589948ns | +2.11% |
+| carrier_lay_scatter_rec24 | 577776ns | 577776ns | base |
+| carrier_lay_scatter_rec32 | 580471ns | 580471ns | +0.47% |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| carrier_lay_scatter_rec24 | 608199ns | base | --- | [557668, 616369] | --- | --- | --- | --- |
-| carrier_lay_scatter_rec12 | 582540ns | no significant difference | [-74350, +30936]ns | [536032, 592461] | no | 0.6875 | 0.6875 | 0 |
-| carrier_lay_scatter_rec16 | 582926ns | no significant difference | [-56652, +29455]ns | [546176, 613738] | no | 0.6875 | 0.6875 | 0 |
-| carrier_lay_scatter_rec20 | 592914ns | no significant difference | [-43920, +45195]ns | [566461, 609070] | no | 0.6875 | 0.6875 | 0 |
-| carrier_lay_scatter_rec32 | 576148ns | no significant difference | [-47594, +16801]ns | [539909, 618074] | no | 0.6875 | 0.6875 | 0 |
+| carrier_lay_scatter_rec24 | 576662ns | base | --- | [561170, 586261] | --- | --- | --- | --- |
+| carrier_lay_scatter_rec12 | 578861ns | no significant difference | [-12234, +16647]ns | [568820, 585482] | no | 0.9167 | 0.6875 | 0 |
+| carrier_lay_scatter_rec16 | 577400ns | no significant difference | [-25925, +21832]ns | [560336, 592256] | no | 0.9167 | 0.6875 | 0 |
+| carrier_lay_scatter_rec20 | 586731ns | no significant difference | [-1393, +34202]ns | [576596, 597109] | no | 0.9167 | 0.6875 | 0 |
+| carrier_lay_scatter_rec32 | 578660ns | no significant difference | [-16016, +23880]ns | [566608, 586786] | no | 1.0000 | 1.0000 | 0 |
 
 ## Per-pass consistency (nonstop e2e, Δ vs baseline)
 
 | Pass | carrier_lay_scatter_rec24 | carrier_lay_scatter_rec12 | carrier_lay_scatter_rec16 | carrier_lay_scatter_rec20 | carrier_lay_scatter_rec32 |
 |---|---|---|---|---|---|
-| 1 | 549603ns | +8.1% | +8.3% | +12.5% | +2.4% |
-| 2 | 613777ns | -9.6% | -12.4% | -7.3% | +3.4% |
-| 3 | 618962ns | -4.6% | +2.2% | -3.3% | -2.8% |
-| 4 | 609410ns | -4.5% | -6.1% | -1.6% | -7.7% |
-| 5 | 565733ns | +3.0% | -2.0% | +3.8% | -8.6% |
-| 6 | 606987ns | -14.8% | -2.2% | -7.1% | -2.9% |
+| 1 | 549389ns | +3.5% | +4.1% | +8.9% | +7.3% |
+| 2 | 576424ns | +0.4% | +3.7% | +3.4% | +1.3% |
+| 3 | 579268ns | -1.8% | -4.3% | -0.2% | -1.1% |
+| 4 | 576900ns | +2.4% | +1.7% | -0.3% | -2.8% |
+| 5 | 593255ns | -2.4% | -4.5% | +0.4% | -2.6% |
+| 6 | 572952ns | +1.2% | +1.8% | +0.9% | +1.2% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| carrier_lay_scatter_rec12 | -0.219 | moderate- |
-| carrier_lay_scatter_rec16 | -0.600 | HIGH- (thermal bounce) |
-| carrier_lay_scatter_rec20 | -0.308 | moderate- |
-| carrier_lay_scatter_rec24 | -0.192 | ok |
-| carrier_lay_scatter_rec32 | 0.041 | ok |
+| carrier_lay_scatter_rec12 | -0.325 | moderate- |
+| carrier_lay_scatter_rec16 | -0.797 | HIGH- (thermal bounce) |
+| carrier_lay_scatter_rec20 | -0.082 | ok |
+| carrier_lay_scatter_rec24 | -0.017 | ok |
+| carrier_lay_scatter_rec32 | 0.246 | moderate+ |
 
 **Consistency summary:**
 
-- **carrier_lay_scatter_rec12**: won 4/6, lost 2/6
-- **carrier_lay_scatter_rec16**: won 4/6, lost 2/6
-- **carrier_lay_scatter_rec20**: won 4/6, lost 2/6
-- **carrier_lay_scatter_rec32**: won 4/6, lost 2/6
+- **carrier_lay_scatter_rec12**: won 2/6, lost 4/6
+- **carrier_lay_scatter_rec16**: won 2/6, lost 4/6
+- **carrier_lay_scatter_rec20**: won 2/6, lost 4/6
+- **carrier_lay_scatter_rec32**: won 3/6, lost 3/6
 
 ## Bridge overhead per variant
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| carrier_lay_scatter_rec12 | 571601.9ns | 570344.3ns | 100.2% | HIGH |
-| carrier_lay_scatter_rec16 | 581394.4ns | 580946.6ns | 100.1% | HIGH |
-| carrier_lay_scatter_rec20 | 590010.1ns | 589481.7ns | 100.1% | HIGH |
-| carrier_lay_scatter_rec24 | 595098.5ns | 594078.6ns | 100.2% | HIGH |
-| carrier_lay_scatter_rec32 | 579186.5ns | 578043.9ns | 100.2% | HIGH |
+| carrier_lay_scatter_rec12 | 578148.0ns | 577721.0ns | 100.1% | HIGH |
+| carrier_lay_scatter_rec16 | 577037.0ns | 576664.2ns | 100.1% | HIGH |
+| carrier_lay_scatter_rec20 | 587416.8ns | 586812.0ns | 100.1% | HIGH |
+| carrier_lay_scatter_rec24 | 575169.4ns | 574698.1ns | 100.1% | HIGH |
+| carrier_lay_scatter_rec32 | 577482.9ns | 577351.2ns | 100.0% | HIGH |
 
 ## Distribution (algo ns)
 
 ```
-carrier_lay_scatter_rec12 (n=6, range 517064.6-592460.8 ns)
-  517064.6 |####################
-  520834.4 |
-  524604.2 |
-  528374.0 |
-  532143.8 |
-  535913.7 |
-  539683.5 |
-  543453.3 |
-  547223.1 |
-  550992.9 |
-  554762.7 |####################
-  558532.5 |
-  562302.3 |
-  566072.2 |
-  569842.0 |
-  573611.8 |
-  577381.6 |
-  581151.4 |########################################
-  584921.2 |
-  588691.0 |####################
+carrier_lay_scatter_rec12 (n=6, range 568664.6-585481.6 ns)
+  568664.6 |########################################
+  569505.5 |
+  570346.3 |
+  571187.2 |
+  572028.0 |
+  572868.9 |
+  573709.7 |
+  574550.6 |
+  575391.4 |
+  576232.3 |
+  577073.1 |
+  577914.0 |####################
+  578754.8 |####################
+  579595.7 |####################
+  580436.5 |
+  581277.4 |
+  582118.2 |
+  582959.1 |
+  583799.9 |
+  584640.8 |
   (0 below, 1 above range)
 
-carrier_lay_scatter_rec16 (n=6, range 537849.6-613737.7 ns)
-  537849.6 |########################################
-  541644.0 |
-  545438.4 |
-  549232.8 |
-  553027.2 |########################################
-  556821.6 |
-  560616.0 |
-  564410.4 |
-  568204.8 |
-  571999.2 |########################################
-  575793.6 |
-  579588.1 |
-  583382.5 |
-  587176.9 |
-  590971.3 |########################################
-  594765.7 |########################################
-  598560.1 |
-  602354.5 |
-  606148.9 |
-  609943.3 |
+carrier_lay_scatter_rec16 (n=6, range 554109.2-592256.1 ns)
+  554109.2 |########################################
+  556016.5 |
+  557923.9 |
+  559831.2 |
+  561738.6 |
+  563645.9 |
+  565553.3 |########################################
+  567460.6 |
+  569367.9 |
+  571275.3 |########################################
+  573182.6 |
+  575090.0 |
+  576997.3 |
+  578904.7 |
+  580812.0 |
+  582719.3 |########################################
+  584626.7 |
+  586534.0 |########################################
+  588441.4 |
+  590348.7 |
   (0 below, 1 above range)
 
-carrier_lay_scatter_rec20 (n=6, range 563836.7-609070.2 ns)
-  563836.7 |####################
-  566098.4 |
-  568360.0 |####################
-  570621.7 |
-  572883.4 |
-  575145.1 |
-  577406.8 |
-  579668.4 |
-  581930.1 |
-  584191.8 |
-  586453.4 |####################
-  588715.1 |
-  590976.8 |
-  593238.5 |
-  595500.1 |
-  597761.8 |########################################
-  600023.5 |
-  602285.2 |
-  604546.8 |
-  606808.5 |
+carrier_lay_scatter_rec20 (n=6, range 575262.5-597108.9 ns)
+  575262.5 |####################
+  576354.8 |
+  577447.1 |########################################
+  578539.5 |
+  579631.8 |
+  580724.1 |
+  581816.4 |
+  582908.8 |
+  584001.1 |
+  585093.4 |
+  586185.7 |
+  587278.0 |
+  588370.4 |
+  589462.7 |
+  590555.0 |
+  591647.3 |
+  592739.7 |
+  593832.0 |
+  594924.3 |########################################
+  596016.6 |
   (0 below, 1 above range)
 
-carrier_lay_scatter_rec24 (n=6, range 549603.3-616369.2 ns)
-  549603.3 |####################
-  552941.6 |
-  556279.9 |
-  559618.2 |
-  562956.5 |####################
-  566294.8 |
-  569633.1 |
-  572971.4 |
-  576309.7 |
-  579648.0 |
-  582986.2 |
-  586324.5 |
-  589662.8 |
-  593001.1 |
-  596339.4 |
-  599677.7 |
-  603016.0 |
-  606354.3 |########################################
-  609692.6 |
-  613030.9 |####################
+carrier_lay_scatter_rec24 (n=6, range 549388.8-586261.4 ns)
+  549388.8 |####################
+  551232.4 |
+  553076.1 |
+  554919.7 |
+  556763.3 |
+  558607.0 |
+  560450.6 |
+  562294.2 |
+  564137.9 |
+  565981.5 |
+  567825.1 |
+  569668.8 |
+  571512.4 |####################
+  573356.0 |
+  575199.7 |########################################
+  577043.3 |
+  578886.9 |####################
+  580730.6 |
+  582574.2 |
+  584417.8 |
   (0 below, 1 above range)
 
-carrier_lay_scatter_rec32 (n=6, range 517265.8-618074.4 ns)
-  517265.8 |########################################
-  522306.2 |
-  527346.7 |
-  532387.1 |
-  537427.5 |
-  542467.9 |
-  547508.4 |
-  552548.8 |
-  557589.2 |########################################
-  562629.6 |########################################
-  567670.1 |
-  572710.5 |
-  577750.9 |
-  582791.4 |
-  587831.8 |########################################
-  592872.2 |
-  597912.6 |########################################
-  602953.1 |
-  607993.5 |
-  613033.9 |
+carrier_lay_scatter_rec32 (n=6, range 560502.5-586786.2 ns)
+  560502.5 |########################################
+  561816.7 |
+  563130.9 |
+  564445.1 |
+  565759.2 |
+  567073.4 |
+  568387.6 |
+  569701.8 |
+  571016.0 |
+  572330.2 |########################################
+  573644.4 |
+  574958.6 |
+  576272.8 |
+  577586.9 |########################################
+  578901.1 |########################################
+  580215.3 |
+  581529.5 |
+  582843.7 |########################################
+  584157.9 |
+  585472.1 |
   (0 below, 1 above range)
 
 ```
 
 ## Diagnostics
 
-- **carrier_lay_scatter_rec12**: bridge=100.2% of algo (FFI overhead may distort results)
-- **carrier_lay_scatter_rec16**: bridge=100.1% of algo (FFI overhead may distort results)
+- **carrier_lay_scatter_rec12**: bridge=99.8% of algo (FFI overhead may distort results)
+- **carrier_lay_scatter_rec16**: bridge=100.0% of algo (FFI overhead may distort results)
 - **carrier_lay_scatter_rec20**: bridge=100.1% of algo (FFI overhead may distort results)
 - **carrier_lay_scatter_rec24**: bridge=100.1% of algo (FFI overhead may distort results)
-- **carrier_lay_scatter_rec32**: bridge=100.4% of algo (FFI overhead may distort results)
+- **carrier_lay_scatter_rec32**: bridge=99.9% of algo (FFI overhead may distort results)

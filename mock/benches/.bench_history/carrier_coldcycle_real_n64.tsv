@@ -1,0 +1,5 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784793765	2a3f34b	carrier_coldcycle_real_n64	carrier_cold_real_fntable	64	warm	2970.8	2967.5	3149.4
+1784793765	2a3f34b	carrier_coldcycle_real_n64	carrier_cold_real_null	64	warm	1371.7	1370.2	1402.9
+1784793765	2a3f34b	carrier_coldcycle_real_n64	carrier_cold_real_switch	64	warm	2151.2	2143.5	2202.7
+1784793765	2a3f34b	carrier_coldcycle_real_n64	carrier_cold_real_threaded	64	warm	2014.6	1995.7	2103.6

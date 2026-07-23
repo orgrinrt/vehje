@@ -7,3 +7,11 @@
 1784757564	d772801	carrier_dispatch_scatter_n4096	carrier_disp_scatter_nullfloor	4096	warm	119212.1	117921.5	122201.1
 1784757564	d772801	carrier_dispatch_scatter_n4096	carrier_disp_scatter_switch	4096	warm	585673.3	582760.8	609501.6
 1784757564	d772801	carrier_dispatch_scatter_n4096	carrier_disp_scatter_threaded	4096	warm	651871.7	639596.1	689305.6
+1784794018	2a3f34b	carrier_dispatch_scatter_n4096	carrier_disp_scatter_bittree	4096	warm	321385.0	306030.2	333993.3
+1784794018	2a3f34b	carrier_dispatch_scatter_n4096	carrier_disp_scatter_fntable	4096	warm	551316.2	549150.6	557532.3
+1784794018	2a3f34b	carrier_dispatch_scatter_n4096	carrier_disp_scatter_ifchain	4096	warm	574350.4	558888.1	597013.9
+1784794018	2a3f34b	carrier_dispatch_scatter_n4096	carrier_disp_scatter_ifchainasc	4096	warm	575908.8	566610.7	633980.8
+1784794018	2a3f34b	carrier_dispatch_scatter_n4096	carrier_disp_scatter_ifchainlin	4096	warm	559687.9	556788.6	622408.6
+1784794018	2a3f34b	carrier_dispatch_scatter_n4096	carrier_disp_scatter_nullfloor	4096	warm	116960.8	116911.9	119875.4
+1784794018	2a3f34b	carrier_dispatch_scatter_n4096	carrier_disp_scatter_switch	4096	warm	568204.2	568030.8	581783.1
+1784794018	2a3f34b	carrier_dispatch_scatter_n4096	carrier_disp_scatter_threaded	4096	warm	593079.6	589170.0	648402.5

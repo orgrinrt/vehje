@@ -7,3 +7,11 @@
 1784757541	d772801	carrier_dispatch_scatter_n64	carrier_disp_scatter_nullfloor	64	warm	1777.1	1775.0	1783.3
 1784757541	d772801	carrier_dispatch_scatter_n64	carrier_disp_scatter_switch	64	warm	2509.6	2507.5	2528.1
 1784757541	d772801	carrier_dispatch_scatter_n64	carrier_disp_scatter_threaded	64	warm	2880.4	2878.9	2901.4
+1784793995	2a3f34b	carrier_dispatch_scatter_n64	carrier_disp_scatter_bittree	64	warm	2995.0	2986.8	3000.6
+1784793995	2a3f34b	carrier_dispatch_scatter_n64	carrier_disp_scatter_fntable	64	warm	3185.8	3185.2	3219.4
+1784793995	2a3f34b	carrier_dispatch_scatter_n64	carrier_disp_scatter_ifchain	64	warm	2505.4	2492.1	2534.4
+1784793995	2a3f34b	carrier_dispatch_scatter_n64	carrier_disp_scatter_ifchainasc	64	warm	2521.7	2518.1	2548.8
+1784793995	2a3f34b	carrier_dispatch_scatter_n64	carrier_disp_scatter_ifchainlin	64	warm	5797.9	5751.4	5814.4
+1784793995	2a3f34b	carrier_dispatch_scatter_n64	carrier_disp_scatter_nullfloor	64	warm	1784.6	1781.7	1792.1
+1784793995	2a3f34b	carrier_dispatch_scatter_n64	carrier_disp_scatter_switch	64	warm	2465.0	2441.7	2485.2
+1784793995	2a3f34b	carrier_dispatch_scatter_n64	carrier_disp_scatter_threaded	64	warm	2863.8	2860.0	2884.8

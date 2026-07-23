@@ -2,3 +2,6 @@
 1784759092	d772801	carrier_native_tight_n256	carrier_nat_tight_copypatch	256	warm	5162.5	5132.7	5455.8
 1784759092	d772801	carrier_native_tight_n256	carrier_nat_tight_interp	256	warm	11084.2	11058.0	12369.4
 1784759092	d772801	carrier_native_tight_n256	carrier_nat_tight_stencil	256	warm	5090.0	5060.6	5418.1
+1784794918	74f52f4	carrier_native_tight_n256	carrier_nat_tight_copypatch	256	warm	5065.8	5060.2	5138.8
+1784794918	74f52f4	carrier_native_tight_n256	carrier_nat_tight_direct	256	warm	4884.6	4708.4	5043.5
+1784794918	74f52f4	carrier_native_tight_n256	carrier_nat_tight_interp	256	warm	10466.7	10216.5	11140.2

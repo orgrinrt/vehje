@@ -6,3 +6,9 @@
 1784759000	d772801	carrier_optimize_wideselect_n4096	carrier_opt_wideselect_eqsat	4096	warm	327617.9	325346.1	384399.0
 1784759000	d772801	carrier_optimize_wideselect_n4096	carrier_opt_wideselect_fold	4096	warm	430768.8	429768.3	440705.6
 1784759000	d772801	carrier_optimize_wideselect_n4096	carrier_opt_wideselect_none	4096	warm	427308.7	423096.5	451353.5
+1784795193	74f52f4	carrier_optimize_wideselect_n4096	carrier_opt_wideselect_all	4096	warm	292246.7	285273.0	317786.7
+1784795193	74f52f4	carrier_optimize_wideselect_n4096	carrier_opt_wideselect_canon	4096	warm	275719.6	272268.5	304503.5
+1784795193	74f52f4	carrier_optimize_wideselect_n4096	carrier_opt_wideselect_cse	4096	warm	291053.8	284701.9	315671.5
+1784795193	74f52f4	carrier_optimize_wideselect_n4096	carrier_opt_wideselect_dce	4096	warm	404373.3	391049.8	425406.1
+1784795193	74f52f4	carrier_optimize_wideselect_n4096	carrier_opt_wideselect_fold	4096	warm	425672.5	414240.8	431809.2
+1784795193	74f52f4	carrier_optimize_wideselect_n4096	carrier_opt_wideselect_none	4096	warm	402079.6	402037.5	406974.8

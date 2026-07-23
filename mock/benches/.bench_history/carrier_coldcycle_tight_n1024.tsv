@@ -1,0 +1,5 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784793787	2a3f34b	carrier_coldcycle_tight_n1024	carrier_cold_tight_fntable	1024	warm	51647.5	51642.7	52225.2
+1784793787	2a3f34b	carrier_coldcycle_tight_n1024	carrier_cold_tight_null	1024	warm	31685.0	31436.0	31911.9
+1784793787	2a3f34b	carrier_coldcycle_tight_n1024	carrier_cold_tight_switch	1024	warm	42120.8	41909.6	42585.4
+1784793787	2a3f34b	carrier_coldcycle_tight_n1024	carrier_cold_tight_threaded	1024	warm	36077.5	35976.4	36576.2

@@ -5,3 +5,9 @@
 1784757835	d772801	carrier_predecode_madd_n64	carrier_pre_madd_regcache	64	warm	2091.2	2090.4	2123.9
 1784757835	d772801	carrier_predecode_madd_n64	carrier_pre_madd_switch	64	warm	2401.7	2388.3	2406.2
 1784757835	d772801	carrier_predecode_madd_n64	carrier_pre_madd_threaded	64	warm	2254.2	2252.3	2275.2
+1784795268	74f52f4	carrier_predecode_madd_n64	carrier_pre_madd_direct	64	warm	2178.8	2178.4	2219.6
+1784795268	74f52f4	carrier_predecode_madd_n64	carrier_pre_madd_fntable	64	warm	2467.5	2456.1	2636.7
+1784795268	74f52f4	carrier_predecode_madd_n64	carrier_pre_madd_null	64	warm	2087.9	2080.2	2102.3
+1784795268	74f52f4	carrier_predecode_madd_n64	carrier_pre_madd_regcache	64	warm	2062.5	2060.2	2080.2
+1784795268	74f52f4	carrier_predecode_madd_n64	carrier_pre_madd_switch	64	warm	2375.4	2373.6	2392.7
+1784795268	74f52f4	carrier_predecode_madd_n64	carrier_pre_madd_threaded	64	warm	2218.8	2218.4	2224.8

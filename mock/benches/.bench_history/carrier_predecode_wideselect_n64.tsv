@@ -5,3 +5,9 @@
 1784757967	d772801	carrier_predecode_wideselect_n64	carrier_pre_wideselect_regcache	64	warm	2325.0	2321.1	2391.2
 1784757967	d772801	carrier_predecode_wideselect_n64	carrier_pre_wideselect_switch	64	warm	2136.7	2128.8	2142.9
 1784757967	d772801	carrier_predecode_wideselect_n64	carrier_pre_wideselect_threaded	64	warm	1792.1	1791.7	1843.3
+1784795451	74f52f4	carrier_predecode_wideselect_n64	carrier_pre_wideselect_direct	64	warm	1415.4	1404.3	1428.9
+1784795451	74f52f4	carrier_predecode_wideselect_n64	carrier_pre_wideselect_fntable	64	warm	2828.3	2819.8	2859.8
+1784795451	74f52f4	carrier_predecode_wideselect_n64	carrier_pre_wideselect_null	64	warm	1309.2	1308.2	1328.0
+1784795451	74f52f4	carrier_predecode_wideselect_n64	carrier_pre_wideselect_regcache	64	warm	2237.9	2219.2	2252.9
+1784795451	74f52f4	carrier_predecode_wideselect_n64	carrier_pre_wideselect_switch	64	warm	2072.1	2066.2	2104.1
+1784795451	74f52f4	carrier_predecode_wideselect_n64	carrier_pre_wideselect_threaded	64	warm	1686.7	1682.1	1744.6

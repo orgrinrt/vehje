@@ -7,3 +7,11 @@
 1784757483	d772801	carrier_dispatch_madd_n16384	carrier_disp_madd_nullfloor	16384	warm	650627.1	650330.8	652075.0
 1784757483	d772801	carrier_dispatch_madd_n16384	carrier_disp_madd_switch	16384	warm	783853.8	783578.4	788299.4
 1784757483	d772801	carrier_dispatch_madd_n16384	carrier_disp_madd_threaded	16384	warm	894917.5	893270.0	909640.2
+1784793891	2a3f34b	carrier_dispatch_madd_n16384	carrier_disp_madd_bittree	16384	warm	717511.2	717020.6	724193.2
+1784793891	2a3f34b	carrier_dispatch_madd_n16384	carrier_disp_madd_fntable	16384	warm	883282.9	875163.8	884434.6
+1784793891	2a3f34b	carrier_dispatch_madd_n16384	carrier_disp_madd_ifchain	16384	warm	788859.2	787544.8	791241.4
+1784793891	2a3f34b	carrier_dispatch_madd_n16384	carrier_disp_madd_ifchainasc	16384	warm	784409.2	784145.4	788966.1
+1784793891	2a3f34b	carrier_dispatch_madd_n16384	carrier_disp_madd_ifchainlin	16384	warm	697847.1	696944.1	704731.8
+1784793891	2a3f34b	carrier_dispatch_madd_n16384	carrier_disp_madd_nullfloor	16384	warm	654878.8	654385.7	658862.9
+1784793891	2a3f34b	carrier_dispatch_madd_n16384	carrier_disp_madd_switch	16384	warm	796207.1	791771.4	799027.5
+1784793891	2a3f34b	carrier_dispatch_madd_n16384	carrier_disp_madd_threaded	16384	warm	913850.8	912864.6	922062.9

@@ -1,0 +1,7 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784796307	74f52f4	carrier_setup_tight_n64	carrier_setup_tight_emitcopypatch	64	warm	14085.4	13891.0	14815.0
+1784796307	74f52f4	carrier_setup_tight_n64	carrier_setup_tight_emitdirect	64	warm	4346.7	4343.9	4456.0
+1784796307	74f52f4	carrier_setup_tight_n64	carrier_setup_tight_optall	64	warm	107640.4	107626.0	110002.5
+1784796307	74f52f4	carrier_setup_tight_n64	carrier_setup_tight_parse	64	warm	0.0	0.0	0.0
+1784796307	74f52f4	carrier_setup_tight_n64	carrier_setup_tight_predecode	64	warm	3548.3	3443.3	3625.0
+1784796307	74f52f4	carrier_setup_tight_n64	carrier_setup_tight_stackcompile	64	warm	8006.2	7907.7	8101.4

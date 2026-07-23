@@ -7,3 +7,11 @@
 1784757714	d772801	carrier_dispatch_wideselect_n16384	carrier_disp_wideselect_nullfloor	16384	warm	518811.7	518649.6	553769.8
 1784757714	d772801	carrier_dispatch_wideselect_n16384	carrier_disp_wideselect_switch	16384	warm	2132929.6	2131762.3	2144912.7
 1784757714	d772801	carrier_dispatch_wideselect_n16384	carrier_disp_wideselect_threaded	16384	warm	2314729.2	2310509.2	2321666.2
+1784794215	2a3f34b	carrier_dispatch_wideselect_n16384	carrier_disp_wideselect_bittree	16384	warm	1683999.2	1677921.9	1738288.5
+1784794215	2a3f34b	carrier_dispatch_wideselect_n16384	carrier_disp_wideselect_fntable	16384	warm	2035718.3	2031250.4	2048797.1
+1784794215	2a3f34b	carrier_dispatch_wideselect_n16384	carrier_disp_wideselect_ifchain	16384	warm	2192477.5	2188855.9	2202656.9
+1784794215	2a3f34b	carrier_dispatch_wideselect_n16384	carrier_disp_wideselect_ifchainasc	16384	warm	2152082.9	2149328.5	2156512.7
+1784794215	2a3f34b	carrier_dispatch_wideselect_n16384	carrier_disp_wideselect_ifchainlin	16384	warm	2743132.9	2742465.4	2749585.4
+1784794215	2a3f34b	carrier_dispatch_wideselect_n16384	carrier_disp_wideselect_nullfloor	16384	warm	517753.8	509725.0	547503.1
+1784794215	2a3f34b	carrier_dispatch_wideselect_n16384	carrier_disp_wideselect_switch	16384	warm	2146036.7	2141733.8	2153306.5
+1784794215	2a3f34b	carrier_dispatch_wideselect_n16384	carrier_disp_wideselect_threaded	16384	warm	2364093.8	2361728.8	2407679.1

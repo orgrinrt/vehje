@@ -2,3 +2,6 @@
 1784759088	d772801	carrier_native_madd_n1024	carrier_nat_madd_copypatch	1024	warm	34807.5	34647.3	35073.9
 1784759088	d772801	carrier_native_madd_n1024	carrier_nat_madd_interp	1024	warm	49480.4	49417.1	49722.5
 1784759088	d772801	carrier_native_madd_n1024	carrier_nat_madd_stencil	1024	warm	34703.3	34699.2	34928.1
+1784794858	74f52f4	carrier_native_madd_n1024	carrier_nat_madd_copypatch	1024	warm	32469.6	32465.8	33164.6
+1784794858	74f52f4	carrier_native_madd_n1024	carrier_nat_madd_direct	1024	warm	33162.5	32859.8	33618.6
+1784794858	74f52f4	carrier_native_madd_n1024	carrier_nat_madd_interp	1024	warm	48123.8	48034.4	48423.3

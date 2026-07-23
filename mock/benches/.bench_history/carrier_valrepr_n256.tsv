@@ -2,3 +2,6 @@
 1784758551	d772801	carrier_valrepr_n256	carrier_vr_nanbox	256	warm	9029.6	9001.7	9233.4
 1784758551	d772801	carrier_valrepr_n256	carrier_vr_static	256	warm	10685.4	10667.1	11406.6
 1784758552	d772801	carrier_valrepr_n256	carrier_vr_tagged	256	warm	9433.8	9401.9	9471.7
+1784796654	74f52f4	carrier_valrepr_n256	carrier_vr_nanbox	256	warm	8138.8	8115.6	8282.3
+1784796654	74f52f4	carrier_valrepr_n256	carrier_vr_static	256	warm	8481.7	8474.0	8642.5
+1784796654	74f52f4	carrier_valrepr_n256	carrier_vr_tagged	256	warm	8517.9	8477.0	8841.2

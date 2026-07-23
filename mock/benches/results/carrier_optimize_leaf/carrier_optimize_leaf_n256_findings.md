@@ -1,6 +1,6 @@
 # Optimize stage (none/CSE/eqsat/CSE+eqsat...), downstream interp, leaf profile
 
-7 variants, 6 samples per variant.
+6 variants, 6 samples per variant.
 Baseline: **carrier_opt_leaf_none**
 
 ## Highlights
@@ -9,319 +9,300 @@ Baseline for all deltas below: **carrier_opt_leaf_none**. (Deltas are paired `va
 
 ### Baseline (carrier_opt_leaf_none) is the SLOWEST variant; every rival beats it
 
-The declared/defaulted baseline carrier_opt_leaf_none has the worst median (8.79 us). Every delta is therefore measured against the worst performer, which flatters all rivals and compresses the differences that matter among them (e.g. fastest carrier_opt_leaf_all at 3.58 us).
+The declared/defaulted baseline carrier_opt_leaf_none has the worst median (8.62 us). Every delta is therefore measured against the worst performer, which flatters all rivals and compresses the differences that matter among them (e.g. fastest carrier_opt_leaf_all at 3.49 us).
 
 _Why it matters:_ A baseline picked by accident (often the first variant to run / sort) silently skews every comparison. Re-baseline via `[bench.<name>.normalise]` on a representative variant.
 
-### carrier_opt_leaf_all dominates: 11% faster than the next best (carrier_opt_leaf_cse)
+### carrier_opt_leaf_all beats baseline by 61% (significant)
 
-carrier_opt_leaf_all (3.58 us) leads carrier_opt_leaf_cse (3.98 us) by 11%, a clear separation rather than a photo finish. CV 1.0%.
-
-_Why it matters:_ A dominant, well-separated winner is a safe default pick for this workload shape.
-
-### carrier_opt_leaf_all beats baseline by 59% (significant)
-
-carrier_opt_leaf_all is -5.16 us (59%) faster than baseline carrier_opt_leaf_none, with a CI that excludes zero.
+carrier_opt_leaf_all is -5.28 us (61%) faster than baseline carrier_opt_leaf_none, with a CI that excludes zero.
 
 _Why it matters:_ A large, significant improvement over the current baseline is a concrete reason to switch.
 
 ### carrier_opt_leaf_none is an outlier: 2.5x slower than the field
 
-carrier_opt_leaf_none (8.79 us) is 2.5x the fastest (3.58 us), well off the pack.
+carrier_opt_leaf_none (8.62 us) is 2.5x the fastest (3.49 us), well off the pack.
 
 _Why it matters:_ A >2x outlier is almost never the right choice; if it is intentional (e.g. it buys correctness), say so explicitly.
 
-### Two tiers: {carrier_opt_leaf_all, carrier_opt_leaf_cse, carrier_opt_leaf_eqsat, carrier_opt_leaf_cseeqsat} vs {carrier_opt_leaf_fold, carrier_opt_leaf_dce, carrier_opt_leaf_none} (90% apart)
+### carrier_opt_leaf_canon shows alternating (throttle bounce) (autocorr -0.85)
 
-The field splits into a fast tier {carrier_opt_leaf_all, carrier_opt_leaf_cse, carrier_opt_leaf_eqsat, carrier_opt_leaf_cseeqsat} and a slow tier {carrier_opt_leaf_fold, carrier_opt_leaf_dce, carrier_opt_leaf_none} with a 90% jump between them - a qualitative difference, not a gradient.
+carrier_opt_leaf_canon's per-pass series has lag-1 autocorrelation -0.85, indicating alternating (throttle bounce). Its timing may not be at steady state.
+
+_Why it matters:_ Autocorrelated samples violate the independence the CIs assume; the interval is optimistic until the drift is warmed out or cooled down.
+
+### Two tiers: {carrier_opt_leaf_all, carrier_opt_leaf_canon, carrier_opt_leaf_cse} vs {carrier_opt_leaf_dce, carrier_opt_leaf_fold, carrier_opt_leaf_none} (121% apart)
+
+The field splits into a fast tier {carrier_opt_leaf_all, carrier_opt_leaf_canon, carrier_opt_leaf_cse} and a slow tier {carrier_opt_leaf_dce, carrier_opt_leaf_fold, carrier_opt_leaf_none} with a 121% jump between them - a qualitative difference, not a gradient.
 
 _Why it matters:_ A tier split usually reflects a mechanism boundary (branchless vs branch, cached vs not); the tier, not the exact rank, is the finding.
 
 ## Key findings
 
-- **Fastest: carrier_opt_leaf_all** at 3584.1 ns median (-59.2% vs baseline)
-- 4 variants significantly faster than baseline
-- Spread: 2.45x (fastest 3584.1 ns, slowest 8785.6 ns)
+- **Fastest: carrier_opt_leaf_all** at 3493.5 ns median (-59.5% vs baseline)
+- 3 variants significantly faster than baseline
+- Spread: 2.47x (fastest 3493.5 ns, slowest 8622.3 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| carrier_opt_leaf_all | 6155ns | 6175ns | 6033ns | 6138ns | 6240ns | -47.51% |
-| carrier_opt_leaf_cse | 6371ns | 6451ns | 5684ns | 6441ns | 6609ns | -45.67% |
-| carrier_opt_leaf_cseeqsat | 7143ns | 7130ns | 7063ns | 7122ns | 7215ns | -39.08% |
-| carrier_opt_leaf_dce | 11576ns | 11288ns | 11143ns | 11266ns | 12258ns | -1.28% |
-| carrier_opt_leaf_eqsat | 7019ns | 6994ns | 6932ns | 6985ns | 7114ns | -40.14% |
-| carrier_opt_leaf_fold | 11227ns | 11214ns | 11099ns | 11208ns | 11318ns | -4.26% |
-| carrier_opt_leaf_none | 11726ns | 11436ns | 11067ns | 11399ns | 12547ns | base |
+| carrier_opt_leaf_all | 5807ns | 5892ns | 5421ns | 5742ns | 6097ns | -47.00% |
+| carrier_opt_leaf_canon | 6078ns | 6072ns | 5678ns | 5952ns | 6466ns | -44.53% |
+| carrier_opt_leaf_cse | 6052ns | 6087ns | 5679ns | 5965ns | 6368ns | -44.77% |
+| carrier_opt_leaf_dce | 10758ns | 10656ns | 10000ns | 10453ns | 11594ns | -1.81% |
+| carrier_opt_leaf_fold | 10708ns | 10907ns | 9842ns | 10632ns | 11254ns | -2.27% |
+| carrier_opt_leaf_none | 10956ns | 11094ns | 9887ns | 10847ns | 11654ns | base |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| carrier_opt_leaf_all | 3591ns | 3555ns | 3628ns | -60.62% | 0.071 |
-| carrier_opt_leaf_cse | 3901ns | 3463ns | 4011ns | -57.22% | 0.066 |
-| carrier_opt_leaf_cseeqsat | 4565ns | 4550ns | 4584ns | -49.94% | 0.056 |
-| carrier_opt_leaf_dce | 8990ns | 8607ns | 9644ns | -1.42% | 0.028 |
-| carrier_opt_leaf_eqsat | 4522ns | 4490ns | 4561ns | -50.41% | 0.057 |
-| carrier_opt_leaf_fold | 8670ns | 8608ns | 8744ns | -4.92% | 0.030 |
-| carrier_opt_leaf_none | 9119ns | 8611ns | 9930ns | base | 0.028 |
+| carrier_opt_leaf_all | 3422ns | 3196ns | 3559ns | -59.97% | 0.075 |
+| carrier_opt_leaf_canon | 3749ns | 3525ns | 3982ns | -56.14% | 0.068 |
+| carrier_opt_leaf_cse | 3709ns | 3462ns | 3924ns | -56.61% | 0.069 |
+| carrier_opt_leaf_dce | 8369ns | 7764ns | 9042ns | -2.10% | 0.031 |
+| carrier_opt_leaf_fold | 8305ns | 7686ns | 8707ns | -2.85% | 0.031 |
+| carrier_opt_leaf_none | 8549ns | 7703ns | 9220ns | base | 0.030 |
+
+## Hardware counters (per call)
+
+| Variant | instructions | cycles | IPC | × base instr |
+|---|---|---|---|---|
+| carrier_opt_leaf_all | 270817 | 1326576 | 0.204 | 0.92× |
+| carrier_opt_leaf_canon | 276172 | 1441162 | 0.192 | 0.94× |
+| carrier_opt_leaf_cse | 278906 | 1453434 | 0.192 | 0.95× |
+| carrier_opt_leaf_dce | 295670 | 1676430 | 0.176 | 1.01× |
+| carrier_opt_leaf_fold | 288140 | 1642682 | 0.175 | 0.98× |
+| carrier_opt_leaf_none | 293557 | 1643290 | 0.179 | 1.00× |
+
+Instructions and cycles are the mean over the variant's samples for the measured region. IPC is instructions per cycle. The instruction ratio isolates whether a variant wins by retiring fewer instructions or by executing the same instructions more efficiently.
 
 ## Performance model
 
-- Peak throughput: **0.074 Gops/s** (carrier_opt_leaf_cse; best 20% batches)
+- Peak throughput: **0.080 Gops/s** (carrier_opt_leaf_all; best 20% batches)
 - Ops per call: 256
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| carrier_opt_leaf_all | 0.071 | 96.6% |
-| carrier_opt_leaf_cse | 0.064 | 87.1% |
-| carrier_opt_leaf_cseeqsat | 0.056 | 76.0% |
-| carrier_opt_leaf_dce | 0.029 | 39.8% |
-| carrier_opt_leaf_eqsat | 0.057 | 76.7% |
-| carrier_opt_leaf_fold | 0.030 | 40.0% |
-| carrier_opt_leaf_none | 0.029 | 39.4% |
+| carrier_opt_leaf_all | 0.073 | 91.5% |
+| carrier_opt_leaf_canon | 0.068 | 85.5% |
+| carrier_opt_leaf_cse | 0.068 | 85.4% |
+| carrier_opt_leaf_dce | 0.031 | 38.6% |
+| carrier_opt_leaf_fold | 0.030 | 37.7% |
+| carrier_opt_leaf_none | 0.030 | 37.1% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| carrier_opt_leaf_all | 6155ns | 6155ns | -47.51% |
-| carrier_opt_leaf_cse | 6371ns | 6371ns | -45.67% |
-| carrier_opt_leaf_cseeqsat | 7143ns | 7143ns | -39.08% |
-| carrier_opt_leaf_dce | 11576ns | 11576ns | -1.28% |
-| carrier_opt_leaf_eqsat | 7019ns | 7019ns | -40.14% |
-| carrier_opt_leaf_fold | 11227ns | 11227ns | -4.26% |
-| carrier_opt_leaf_none | 11726ns | 11726ns | base |
+| carrier_opt_leaf_all | 5807ns | 5807ns | -47.00% |
+| carrier_opt_leaf_canon | 6078ns | 6078ns | -44.53% |
+| carrier_opt_leaf_cse | 6052ns | 6052ns | -44.77% |
+| carrier_opt_leaf_dce | 10758ns | 10758ns | -1.81% |
+| carrier_opt_leaf_fold | 10708ns | 10708ns | -2.27% |
+| carrier_opt_leaf_none | 10956ns | 10956ns | base |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| carrier_opt_leaf_none | 8786ns | base | --- | [8641, 9930] | --- | --- | --- | --- |
-| carrier_opt_leaf_all | 3584ns | -5161.2ns (-58.7%) | [-6369, -5054]ns | [3561, 3628] | YES | 0.0469 | 0.0313 | 0 |
-| carrier_opt_leaf_cse | 3977ns | -4790.8ns (-54.5%) | [-6196, -4668]ns | [3714, 4011] | YES | 0.0469 | 0.0313 | 0 |
-| carrier_opt_leaf_cseeqsat | 4558ns | -4215.4ns (-48.0%) | [-5363, -4084]ns | [4553, 4584] | YES | 0.0469 | 0.0313 | 0 |
-| carrier_opt_leaf_dce | 8709ns | no significant difference | [-1220, +927]ns | [8616, 9644] | no | 0.6875 | 0.6875 | 0 |
-| carrier_opt_leaf_eqsat | 4513ns | -4286.2ns (-48.8%) | [-5393, -4111]ns | [4493, 4561] | YES | 0.0469 | 0.0313 | 0 |
-| carrier_opt_leaf_fold | 8655ns | no significant difference | [-1260, +52]ns | [8612, 8744] | no | 0.6875 | 0.6875 | 0 |
+| carrier_opt_leaf_none | 8622ns | base | --- | [7804, 9220] | --- | --- | --- | --- |
+| carrier_opt_leaf_all | 3494ns | -5277.6ns (-61.2%) | [-5661, -4440]ns | [3215, 3559] | YES (adj: no) | 0.0521 | 0.0313 | 0 |
+| carrier_opt_leaf_canon | 3739ns | -4670.9ns (-54.2%) | [-5460, -4268]ns | [3526, 3982] | YES (adj: no) | 0.0521 | 0.0313 | 0 |
+| carrier_opt_leaf_cse | 3742ns | -4698.8ns (-54.5%) | [-5560, -4259]ns | [3463, 3924] | YES (adj: no) | 0.0521 | 0.0313 | 0 |
+| carrier_opt_leaf_dce | 8272ns | no significant difference | [-1077, +606]ns | [7793, 9042] | no | 1.0000 | 1.0000 | 0 |
+| carrier_opt_leaf_fold | 8471ns | no significant difference | [-930, +433]ns | [7738, 8707] | no | 0.8594 | 0.6875 | 0 |
 
 ## Per-pass consistency (nonstop e2e, Δ vs baseline)
 
-| Pass | carrier_opt_leaf_none | carrier_opt_leaf_all | carrier_opt_leaf_cse | carrier_opt_leaf_cseeqsat | carrier_opt_leaf_dce | carrier_opt_leaf_eqsat | carrier_opt_leaf_fold |
-|---|---|---|---|---|---|---|---|
-| 1 | 9495ns | -62.6% | -63.5% | -51.8% | -7.8% | -52.0% | -8.0% |
-| 2 | 8611ns | -58.3% | -54.0% | -47.1% | -0.0% | -47.8% | +0.3% |
-| 3 | 8810ns | -58.4% | -54.9% | -47.9% | -2.1% | -48.8% | -1.5% |
-| 4 | 8672ns | -58.6% | -54.1% | -47.4% | +13.7% | -47.4% | +1.0% |
-| 5 | 8761ns | -59.1% | -54.1% | -48.1% | +7.6% | -48.7% | -1.7% |
-| 6 | 10365ns | -65.6% | -61.4% | -56.0% | -16.4% | -56.4% | -17.0% |
+| Pass | carrier_opt_leaf_none | carrier_opt_leaf_all | carrier_opt_leaf_canon | carrier_opt_leaf_cse | carrier_opt_leaf_dce | carrier_opt_leaf_fold |
+|---|---|---|---|---|---|---|
+| 1 | 7904ns | -55.8% | -55.4% | -56.2% | +10.2% | +9.9% |
+| 2 | 8620ns | -62.9% | -54.0% | -54.2% | -9.3% | -10.8% |
+| 3 | 9189ns | -61.6% | -61.6% | -62.3% | -14.8% | -5.0% |
+| 4 | 9252ns | -61.2% | -56.8% | -58.3% | -2.1% | -10.0% |
+| 5 | 7703ns | -58.0% | -54.0% | -52.9% | +0.8% | +1.1% |
+| 6 | 8624ns | -59.5% | -54.4% | -54.7% | +4.7% | -0.1% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| carrier_opt_leaf_all | -0.017 | ok |
-| carrier_opt_leaf_cse | 0.017 | ok |
-| carrier_opt_leaf_cseeqsat | -0.234 | moderate- |
-| carrier_opt_leaf_dce | 0.111 | ok |
-| carrier_opt_leaf_eqsat | -0.479 | moderate- |
-| carrier_opt_leaf_fold | -0.165 | ok |
-| carrier_opt_leaf_none | -0.077 | ok |
+| carrier_opt_leaf_all | -0.495 | moderate- |
+| carrier_opt_leaf_canon | -0.848 | HIGH- (thermal bounce) |
+| carrier_opt_leaf_cse | -0.745 | HIGH- (thermal bounce) |
+| carrier_opt_leaf_dce | -0.545 | HIGH- (thermal bounce) |
+| carrier_opt_leaf_fold | -0.616 | HIGH- (thermal bounce) |
+| carrier_opt_leaf_none | -0.102 | ok |
 
 **Consistency summary:**
 
 - **carrier_opt_leaf_all**: won 6/6, lost 0/6
+- **carrier_opt_leaf_canon**: won 6/6, lost 0/6
 - **carrier_opt_leaf_cse**: won 6/6, lost 0/6
-- **carrier_opt_leaf_cseeqsat**: won 6/6, lost 0/6
-- **carrier_opt_leaf_dce**: won 3/6, lost 2/6
-- **carrier_opt_leaf_eqsat**: won 6/6, lost 0/6
+- **carrier_opt_leaf_dce**: won 3/6, lost 3/6
 - **carrier_opt_leaf_fold**: won 4/6, lost 2/6
 
 ## Bridge overhead per variant
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| carrier_opt_leaf_all | 87612.4ns | 3591.0ns | 2439.8% | HIGH |
-| carrier_opt_leaf_cse | 87448.8ns | 3900.6ns | 2241.9% | HIGH |
-| carrier_opt_leaf_cseeqsat | 86864.5ns | 4564.8ns | 1902.9% | HIGH |
-| carrier_opt_leaf_dce | 88488.8ns | 8989.6ns | 984.3% | HIGH |
-| carrier_opt_leaf_eqsat | 86976.3ns | 4522.4ns | 1923.2% | HIGH |
-| carrier_opt_leaf_fold | 86991.4ns | 8670.3ns | 1003.3% | HIGH |
-| carrier_opt_leaf_none | 88236.6ns | 9118.9ns | 967.6% | HIGH |
+| carrier_opt_leaf_all | 86994.9ns | 3422.5ns | 2541.9% | HIGH |
+| carrier_opt_leaf_canon | 87376.4ns | 3749.1ns | 2330.6% | HIGH |
+| carrier_opt_leaf_cse | 87290.5ns | 3709.4ns | 2353.2% | HIGH |
+| carrier_opt_leaf_dce | 89426.7ns | 8369.2ns | 1068.5% | HIGH |
+| carrier_opt_leaf_fold | 88479.0ns | 8305.3ns | 1065.3% | HIGH |
+| carrier_opt_leaf_none | 89163.8ns | 8548.8ns | 1043.0% | HIGH |
 
 ## Distribution (algo ns)
 
 ```
-carrier_opt_leaf_all (n=6, range 3554.6-3627.7 ns)
-   3554.6 |########################################
-   3558.3 |
-   3561.9 |
-   3565.6 |########################################
-   3569.2 |
-   3572.9 |
-   3576.5 |
-   3580.2 |########################################
-   3583.8 |########################################
-   3587.5 |########################################
-   3591.1 |
-   3594.8 |
-   3598.5 |
-   3602.1 |
-   3605.8 |
-   3609.4 |
-   3613.1 |
+carrier_opt_leaf_all (n=6, range 3196.2-3559.2 ns)
+   3196.2 |####################
+   3214.3 |
+   3232.5 |####################
+   3250.6 |
+   3268.8 |
+   3286.9 |
+   3305.1 |
+   3323.2 |
+   3341.4 |
+   3359.5 |
+   3377.7 |
+   3395.8 |
+   3414.0 |
+   3432.1 |
+   3450.3 |
+   3468.4 |
+   3486.6 |########################################
+   3504.7 |
+   3522.9 |####################
+   3541.0 |
+  (0 below, 1 above range)
+
+carrier_opt_leaf_canon (n=6, range 3525.4-3981.7 ns)
+   3525.4 |########################################
+   3548.2 |
+   3571.0 |
+   3593.8 |
    3616.7 |
-   3620.4 |
-   3624.0 |
+   3639.5 |
+   3662.3 |
+   3685.1 |
+   3707.9 |
+   3730.7 |
+   3753.5 |
+   3776.3 |
+   3799.2 |
+   3822.0 |
+   3844.8 |
+   3867.6 |
+   3890.4 |
+   3913.2 |#############
+   3936.0 |
+   3958.8 |#############
   (0 below, 1 above range)
 
-carrier_opt_leaf_cse (n=6, range 3462.9-4010.8 ns)
-   3462.9 |#############
-   3490.3 |
-   3517.7 |
-   3545.1 |
-   3572.5 |
-   3599.9 |
-   3627.3 |
-   3654.7 |
-   3682.1 |
-   3709.5 |
-   3736.9 |
-   3764.3 |
-   3791.7 |
-   3819.1 |
-   3846.5 |
-   3873.9 |
-   3901.3 |
-   3928.7 |
-   3956.1 |########################################
-   3983.5 |#############
+carrier_opt_leaf_cse (n=6, range 3462.5-3923.6 ns)
+   3462.5 |########################################
+   3485.6 |
+   3508.6 |
+   3531.7 |
+   3554.7 |
+   3577.8 |
+   3600.8 |
+   3623.9 |####################
+   3646.9 |
+   3670.0 |
+   3693.0 |
+   3716.1 |
+   3739.1 |
+   3762.2 |
+   3785.2 |
+   3808.3 |
+   3831.3 |
+   3854.4 |####################
+   3877.4 |
+   3900.5 |####################
   (0 below, 1 above range)
 
-carrier_opt_leaf_cseeqsat (n=6, range 4550.0-4583.5 ns)
-   4550.0 |####################
-   4551.7 |
-   4553.4 |
-   4555.0 |####################
-   4556.7 |########################################
-   4558.4 |
-   4560.1 |
-   4561.7 |
-   4563.4 |
-   4565.1 |
-   4566.8 |
-   4568.5 |
-   4570.1 |
-   4571.8 |
-   4573.5 |
-   4575.2 |####################
-   4576.8 |
-   4578.5 |
-   4580.2 |
-   4581.9 |
+carrier_opt_leaf_dce (n=6, range 7764.2-9041.7 ns)
+   7764.2 |########################################
+   7828.1 |####################
+   7891.9 |
+   7955.8 |
+   8019.7 |
+   8083.6 |
+   8147.4 |
+   8211.3 |
+   8275.2 |
+   8339.1 |
+   8403.0 |
+   8466.8 |
+   8530.7 |
+   8594.6 |
+   8658.5 |####################
+   8722.3 |
+   8786.2 |
+   8850.1 |
+   8914.0 |
+   8977.8 |####################
   (0 below, 1 above range)
 
-carrier_opt_leaf_dce (n=6, range 8607.1-9643.5 ns)
-   8607.1 |########################################
-   8658.9 |####################
-   8710.7 |####################
-   8762.6 |
-   8814.4 |
-   8866.2 |
-   8918.0 |
-   8969.9 |
-   9021.7 |
-   9073.5 |
-   9125.3 |
-   9177.1 |
-   9229.0 |
-   9280.8 |
-   9332.6 |
-   9384.4 |####################
-   9436.3 |
-   9488.1 |
-   9539.9 |
-   9591.7 |
+carrier_opt_leaf_fold (n=6, range 7686.2-8707.1 ns)
+   7686.2 |########################################
+   7737.2 |
+   7788.3 |########################################
+   7839.3 |
+   7890.4 |
+   7941.4 |
+   7992.5 |
+   8043.5 |
+   8094.6 |
+   8145.6 |
+   8196.6 |
+   8247.7 |
+   8298.7 |########################################
+   8349.8 |
+   8400.8 |
+   8451.9 |
+   8502.9 |
+   8554.0 |
+   8605.0 |########################################
+   8656.1 |########################################
   (0 below, 1 above range)
 
-carrier_opt_leaf_eqsat (n=6, range 4490.0-4560.8 ns)
-   4490.0 |########################################
-   4493.5 |########################################
-   4497.1 |
-   4500.6 |
-   4504.2 |
-   4507.7 |########################################
-   4511.2 |
-   4514.8 |########################################
-   4518.3 |
-   4521.9 |
-   4525.4 |
-   4528.9 |
-   4532.5 |
-   4536.0 |
-   4539.6 |
-   4543.1 |
-   4546.6 |
-   4550.2 |
-   4553.7 |########################################
-   4557.3 |
-  (0 below, 1 above range)
-
-carrier_opt_leaf_fold (n=6, range 8607.5-8744.0 ns)
-   8607.5 |########################################
-   8614.3 |########################################
-   8621.1 |
-   8628.0 |########################################
-   8634.8 |
-   8641.6 |
-   8648.4 |
-   8655.3 |
-   8662.1 |
-   8668.9 |
-   8675.7 |########################################
-   8682.5 |
+carrier_opt_leaf_none (n=6, range 7703.3-9220.5 ns)
+   7703.3 |####################
+   7779.2 |
+   7855.0 |####################
+   7930.9 |
+   8006.7 |
+   8082.6 |
+   8158.4 |
+   8234.3 |
+   8310.2 |
+   8386.0 |
+   8461.9 |
+   8537.7 |
+   8613.6 |########################################
    8689.4 |
-   8696.2 |
-   8703.0 |
-   8709.8 |
-   8716.7 |
-   8723.5 |
-   8730.3 |########################################
-   8737.1 |
-  (0 below, 1 above range)
-
-carrier_opt_leaf_none (n=6, range 8610.8-9929.8 ns)
-   8610.8 |########################################
-   8676.8 |
-   8742.7 |####################
-   8808.6 |####################
-   8874.6 |
-   8940.5 |
-   9006.5 |
-   9072.4 |
-   9138.4 |
-   9204.3 |
-   9270.3 |
-   9336.2 |
-   9402.2 |
-   9468.1 |####################
-   9534.1 |
-   9600.0 |
-   9666.0 |
-   9731.9 |
-   9797.9 |
-   9863.8 |
+   8765.3 |
+   8841.2 |
+   8917.0 |
+   8992.9 |
+   9068.7 |
+   9144.6 |####################
   (0 below, 1 above range)
 
 ```
 
 ## Diagnostics
 
-- **carrier_opt_leaf_all**: bridge=2447.1% of algo (FFI overhead may distort results)
-- **carrier_opt_leaf_cse**: bridge=2198.7% of algo (FFI overhead may distort results)
-- **carrier_opt_leaf_cseeqsat**: bridge=1904.8% of algo (FFI overhead may distort results)
-- **carrier_opt_leaf_dce**: bridge=1005.4% of algo (FFI overhead may distort results)
-- **carrier_opt_leaf_eqsat**: bridge=1927.2% of algo (FFI overhead may distort results)
-- **carrier_opt_leaf_fold**: bridge=1004.5% of algo (FFI overhead may distort results)
-- **carrier_opt_leaf_none**: bridge=1000.3% of algo (FFI overhead may distort results)
+- **carrier_opt_leaf_all**: bridge=2491.2% of algo (FFI overhead may distort results)
+- **carrier_opt_leaf_canon**: bridge=2338.5% of algo (FFI overhead may distort results)
+- **carrier_opt_leaf_cse**: bridge=2332.4% of algo (FFI overhead may distort results)
+- **carrier_opt_leaf_dce**: bridge=1089.3% of algo (FFI overhead may distort results)
+- **carrier_opt_leaf_fold**: bridge=1033.6% of algo (FFI overhead may distort results)
+- **carrier_opt_leaf_none**: bridge=1039.1% of algo (FFI overhead may distort results)

@@ -1,0 +1,5 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784793748	2a3f34b	carrier_coldcycle_leaf_n64	carrier_cold_leaf_fntable	64	warm	2886.7	2872.8	3104.8
+1784793748	2a3f34b	carrier_coldcycle_leaf_n64	carrier_cold_leaf_null	64	warm	1057.5	1053.3	1098.3
+1784793748	2a3f34b	carrier_coldcycle_leaf_n64	carrier_cold_leaf_switch	64	warm	1539.6	1529.2	1590.6
+1784793748	2a3f34b	carrier_coldcycle_leaf_n64	carrier_cold_leaf_threaded	64	warm	1341.2	1337.9	1393.1

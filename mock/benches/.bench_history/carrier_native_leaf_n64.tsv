@@ -2,3 +2,6 @@
 1784759108	d772801	carrier_native_leaf_n64	carrier_nat_leaf_copypatch	64	warm	552.1	544.8	562.1
 1784759108	d772801	carrier_native_leaf_n64	carrier_nat_leaf_interp	64	warm	1962.5	1945.0	2156.1
 1784759108	d772801	carrier_native_leaf_n64	carrier_nat_leaf_stencil	64	warm	553.3	549.8	562.1
+1784794840	74f52f4	carrier_native_leaf_n64	carrier_nat_leaf_copypatch	64	warm	541.2	526.9	557.9
+1784794840	74f52f4	carrier_native_leaf_n64	carrier_nat_leaf_direct	64	warm	550.0	532.3	553.2
+1784794840	74f52f4	carrier_native_leaf_n64	carrier_nat_leaf_interp	64	warm	2138.3	2128.9	2173.6

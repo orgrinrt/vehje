@@ -6,3 +6,9 @@
 1784758795	d772801	carrier_optimize_madd_n1024	carrier_opt_madd_eqsat	1024	warm	227960.4	227831.2	229467.9
 1784758795	d772801	carrier_optimize_madd_n1024	carrier_opt_madd_fold	1024	warm	26138.8	26099.0	26824.4
 1784758795	d772801	carrier_optimize_madd_n1024	carrier_opt_madd_none	1024	warm	41275.8	40946.9	41866.7
+1784794989	74f52f4	carrier_optimize_madd_n1024	carrier_opt_madd_all	1024	warm	1554.2	1549.8	1558.8
+1784794989	74f52f4	carrier_optimize_madd_n1024	carrier_opt_madd_canon	1024	warm	37336.7	37267.1	38052.9
+1784794989	74f52f4	carrier_optimize_madd_n1024	carrier_opt_madd_cse	1024	warm	38208.8	37877.1	39344.6
+1784794989	74f52f4	carrier_optimize_madd_n1024	carrier_opt_madd_dce	1024	warm	38132.1	37899.8	39196.4
+1784794989	74f52f4	carrier_optimize_madd_n1024	carrier_opt_madd_fold	1024	warm	25200.4	25174.8	28236.4
+1784794989	74f52f4	carrier_optimize_madd_n1024	carrier_opt_madd_none	1024	warm	39316.2	39038.3	41767.5

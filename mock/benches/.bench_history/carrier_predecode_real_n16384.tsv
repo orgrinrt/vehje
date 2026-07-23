@@ -5,3 +5,9 @@
 1784757827	d772801	carrier_predecode_real_n16384	carrier_pre_real_regcache	16384	warm	2216349.6	2210949.6	2222961.2
 1784757827	d772801	carrier_predecode_real_n16384	carrier_pre_real_switch	16384	warm	2098273.3	2096355.6	2103540.4
 1784757827	d772801	carrier_predecode_real_n16384	carrier_pre_real_threaded	16384	warm	2206553.8	2200116.3	2219391.6
+1784795358	74f52f4	carrier_predecode_real_n16384	carrier_pre_real_direct	16384	warm	1739800.4	1736426.0	1749962.5
+1784795358	74f52f4	carrier_predecode_real_n16384	carrier_pre_real_fntable	16384	warm	2452565.0	2450734.6	2465496.5
+1784795358	74f52f4	carrier_predecode_real_n16384	carrier_pre_real_null	16384	warm	508932.1	508152.9	519186.0
+1784795358	74f52f4	carrier_predecode_real_n16384	carrier_pre_real_regcache	16384	warm	2268397.1	2259817.3	2278137.9
+1784795358	74f52f4	carrier_predecode_real_n16384	carrier_pre_real_switch	16384	warm	2153857.5	2152031.6	2160563.2
+1784795358	74f52f4	carrier_predecode_real_n16384	carrier_pre_real_threaded	16384	warm	2259567.1	2259049.4	2264302.9

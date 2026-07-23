@@ -1,4 +1,4 @@
-# Residual encoding: register/SSA vs stack bytecode, real profile
+# Residual encoding: predecoded register/SSA vs stack bytecode, real profile
 
 2 variants, 6 samples per variant.
 Baseline: **carrier_res_real_register**
@@ -7,79 +7,100 @@ Baseline: **carrier_res_real_register**
 
 Baseline for all deltas below: **carrier_res_real_register**. (Deltas are paired `variant - baseline` medians; `*` marks a CI that excludes zero.)
 
-### carrier_res_real_register dominates: 160% faster than the next best (carrier_res_real_stack)
+### carrier_res_real_register dominates: 380% faster than the next best (carrier_res_real_stack)
 
-carrier_res_real_register (45.19 us) leads carrier_res_real_stack (117.42 us) by 160%, a clear separation rather than a photo finish. CV 4.4%.
+carrier_res_real_register (27.26 us) leads carrier_res_real_stack (130.77 us) by 380%, a clear separation rather than a photo finish. CV 4.9%.
 
 _Why it matters:_ A dominant, well-separated winner is a safe default pick for this workload shape.
 
+### carrier_res_real_stack shows alternating (throttle bounce) (autocorr -0.53)
+
+carrier_res_real_stack's per-pass series has lag-1 autocorrelation -0.53, indicating alternating (throttle bounce). Its timing may not be at steady state.
+
+_Why it matters:_ Autocorrelated samples violate the independence the CIs assume; the interval is optimistic until the drift is warmed out or cooled down.
+
 ### No variant beats the baseline (carrier_res_real_register)
 
-The baseline carrier_res_real_register is the fastest (45.19 us median); no rival improves on it (all deltas are >= 0).
+The baseline carrier_res_real_register is the fastest (27.26 us median); no rival improves on it (all deltas are >= 0).
 
 _Why it matters:_ When nothing beats the baseline, the current choice stands; the contenders cost speed for whatever else they buy.
 
+### Wide spread: slowest is 4.8x the fastest
+
+Fastest carrier_res_real_register (27.26 us) to slowest carrier_res_real_stack (130.77 us): 4.8x. The strategy choice matters a lot for this workload.
+
+_Why it matters:_ A wide field means the strategy is load-bearing here; getting it right (or wrong) has large consequences.
+
 ## Key findings
 
-- **Baseline (carrier_res_real_register) is the fastest** at 45192.1 ns median
+- **Baseline (carrier_res_real_register) is the fastest** at 27263.3 ns median
 - 1 variant significantly slower than baseline
-- Spread: 2.60x (fastest 45192.1 ns, slowest 117416.9 ns)
+- Spread: 4.80x (fastest 27263.3 ns, slowest 130774.4 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| carrier_res_real_register | 47527ns | 47718ns | 43876ns | 47290ns | 49710ns | base |
-| carrier_res_real_stack | 121210ns | 119708ns | 115440ns | 118852ns | 127632ns | +155.03% |
+| carrier_res_real_register | 30206ns | 29772ns | 28963ns | 29541ns | 31825ns | base |
+| carrier_res_real_stack | 127250ns | 133256ns | 108552ns | 128559ns | 134637ns | +321.28% |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| carrier_res_real_register | 44994ns | 41465ns | 47037ns | base | 0.023 |
-| carrier_res_real_stack | 118787ns | 113122ns | 124984ns | +164.01% | 0.009 |
+| carrier_res_real_register | 27817ns | 26741ns | 29338ns | base | 0.037 |
+| carrier_res_real_stack | 124768ns | 106100ns | 132071ns | +348.53% | 0.008 |
+
+## Hardware counters (per call)
+
+| Variant | instructions | cycles | IPC | × base instr |
+|---|---|---|---|---|
+| carrier_res_real_register | 425078 | 1374204 | 0.309 | 1.00× |
+| carrier_res_real_stack | 722826 | 2173558 | 0.333 | 1.70× |
+
+Instructions and cycles are the mean over the variant's samples for the measured region. IPC is instructions per cycle. The instruction ratio isolates whether a variant wins by retiring fewer instructions or by executing the same instructions more efficiently.
 
 ## Performance model
 
-- Peak throughput: **0.025 Gops/s** (carrier_res_real_register; best 20% batches)
+- Peak throughput: **0.038 Gops/s** (carrier_res_real_register; best 20% batches)
 - Ops per call: 1024
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| carrier_res_real_register | 0.023 | 91.8% |
-| carrier_res_real_stack | 0.009 | 35.3% |
+| carrier_res_real_register | 0.038 | 98.1% |
+| carrier_res_real_stack | 0.008 | 20.4% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| carrier_res_real_register | 47527ns | 47527ns | base |
-| carrier_res_real_stack | 121210ns | 121210ns | +155.03% |
+| carrier_res_real_register | 30206ns | 30206ns | base |
+| carrier_res_real_stack | 127250ns | 127250ns | +321.28% |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| carrier_res_real_register | 45192ns | base | --- | [42752, 47037] | --- | --- | --- | --- |
-| carrier_res_real_stack | 117417ns | +71742.5ns (+158.8%) | [+68536, +81102]ns | [113961, 124984] | YES | 0.0313 | 0.0313 | 0 |
+| carrier_res_real_register | 27263ns | base | --- | [26849, 29338] | --- | --- | --- | --- |
+| carrier_res_real_stack | 130774ns | +103743.3ns (+380.5%) | [+82120, +104990]ns | [111458, 132071] | YES | 0.0313 | 0.0313 | 0 |
 
 ## Per-pass consistency (nonstop e2e, Δ vs baseline)
 
 | Pass | carrier_res_real_register | carrier_res_real_stack |
 |---|---|---|
-| 1 | 47818ns | +151.5% |
-| 2 | 44039ns | +161.3% |
-| 3 | 46255ns | +144.6% |
-| 4 | 44594ns | +157.4% |
-| 5 | 45790ns | +161.6% |
-| 6 | 41465ns | +212.8% |
+| 1 | 27422ns | +383.1% |
+| 2 | 28050ns | +316.5% |
+| 3 | 26958ns | +385.7% |
+| 4 | 27105ns | +381.9% |
+| 5 | 30625ns | +246.4% |
+| 6 | 26741ns | +392.4% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| carrier_res_real_register | -0.318 | moderate- |
-| carrier_res_real_stack | 0.244 | moderate+ |
+| carrier_res_real_register | -0.448 | moderate- |
+| carrier_res_real_stack | -0.528 | HIGH- (thermal bounce) |
 
 **Consistency summary:**
 
@@ -89,61 +110,61 @@ _Why it matters:_ When nothing beats the baseline, the current choice stands; th
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| carrier_res_real_register | 109999.9ns | 44993.5ns | 244.5% | HIGH |
-| carrier_res_real_stack | 109704.0ns | 118787.1ns | 92.4% | HIGH |
+| carrier_res_real_register | 106565.2ns | 27816.8ns | 383.1% | HIGH |
+| carrier_res_real_stack | 103219.3ns | 124767.9ns | 82.7% | HIGH |
 
 ## Distribution (algo ns)
 
 ```
-carrier_res_real_register (n=6, range 41464.6-47036.7 ns)
-  41464.6 |########################################
-  41743.2 |
-  42021.8 |
-  42300.4 |
-  42579.0 |
-  42857.6 |
-  43136.2 |
-  43414.8 |
-  43693.4 |
-  43972.0 |########################################
-  44250.6 |
-  44529.2 |########################################
-  44807.8 |
-  45086.4 |
-  45365.0 |
-  45643.6 |########################################
-  45922.2 |
-  46200.8 |########################################
-  46479.4 |
-  46758.0 |
+carrier_res_real_register (n=6, range 26740.8-29337.9 ns)
+  26740.8 |########################################
+  26870.7 |########################################
+  27000.5 |########################################
+  27130.4 |
+  27260.2 |
+  27390.1 |########################################
+  27519.9 |
+  27649.8 |
+  27779.6 |
+  27909.5 |
+  28039.3 |########################################
+  28169.2 |
+  28299.1 |
+  28428.9 |
+  28558.8 |
+  28688.6 |
+  28818.5 |
+  28948.3 |
+  29078.2 |
+  29208.0 |
   (0 below, 1 above range)
 
-carrier_res_real_stack (n=6, range 113122.1-124983.9 ns)
-  113122.1 |########################################
-  113715.2 |
-  114308.3 |########################################
-  114901.4 |########################################
-  115494.5 |
-  116087.6 |
-  116680.7 |
-  117273.7 |
-  117866.8 |
-  118459.9 |
-  119053.0 |
-  119646.1 |########################################
-  120239.2 |########################################
-  120832.3 |
-  121425.4 |
-  122018.5 |
-  122611.6 |
-  123204.7 |
-  123797.8 |
-  124390.9 |
+carrier_res_real_stack (n=6, range 106099.6-132071.2 ns)
+  106099.6 |####################
+  107398.2 |
+  108696.8 |
+  109995.3 |
+  111293.9 |
+  112592.5 |
+  113891.1 |
+  115189.7 |
+  116488.3 |####################
+  117786.8 |
+  119085.4 |
+  120384.0 |
+  121682.6 |
+  122981.2 |
+  124279.8 |
+  125578.3 |
+  126876.9 |
+  128175.5 |
+  129474.1 |####################
+  130772.7 |########################################
   (0 below, 1 above range)
 
 ```
 
 ## Diagnostics
 
-- **carrier_res_real_register**: bridge=235.2% of algo (FFI overhead may distort results)
-- **carrier_res_real_stack**: bridge=92.3% of algo (FFI overhead may distort results)
+- **carrier_res_real_register**: bridge=394.3% of algo (FFI overhead may distort results)
+- **carrier_res_real_stack**: bridge=78.0% of algo (FFI overhead may distort results)

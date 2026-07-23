@@ -7,147 +7,163 @@ Baseline: **carrier_disp_scatter_switch**
 
 Baseline for all deltas below: **carrier_disp_scatter_switch**. (Deltas are paired `variant - baseline` medians; `*` marks a CI that excludes zero.)
 
-### carrier_disp_scatter_nullfloor dominates: 149% faster than the next best (carrier_disp_scatter_bittree)
+### carrier_disp_scatter_nullfloor dominates: 162% faster than the next best (carrier_disp_scatter_bittree)
 
-carrier_disp_scatter_nullfloor (117.92 us) leads carrier_disp_scatter_bittree (293.36 us) by 149%, a clear separation rather than a photo finish. CV 2.5%.
+carrier_disp_scatter_nullfloor (116.91 us) leads carrier_disp_scatter_bittree (306.03 us) by 162%, a clear separation rather than a photo finish. CV 1.7%.
 
 _Why it matters:_ A dominant, well-separated winner is a safe default pick for this workload shape.
 
-### carrier_disp_scatter_nullfloor beats baseline by 80% (significant)
+### carrier_disp_scatter_nullfloor beats baseline by 79% (significant)
 
-carrier_disp_scatter_nullfloor is -463.56 us (80%) faster than baseline carrier_disp_scatter_switch, with a CI that excludes zero.
+carrier_disp_scatter_nullfloor is -449.40 us (79%) faster than baseline carrier_disp_scatter_switch, with a CI that excludes zero.
 
 _Why it matters:_ A large, significant improvement over the current baseline is a concrete reason to switch.
 
-### carrier_disp_scatter_threaded is an outlier: 5.4x slower than the field
+### carrier_disp_scatter_threaded is an outlier: 5.0x slower than the field
 
-carrier_disp_scatter_threaded (639.60 us) is 5.4x the fastest (117.92 us), well off the pack.
+carrier_disp_scatter_threaded (589.17 us) is 5.0x the fastest (116.91 us), well off the pack.
 
 _Why it matters:_ A >2x outlier is almost never the right choice; if it is intentional (e.g. it buys correctness), say so explicitly.
 
-### carrier_disp_scatter_fntable shows warm-up / thermal drift (autocorr +0.52)
+### carrier_disp_scatter_ifchainasc shows alternating (throttle bounce) (autocorr -0.53)
 
-carrier_disp_scatter_fntable's per-pass series has lag-1 autocorrelation +0.52, indicating warm-up / thermal drift. Its timing may not be at steady state.
+carrier_disp_scatter_ifchainasc's per-pass series has lag-1 autocorrelation -0.53, indicating alternating (throttle bounce). Its timing may not be at steady state.
 
 _Why it matters:_ Autocorrelated samples violate the independence the CIs assume; the interval is optimistic until the drift is warmed out or cooled down.
 
-### Two tiers: {carrier_disp_scatter_nullfloor} vs {carrier_disp_scatter_bittree, carrier_disp_scatter_ifchainlin, carrier_disp_scatter_fntable, carrier_disp_scatter_switch, carrier_disp_scatter_ifchainasc, carrier_disp_scatter_ifchain, carrier_disp_scatter_threaded} (149% apart)
+### Two tiers: {carrier_disp_scatter_nullfloor} vs {carrier_disp_scatter_bittree, carrier_disp_scatter_fntable, carrier_disp_scatter_ifchainlin, carrier_disp_scatter_ifchain, carrier_disp_scatter_ifchainasc, carrier_disp_scatter_switch, carrier_disp_scatter_threaded} (162% apart)
 
-The field splits into a fast tier {carrier_disp_scatter_nullfloor} and a slow tier {carrier_disp_scatter_bittree, carrier_disp_scatter_ifchainlin, carrier_disp_scatter_fntable, carrier_disp_scatter_switch, carrier_disp_scatter_ifchainasc, carrier_disp_scatter_ifchain, carrier_disp_scatter_threaded} with a 149% jump between them - a qualitative difference, not a gradient.
+The field splits into a fast tier {carrier_disp_scatter_nullfloor} and a slow tier {carrier_disp_scatter_bittree, carrier_disp_scatter_fntable, carrier_disp_scatter_ifchainlin, carrier_disp_scatter_ifchain, carrier_disp_scatter_ifchainasc, carrier_disp_scatter_switch, carrier_disp_scatter_threaded} with a 162% jump between them - a qualitative difference, not a gradient.
 
 _Why it matters:_ A tier split usually reflects a mechanism boundary (branchless vs branch, cached vs not); the tier, not the exact rank, is the finding.
 
-### Wide spread: slowest is 5.4x the fastest
+### Wide spread: slowest is 5.0x the fastest
 
-Fastest carrier_disp_scatter_nullfloor (117.92 us) to slowest carrier_disp_scatter_threaded (639.60 us): 5.4x. The strategy choice matters a lot for this workload.
+Fastest carrier_disp_scatter_nullfloor (116.91 us) to slowest carrier_disp_scatter_threaded (589.17 us): 5.0x. The strategy choice matters a lot for this workload.
 
 _Why it matters:_ A wide field means the strategy is load-bearing here; getting it right (or wrong) has large consequences.
 
 ## Key findings
 
-- **Fastest: carrier_disp_scatter_nullfloor** at 117921.5 ns median (-79.8% vs baseline)
+- **Fastest: carrier_disp_scatter_nullfloor** at 116911.9 ns median (-79.4% vs baseline)
 - 2 variants significantly faster than baseline
-- Spread: 5.42x (fastest 117921.5 ns, slowest 639596.1 ns)
+- 1 variant significantly slower than baseline
+- Spread: 5.04x (fastest 116911.9 ns, slowest 589170.0 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| carrier_disp_scatter_bittree | 311721ns | 296024ns | 281943ns | 291911ns | 356324ns | -46.89% |
-| carrier_disp_scatter_fntable | 560514ns | 562309ns | 546022ns | 559253ns | 569653ns | -4.50% |
-| carrier_disp_scatter_ifchain | 604206ns | 614764ns | 527472ns | 612266ns | 630483ns | +2.95% |
-| carrier_disp_scatter_ifchainasc | 604350ns | 605088ns | 574624ns | 597324ns | 629750ns | +2.97% |
-| carrier_disp_scatter_ifchainlin | 558183ns | 551419ns | 510565ns | 538842ns | 611002ns | -4.89% |
-| carrier_disp_scatter_nullfloor | 120975ns | 120321ns | 117050ns | 119814ns | 124680ns | -79.39% |
-| carrier_disp_scatter_switch | 586907ns | 585039ns | 554858ns | 580342ns | 612780ns | base |
-| carrier_disp_scatter_threaded | 637142ns | 642452ns | 547574ns | 630274ns | 692226ns | +8.56% |
+| carrier_disp_scatter_bittree | 301444ns | 308800ns | 231855ns | 300990ns | 336918ns | -46.61% |
+| carrier_disp_scatter_fntable | 552777ns | 552212ns | 543972ns | 550865ns | 560049ns | -2.10% |
+| carrier_disp_scatter_ifchain | 568380ns | 562079ns | 540955ns | 556376ns | 600097ns | +0.67% |
+| carrier_disp_scatter_ifchainasc | 585719ns | 569740ns | 550126ns | 563333ns | 637095ns | +3.74% |
+| carrier_disp_scatter_ifchainlin | 568997ns | 559503ns | 520457ns | 547294ns | 625820ns | +0.78% |
+| carrier_disp_scatter_nullfloor | 119960ns | 119153ns | 118118ns | 119008ns | 122309ns | -78.75% |
+| carrier_disp_scatter_switch | 564618ns | 570945ns | 530728ns | 562793ns | 584302ns | base |
+| carrier_disp_scatter_threaded | 606289ns | 592050ns | 568407ns | 588636ns | 651711ns | +7.38% |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| carrier_disp_scatter_bittree | 309015ns | 278961ns | 353483ns | -47.10% | 0.013 |
-| carrier_disp_scatter_fntable | 557630ns | 543818ns | 566466ns | -4.53% | 0.007 |
-| carrier_disp_scatter_ifchain | 601393ns | 525145ns | 627710ns | +2.96% | 0.007 |
-| carrier_disp_scatter_ifchainasc | 601230ns | 571548ns | 626803ns | +2.93% | 0.007 |
-| carrier_disp_scatter_ifchainlin | 555603ns | 508293ns | 608015ns | -4.88% | 0.007 |
-| carrier_disp_scatter_nullfloor | 118540ns | 114855ns | 122201ns | -79.71% | 0.035 |
-| carrier_disp_scatter_switch | 584107ns | 551562ns | 609502ns | base | 0.007 |
-| carrier_disp_scatter_threaded | 634440ns | 545371ns | 689306ns | +8.62% | 0.006 |
+| carrier_disp_scatter_bittree | 298762ns | 229551ns | 333993ns | -46.84% | 0.014 |
+| carrier_disp_scatter_fntable | 550032ns | 540842ns | 557532ns | -2.13% | 0.007 |
+| carrier_disp_scatter_ifchain | 565231ns | 537950ns | 597014ns | +0.57% | 0.007 |
+| carrier_disp_scatter_ifchainasc | 582799ns | 547543ns | 633981ns | +3.70% | 0.007 |
+| carrier_disp_scatter_ifchainlin | 566187ns | 518174ns | 622409ns | +0.74% | 0.007 |
+| carrier_disp_scatter_nullfloor | 117624ns | 115632ns | 119875ns | -79.07% | 0.035 |
+| carrier_disp_scatter_switch | 562003ns | 528180ns | 581783ns | base | 0.007 |
+| carrier_disp_scatter_threaded | 603444ns | 565967ns | 648402ns | +7.37% | 0.007 |
+
+## Hardware counters (per call)
+
+| Variant | instructions | cycles | IPC | × base instr |
+|---|---|---|---|---|
+| carrier_disp_scatter_bittree | 1876408 | 4970794 | 0.377 | 0.54× |
+| carrier_disp_scatter_fntable | 3460294 | 6564440 | 0.527 | 0.99× |
+| carrier_disp_scatter_ifchain | 3557627 | 4835222 | 0.736 | 1.02× |
+| carrier_disp_scatter_ifchainasc | 3633528 | 4836203 | 0.751 | 1.04× |
+| carrier_disp_scatter_ifchainlin | 3533749 | 13237264 | 0.267 | 1.01× |
+| carrier_disp_scatter_nullfloor | 733703 | 4154434 | 0.177 | 0.21× |
+| carrier_disp_scatter_switch | 3496999 | 4704866 | 0.743 | 1.00× |
+| carrier_disp_scatter_threaded | 3783025 | 6531161 | 0.579 | 1.08× |
+
+Instructions and cycles are the mean over the variant's samples for the measured region. IPC is instructions per cycle. The instruction ratio isolates whether a variant wins by retiring fewer instructions or by executing the same instructions more efficiently.
 
 ## Performance model
 
-- Peak throughput: **0.036 Gops/s** (carrier_disp_scatter_nullfloor; best 20% batches)
+- Peak throughput: **0.035 Gops/s** (carrier_disp_scatter_nullfloor; best 20% batches)
 - Ops per call: 4096
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| carrier_disp_scatter_bittree | 0.014 | 39.2% |
-| carrier_disp_scatter_fntable | 0.007 | 20.5% |
-| carrier_disp_scatter_ifchain | 0.007 | 18.8% |
-| carrier_disp_scatter_ifchainasc | 0.007 | 19.1% |
-| carrier_disp_scatter_ifchainlin | 0.007 | 20.9% |
-| carrier_disp_scatter_nullfloor | 0.035 | 97.4% |
-| carrier_disp_scatter_switch | 0.007 | 19.7% |
-| carrier_disp_scatter_threaded | 0.006 | 18.0% |
+| carrier_disp_scatter_bittree | 0.013 | 37.8% |
+| carrier_disp_scatter_fntable | 0.007 | 21.1% |
+| carrier_disp_scatter_ifchain | 0.007 | 20.7% |
+| carrier_disp_scatter_ifchainasc | 0.007 | 20.4% |
+| carrier_disp_scatter_ifchainlin | 0.007 | 20.8% |
+| carrier_disp_scatter_nullfloor | 0.035 | 98.9% |
+| carrier_disp_scatter_switch | 0.007 | 20.4% |
+| carrier_disp_scatter_threaded | 0.007 | 19.6% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| carrier_disp_scatter_bittree | 311721ns | 311721ns | -46.89% |
-| carrier_disp_scatter_fntable | 560514ns | 560514ns | -4.50% |
-| carrier_disp_scatter_ifchain | 604206ns | 604206ns | +2.95% |
-| carrier_disp_scatter_ifchainasc | 604350ns | 604350ns | +2.97% |
-| carrier_disp_scatter_ifchainlin | 558183ns | 558183ns | -4.89% |
-| carrier_disp_scatter_nullfloor | 120975ns | 120975ns | -79.39% |
-| carrier_disp_scatter_switch | 586907ns | 586907ns | base |
-| carrier_disp_scatter_threaded | 637142ns | 637142ns | +8.56% |
+| carrier_disp_scatter_bittree | 301444ns | 301444ns | -46.61% |
+| carrier_disp_scatter_fntable | 552777ns | 552777ns | -2.10% |
+| carrier_disp_scatter_ifchain | 568380ns | 568380ns | +0.67% |
+| carrier_disp_scatter_ifchainasc | 585719ns | 585719ns | +3.74% |
+| carrier_disp_scatter_ifchainlin | 568997ns | 568997ns | +0.78% |
+| carrier_disp_scatter_nullfloor | 119960ns | 119960ns | -78.75% |
+| carrier_disp_scatter_switch | 564618ns | 564618ns | base |
+| carrier_disp_scatter_threaded | 606289ns | 606289ns | +7.38% |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| carrier_disp_scatter_switch | 582761ns | base | --- | [560059, 609502] | --- | --- | --- | --- |
-| carrier_disp_scatter_bittree | 293356ns | -291460.8ns (-50.0%) | [-315460, -218357]ns | [280205, 353483] | YES (adj: no) | 0.1094 | 0.0313 | 0 |
-| carrier_disp_scatter_fntable | 559078ns | no significant difference | [-50424, +6407]ns | [547345, 566466] | no | 0.3063 | 0.2188 | 0 |
-| carrier_disp_scatter_ifchain | 611448ns | no significant difference | [-35458, +62005]ns | [565022, 627710] | no | 0.8021 | 0.6875 | 0 |
-| carrier_disp_scatter_ifchainasc | 601877ns | no significant difference | [-14446, +52601]ns | [575010, 626803] | no | 1.0000 | 1.0000 | 0 |
-| carrier_disp_scatter_ifchainlin | 549112ns | no significant difference | [-66213, +12507]ns | [509684, 608015] | no | 0.3063 | 0.2188 | 0 |
-| carrier_disp_scatter_nullfloor | 117921ns | -463559.4ns (-79.5%) | [-492468, -440673]ns | [115499, 122201] | YES (adj: no) | 0.1094 | 0.0313 | 0 |
-| carrier_disp_scatter_threaded | 639596ns | no significant difference | [-16689, +93798]ns | [574420, 689306] | no | 0.3063 | 0.2188 | 0 |
+| carrier_disp_scatter_switch | 568031ns | base | --- | [536194, 581783] | --- | --- | --- | --- |
+| carrier_disp_scatter_bittree | 306030ns | -255986.9ns (-45.1%) | [-313283, -220452]ns | [256262, 333993] | YES (adj: no) | 0.1094 | 0.0313 | 0 |
+| carrier_disp_scatter_fntable | 549151ns | no significant difference | [-33946, +10292]ns | [543414, 557532] | no | 0.8021 | 0.6875 | 0 |
+| carrier_disp_scatter_ifchain | 558888ns | no significant difference | [-39754, +48550]ns | [539791, 597014] | no | 1.0000 | 1.0000 | 0 |
+| carrier_disp_scatter_ifchainasc | 566611ns | no significant difference | [-3515, +53712]ns | [547806, 633981] | no | 0.3828 | 0.2188 | 0 |
+| carrier_disp_scatter_ifchainlin | 556789ns | no significant difference | [-18811, +40625]ns | [519364, 622409] | no | 0.8021 | 0.6875 | 0 |
+| carrier_disp_scatter_nullfloor | 116912ns | -449399.8ns (-79.1%) | [-465033, -418702]ns | [116085, 119875] | YES (adj: no) | 0.1094 | 0.0313 | 0 |
+| carrier_disp_scatter_threaded | 589170ns | +25072.1ns (+4.4%) | [+6069, +93182]ns | [572758, 648402] | YES (adj: no) | 0.3828 | 0.2188 | 0 |
 
 ## Per-pass consistency (nonstop e2e, Δ vs baseline)
 
 | Pass | carrier_disp_scatter_switch | carrier_disp_scatter_bittree | carrier_disp_scatter_fntable | carrier_disp_scatter_ifchain | carrier_disp_scatter_ifchainasc | carrier_disp_scatter_ifchainlin | carrier_disp_scatter_nullfloor | carrier_disp_scatter_threaded |
 |---|---|---|---|---|---|---|---|---|
-| 1 | 585673ns | -51.9% | -5.9% | -10.3% | -0.1% | -7.5% | -79.2% | -6.9% |
-| 2 | 579848ns | -48.1% | -6.2% | +7.5% | +9.5% | -4.0% | -79.9% | +12.4% |
-| 3 | 596544ns | -53.2% | -6.7% | +2.4% | -4.2% | -14.8% | -80.7% | +1.2% |
-| 4 | 551562ns | -48.2% | +2.4% | +14.6% | +4.9% | -7.3% | -77.8% | +13.7% |
-| 5 | 568556ns | -30.0% | -0.1% | +6.4% | +8.8% | -0.3% | -79.6% | +18.5% |
-| 6 | 622460ns | -50.3% | -9.8% | -1.7% | -0.6% | +4.3% | -80.8% | +13.2% |
+| 1 | 570886ns | -59.8% | -1.4% | +4.9% | +0.9% | +11.0% | -79.6% | +2.5% |
+| 2 | 592680ns | -43.6% | -6.8% | -8.3% | +5.2% | +3.1% | -80.3% | +4.2% |
+| 3 | 528180ns | -39.2% | +3.6% | +8.7% | +3.7% | -1.9% | -77.9% | +28.6% |
+| 4 | 568204ns | -50.2% | -4.8% | -5.3% | -1.9% | -1.5% | -78.6% | -0.4% |
+| 5 | 567858ns | -41.2% | -2.9% | -4.6% | +13.5% | -2.5% | -79.6% | +4.4% |
+| 6 | 544207ns | -46.6% | +0.3% | +9.4% | +0.7% | -4.3% | -78.3% | +6.5% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| carrier_disp_scatter_bittree | -0.090 | ok |
-| carrier_disp_scatter_fntable | 0.523 | HIGH+ (drift/warm-up) |
-| carrier_disp_scatter_ifchain | -0.140 | ok |
-| carrier_disp_scatter_ifchainasc | -0.282 | moderate- |
-| carrier_disp_scatter_ifchainlin | 0.195 | ok |
-| carrier_disp_scatter_nullfloor | -0.506 | HIGH- (thermal bounce) |
-| carrier_disp_scatter_switch | -0.188 | ok |
-| carrier_disp_scatter_threaded | 0.039 | ok |
+| carrier_disp_scatter_bittree | -0.351 | moderate- |
+| carrier_disp_scatter_fntable | 0.113 | ok |
+| carrier_disp_scatter_ifchain | -0.320 | moderate- |
+| carrier_disp_scatter_ifchainasc | -0.526 | HIGH- (thermal bounce) |
+| carrier_disp_scatter_ifchainlin | 0.164 | ok |
+| carrier_disp_scatter_nullfloor | -0.481 | moderate- |
+| carrier_disp_scatter_switch | -0.408 | moderate- |
+| carrier_disp_scatter_threaded | -0.166 | ok |
 
 **Consistency summary:**
 
 - **carrier_disp_scatter_bittree**: won 6/6, lost 0/6
-- **carrier_disp_scatter_fntable**: won 5/6, lost 1/6
-- **carrier_disp_scatter_ifchain**: won 2/6, lost 4/6
-- **carrier_disp_scatter_ifchainasc**: won 2/6, lost 3/6
-- **carrier_disp_scatter_ifchainlin**: won 5/6, lost 1/6
+- **carrier_disp_scatter_fntable**: won 4/6, lost 2/6
+- **carrier_disp_scatter_ifchain**: won 3/6, lost 3/6
+- **carrier_disp_scatter_ifchainasc**: won 1/6, lost 5/6
+- **carrier_disp_scatter_ifchainlin**: won 4/6, lost 2/6
 - **carrier_disp_scatter_nullfloor**: won 6/6, lost 0/6
 - **carrier_disp_scatter_threaded**: won 1/6, lost 5/6
 
@@ -155,200 +171,200 @@ _Why it matters:_ A wide field means the strategy is load-bearing here; getting 
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| carrier_disp_scatter_bittree | 309721.8ns | 309014.5ns | 100.2% | HIGH |
-| carrier_disp_scatter_fntable | 552896.1ns | 557629.6ns | 99.2% | HIGH |
-| carrier_disp_scatter_ifchain | 602120.0ns | 601393.2ns | 100.1% | HIGH |
-| carrier_disp_scatter_ifchainasc | 601208.8ns | 601230.0ns | 100.0% | HIGH |
-| carrier_disp_scatter_ifchainlin | 557255.9ns | 555603.3ns | 100.3% | HIGH |
-| carrier_disp_scatter_nullfloor | 119029.7ns | 118540.3ns | 100.4% | HIGH |
-| carrier_disp_scatter_switch | 585625.5ns | 584107.1ns | 100.3% | HIGH |
-| carrier_disp_scatter_threaded | 634628.7ns | 634440.4ns | 100.0% | HIGH |
+| carrier_disp_scatter_bittree | 299162.9ns | 298762.0ns | 100.1% | HIGH |
+| carrier_disp_scatter_fntable | 555181.0ns | 550032.4ns | 100.9% | HIGH |
+| carrier_disp_scatter_ifchain | 565228.5ns | 565231.1ns | 100.0% | HIGH |
+| carrier_disp_scatter_ifchainasc | 582262.8ns | 582799.1ns | 99.9% | HIGH |
+| carrier_disp_scatter_ifchainlin | 567770.6ns | 566187.0ns | 100.3% | HIGH |
+| carrier_disp_scatter_nullfloor | 117904.0ns | 117624.2ns | 100.2% | HIGH |
+| carrier_disp_scatter_switch | 562546.9ns | 562002.6ns | 100.1% | HIGH |
+| carrier_disp_scatter_threaded | 604808.5ns | 603443.6ns | 100.2% | HIGH |
 
 ## Distribution (algo ns)
 
 ```
-carrier_disp_scatter_bittree (n=6, range 278961.2-353482.8 ns)
-  278961.2 |########################################
-  282687.3 |####################
-  286413.4 |
-  290139.4 |
-  293865.5 |
-  297591.6 |####################
-  301317.7 |
-  305043.7 |
-  308769.8 |####################
-  312495.9 |
-  316222.0 |
-  319948.1 |
-  323674.1 |
-  327400.2 |
-  331126.3 |
-  334852.4 |
-  338578.4 |
-  342304.5 |
-  346030.6 |
-  349756.7 |
+carrier_disp_scatter_bittree (n=6, range 229551.2-333993.3 ns)
+  229551.2 |########################################
+  234773.3 |
+  239995.4 |
+  245217.5 |
+  250439.6 |
+  255661.7 |
+  260883.8 |
+  266106.0 |
+  271328.1 |
+  276550.2 |
+  281772.3 |########################################
+  286994.4 |########################################
+  292216.5 |
+  297438.6 |
+  302660.7 |
+  307882.8 |
+  313104.9 |
+  318327.0 |########################################
+  323549.1 |
+  328771.2 |########################################
   (0 below, 1 above range)
 
-carrier_disp_scatter_fntable (n=6, range 543818.3-566466.2 ns)
-  543818.3 |########################################
-  544950.7 |
-  546083.1 |
-  547215.5 |
-  548347.9 |
-  549480.3 |
-  550612.7 |########################################
-  551745.1 |
-  552877.5 |
-  554009.9 |
-  555142.3 |
-  556274.7 |########################################
-  557407.1 |
-  558539.5 |
-  559671.9 |
-  560804.3 |########################################
-  561936.7 |
-  563069.1 |
-  564201.5 |########################################
-  565333.9 |
+carrier_disp_scatter_fntable (n=6, range 540841.7-557532.3 ns)
+  540841.7 |########################################
+  541676.2 |
+  542510.8 |
+  543345.3 |
+  544179.8 |
+  545014.3 |
+  545848.9 |########################################
+  546683.4 |########################################
+  547517.9 |
+  548352.5 |
+  549187.0 |
+  550021.5 |
+  550856.1 |########################################
+  551690.6 |########################################
+  552525.1 |
+  553359.7 |
+  554194.2 |
+  555028.7 |
+  555863.2 |
+  556697.8 |
   (0 below, 1 above range)
 
-carrier_disp_scatter_ifchain (n=6, range 525145.4-627709.6 ns)
-  525145.4 |####################
-  530273.6 |
-  535401.8 |
-  540530.0 |
-  545658.2 |
-  550786.4 |
-  555914.6 |
-  561042.9 |
-  566171.1 |
-  571299.3 |
-  576427.5 |
-  581555.7 |
-  586683.9 |
-  591812.1 |
-  596940.3 |
-  602068.5 |####################
-  607196.7 |########################################
-  612324.9 |
-  617453.1 |
-  622581.3 |####################
+carrier_disp_scatter_ifchain (n=6, range 537949.6-597013.9 ns)
+  537949.6 |####################
+  540902.8 |########################################
+  543856.0 |
+  546809.3 |
+  549762.5 |
+  552715.7 |
+  555668.9 |
+  558622.1 |
+  561575.3 |
+  564528.6 |
+  567481.8 |
+  570435.0 |
+  573388.2 |####################
+  576341.4 |
+  579294.6 |
+  582247.9 |
+  585201.1 |
+  588154.3 |
+  591107.5 |
+  594060.7 |####################
   (0 below, 1 above range)
 
-carrier_disp_scatter_ifchainasc (n=6, range 571547.5-626802.9 ns)
-  571547.5 |####################
-  574310.3 |
-  577073.0 |####################
-  579835.8 |
-  582598.6 |####################
-  585361.3 |
-  588124.1 |
-  590886.9 |
-  593649.7 |
-  596412.4 |
-  599175.2 |
-  601938.0 |
-  604700.7 |
-  607463.5 |
-  610226.3 |
-  612989.1 |
-  615751.8 |
-  618514.6 |########################################
-  621277.4 |
-  624040.1 |
+carrier_disp_scatter_ifchainasc (n=6, range 547543.3-633980.8 ns)
+  547543.3 |########################################
+  551865.2 |
+  556187.1 |####################
+  560508.9 |
+  564830.8 |
+  569152.7 |
+  573474.6 |####################
+  577796.4 |
+  582118.3 |
+  586440.2 |
+  590762.1 |
+  595084.0 |
+  599405.8 |
+  603727.7 |
+  608049.6 |
+  612371.5 |
+  616693.3 |
+  621015.2 |####################
+  625337.1 |
+  629659.0 |
   (0 below, 1 above range)
 
-carrier_disp_scatter_ifchainlin (n=6, range 508293.3-608014.6 ns)
-  508293.3 |########################################
-  513279.4 |
-  518265.4 |
-  523251.5 |
-  528237.6 |
-  533223.6 |
-  538209.7 |####################
-  543195.7 |
-  548181.8 |
-  553167.9 |####################
-  558153.9 |
-  563140.0 |####################
-  568126.1 |
-  573112.1 |
-  578098.2 |
-  583084.2 |
-  588070.3 |
-  593056.4 |
-  598042.4 |
-  603028.5 |
+carrier_disp_scatter_ifchainlin (n=6, range 518174.2-622408.6 ns)
+  518174.2 |########################################
+  523385.9 |
+  528597.6 |
+  533809.4 |
+  539021.1 |
+  544232.8 |
+  549444.5 |####################
+  554656.2 |####################
+  559867.9 |
+  565079.7 |
+  570291.4 |
+  575503.1 |
+  580714.8 |
+  585926.5 |
+  591138.2 |
+  596350.0 |
+  601561.7 |
+  606773.4 |####################
+  611985.1 |
+  617196.8 |
   (0 below, 1 above range)
 
-carrier_disp_scatter_nullfloor (n=6, range 114854.6-122201.1 ns)
-  114854.6 |########################################
-  115221.9 |
-  115589.2 |
-  115956.6 |########################################
-  116323.9 |########################################
-  116691.2 |
-  117058.5 |
-  117425.9 |
-  117793.2 |
-  118160.5 |
-  118527.8 |
-  118895.1 |########################################
-  119262.5 |
-  119629.8 |
-  119997.1 |
-  120364.4 |
-  120731.8 |
-  121099.1 |
-  121466.4 |########################################
-  121833.7 |
+carrier_disp_scatter_nullfloor (n=6, range 115631.7-119875.4 ns)
+  115631.7 |########################################
+  115843.9 |
+  116056.1 |
+  116268.3 |
+  116480.4 |########################################
+  116692.6 |########################################
+  116904.8 |########################################
+  117117.0 |
+  117329.2 |
+  117541.4 |
+  117753.5 |
+  117965.7 |########################################
+  118177.9 |
+  118390.1 |
+  118602.3 |
+  118814.5 |
+  119026.7 |
+  119238.8 |
+  119451.0 |
+  119663.2 |
   (0 below, 1 above range)
 
-carrier_disp_scatter_switch (n=6, range 551561.7-609501.6 ns)
-  551561.7 |########################################
-  554458.7 |
-  557355.7 |
-  560252.7 |
-  563149.7 |
-  566046.7 |########################################
-  568943.7 |
-  571840.7 |
-  574737.7 |
-  577634.7 |########################################
-  580531.7 |
-  583428.7 |########################################
-  586325.7 |
-  589222.7 |
-  592119.7 |
-  595016.7 |########################################
-  597913.7 |
-  600810.7 |
-  603707.7 |
-  606604.7 |
+carrier_disp_scatter_switch (n=6, range 528180.4-581783.1 ns)
+  528180.4 |####################
+  530860.5 |
+  533540.7 |
+  536220.8 |
+  538900.9 |
+  541581.1 |####################
+  544261.2 |
+  546941.3 |
+  549621.5 |
+  552301.6 |
+  554981.8 |
+  557661.9 |
+  560342.0 |
+  563022.2 |
+  565702.3 |########################################
+  568382.4 |####################
+  571062.6 |
+  573742.7 |
+  576422.8 |
+  579103.0 |
   (0 below, 1 above range)
 
-carrier_disp_scatter_threaded (n=6, range 545370.8-689305.6 ns)
-  545370.8 |########################################
-  552567.5 |
-  559764.3 |
-  566961.0 |
-  574157.8 |
-  581354.5 |
-  588551.3 |
-  595748.0 |
-  602944.7 |########################################
-  610141.5 |
-  617338.2 |
-  624535.0 |########################################
-  631731.7 |
-  638928.5 |
-  646125.2 |########################################
-  653321.9 |
-  660518.7 |
-  667715.4 |########################################
-  674912.2 |
-  682108.9 |
+carrier_disp_scatter_threaded (n=6, range 565967.1-648402.5 ns)
+  565967.1 |########################################
+  570088.9 |
+  574210.6 |
+  578332.4 |########################################
+  582454.2 |########################################
+  586575.9 |
+  590697.7 |########################################
+  594819.5 |
+  598941.3 |
+  603063.0 |
+  607184.8 |
+  611306.6 |
+  615428.3 |########################################
+  619550.1 |
+  623671.9 |
+  627793.7 |
+  631915.4 |
+  636037.2 |
+  640159.0 |
+  644280.7 |
   (0 below, 1 above range)
 
 ```
@@ -356,11 +372,10 @@ carrier_disp_scatter_threaded (n=6, range 545370.8-689305.6 ns)
 ## Diagnostics
 
 - **carrier_disp_scatter_bittree**: bridge=100.2% of algo (FFI overhead may distort results)
-- **carrier_disp_scatter_fntable**: autocorrelation=0.52 (measurement drift or warm-up artifact)
-- **carrier_disp_scatter_fntable**: bridge=98.5% of algo (FFI overhead may distort results)
-- **carrier_disp_scatter_ifchain**: bridge=100.1% of algo (FFI overhead may distort results)
-- **carrier_disp_scatter_ifchainasc**: bridge=100.1% of algo (FFI overhead may distort results)
-- **carrier_disp_scatter_ifchainlin**: bridge=100.4% of algo (FFI overhead may distort results)
-- **carrier_disp_scatter_nullfloor**: bridge=100.3% of algo (FFI overhead may distort results)
-- **carrier_disp_scatter_switch**: bridge=100.4% of algo (FFI overhead may distort results)
-- **carrier_disp_scatter_threaded**: bridge=100.0% of algo (FFI overhead may distort results)
+- **carrier_disp_scatter_fntable**: bridge=100.9% of algo (FFI overhead may distort results)
+- **carrier_disp_scatter_ifchain**: bridge=100.0% of algo (FFI overhead may distort results)
+- **carrier_disp_scatter_ifchainasc**: bridge=100.0% of algo (FFI overhead may distort results)
+- **carrier_disp_scatter_ifchainlin**: bridge=100.2% of algo (FFI overhead may distort results)
+- **carrier_disp_scatter_nullfloor**: bridge=100.2% of algo (FFI overhead may distort results)
+- **carrier_disp_scatter_switch**: bridge=100.1% of algo (FFI overhead may distort results)
+- **carrier_disp_scatter_threaded**: bridge=100.2% of algo (FFI overhead may distort results)

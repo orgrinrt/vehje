@@ -6,3 +6,9 @@
 1784758708	d772801	carrier_optimize_real_n256	carrier_opt_real_eqsat	256	warm	8517.9	8486.5	8555.9
 1784758708	d772801	carrier_optimize_real_n256	carrier_opt_real_fold	256	warm	8956.7	8954.6	9005.0
 1784758708	d772801	carrier_optimize_real_n256	carrier_opt_real_none	256	warm	9005.0	9000.9	9155.4
+1784795012	74f52f4	carrier_optimize_real_n256	carrier_opt_real_all	256	warm	8237.9	7990.2	8377.8
+1784795012	74f52f4	carrier_optimize_real_n256	carrier_opt_real_canon	256	warm	8294.6	7983.1	8647.1
+1784795012	74f52f4	carrier_optimize_real_n256	carrier_opt_real_cse	256	warm	8344.2	8202.1	8599.3
+1784795012	74f52f4	carrier_optimize_real_n256	carrier_opt_real_dce	256	warm	8824.2	8465.9	9190.8
+1784795012	74f52f4	carrier_optimize_real_n256	carrier_opt_real_fold	256	warm	8725.0	8357.1	8953.1
+1784795012	74f52f4	carrier_optimize_real_n256	carrier_opt_real_none	256	warm	8470.4	8280.8	8973.4

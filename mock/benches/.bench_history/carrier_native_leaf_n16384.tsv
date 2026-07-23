@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784794853	74f52f4	carrier_native_leaf_n16384	carrier_nat_leaf_copypatch	16384	warm	297243.3	296195.0	302054.8
+1784794853	74f52f4	carrier_native_leaf_n16384	carrier_nat_leaf_direct	16384	warm	298585.8	297862.3	300945.2
+1784794853	74f52f4	carrier_native_leaf_n16384	carrier_nat_leaf_interp	16384	warm	1158650.0	1155482.5	1162765.0

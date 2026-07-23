@@ -1,4 +1,4 @@
-# Near-native tier: interp vs direct codegen vs copy-and-patch stencil, wideselect profile (JIT window caps sizes at 1024)
+# Near-native tier: interp vs direct instruction-selection vs copy-and-patch stencil, wideselect profile
 
 3 variants, 6 samples per variant.
 Baseline: **carrier_nat_wideselect_interp**
@@ -9,179 +9,189 @@ Baseline for all deltas below: **carrier_nat_wideselect_interp**. (Deltas are pa
 
 ### Baseline (carrier_nat_wideselect_interp) is the SLOWEST variant; every rival beats it
 
-The declared/defaulted baseline carrier_nat_wideselect_interp has the worst median (43.52 us). Every delta is therefore measured against the worst performer, which flatters all rivals and compresses the differences that matter among them (e.g. fastest carrier_nat_wideselect_stencil at 16.38 us).
+The declared/defaulted baseline carrier_nat_wideselect_interp has the worst median (43.01 us). Every delta is therefore measured against the worst performer, which flatters all rivals and compresses the differences that matter among them (e.g. fastest carrier_nat_wideselect_copypatch at 15.74 us).
 
 _Why it matters:_ A baseline picked by accident (often the first variant to run / sort) silently skews every comparison. Re-baseline via `[bench.<name>.normalise]` on a representative variant.
 
-### carrier_nat_wideselect_stencil beats baseline by 62% (significant)
+### carrier_nat_wideselect_copypatch beats baseline by 63% (significant)
 
-carrier_nat_wideselect_stencil is -27.07 us (62%) faster than baseline carrier_nat_wideselect_interp, with a CI that excludes zero.
+carrier_nat_wideselect_copypatch is -27.18 us (63%) faster than baseline carrier_nat_wideselect_interp, with a CI that excludes zero.
 
 _Why it matters:_ A large, significant improvement over the current baseline is a concrete reason to switch.
 
 ### carrier_nat_wideselect_interp is an outlier: 2.7x slower than the field
 
-carrier_nat_wideselect_interp (43.52 us) is 2.7x the fastest (16.38 us), well off the pack.
+carrier_nat_wideselect_interp (43.01 us) is 2.7x the fastest (15.74 us), well off the pack.
 
 _Why it matters:_ A >2x outlier is almost never the right choice; if it is intentional (e.g. it buys correctness), say so explicitly.
 
 ## Key findings
 
-- **Fastest: carrier_nat_wideselect_stencil** at 16382.9 ns median (-62.4% vs baseline)
+- **Fastest: carrier_nat_wideselect_copypatch** at 15742.0 ns median (-63.4% vs baseline)
 - 2 variants significantly faster than baseline
-- Spread: 2.66x (fastest 16382.9 ns, slowest 43517.3 ns)
+- Spread: 2.73x (fastest 15742.0 ns, slowest 43008.9 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| carrier_nat_wideselect_copypatch | 18727ns | 18957ns | 17026ns | 18868ns | 19367ns | -59.25% |
-| carrier_nat_wideselect_interp | 45952ns | 46021ns | 45024ns | 45945ns | 46428ns | base |
-| carrier_nat_wideselect_stencil | 18681ns | 18771ns | 17623ns | 18664ns | 19238ns | -59.35% |
+| carrier_nat_wideselect_copypatch | 18027ns | 18059ns | 17336ns | 17861ns | 18620ns | -59.70% |
+| carrier_nat_wideselect_direct | 18143ns | 18283ns | 17332ns | 18031ns | 18718ns | -59.44% |
+| carrier_nat_wideselect_interp | 44731ns | 45546ns | 42175ns | 44572ns | 46249ns | base |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| carrier_nat_wideselect_copypatch | 16340ns | 14852ns | 16878ns | -62.38% | 0.063 |
-| carrier_nat_wideselect_interp | 43430ns | 42617ns | 43904ns | base | 0.024 |
-| carrier_nat_wideselect_stencil | 16293ns | 15387ns | 16772ns | -62.49% | 0.063 |
+| carrier_nat_wideselect_copypatch | 15725ns | 15145ns | 16256ns | -62.83% | 0.065 |
+| carrier_nat_wideselect_direct | 15798ns | 15121ns | 16304ns | -62.65% | 0.065 |
+| carrier_nat_wideselect_interp | 42303ns | 39974ns | 43719ns | base | 0.024 |
+
+## Hardware counters (per call)
+
+| Variant | instructions | cycles | IPC | × base instr |
+|---|---|---|---|---|
+| carrier_nat_wideselect_copypatch | 388550 | 1183503 | 0.328 | 0.85× |
+| carrier_nat_wideselect_direct | 341162 | 1039881 | 0.328 | 0.75× |
+| carrier_nat_wideselect_interp | 457176 | 2170585 | 0.211 | 1.00× |
+
+Instructions and cycles are the mean over the variant's samples for the measured region. IPC is instructions per cycle. The instruction ratio isolates whether a variant wins by retiring fewer instructions or by executing the same instructions more efficiently.
 
 ## Performance model
 
-- Peak throughput: **0.069 Gops/s** (carrier_nat_wideselect_copypatch; best 20% batches)
+- Peak throughput: **0.068 Gops/s** (carrier_nat_wideselect_direct; best 20% batches)
 - Ops per call: 1024
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| carrier_nat_wideselect_copypatch | 0.062 | 89.7% |
-| carrier_nat_wideselect_interp | 0.024 | 34.1% |
-| carrier_nat_wideselect_stencil | 0.063 | 90.7% |
+| carrier_nat_wideselect_copypatch | 0.065 | 96.1% |
+| carrier_nat_wideselect_direct | 0.064 | 95.1% |
+| carrier_nat_wideselect_interp | 0.024 | 35.2% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| carrier_nat_wideselect_copypatch | 18727ns | 18727ns | -59.25% |
-| carrier_nat_wideselect_interp | 45952ns | 45952ns | base |
-| carrier_nat_wideselect_stencil | 18681ns | 18681ns | -59.35% |
+| carrier_nat_wideselect_copypatch | 18027ns | 18027ns | -59.70% |
+| carrier_nat_wideselect_direct | 18143ns | 18143ns | -59.44% |
+| carrier_nat_wideselect_interp | 44731ns | 44731ns | base |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| carrier_nat_wideselect_interp | 43517ns | base | --- | [42871, 43904] | --- | --- | --- | --- |
-| carrier_nat_wideselect_copypatch | 16551ns | -26987.3ns (-62.0%) | [-27525, -26760]ns | [15590, 16878] | YES | 0.0313 | 0.0313 | 0 |
-| carrier_nat_wideselect_stencil | 16383ns | -27065.2ns (-62.2%) | [-28042, -26306]ns | [15723, 16772] | YES | 0.0313 | 0.0313 | 0 |
+| carrier_nat_wideselect_interp | 43009ns | base | --- | [40180, 43719] | --- | --- | --- | --- |
+| carrier_nat_wideselect_copypatch | 15742ns | -27175.4ns (-63.2%) | [-27555, -25004]ns | [15176, 16256] | YES | 0.0313 | 0.0313 | 0 |
+| carrier_nat_wideselect_direct | 15901ns | -26943.3ns (-62.6%) | [-27579, -24992]ns | [15189, 16304] | YES | 0.0313 | 0.0313 | 0 |
 
 ## Per-pass consistency (nonstop e2e, Δ vs baseline)
 
-| Pass | carrier_nat_wideselect_interp | carrier_nat_wideselect_copypatch | carrier_nat_wideselect_stencil |
+| Pass | carrier_nat_wideselect_interp | carrier_nat_wideselect_copypatch | carrier_nat_wideselect_direct |
 |---|---|---|---|
-| 1 | 42617ns | -65.1% | -61.9% |
-| 2 | 43724ns | -61.2% | -62.2% |
-| 3 | 43124ns | -62.1% | -60.8% |
-| 4 | 44083ns | -61.9% | -65.1% |
-| 5 | 43448ns | -61.6% | -63.0% |
-| 6 | 43587ns | -62.4% | -61.8% |
+| 1 | 40387ns | -62.5% | -62.2% |
+| 2 | 39974ns | -62.0% | -62.2% |
+| 3 | 44055ns | -62.9% | -63.0% |
+| 4 | 43163ns | -62.9% | -63.5% |
+| 5 | 43383ns | -62.7% | -62.4% |
+| 6 | 42855ns | -63.9% | -62.5% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| carrier_nat_wideselect_copypatch | -0.253 | moderate- |
-| carrier_nat_wideselect_interp | -0.399 | moderate- |
-| carrier_nat_wideselect_stencil | -0.201 | moderate- |
+| carrier_nat_wideselect_copypatch | 0.135 | ok |
+| carrier_nat_wideselect_direct | 0.077 | ok |
+| carrier_nat_wideselect_interp | 0.238 | moderate+ |
 
 **Consistency summary:**
 
 - **carrier_nat_wideselect_copypatch**: won 6/6, lost 0/6
-- **carrier_nat_wideselect_stencil**: won 6/6, lost 0/6
+- **carrier_nat_wideselect_direct**: won 6/6, lost 0/6
 
 ## Bridge overhead per variant
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| carrier_nat_wideselect_copypatch | 90040.1ns | 16339.9ns | 551.0% | HIGH |
-| carrier_nat_wideselect_interp | 100344.5ns | 43430.5ns | 231.0% | HIGH |
-| carrier_nat_wideselect_stencil | 101535.0ns | 16292.6ns | 623.2% | HIGH |
+| carrier_nat_wideselect_copypatch | 111312.1ns | 15724.6ns | 707.9% | HIGH |
+| carrier_nat_wideselect_direct | 95596.2ns | 15798.1ns | 605.1% | HIGH |
+| carrier_nat_wideselect_interp | 109319.5ns | 42302.7ns | 258.4% | HIGH |
 
 ## Distribution (algo ns)
 
 ```
-carrier_nat_wideselect_copypatch (n=6, range 14852.1-16877.9 ns)
-  14852.1 |########################################
-  14953.4 |
-  15054.7 |
-  15156.0 |
-  15257.3 |
-  15358.6 |
-  15459.9 |
-  15561.1 |
-  15662.4 |
-  15763.7 |
-  15865.0 |
-  15966.3 |
-  16067.6 |
-  16168.9 |
-  16270.2 |########################################
-  16371.5 |########################################
-  16472.8 |
-  16574.1 |
-  16675.4 |########################################
-  16776.7 |########################################
+carrier_nat_wideselect_copypatch (n=6, range 15145.4-16255.6 ns)
+  15145.4 |########################################
+  15200.9 |########################################
+  15256.4 |
+  15311.9 |
+  15367.4 |
+  15423.0 |########################################
+  15478.5 |
+  15534.0 |
+  15589.5 |
+  15645.0 |
+  15700.5 |
+  15756.0 |
+  15811.5 |
+  15867.1 |
+  15922.6 |
+  15978.1 |########################################
+  16033.6 |
+  16089.1 |
+  16144.6 |########################################
+  16200.1 |
   (0 below, 1 above range)
 
-carrier_nat_wideselect_interp (n=6, range 42617.1-43903.6 ns)
-  42617.1 |########################################
-  42681.4 |
-  42745.7 |
-  42810.1 |
-  42874.4 |
-  42938.7 |
-  43003.0 |
-  43067.4 |########################################
-  43131.7 |
-  43196.0 |
-  43260.3 |
-  43324.6 |
-  43389.0 |########################################
-  43453.3 |
-  43517.6 |
-  43581.9 |########################################
-  43646.3 |
-  43710.6 |########################################
-  43774.9 |
-  43839.2 |
+carrier_nat_wideselect_direct (n=6, range 15120.8-16304.4 ns)
+  15120.8 |########################################
+  15180.0 |
+  15239.2 |########################################
+  15298.3 |
+  15357.5 |
+  15416.7 |
+  15475.9 |
+  15535.1 |
+  15594.2 |
+  15653.4 |
+  15712.6 |########################################
+  15771.8 |
+  15831.0 |
+  15890.1 |
+  15949.3 |
+  16008.5 |########################################
+  16067.7 |
+  16126.9 |
+  16186.0 |
+  16245.2 |########################################
   (0 below, 1 above range)
 
-carrier_nat_wideselect_stencil (n=6, range 15386.7-16772.0 ns)
-  15386.7 |########################################
-  15456.0 |
-  15525.2 |
-  15594.5 |
-  15663.8 |
-  15733.0 |
-  15802.3 |
-  15871.6 |
-  15940.8 |
-  16010.1 |########################################
-  16079.4 |
-  16148.6 |
-  16217.9 |########################################
-  16287.2 |
-  16356.4 |
-  16425.7 |
-  16495.0 |########################################
-  16564.2 |
-  16633.5 |########################################
-  16702.8 |
+carrier_nat_wideselect_interp (n=6, range 39973.8-43718.8 ns)
+  39973.8 |########################################
+  40161.0 |
+  40348.3 |########################################
+  40535.5 |
+  40722.8 |
+  40910.0 |
+  41097.3 |
+  41284.5 |
+  41471.8 |
+  41659.0 |
+  41846.3 |
+  42033.5 |
+  42220.8 |
+  42408.0 |
+  42595.3 |
+  42782.5 |########################################
+  42969.8 |
+  43157.0 |########################################
+  43344.3 |########################################
+  43531.5 |
   (0 below, 1 above range)
 
 ```
 
 ## Diagnostics
 
-- **carrier_nat_wideselect_copypatch**: bridge=540.7% of algo (FFI overhead may distort results)
-- **carrier_nat_wideselect_interp**: bridge=228.3% of algo (FFI overhead may distort results)
-- **carrier_nat_wideselect_stencil**: bridge=605.7% of algo (FFI overhead may distort results)
+- **carrier_nat_wideselect_copypatch**: bridge=707.5% of algo (FFI overhead may distort results)
+- **carrier_nat_wideselect_direct**: bridge=603.3% of algo (FFI overhead may distort results)
+- **carrier_nat_wideselect_interp**: bridge=248.8% of algo (FFI overhead may distort results)

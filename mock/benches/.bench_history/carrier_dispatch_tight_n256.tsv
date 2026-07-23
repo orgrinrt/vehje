@@ -7,3 +7,11 @@
 1784757498	d772801	carrier_dispatch_tight_n256	carrier_disp_tight_nullfloor	256	warm	8332.9	8315.6	8341.6
 1784757498	d772801	carrier_dispatch_tight_n256	carrier_disp_tight_switch	256	warm	11144.6	11129.6	11217.3
 1784757498	d772801	carrier_dispatch_tight_n256	carrier_disp_tight_threaded	256	warm	12621.7	12548.4	12656.8
+1784794097	2a3f34b	carrier_dispatch_tight_n256	carrier_disp_tight_bittree	256	warm	11322.9	10838.3	11650.8
+1784794097	2a3f34b	carrier_dispatch_tight_n256	carrier_disp_tight_fntable	256	warm	12486.2	12121.9	13279.8
+1784794097	2a3f34b	carrier_dispatch_tight_n256	carrier_disp_tight_ifchain	256	warm	11185.0	10621.9	11345.9
+1784794097	2a3f34b	carrier_dispatch_tight_n256	carrier_disp_tight_ifchainasc	256	warm	10689.2	10370.0	11536.5
+1784794097	2a3f34b	carrier_dispatch_tight_n256	carrier_disp_tight_ifchainlin	256	warm	16403.3	16022.9	17082.5
+1784794097	2a3f34b	carrier_dispatch_tight_n256	carrier_disp_tight_nullfloor	256	warm	8163.8	7831.1	8364.2
+1784794097	2a3f34b	carrier_dispatch_tight_n256	carrier_disp_tight_switch	256	warm	10461.2	10182.7	10990.8
+1784794097	2a3f34b	carrier_dispatch_tight_n256	carrier_disp_tight_threaded	256	warm	12433.3	11802.0	12511.9

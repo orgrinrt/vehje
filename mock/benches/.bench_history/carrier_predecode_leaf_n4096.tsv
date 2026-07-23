@@ -5,3 +5,9 @@
 1784758030	d772801	carrier_predecode_leaf_n4096	carrier_pre_leaf_regcache	4096	warm	148382.1	147594.0	161696.2
 1784758030	d772801	carrier_predecode_leaf_n4096	carrier_pre_leaf_switch	4096	warm	147834.6	146599.6	150278.8
 1784758030	d772801	carrier_predecode_leaf_n4096	carrier_pre_leaf_threaded	4096	warm	105137.9	99570.0	109905.0
+1784795246	74f52f4	carrier_predecode_leaf_n4096	carrier_pre_leaf_direct	4096	warm	77178.8	77068.1	82933.4
+1784795246	74f52f4	carrier_predecode_leaf_n4096	carrier_pre_leaf_fntable	4096	warm	248734.2	248684.6	250420.2
+1784795246	74f52f4	carrier_predecode_leaf_n4096	carrier_pre_leaf_null	4096	warm	81642.9	81012.7	82077.5
+1784795246	74f52f4	carrier_predecode_leaf_n4096	carrier_pre_leaf_regcache	4096	warm	155717.5	154295.4	162352.7
+1784795246	74f52f4	carrier_predecode_leaf_n4096	carrier_pre_leaf_switch	4096	warm	146368.3	145326.2	148000.7
+1784795246	74f52f4	carrier_predecode_leaf_n4096	carrier_pre_leaf_threaded	4096	warm	123750.8	114946.9	128797.3

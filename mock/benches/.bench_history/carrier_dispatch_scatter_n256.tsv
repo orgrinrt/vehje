@@ -7,3 +7,11 @@
 1784757544	d772801	carrier_dispatch_scatter_n256	carrier_disp_scatter_nullfloor	256	warm	7955.4	7926.4	7978.5
 1784757544	d772801	carrier_dispatch_scatter_n256	carrier_disp_scatter_switch	256	warm	11230.0	11181.5	11324.0
 1784757544	d772801	carrier_dispatch_scatter_n256	carrier_disp_scatter_threaded	256	warm	12630.4	12628.1	12700.8
+1784793999	2a3f34b	carrier_dispatch_scatter_n256	carrier_disp_scatter_bittree	256	warm	13337.9	13207.0	13478.8
+1784793999	2a3f34b	carrier_dispatch_scatter_n256	carrier_disp_scatter_fntable	256	warm	14112.1	14020.0	14291.2
+1784793999	2a3f34b	carrier_dispatch_scatter_n256	carrier_disp_scatter_ifchain	256	warm	11193.3	11112.9	11293.8
+1784793999	2a3f34b	carrier_dispatch_scatter_n256	carrier_disp_scatter_ifchainasc	256	warm	11110.8	11107.3	11258.2
+1784793999	2a3f34b	carrier_dispatch_scatter_n256	carrier_disp_scatter_ifchainlin	256	warm	23455.0	22825.6	23640.0
+1784793999	2a3f34b	carrier_dispatch_scatter_n256	carrier_disp_scatter_nullfloor	256	warm	7759.6	7567.5	8028.6
+1784793999	2a3f34b	carrier_dispatch_scatter_n256	carrier_disp_scatter_switch	256	warm	11168.8	11159.0	11245.0
+1784793999	2a3f34b	carrier_dispatch_scatter_n256	carrier_disp_scatter_threaded	256	warm	12622.5	12603.5	12716.9

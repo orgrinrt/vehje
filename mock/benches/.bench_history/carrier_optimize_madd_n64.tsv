@@ -6,3 +6,9 @@
 1784758787	d772801	carrier_optimize_madd_n64	carrier_opt_madd_eqsat	64	warm	15247.1	15198.4	15369.6
 1784758787	d772801	carrier_optimize_madd_n64	carrier_opt_madd_fold	64	warm	1940.4	1940.0	1970.8
 1784758787	d772801	carrier_optimize_madd_n64	carrier_opt_madd_none	64	warm	2327.9	2321.9	2360.0
+1784794983	74f52f4	carrier_optimize_madd_n64	carrier_opt_madd_all	64	warm	411.7	404.6	415.6
+1784794983	74f52f4	carrier_optimize_madd_n64	carrier_opt_madd_canon	64	warm	2012.1	1910.2	2027.5
+1784794983	74f52f4	carrier_optimize_madd_n64	carrier_opt_madd_cse	64	warm	2075.0	2010.8	2126.9
+1784794983	74f52f4	carrier_optimize_madd_n64	carrier_opt_madd_dce	64	warm	2266.2	2244.1	2344.8
+1784794983	74f52f4	carrier_optimize_madd_n64	carrier_opt_madd_fold	64	warm	1850.0	1790.6	1898.3
+1784794983	74f52f4	carrier_optimize_madd_n64	carrier_opt_madd_none	64	warm	2175.4	2171.4	2278.6

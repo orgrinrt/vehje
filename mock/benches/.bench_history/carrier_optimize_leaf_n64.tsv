@@ -6,3 +6,9 @@
 1784759052	d772801	carrier_optimize_leaf_n64	carrier_opt_leaf_eqsat	64	warm	1874.6	1873.3	1906.8
 1784759052	d772801	carrier_optimize_leaf_n64	carrier_opt_leaf_fold	64	warm	2195.8	2186.0	2204.6
 1784759052	d772801	carrier_optimize_leaf_n64	carrier_opt_leaf_none	64	warm	2027.9	2024.6	2044.3
+1784794956	74f52f4	carrier_optimize_leaf_n64	carrier_opt_leaf_all	64	warm	1140.8	1135.0	1156.5
+1784794956	74f52f4	carrier_optimize_leaf_n64	carrier_opt_leaf_canon	64	warm	1297.5	1257.9	1331.5
+1784794956	74f52f4	carrier_optimize_leaf_n64	carrier_opt_leaf_cse	64	warm	1280.0	1260.8	1342.5
+1784794956	74f52f4	carrier_optimize_leaf_n64	carrier_opt_leaf_dce	64	warm	1791.7	1782.5	1983.3
+1784794956	74f52f4	carrier_optimize_leaf_n64	carrier_opt_leaf_fold	64	warm	2109.6	2094.8	2138.1
+1784794956	74f52f4	carrier_optimize_leaf_n64	carrier_opt_leaf_none	64	warm	1976.7	1974.4	1985.2

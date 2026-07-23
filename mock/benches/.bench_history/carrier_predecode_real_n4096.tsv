@@ -5,3 +5,9 @@
 1784757788	d772801	carrier_predecode_real_n4096	carrier_pre_real_regcache	4096	warm	515695.4	507388.1	534100.0
 1784757788	d772801	carrier_predecode_real_n4096	carrier_pre_real_switch	4096	warm	495368.8	487104.0	512341.8
 1784757788	d772801	carrier_predecode_real_n4096	carrier_pre_real_threaded	4096	warm	470510.4	462945.2	510519.4
+1784795318	74f52f4	carrier_predecode_real_n4096	carrier_pre_real_direct	4096	warm	393794.6	391317.3	403061.5
+1784795318	74f52f4	carrier_predecode_real_n4096	carrier_pre_real_fntable	4096	warm	574752.1	573938.8	579756.9
+1784795318	74f52f4	carrier_predecode_real_n4096	carrier_pre_real_null	4096	warm	103304.2	103190.9	105582.3
+1784795318	74f52f4	carrier_predecode_real_n4096	carrier_pre_real_regcache	4096	warm	512277.5	502779.8	525951.1
+1784795318	74f52f4	carrier_predecode_real_n4096	carrier_pre_real_switch	4096	warm	503193.7	499134.8	508350.8
+1784795318	74f52f4	carrier_predecode_real_n4096	carrier_pre_real_threaded	4096	warm	508181.2	495993.5	524007.1

@@ -5,3 +5,9 @@
 1784757871	d772801	carrier_predecode_tight_n64	carrier_pre_tight_regcache	64	warm	2214.2	2203.8	2233.9
 1784757871	d772801	carrier_predecode_tight_n64	carrier_pre_tight_switch	64	warm	2260.8	2256.2	2269.8
 1784757871	d772801	carrier_predecode_tight_n64	carrier_pre_tight_threaded	64	warm	2075.0	2074.4	2107.5
+1784795421	74f52f4	carrier_predecode_tight_n64	carrier_pre_tight_direct	64	warm	1920.0	1919.2	1933.1
+1784795421	74f52f4	carrier_predecode_tight_n64	carrier_pre_tight_fntable	64	warm	2070.4	2070.4	2078.8
+1784795421	74f52f4	carrier_predecode_tight_n64	carrier_pre_tight_null	64	warm	1539.6	1532.3	1546.2
+1784795421	74f52f4	carrier_predecode_tight_n64	carrier_pre_tight_regcache	64	warm	2151.2	2145.6	2154.6
+1784795421	74f52f4	carrier_predecode_tight_n64	carrier_pre_tight_switch	64	warm	2178.8	2177.3	2197.1
+1784795421	74f52f4	carrier_predecode_tight_n64	carrier_pre_tight_threaded	64	warm	1999.2	1997.5	2002.3

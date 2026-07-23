@@ -1,0 +1,19 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784791110	71e4d90	carrier_entgrid_n4096	carrier_ent_c0_w4	4096	warm	482093.3	477860.2	501518.6
+1784791110	71e4d90	carrier_entgrid_n4096	carrier_ent_c0_w64	4096	warm	489502.9	486158.1	502313.2
+1784791110	71e4d90	carrier_entgrid_n4096	carrier_ent_c0_wmax	4096	warm	481456.7	480770.0	487691.5
+1784791110	71e4d90	carrier_entgrid_n4096	carrier_ent_c500_w4	4096	warm	435037.9	432102.7	452774.8
+1784791110	71e4d90	carrier_entgrid_n4096	carrier_ent_c500_w64	4096	warm	446452.5	439265.6	452380.8
+1784791110	71e4d90	carrier_entgrid_n4096	carrier_ent_c500_wmax	4096	warm	438387.9	435411.2	450789.0
+1784791110	71e4d90	carrier_entgrid_n4096	carrier_ent_c900_w4	4096	warm	176731.2	176413.1	177900.4
+1784791110	71e4d90	carrier_entgrid_n4096	carrier_ent_c900_w64	4096	warm	136799.2	136048.5	137293.8
+1784791110	71e4d90	carrier_entgrid_n4096	carrier_ent_c900_wmax	4096	warm	134035.8	133767.9	135332.9
+1784794245	2a3f34b	carrier_entgrid_n4096	carrier_ent_c0_w4	4096	warm	483534.2	475615.2	494129.4
+1784794245	2a3f34b	carrier_entgrid_n4096	carrier_ent_c0_w64	4096	warm	470182.5	467162.3	485758.8
+1784794245	2a3f34b	carrier_entgrid_n4096	carrier_ent_c0_wmax	4096	warm	502589.2	500478.6	507831.5
+1784794245	2a3f34b	carrier_entgrid_n4096	carrier_ent_c500_w4	4096	warm	438332.5	432143.1	445419.6
+1784794245	2a3f34b	carrier_entgrid_n4096	carrier_ent_c500_w64	4096	warm	447686.2	445135.8	457588.5
+1784794245	2a3f34b	carrier_entgrid_n4096	carrier_ent_c500_wmax	4096	warm	442391.2	435287.9	449103.3
+1784794245	2a3f34b	carrier_entgrid_n4096	carrier_ent_c900_w4	4096	warm	177053.3	175985.8	178780.0
+1784794245	2a3f34b	carrier_entgrid_n4096	carrier_ent_c900_w64	4096	warm	133792.5	133695.4	134890.7
+1784794245	2a3f34b	carrier_entgrid_n4096	carrier_ent_c900_wmax	4096	warm	132028.3	131584.8	134270.8
