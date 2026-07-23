@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784828018	65c5ac15	abi_soa_win_real_n4	abi_soa_win_real_null_entry	4	warm	4495.8	4427.5	4556.2
+1784828018	65c5ac15	abi_soa_win_real_n4	abi_soa_win_real_scalar_payload	4	warm	2413990.8	2411989.1	2448249.1
+1784828018	65c5ac15	abi_soa_win_real_n4	abi_soa_win_real_soa_payload	4	warm	2362750.0	2331975.0	2391431.5
