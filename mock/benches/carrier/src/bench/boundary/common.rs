@@ -50,6 +50,9 @@ pub type CrExec1 = unsafe extern "C" fn(*mut c_void, u64) -> u64;
 /// A sink-driven entry: `(handle, seeds, w, sink)`, no return; results flow out through
 /// the sink. `cr_execute_sink_batched` and `cr_execute_sink_per_record` share this shape.
 pub type CrEntrySink = unsafe extern "C" fn(*mut c_void, *const u64, usize, *const CrSink);
+/// A marshalling entry: `(handle, buf, n, f)` over `n` records of `f` fields each. The AoS,
+/// SoA, and marshal-null entries share this shape.
+pub type CrEntryMarshal = unsafe extern "C" fn(*mut c_void, *const u64, usize, usize) -> u64;
 
 /// The value-arena output sink, layout-identical to `carrier-runtime`'s `CrSink`: the
 /// settled reserve/commit two-function-pointer return mechanism. The runtime calls

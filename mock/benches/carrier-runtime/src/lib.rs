@@ -335,6 +335,97 @@ pub unsafe extern "C" fn cr_execute_sink_per_record(
     }
 }
 
+// ── the marshalling entries: multi-field records in AoS vs SoA layout ──
+//
+// A record carries `f` fields (u64 each); the runtime combines them to a seed (XOR fold,
+// layout-independent) and runs the scalar interpreter, so bench 2 measures the marshalling
+// access pattern of AoS versus SoA BEFORE any downstream vectorisation, with the payload
+// held scalar. AoS is record-major (`recs[i*f + k]` = field k of record i, a contiguous
+// per-record read at stride f); SoA is field-major (`fields[k*n + i]`, f separate streams).
+// The XOR combine is commutative, so AoS and SoA fold the identical checksum for the same
+// logical records, which is the cross-validation the layouts rest on.
+
+/// Combine a record's `f` fields to a seed from an AoS (record-major) buffer.
+#[inline(always)]
+unsafe fn combine_aos(recs: *const u64, i: usize, f: usize) -> u64 {
+    let mut seed = 0u64;
+    let mut k = 0usize;
+    while k < f {
+        seed ^= unsafe { *recs.add(i * f + k) };
+        k += 1;
+    }
+    seed
+}
+
+/// Combine a record's `f` fields to a seed from a SoA (field-major) buffer of `n` records.
+#[inline(always)]
+unsafe fn combine_soa(fields: *const u64, i: usize, n: usize, f: usize) -> u64 {
+    let mut seed = 0u64;
+    let mut k = 0usize;
+    while k < f {
+        seed ^= unsafe { *fields.add(k * n + i) };
+        k += 1;
+    }
+    seed
+}
+
+/// AoS marshalling: read each of `n` records' `f` fields record-major, combine, interpret,
+/// fold. `recs` points to `n * f` `u64`s.
+///
+/// # Safety
+/// `recs` points to `n * f` valid `u64`s; `h` is live.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn cr_execute_marshal_aos(h: *mut Handle, recs: *const u64, n: usize, f: usize) -> u64 {
+    let h = unsafe { &mut *h };
+    let mut acc = 0u64;
+    let mut i = 0usize;
+    while i < n {
+        let seed = unsafe { combine_aos(recs, i, f) };
+        c::interpret_predecoded(&h.pd, seed, &mut h.scalar_scratch);
+        acc = acc.rotate_left(7) ^ c::checksum(&h.scalar_scratch);
+        i += 1;
+    }
+    acc
+}
+
+/// SoA marshalling: read each of `n` records' `f` fields field-major, combine, interpret,
+/// fold. `fields` points to `f * n` `u64`s. Folds identically to [`cr_execute_marshal_aos`]
+/// for the same logical records.
+///
+/// # Safety
+/// `fields` points to `f * n` valid `u64`s; `h` is live.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn cr_execute_marshal_soa(h: *mut Handle, fields: *const u64, n: usize, f: usize) -> u64 {
+    let h = unsafe { &mut *h };
+    let mut acc = 0u64;
+    let mut i = 0usize;
+    while i < n {
+        let seed = unsafe { combine_soa(fields, i, n, f) };
+        c::interpret_predecoded(&h.pd, seed, &mut h.scalar_scratch);
+        acc = acc.rotate_left(7) ^ c::checksum(&h.scalar_scratch);
+        i += 1;
+    }
+    acc
+}
+
+/// The marshalling floor: read and combine each record's `f` fields (AoS), fold the seeds,
+/// NO interpret. Isolates the pure AoS marshalling cost; a marshalling cell minus this is
+/// the interpret payload.
+///
+/// # Safety
+/// `recs` points to `n * f` valid `u64`s.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn cr_execute_marshal_null_aos(_h: *mut Handle, recs: *const u64, n: usize, f: usize) -> u64 {
+    let mut acc = 0u64;
+    let mut i = 0usize;
+    while i < n {
+        let seed = unsafe { combine_aos(recs, i, f) };
+        acc = acc.rotate_left(7) ^ seed;
+        i += 1;
+    }
+    acc
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -460,6 +551,29 @@ mod tests {
         assert_eq!(arena2.off, w, "per-record sink commits every record");
         assert_eq!(arena2.buf, want, "per-record sink writes the same checksums as batched");
 
+        unsafe { cr_free(h) };
+    }
+
+    #[test]
+    fn marshal_aos_equals_soa_for_the_same_records() {
+        let h = unsafe { handle() };
+        let n = 48usize;
+        for f in [1usize, 2, 4, 8] {
+            // logical records: field k of record i is a deterministic function of (i, k).
+            let val = |i: usize, k: usize| (i as u64).wrapping_mul(0x1000_0001) ^ (k as u64).wrapping_mul(0x9e37);
+            let mut aos = vec![0u64; n * f];
+            let mut soa = vec![0u64; f * n];
+            for i in 0..n {
+                for k in 0..f {
+                    aos[i * f + k] = val(i, k);
+                    soa[k * n + i] = val(i, k);
+                }
+            }
+            let a = unsafe { cr_execute_marshal_aos(h, aos.as_ptr(), n, f) };
+            let s = unsafe { cr_execute_marshal_soa(h, soa.as_ptr(), n, f) };
+            assert_eq!(a, s, "AoS and SoA must fold identically for f={f}");
+            assert_ne!(a, 0, "marshalling must fold a nonzero keep-alive for f={f}");
+        }
         unsafe { cr_free(h) };
     }
 

@@ -6,6 +6,8 @@
 //!
 //! - [`cross`] (bench 1): call-crossing amortisation over the batch width `W`, scalar
 //!   payload pinned. Yields the per-crossing cost `C_cross` and the amortisation knee.
+//! - [`marshal`] (bench 2): the marshalling layout (AoS / SoA-native / SoA-transposed),
+//!   scalar payload, swept over the field count. What SoA costs at the boundary.
 //! - [`soa`] (bench 3): the column-SoA vectorisation win across the boundary, scalar
 //!   versus SoA-8 payload at equal crossing cost. The headline family.
 //! - [`entry`] (bench 4): the entry-point form (scalar-anchor / runtime-W / dispatch-table
@@ -33,6 +35,7 @@ pub mod common;
 pub mod cross;
 pub mod entry;
 pub mod lifecycle;
+pub mod marshal;
 pub mod residency;
 pub mod sink;
 pub mod soa;
@@ -44,6 +47,7 @@ use mockspace_bench_matrix::MatrixDecl;
 /// calls this once; the extra_deps are filled in by the caller like every other family.
 pub fn matrix_decls() -> Vec<MatrixDecl> {
     let mut all = cross::matrix_decls();
+    all.extend(marshal::matrix_decls());
     all.extend(soa::matrix_decls());
     all.extend(entry::matrix_decls());
     all.extend(sink::matrix_decls());
