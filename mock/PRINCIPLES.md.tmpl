@@ -246,16 +246,21 @@ is that a consumer wants its authors' mistakes surfaced immediately.
  execution (the runtime side). The framework consumes; it does not
  reinvent DAG topology, bitmask ops, the set typestate, or scheduling.
 
-## Staging is an effect, not a language feature
+## Staging is a binding time, effects are operations
 
 The framework does not define macros as a surface feature; a consumer's
-family does. What the framework provides is the staging substrate: the
-`Interp` Core form and the parametrized effect axis (`Reads<E>` /
-`Writes<E>` over build and runtime environments). Build-environment
-effects (constant evaluation, macro expansion, registry queries) are
-reduced away by the Rust compiler before emission; the residual carries
-only runtime-executable effects. Staging is decided by target policy and
-the effect axis, never by probabilistic inference.
+family does. What the framework provides is the graded substrate: the
+`Interp` Core form and two split axes. Effect is a graded monad, the
+operations a construct invokes, serviced by the handler discipline (a
+host-call is a runtime-effect operation the host handles, macro expansion
+is a compile-stage-effect operation the compile stage handles). Binding
+time is a graded modality over the knowledge-source lattice (language
+author, bundler, host-loader, runtime), and which stage handles an
+operation is the binding-time coordinate. Build-time operations (constant
+evaluation, macro expansion, registry queries) discharge before emission;
+the residual carries only runtime operations, its unhandled effects
+included in the target's permitted set. Staging is decided by the grade,
+never by probabilistic inference.
 
 ## Generalise, don't exception
 
