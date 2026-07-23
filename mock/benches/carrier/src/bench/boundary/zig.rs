@@ -31,7 +31,7 @@ const WMAX: usize = 128;
 /// Open the Zig object and resolve `zr_init`/`zr_free` and the named width-taking entry,
 /// building a handle from `profile`'s residual. Reuses [`StCross`] (the Zig entries have
 /// the identical resolved signatures as the Rust ones).
-fn open_zig_cross(profile: &str, w: usize, entry_name: &[u8]) -> StCross {
+pub fn open_zig_cross(profile: &str, w: usize, entry_name: &[u8]) -> StCross {
     let rt = open_runtime_at(ZIG_ENV);
     let init: CrInit = unsafe { rt.resolve(b"zr_init\0") }.expect("zr_init resolves");
     let free: CrFree = unsafe { rt.resolve(b"zr_free\0") }.expect("zr_free resolves");

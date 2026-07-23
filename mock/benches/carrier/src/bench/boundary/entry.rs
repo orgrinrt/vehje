@@ -38,7 +38,7 @@ use super::common::{
 /// The largest per-W-monomorphised symbol compiled in `carrier-runtime` (Wmax=128). A
 /// requested W above this chunks by [`WMAX`], modelling a per-W ABI's plateau past its
 /// maximum compiled width.
-const WMAX: usize = 128;
+pub const WMAX: usize = 128;
 
 // ── the per-record anchor state ──
 
@@ -61,7 +61,7 @@ impl Drop for StAnchor {
     }
 }
 
-fn open_anchor(profile: &str) -> StAnchor {
+pub fn open_anchor(profile: &str) -> StAnchor {
     let rt = open_runtime();
     let init: CrInit = unsafe { rt.resolve(b"cr_init\0") }.expect("cr_init");
     let free: CrFree = unsafe { rt.resolve(b"cr_free\0") }.expect("cr_free");
@@ -104,7 +104,7 @@ impl Drop for StMono {
     }
 }
 
-fn open_mono(profile: &str, w: usize) -> StMono {
+pub fn open_mono(profile: &str, w: usize) -> StMono {
     let rt = open_runtime();
     let init: CrInit = unsafe { rt.resolve(b"cr_init\0") }.expect("cr_init");
     let free: CrFree = unsafe { rt.resolve(b"cr_free\0") }.expect("cr_free");

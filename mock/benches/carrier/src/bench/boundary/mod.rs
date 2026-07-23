@@ -36,6 +36,7 @@ pub mod cross;
 pub mod entry;
 pub mod lifecycle;
 pub mod marshal;
+pub mod matrix;
 pub mod residency;
 pub mod sink;
 pub mod soa;
@@ -54,5 +55,6 @@ pub fn matrix_decls() -> Vec<MatrixDecl> {
     all.extend(lifecycle::matrix_decls());
     all.extend(residency::matrix_decls());
     all.extend(zig::matrix_decls());
+    all.extend(matrix::matrix_decls());
     all
 }
