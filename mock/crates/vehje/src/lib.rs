@@ -17,7 +17,8 @@
 use hilavitkutin_api::sink::ByteEmitter;
 use notko::Outcome;
 use vehje_codegen::fold_core;
-use vehje_ir::{Arena, Cons, Core, Diagnostic, Empty, Node, NodeRef};
+use vehje_ir::{Arena, Cons, Core, Diagnostic, Empty, Node, NodeRef, Phase};
+use vehje_resolve::{resolve, ResolveError};
 
 /// The `Target` output contract, re-exported from `vehje-codegen`.
 pub use vehje_codegen::{Checked, CodegenError, Target};
@@ -41,18 +42,35 @@ pub trait Grammar {
     fn lower(&self, arena: &mut Arena<'_>) -> Outcome<NodeRef, Self::Error>;
 }
 
-/// Run a program from its IR through the Core passes to a checked
-/// residual for a target.
+/// Run a program from its IR through the per-program compile path.
 ///
-/// M0 defines the orchestration entry; wiring resolve, check, the family
-/// and effect inclusion checks, and the residual hand-off to the runtime
-/// driver is the next behavior gate.
-// FIXME: run vehje-resolve then vehje-typecheck (check) over the arena,
-// run the inclusion checks to produce a Checked, and hand it to the
-// runtime driver. M0 ships the surface.
-pub fn run<T: Target>(_target: &T, _arena: &Arena<'_>, _root: NodeRef) -> Outcome<(), Diagnostic> {
-    Outcome::Ok(())
+/// The dev-time compiler's per-program path: resolve the Core binders, then
+/// (the next wiring gate) the graded check, the cheap lowering, the inclusion
+/// check to a `Checked`, the emit through the target, and the hand-off to the
+/// runtime driver. M-level validates resolution and reports an unresolved name
+/// as a diagnostic.
+// FIXME: thread caller-provided grade and resolution regions to run
+// vehje-check (the graded judgment) and vehje-lower (the cheap subset), then
+// build the Checked and emit through the target into a sink and hand the
+// residual to vehje-runtime-driver. The resolve stage ships; the rest is the
+// next behavior gate.
+pub fn run<T: Target>(_target: &T, arena: &Arena<'_>, root: NodeRef) -> Outcome<(), Diagnostic> {
+    match resolve(arena, root) {
+        Outcome::Ok(()) => Outcome::Ok(()),
+        Outcome::Err(ResolveError::Unresolved { span, .. }) => {
+            Outcome::Err(Diagnostic::error(Phase::Resolve, span, "unresolved name"))
+        }
+    }
 }
+
+// FIXME: the per-language path (`compile_language`) drives a `vehje-signature`
+// `Signature` through the check and lower stages to collect their
+// validated-data slices, then hands them to `vehje-runtime-gen::generate` to
+// produce the language package and manifest. M-level exposes
+// `vehje-runtime-gen::generate` directly (a consumer composes the slices); the
+// orchestration that produces the slices from the signature is the next gate,
+// and adding it here as a thin forward would only duplicate `generate`, so it
+// lands when it drives the stages.
 
 /// A reference target that emits a pre-order tag dump of the Core forms.
 ///
@@ -88,6 +106,7 @@ impl Target for DebugTarget {
                 Node::Iter { .. } => b"iter ",
                 Node::Interp { .. } => b"interp ",
                 Node::Raw { .. } => b"raw ",
+                Node::Handle { .. } => b"handle ",
             };
             sink.push_bulk(tag);
         });

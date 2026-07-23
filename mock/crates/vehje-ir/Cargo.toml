@@ -6,6 +6,9 @@ license.workspace = true
 
 [dependencies]
 arvo.workspace = true
+arvo-bits.workspace = true
+arvo-bitmask.workspace = true
+arvo-hash.workspace = true
 notko.workspace = true
 hilavitkutin-api.workspace = true
 hilavitkutin-str.workspace = true

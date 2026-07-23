@@ -12,11 +12,13 @@
 #![no_std]
 #![deny(unused, unreachable_code, unused_must_use, unused_imports, dead_code)]
 
-use core::marker::PhantomData;
-
 use hilavitkutin_api::sink::ByteEmitter;
 use notko::Outcome;
 use vehje_ir::{AccessSet, Arena, ContainsAll, Node, NodeRef, Span};
+
+/// The checked-program witness, minted by `vehje-check` (the proof witness
+/// belongs with the prover) and re-exported here because `emit` consumes it.
+pub use vehje_typecheck::Checked;
 
 /// The output plug-in contract.
 ///
@@ -46,31 +48,6 @@ pub trait Target: core::fmt::Debug {
         Self: Sized;
 }
 
-/// A witness that a program has been inclusion- and effect-checked
-/// against a specific target.
-///
-/// `emit` accepts only a `Checked`; a `Checked` is producible only by
-/// running the check for that target (see [`check`]). The obligation to
-/// check is enforced at compile time; for a statically known program the
-/// inclusion discharges at compile time.
-pub struct Checked<'a, T> {
-    arena: &'a Arena<'a>,
-    root: NodeRef,
-    _target: PhantomData<T>,
-}
-
-impl<'a, T> Checked<'a, T> {
-    /// The checked program's arena.
-    pub fn arena(&self) -> &'a Arena<'a> {
-        self.arena
-    }
-
-    /// The checked program's root node.
-    pub fn root(&self) -> NodeRef {
-        self.root
-    }
-}
-
 /// Check a statically known program against target `T` at compile time.
 ///
 /// The `where` bounds are the inclusion proof: the target's `Supports`
@@ -90,7 +67,7 @@ where
     T::Supports: ContainsAll<Families>,
     T::Permits: ContainsAll<Effects>,
 {
-    Checked { arena, root, _target: PhantomData }
+    Checked::new(arena, root)
 }
 
 /// The one generic fold over the Core substrate: a pre-order walk that
@@ -136,6 +113,12 @@ pub fn fold_core<F: FnMut(&Node)>(arena: &Arena<'_>, at: NodeRef, visit: &mut F)
             fold_core(arena, body, visit);
         }
         Node::Interp { value } => fold_core(arena, value, visit),
+        Node::Handle { body, clauses } => {
+            fold_core(arena, body, visit);
+            for child in arena.list(clauses) {
+                fold_core(arena, *child, visit);
+            }
+        }
     }
 }
 

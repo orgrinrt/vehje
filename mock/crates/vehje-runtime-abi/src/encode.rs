@@ -11,7 +11,7 @@
 //! [`encode`] walks a checked arena once, in node-index order, decomposing
 //! each Core form into the primitive calls of a [`ResidualEncoder`]. A tier
 //! (flat arena today, bytecode later) implements only how each primitive
-//! materializes; the walk, and the eleven-form match, are written once
+//! materializes; the walk, and the twelve-form match, are written once
 //! here and shared by every tier.
 
 use arvo::strategy::Hot;
@@ -36,6 +36,7 @@ pub enum NodeTag {
     Iter,
     Interp,
     Raw,
+    Handle,
 }
 
 /// A `Lit` node's literal kind, written before the literal's payload.
@@ -190,6 +191,11 @@ pub fn encode<A: ArenaInterner, E: ResidualEncoder>(
                 encoder.begin_node(index, NodeTag::Raw)?;
                 encoder.family(family)?;
                 encoder.list(payload)?;
+            }
+            Node::Handle { body, clauses } => {
+                encoder.begin_node(index, NodeTag::Handle)?;
+                encoder.child(body)?;
+                encoder.list(clauses)?;
             }
         }
         i += 1;

@@ -1,4 +1,4 @@
-//! The Core substrate node: the eleven ratified evaluation forms.
+//! The Core substrate node: the twelve evaluation forms.
 //!
 //! One `Node` is one arena slot, addressed by `NodeRef`. Variable-arity
 //! children live in the child-index pool, addressed by `NodeList`. The
@@ -77,7 +77,7 @@ pub enum Literal {
     Str(Str),
 }
 
-/// The Core node: one of the eleven ratified evaluation forms.
+/// The Core node: one of the twelve evaluation forms.
 ///
 /// `Copy`; nodes live in a caller-provided arena as flat slots.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -128,4 +128,17 @@ pub enum Node {
     // the family id and a node-list placeholder until the first family
     // defines its payload encoding.
     Raw { family: FamilyId, payload: NodeList },
+    /// Handle a computation with user-defined resumable algebraic-effect
+    /// handlers. `body` is the handled computation; `clauses` are the
+    /// handler clauses (each an operation, a handler body with access to
+    /// the resumption, and the discharge). The twelfth Core form: a general
+    /// evaluation primitive that unifies the effect set, the host-call
+    /// boundary, and macro expansion into one handler discipline, and
+    /// supports bounded multi-shot resumption via a host-lent budget.
+    // FIXME: the clause carries an operation id, a handler-body handle, and
+    // a resumption binder; M-level stores the clause bodies as a NodeList
+    // and defers the operation-and-resumption representation until the
+    // bounded-multi-shot continuation encoding lands (mirrors Match's arm
+    // deferral).
+    Handle { body: NodeRef, clauses: NodeList },
 }

@@ -16,6 +16,8 @@ pub mod builder;
 pub mod diagnostic;
 pub mod effect;
 pub mod family;
+pub mod grade;
+pub mod hash;
 pub mod intern;
 pub mod node;
 pub mod span;
@@ -23,8 +25,12 @@ pub mod span;
 pub use arena::Arena;
 pub use builder::Builder;
 pub use diagnostic::{Diagnostic, Phase, Severity};
-pub use effect::{BuildEnv, Pure, Reads, RuntimeEnv, Writes};
+pub use effect::Effect;
 pub use family::{Core, Family};
+pub use grade::{
+    Assurance, BindingTime, EffectMask, Grade, GradeTable, Knowledge, Lease, ReachMask,
+};
+pub use hash::{hash_of, StructuralHash};
 pub use intern::{ArenaInterner, Str, StringInterner};
 pub use node::{FamilyId, Literal, Node, NodeList, NodeRef};
 pub use span::{ByteOffset, FileId, Span};

@@ -1,18 +1,16 @@
 [package]
-name = "vehje-typecheck"
+name = "vehje-runtime-gen"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [dependencies]
-vehje-ir.workspace = true
-vehje-resolve.workspace = true
-vehje-signature.workspace = true
-vehje-fixpoint.workspace = true
 arvo.workspace = true
-arvo-bitmask.workspace = true
+arvo-bits.workspace = true
+arvo-hash.workspace = true
 notko.workspace = true
-hilavitkutin-api.workspace = true
+vehje-ir.workspace = true
+vehje-signature.workspace = true
 
 [build-dependencies]
 mockspace.workspace = true

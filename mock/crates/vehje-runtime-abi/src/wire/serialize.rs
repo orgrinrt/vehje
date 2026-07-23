@@ -28,7 +28,7 @@ use hilavitkutin_str::{ArenaInterner, StringInterner};
 use vehje_ir::{Arena, FamilyId, NodeList, NodeRef};
 
 use crate::encode::{encode, LitTag, NodeTag, ResidualEncoder};
-use crate::Tier;
+use crate::wire::residual::Tier;
 
 /// A byte (or word-slot) position into the wire image.
 ///
@@ -64,6 +64,7 @@ const fn tag_code(tag: NodeTag) -> u32 { // lint:allow(no-bare-numeric) lint:all
         NodeTag::Iter => 8, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI wire tag code; tracked: #207
         NodeTag::Interp => 9, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI wire tag code; tracked: #207
         NodeTag::Raw => 10, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI wire tag code; tracked: #207
+        NodeTag::Handle => 11, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI wire tag code; tracked: #207
     }
 }
 
@@ -80,7 +81,6 @@ const fn tier_code(tier: Tier) -> u32 { // lint:allow(no-bare-numeric) lint:allo
     match tier {
         Tier::Arena => 0, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI wire tier code; tracked: #207
         Tier::Bytecode => 1, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI wire tier code; tracked: #207
-        Tier::Native => 2, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI wire tier code; tracked: #207
     }
 }
 

@@ -91,4 +91,10 @@ impl<'a> Builder<'a> {
     pub fn raw(&mut self, family: FamilyId, payload: NodeList, span: Span) -> Maybe<NodeRef> {
         self.arena.push(Node::Raw { family, payload }, span)
     }
+
+    /// Handle `body` with the given handler clauses (resumable
+    /// algebraic-effect handlers).
+    pub fn handle(&mut self, body: NodeRef, clauses: NodeList, span: Span) -> Maybe<NodeRef> {
+        self.arena.push(Node::Handle { body, clauses }, span)
+    }
 }

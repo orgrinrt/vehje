@@ -6,7 +6,7 @@ license.workspace = true
 
 [dependencies]
 vehje-ir.workspace = true
-vehje-resolve.workspace = true
+vehje-typecheck.workspace = true
 hilavitkutin-api.workspace = true
 notko.workspace = true
 

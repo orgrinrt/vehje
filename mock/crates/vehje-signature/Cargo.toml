@@ -1,17 +1,13 @@
 [package]
-name = "vehje-typecheck"
+name = "vehje-signature"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [dependencies]
-vehje-ir.workspace = true
-vehje-resolve.workspace = true
-vehje-signature.workspace = true
-vehje-fixpoint.workspace = true
 arvo.workspace = true
-arvo-bitmask.workspace = true
 notko.workspace = true
+vehje-ir.workspace = true
 hilavitkutin-api.workspace = true
 
 [build-dependencies]

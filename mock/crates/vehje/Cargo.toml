@@ -6,9 +6,13 @@ license.workspace = true
 
 [dependencies]
 vehje-ir.workspace = true
+vehje-signature.workspace = true
 vehje-resolve.workspace = true
 vehje-typecheck.workspace = true
+vehje-lower.workspace = true
 vehje-codegen.workspace = true
+vehje-runtime-gen.workspace = true
+vehje-runtime-driver.workspace = true
 hilavitkutin-api.workspace = true
 hilavitkutin-str.workspace = true
 notko.workspace = true

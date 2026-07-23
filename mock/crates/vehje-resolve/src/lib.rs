@@ -14,7 +14,7 @@
 #![feature(const_trait_impl)]
 #![deny(unused, unreachable_code, unused_must_use, unused_imports, dead_code)]
 
-use arvo::{Maybe, Outcome};
+use arvo::{Maybe, Outcome, USize};
 
 use hilavitkutin_str::Str;
 use vehje_ir::{Arena, Node, NodeRef, Span};
@@ -81,7 +81,7 @@ pub enum ResolveError {
 // FIXME: dispatch Raw nodes to the family-extension resolve hooks, and
 // produce a resolution side-table (Var handle to binder handle) for the
 // check and emit passes. M0 walks and validates against the scope chain.
-pub fn resolve(arena: &mut Arena<'_>, root: NodeRef) -> Outcome<(), ResolveError> {
+pub fn resolve(arena: &Arena<'_>, root: NodeRef) -> Outcome<(), ResolveError> {
     walk(arena, root, Maybe::Isnt)
 }
 
@@ -133,6 +133,17 @@ fn walk(arena: &Arena<'_>, at: NodeRef, scope: Maybe<&Scope<'_>>) -> Outcome<(),
         // FIXME: dispatch Raw to the family-extension resolve hook; M0
         // treats a family node as opaque (no Core-level names inside).
         Node::Raw { .. } => Outcome::Ok(()),
+        Node::Handle { body, clauses } => {
+            // FIXME: a handler clause binds the operation and the resumption;
+            // once the clause representation lands, push those binders before
+            // walking the clause body. M-level walks the body and the clause
+            // bodies without the operation/resumption binders.
+            walk(arena, body, scope)?;
+            for child in arena.list(clauses) {
+                walk(arena, *child, scope)?;
+            }
+            Outcome::Ok(())
+        }
     }
 }
 
@@ -141,6 +152,109 @@ fn frame_for<'p>(name: Str, binder: NodeRef, parent: Maybe<&'p Scope<'p>>) -> Sc
     match parent {
         Maybe::Is(p) => Scope::child(name, binder, p),
         Maybe::Isnt => Scope::root(name, binder),
+    }
+}
+
+/// The resolution side-table.
+///
+/// Each resolved `Var`'s arena index maps to the binder that introduced it,
+/// over a caller-provided region parallel to the node arena. The check and
+/// lower passes read it so they do not re-resolve. No allocation.
+pub struct Resolution<'a> {
+    binders: &'a mut [Maybe<NodeRef>],
+}
+
+impl<'a> Resolution<'a> {
+    /// Wrap a caller-provided region sized like the node arena; every entry
+    /// starts unresolved.
+    pub fn new(binders: &'a mut [Maybe<NodeRef>]) -> Self {
+        Self { binders }
+    }
+
+    /// The binder a `Var` at arena index `at` resolved to, or `Isnt`.
+    pub fn binder(&self, at: USize) -> Maybe<NodeRef> {
+        self.binders[at.0]
+    }
+
+    /// Record that the `Var` at arena index `at` resolves to `binder`.
+    pub fn record(&mut self, at: USize, binder: NodeRef) {
+        self.binders[at.0] = Maybe::Is(binder);
+    }
+}
+
+/// Resolve a program, recording each `Var`'s binder into `resolution`.
+///
+/// Like [`resolve`], but populates the resolution side-table the later passes
+/// read. An unresolved `Var` is still refused with its name.
+pub fn resolve_into(
+    arena: &Arena<'_>,
+    root: NodeRef,
+    resolution: &mut Resolution<'_>,
+) -> Outcome<(), ResolveError> {
+    walk_record(arena, root, Maybe::Isnt, resolution)
+}
+
+/// Recurse over one node, resolving and recording `Var` bindings.
+fn walk_record(
+    arena: &Arena<'_>,
+    at: NodeRef,
+    scope: Maybe<&Scope<'_>>,
+    res: &mut Resolution<'_>,
+) -> Outcome<(), ResolveError> {
+    match arena.get(at) {
+        Node::Lit(_) => Outcome::Ok(()),
+        Node::Var(name) => match scope {
+            Maybe::Is(s) => match s.resolve(name) {
+                Maybe::Is(binder) => {
+                    res.record(at.index(), binder);
+                    Outcome::Ok(())
+                }
+                Maybe::Isnt => Outcome::Err(ResolveError::Unresolved { name, span: arena.span(at) }),
+            },
+            Maybe::Isnt => Outcome::Err(ResolveError::Unresolved { name, span: arena.span(at) }),
+        },
+        Node::Let { name, value, body, .. } => {
+            walk_record(arena, value, scope, res)?;
+            let frame = frame_for(name, at, scope);
+            walk_record(arena, body, Maybe::Is(&frame), res)
+        }
+        Node::Lambda { param, body } => {
+            let frame = frame_for(param, at, scope);
+            walk_record(arena, body, Maybe::Is(&frame), res)
+        }
+        Node::Apply { callee, args } => {
+            walk_record(arena, callee, scope, res)?;
+            for child in arena.list(args) {
+                walk_record(arena, *child, scope, res)?;
+            }
+            Outcome::Ok(())
+        }
+        Node::Project { base, .. } => walk_record(arena, base, scope, res),
+        Node::If { cond, then_branch, else_branch } => {
+            walk_record(arena, cond, scope, res)?;
+            walk_record(arena, then_branch, scope, res)?;
+            walk_record(arena, else_branch, scope, res)
+        }
+        Node::Match { scrutinee, arms } => {
+            walk_record(arena, scrutinee, scope, res)?;
+            for child in arena.list(arms) {
+                walk_record(arena, *child, scope, res)?;
+            }
+            Outcome::Ok(())
+        }
+        Node::Iter { seq, body } => {
+            walk_record(arena, seq, scope, res)?;
+            walk_record(arena, body, scope, res)
+        }
+        Node::Interp { value } => walk_record(arena, value, scope, res),
+        Node::Raw { .. } => Outcome::Ok(()),
+        Node::Handle { body, clauses } => {
+            walk_record(arena, body, scope, res)?;
+            for child in arena.list(clauses) {
+                walk_record(arena, *child, scope, res)?;
+            }
+            Outcome::Ok(())
+        }
     }
 }
 
@@ -172,8 +286,8 @@ mod tests {
         let var = expect(b.var(x, Span::default()));
         let root = expect(b.let_(Bool::FALSE, x, unit, var, Span::default()));
 
-        let mut arena = b.into_arena();
-        assert!(matches!(resolve(&mut arena, root), Outcome::Ok(())));
+        let arena = b.into_arena();
+        assert!(matches!(resolve(&arena, root), Outcome::Ok(())));
     }
 
     #[test]
@@ -187,9 +301,9 @@ mod tests {
         let y = str_const!("y");
         let root = expect(b.var(y, Span::default()));
 
-        let mut arena = b.into_arena();
+        let arena = b.into_arena();
         assert!(matches!(
-            resolve(&mut arena, root),
+            resolve(&arena, root),
             Outcome::Err(ResolveError::Unresolved { .. })
         ));
     }

@@ -1,14 +1,22 @@
-//! vehje-runtime-abi, the framework's tier-tagged C ABI.
+//! vehje-runtime-abi, the framework's per-script wire family.
 //!
-//! A `Checked` residual crosses tier-tagged: a flat serialized IR arena
-//! (baseline), an optimized bytecode, or native code. The tier is an
-//! optimization axis orthogonal to correctness; the effect proof is
-//! discharged in Rust before any lowering. Pure type surface plus the
-//! runtime-environment interface descriptor, no runtime logic.
+//! What crosses the compiler-to-runtime boundary and in what representation.
+//! The residual is a control-flow-graph-of-blocks program (a serialized node
+//! arena, the child-index pool, the string blob, a block table, and a function
+//! table); a produced value crosses back as a value-arena of the same
+//! structural family; the reserve-then-commit sink is the one transfer protocol
+//! for both boundaries; and the one runtime-W batched-column `extern "C"` entry
+//! takes a column of records per call. Pure type surface plus the entry
+//! signature, no runtime logic.
 //!
-//! `#![no_std]`, no alloc. Bare primitives appear only at the
-//! `#[repr(C)]` wire boundary (the documented FFI exception), which the
-//! tier-0 serialization introduces when it lands.
+//! One crate, not two, even though it carries a residual arena and a
+//! value-arena: they are one structural family with one record-layout
+//! definition. It splits into modules, [`wire`], [`value`], [`sink`], and
+//! [`entry`], over the shared [`encode`] walk.
+//!
+//! `#![no_std]`, no alloc. Bare primitives appear only at the `#[repr(C)]` wire
+//! boundary (the documented FFI exception); the crate's own logic uses arvo,
+//! notko, and hilavitkutin-str types.
 
 #![no_std]
 // const_trait_impl (test-only): WATCH-allowed (unstable-features.md); the
@@ -18,42 +26,26 @@
 #![deny(unused, unreachable_code, unused_must_use, unused_imports, dead_code)]
 
 pub mod encode;
+pub mod entry;
+pub mod sink;
+pub mod value;
 pub mod wire;
-
-/// Serialize a checked program into a tier-0 residual byte image.
-pub use wire::serialize;
 
 /// The format-agnostic residual encoder contract and node walk.
 pub use encode::{encode, LitTag, NodeTag, ResidualEncoder};
 
-/// The representation a residual crosses the ABI in.
-///
-/// The tier is chosen for execution speed, never semantics: the effect
-/// proof holds across all tiers, so a residual is the same proven-safe
-/// object whether it crosses as an arena, bytecode, or native code.
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub enum Tier {
-    /// The flat serialized IR arena: the reference semantics, and the
-    /// tier the first working version ships.
-    Arena,
-    /// An optimized linear bytecode (encoder deferred).
-    Bytecode,
-    /// Native machine code, where the runtime is environment plumbing
-    /// around LLVM/cranelift output (encoder deferred).
-    Native,
-}
+/// The residual wire form: the crossing descriptor, its tables, and the tier-0
+/// serialization.
+pub use wire::{
+    serialize, BinderSite, Block, BlockId, BlockTable, DiagnosticsSchema, Function, FunctionTable,
+    NodeRange, ProvenanceEntry, Residual, Signature, SuccRange, TerminatorKind, Tier, ViolationSeed,
+};
 
-/// A checked residual's crossing descriptor: the tier it was serialized
-/// at.
-///
-/// The tier-0 byte image itself is produced by [`serialize`] (see the
-/// [`wire`] module); this names which representation those bytes are in,
-/// so the driver and runtime agree on how to read them.
-// FIXME: carry the runtime-environment interface descriptor (the host
-// capabilities the residual expects) and the `extern "C"` entry points
-// alongside the tier tag once the driver bindings land (M3 step 3).
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub struct Residual {
-    /// The representation the serialized residual crosses in.
-    pub tier: Tier,
-}
+/// The value-arena a produced value crosses back in.
+pub use value::{BlobSpan, Region, RegionId, ValueArena, ValueList, ValueNode, ValueRef, ValueTag};
+
+/// The reserve-then-commit transfer sink.
+pub use sink::{CommitFn, ReserveFn, VehjeSink};
+
+/// The batched-column `extern "C"` entry signature and the ABI version.
+pub use entry::{BatchColumn, BatchedColumnEntry, ABI_VERSION};

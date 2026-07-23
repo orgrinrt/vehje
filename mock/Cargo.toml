@@ -3,10 +3,14 @@ resolver = "2"
 members = [
     "crates/vehje",
     "crates/vehje-ir",
+    "crates/vehje-signature",
+    "crates/vehje-fixpoint",
     "crates/vehje-resolve",
     "crates/vehje-typecheck",
+    "crates/vehje-lower",
     "crates/vehje-schedule",
     "crates/vehje-codegen",
+    "crates/vehje-runtime-gen",
     "crates/vehje-runtime-abi",
     "crates/vehje-runtime-driver",
 ]
@@ -28,6 +32,7 @@ arvo-graph = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev" }
 arvo-sparse = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev" }
 arvo-spectral = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev" }
 arvo-comb = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev" }
+arvo-hash = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev" }
 
 hilavitkutin-api = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", branch = "dev" }
 hilavitkutin = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", branch = "dev" }
@@ -38,9 +43,13 @@ notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", defau
 
 # In-workspace phase crates. Path deps for inter-phase consumption.
 vehje-ir = { path = "crates/vehje-ir" }
+vehje-signature = { path = "crates/vehje-signature" }
+vehje-fixpoint = { path = "crates/vehje-fixpoint" }
 vehje-resolve = { path = "crates/vehje-resolve" }
 vehje-typecheck = { path = "crates/vehje-typecheck" }
+vehje-lower = { path = "crates/vehje-lower" }
 vehje-schedule = { path = "crates/vehje-schedule" }
 vehje-codegen = { path = "crates/vehje-codegen" }
+vehje-runtime-gen = { path = "crates/vehje-runtime-gen" }
 vehje-runtime-abi = { path = "crates/vehje-runtime-abi" }
 vehje-runtime-driver = { path = "crates/vehje-runtime-driver" }
