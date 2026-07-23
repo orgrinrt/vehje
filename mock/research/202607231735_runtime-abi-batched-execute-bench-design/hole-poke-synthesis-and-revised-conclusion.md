@@ -127,6 +127,30 @@ dwarfs it). The batched column entry is justified at every tier, for complementa
 everywhere, plus crossing amortisation once the payload is cheap enough (the native / copy-and-patch endgame the
 framework is aiming at). This closes the one open question the first hole-poke left.
 
+## The cold regime confirms the warm crossing was a lower bound (option 3)
+
+The fixed `abi_cross_cold` (seed-dependent target index over 16 distinct addresses, warm baseline matched to a
+single cold target so the delta is pure misprediction) run, empty-payload cells (profile `real`, median us):
+
+| W | cold_null (16 targets, mispredicted) | warm_null (1 target, predicted) | cold/warm |
+|---|---|---|---|
+| 1 | 33.53 | 5.55 | 6.04x |
+| 2 | 14.16 | 3.62 | 3.91x |
+| 4 | 4.99 | 4.14 | 1.20x |
+| 8 | 3.43 | 2.99 | 1.14x |
+| 16 | 2.70 | 2.55 | 1.06x |
+| 64+ | ~2.4-3.2 | ~2.4-3.1 | ~1.0x |
+
+**A mispredicted crossing costs ~6x a predicted one at W=1.** With 256 per-record crossings the cold cell pays
+33.5 us versus the warm 5.5 us; the misprediction adds ~90-110 ns per crossing on top of the ~9-22 ns predicted
+crossing. The penalty falls off as W grows (fewer crossings to mispredict) and is gone by W>=16. So the warm
+`C_cross` the earlier runs measured is the best case, and the real crossing under varying call targets is several
+times larger at the per-record extreme. This STRENGTHENS the batched-entry conclusion (agner's prediction): under
+realistic conditions a scalar per-record entry is penalised ~6x more, so batching helps more, never less. The
+seed-dependent index is load-bearing: the first cold build indexed off a loop counter a predictor learns, and
+would have read near-warm. (The scalar-payload cold cells are ~2.2 ms either way, the misprediction lost under the
+heavy payload, as expected.)
+
 ## What genuinely holds (all three agree)
 
 The two-object cdylib discipline, the resolve-in-setup, the byte-exact cross-validation, and the ICF hygiene are
