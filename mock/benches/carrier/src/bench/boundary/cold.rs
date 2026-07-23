@@ -63,21 +63,25 @@ fn open_cold(profile: &str, w: usize, prefix: &str) -> StColdCross {
     StColdCross { rt, handle, targets, free, seeds: vec![0u64; N_TOTAL], w }
 }
 
-/// Cross the column in `k = N/w` crossings, each into a scattered-index target so the indirect
-/// branch mispredicts. The index is the top bits of a multiplicative hash of the crossing
-/// count: deterministic (so the fold is reps-invariant) but scattered across the sixteen
-/// targets so a per-site predictor cannot lock onto one.
+/// Cross the column in `k = N/w` crossings, each into a DATA-dependent target so the indirect
+/// branch mispredicts. The index is derived from the batch's own seed data (which the CPU has
+/// not seen at branch time and which changes every calibrated iteration via `fill_seeds`), so
+/// a history-based predictor (BTB/ITTAGE) cannot learn the sequence the way it learns a fixed
+/// counter-derived rotation. Panel fix (agner): a loop-counter index is a deterministic
+/// sequence a predictor learns after warmup, measuring near-warm cost; a data-dependent index
+/// is what actually forces the mispredict.
 #[inline(always)]
 fn cold_column(targets: &[CrEntryW; COLD_TARGETS], handle: *mut c_void, seeds: &[u64], w: usize) -> u64 {
     let mut acc = 0u64;
     let mut off = 0usize;
-    let mut cross = 0u64;
     while off < N_TOTAL {
         let batch = w.min(N_TOTAL - off);
-        let idx = ((cross.wrapping_mul(0x9e37_79b9_7f4a_7c15)) >> 60) as usize & (COLD_TARGETS - 1);
+        // index from this batch's first seed: unknown to the predictor at branch time, and
+        // re-randomised every iteration by the anti-hoist seed, so the target sequence is not
+        // a learnable fixed rotation.
+        let idx = (seeds[off].wrapping_mul(0x9e37_79b9_7f4a_7c15) >> 60) as usize & (COLD_TARGETS - 1);
         acc = acc.rotate_left(7) ^ unsafe { targets[idx](handle, seeds.as_ptr().add(off), batch) };
         off += w;
-        cross += 1;
     }
     acc
 }
@@ -94,9 +98,13 @@ bench_matrix! {
     floor: "warm_null",
     regime: warm,
 
-    // one empty-payload target, predicted crossing (baseline + floor).
+    // one empty-payload target, predicted crossing (baseline + floor). Uses cold_null_0 (a
+    // single cold address) rather than cr_null_entry, so it carries the identical per-call
+    // black_box the cold cells' targets carry: the only difference between warm_null and
+    // cold_null is then one predicted target vs sixteen mispredicted ones, the misprediction
+    // penalty in isolation (panel fix: the warm baseline must match the cold body).
     setup |profile: &str, n: usize| -> StCross {
-        open_and_init(profile, n, b"cr_null_entry\0")
+        open_and_init(profile, n, b"cr_cold_null_0\0")
     }
 
     cell warm_null
@@ -117,11 +125,12 @@ bench_matrix! {
             cold_column(&s.targets, s.handle, &s.seeds, s.w)
         }
 
-    // one scalar-payload target, predicted crossing.
+    // one scalar-payload target, predicted crossing (cold_target_0, same body as the cold
+    // cells so the delta is pure misprediction).
     cell warm_scalar
         #[feature = "boundary"]
         setup |profile: &str, n: usize| -> StCross {
-            open_and_init(profile, n, b"cr_execute_scalar_runtime_w\0")
+            open_and_init(profile, n, b"cr_cold_target_0\0")
         }
         |s, seed| {
             fill_seeds(&mut s.seeds, seed);

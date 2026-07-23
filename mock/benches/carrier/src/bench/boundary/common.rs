@@ -83,8 +83,16 @@ pub fn fill_seeds(buf: &mut [u64], seed: u64) {
 /// Build the wire bytes for `profile`'s residual at [`PROG_NODES`]. The bytes cross
 /// into the runtime opaque, matching how a real residual reaches the ABI.
 pub fn program_bytes(profile: &str) -> Vec<u8> {
+    program_bytes_n(profile, PROG_NODES)
+}
+
+/// Build `profile`'s residual at a chosen node count. The payload-cost family sweeps this
+/// (the residual size) to move the per-record interpret cost, so the crossing goes from a
+/// visible fraction (a tiny residual, the cheap-payload regime the ABI decision hinges on)
+/// to negligible (a large residual).
+pub fn program_bytes_n(profile: &str, nodes: usize) -> Vec<u8> {
     let mut gp = c::GenParams::profile(profile).expect("boundary sweep names a real profile");
-    gp.node_count = PROG_NODES;
+    gp.node_count = nodes.max(1);
     c::ir::encode(&c::generate(&gp), &c::ir::REC24)
 }
 
