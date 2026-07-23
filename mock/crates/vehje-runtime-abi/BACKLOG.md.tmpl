@@ -26,8 +26,8 @@ are set by the Zig-side check. Schema-now, semantics-later.
 
 The node record inline-operand count, the region-id column width (a flags byte
 when the live-region count is small, else a parallel array), and whether the
-native tier beats the cheap-lowered interpreter enough to justify the stencil
-trusted base are measure-then-lock constants with provisional values, to lock
+native execution beats the cheap-lowered interpreter enough to justify the
+stencil trusted base are measure-then-lock constants with provisional values, to lock
 against a census-specific corpus when real consumers exist.
 
 ## The bytecode tier encoder

@@ -104,7 +104,8 @@ once its shape is proven.
 `StructuralHash` is a content address of an IR subtree, computed over the arvo
 content-hash primitive. It is defined once here because three downstream
 mechanisms consume the same identity: hash-consing in `vehje-lower`, dedup
-keying in `vehje-fixpoint`'s incremental layer, and the manifest in
+keying in `vehje-fixpoint`'s incremental layer (which takes the content-hash
+value, not this type, so it stays `vehje-ir`-free), and the manifest in
 `vehje-runtime-gen`. Defining it per consumer would fork the identity primitive
 the incremental mechanism's proof-preservation argument depends on. `hash_of`
 folds a subtree to its `StructuralHash`; equal subtrees hash equal, and the

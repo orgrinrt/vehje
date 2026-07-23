@@ -12,8 +12,8 @@ The value is a value-arena: fixed-width value-node records, a flat child-index
 pool, a self-contained byte blob, and relative index links, the same structural
 family as the residual wire form, reused for produced values rather than IR. It
 is closed and versioned (the framework owns producer and reader, so there are no
-vtables), and tier-orthogonal (a native tier emits the same value-arena a tier-0
-interpreter does). The value serialises depth-first, children-before-parents, so
+vtables), and evaluation-orthogonal (a native strategy emits the same
+value-arena the interpreter does). The value serialises depth-first, children-before-parents, so
 a parent records already-emitted child indices with no back-patching; a typed
 structural decode over an untrusted arena is then linear and acyclic by
 construction (child-before-parent makes acyclicity a single monotone index
@@ -59,7 +59,7 @@ internal loop pays essentially nothing over the monomorphised forms at this
 crossing cost). So the batched entry is justified by the vectorisation it enables
 (the SoA win survives the object boundary byte-exact, 2.3x to 4.1x across residual
 sizes), not by crossing cost, at every interpret tier. Crossing amortisation
-becomes a live term only at the native and copy-and-patch tier, where the payload
+becomes a live term only at the native and copy-and-patch strategy, where the payload
 is cheap enough (a tiny native kernel amortises the crossing about 3x from W=1 to
 W=256, and under realistic call-target misprediction the per-record crossing is
 about 6x its warm cost), so the batched entry is justified there for the

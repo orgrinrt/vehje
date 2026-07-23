@@ -51,9 +51,12 @@ mechanism.
 - `Incremental`. Differential maintenance of the compile-stage relations over a
   host-declared artifact set: an edit re-derives only its transitive dependents
   (measured: a 2000-mod stack warm-loads editing one mod in 0.003 ms), and
-  cross-artifact dedup keys shared subtrees by the one `vehje-ir` structural
-  hash so a shared subtree compiles once and a cache hit is a proven-valid
-  content-addressed artifact. The framework owns the mechanism (keying, dedup,
+  cross-artifact dedup keys shared subtrees by opaque content-hash values the
+  client supplies (the `arvo` content hash a client's structural hashing
+  produces), so a shared subtree compiles once and a cache hit is a proven-valid
+  content-addressed artifact. The engine keys on content addresses without naming
+  an IR type, so its `vehje-ir`-free layering holds. The framework owns the
+  mechanism (keying, dedup,
   differential recompute, invalidation); the host owns the load policy and the
   storage backend, expressed as traits (`Store` for the host-lent backend,
   `ArtifactSet` for the host-declared set), so no I/O is baked in.

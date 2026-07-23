@@ -1,6 +1,9 @@
 # vehje-runtime-driver. compiler-side runtime dispatch
 
-The compiler-side dispatch over the tier-tagged C ABI: serialize a
-`Checked` residual at the chosen tier, hand it to the embedded Zig runtime,
-map results and diagnostics back. Compile-time dispatch, no `dyn`, no
-plugin shared-object loading at the compiler layer. `#![no_std]`, no alloc.
+The compiler-side embedding and dispatch over the wire C ABI: serialize a
+`Checked` residual, hand it to the embedded Zig runtime, and map results and
+diagnostics back. It also holds the safe, bounds-checked reader over the
+value-arena a produced value crosses back in, and the validation pass a value
+passes before the host reads it. The one framework crate with a `std` role, for
+the dlopen of the runtime artifact. Compile-time dispatch, no `dyn`, no plugin
+shared-object loading at the compiler layer. `#![no_std]` on the core paths.
