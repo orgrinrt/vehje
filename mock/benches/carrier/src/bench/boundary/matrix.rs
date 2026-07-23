@@ -27,7 +27,6 @@
 use core::ffi::c_void;
 
 use mockspace_bench_matrix::bench_matrix;
-use mockspace_bench_matrix::boundary::Runtime;
 
 use super::common::{
     cross_column, fill_seeds, init_handle, open_and_init, open_runtime, CrEntryMono, CrFree, CrInit,

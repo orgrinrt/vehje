@@ -19,8 +19,8 @@
 use mockspace_bench_matrix::bench_matrix;
 
 use super::common::{
-    cross_column, fill_seeds, init_handle, open_runtime_at, program_bytes, CrEntryMono, CrEntryW,
-    CrExec1, CrFree, CrInit, StCross, ZIG_ENV, N_TOTAL,
+    cross_column, fill_seeds, init_handle, open_runtime_at, CrEntryMono, CrEntryW, CrExec1, CrFree,
+    CrInit, StCross, ZIG_ENV, N_TOTAL,
 };
 use super::entry::{anchor_column, mono_column, StAnchor, StMono};
 
@@ -127,7 +127,7 @@ bench_matrix! {
 
 #[cfg(test)]
 mod tests {
-    use super::super::common::{runtime_dylib_path, zig_dylib_path, N_TOTAL as NT};
+    use super::super::common::{program_bytes, runtime_dylib_path, zig_dylib_path, N_TOTAL as NT};
     use super::*;
     use mockspace_bench_matrix::boundary::Runtime;
 
