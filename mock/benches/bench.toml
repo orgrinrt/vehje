@@ -2263,3 +2263,26 @@ variants = ["variants/carrier_cold_leaf_switch/target/release/carrier_cold_leaf_
 n = 1024
 variants = ["variants/carrier_cold_leaf_switch/target/release/carrier_cold_leaf_switch", "variants/carrier_cold_leaf_fntable/target/release/carrier_cold_leaf_fntable", "variants/carrier_cold_leaf_null/target/release/carrier_cold_leaf_null", "variants/carrier_cold_leaf_threaded/target/release/carrier_cold_leaf_threaded"]
 
+[bench.carrier_entgrid]
+title = "Entropy x locality surface: op_correlation {0,500,900} x locality_window {4,64,unbounded}, fixed predecoded switch dispatch"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_entgrid.normalise]
+baseline = "carrier_ent_c0_w64"
+mode = "subtract"
+[[bench.carrier_entgrid.sizes]]
+n = 64
+variants = ["variants/carrier_ent_c0_w4/target/release/carrier_ent_c0_w4", "variants/carrier_ent_c0_w64/target/release/carrier_ent_c0_w64", "variants/carrier_ent_c0_wmax/target/release/carrier_ent_c0_wmax", "variants/carrier_ent_c500_w4/target/release/carrier_ent_c500_w4", "variants/carrier_ent_c500_w64/target/release/carrier_ent_c500_w64", "variants/carrier_ent_c500_wmax/target/release/carrier_ent_c500_wmax", "variants/carrier_ent_c900_w4/target/release/carrier_ent_c900_w4", "variants/carrier_ent_c900_w64/target/release/carrier_ent_c900_w64", "variants/carrier_ent_c900_wmax/target/release/carrier_ent_c900_wmax"]
+[[bench.carrier_entgrid.sizes]]
+n = 256
+variants = ["variants/carrier_ent_c0_w4/target/release/carrier_ent_c0_w4", "variants/carrier_ent_c0_w64/target/release/carrier_ent_c0_w64", "variants/carrier_ent_c0_wmax/target/release/carrier_ent_c0_wmax", "variants/carrier_ent_c500_w4/target/release/carrier_ent_c500_w4", "variants/carrier_ent_c500_w64/target/release/carrier_ent_c500_w64", "variants/carrier_ent_c500_wmax/target/release/carrier_ent_c500_wmax", "variants/carrier_ent_c900_w4/target/release/carrier_ent_c900_w4", "variants/carrier_ent_c900_w64/target/release/carrier_ent_c900_w64", "variants/carrier_ent_c900_wmax/target/release/carrier_ent_c900_wmax"]
+[[bench.carrier_entgrid.sizes]]
+n = 1024
+variants = ["variants/carrier_ent_c0_w4/target/release/carrier_ent_c0_w4", "variants/carrier_ent_c0_w64/target/release/carrier_ent_c0_w64", "variants/carrier_ent_c0_wmax/target/release/carrier_ent_c0_wmax", "variants/carrier_ent_c500_w4/target/release/carrier_ent_c500_w4", "variants/carrier_ent_c500_w64/target/release/carrier_ent_c500_w64", "variants/carrier_ent_c500_wmax/target/release/carrier_ent_c500_wmax", "variants/carrier_ent_c900_w4/target/release/carrier_ent_c900_w4", "variants/carrier_ent_c900_w64/target/release/carrier_ent_c900_w64", "variants/carrier_ent_c900_wmax/target/release/carrier_ent_c900_wmax"]
+[[bench.carrier_entgrid.sizes]]
+n = 4096
+variants = ["variants/carrier_ent_c0_w4/target/release/carrier_ent_c0_w4", "variants/carrier_ent_c0_w64/target/release/carrier_ent_c0_w64", "variants/carrier_ent_c0_wmax/target/release/carrier_ent_c0_wmax", "variants/carrier_ent_c500_w4/target/release/carrier_ent_c500_w4", "variants/carrier_ent_c500_w64/target/release/carrier_ent_c500_w64", "variants/carrier_ent_c500_wmax/target/release/carrier_ent_c500_wmax", "variants/carrier_ent_c900_w4/target/release/carrier_ent_c900_w4", "variants/carrier_ent_c900_w64/target/release/carrier_ent_c900_w64", "variants/carrier_ent_c900_wmax/target/release/carrier_ent_c900_wmax"]
+[[bench.carrier_entgrid.sizes]]
+n = 16384
+variants = ["variants/carrier_ent_c0_w4/target/release/carrier_ent_c0_w4", "variants/carrier_ent_c0_w64/target/release/carrier_ent_c0_w64", "variants/carrier_ent_c0_wmax/target/release/carrier_ent_c0_wmax", "variants/carrier_ent_c500_w4/target/release/carrier_ent_c500_w4", "variants/carrier_ent_c500_w64/target/release/carrier_ent_c500_w64", "variants/carrier_ent_c500_wmax/target/release/carrier_ent_c500_wmax", "variants/carrier_ent_c900_w4/target/release/carrier_ent_c900_w4", "variants/carrier_ent_c900_w64/target/release/carrier_ent_c900_w64", "variants/carrier_ent_c900_wmax/target/release/carrier_ent_c900_wmax"]
+

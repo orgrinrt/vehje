@@ -423,6 +423,40 @@ fn native_ceiling_family() -> Vec<MatrixSpec> {
     vec![spec_sized("carrier_native_ceiling".to_string(), "Native ceiling: interpreter vs shape-specialized native madd loop (THROUGHPUT over a byte stream, O(N^2), not comparable to sibling per-execution numbers)".to_string(), "interp", "carrier_ceil", cells, vec![64, 256, 1024])]
 }
 
+fn entgrid_family() -> Vec<MatrixSpec> {
+    // Entropy x locality as an explicit 3x3 swept surface, holding the op
+    // distribution uniform and the dispatch fixed (predecoded switch) so the ONLY
+    // variables are op-stream entropy (op_correlation: 0 iid / 500 mid / 900 highly
+    // correlated) and operand locality (locality_window: 4 tight / 64 default /
+    // ~unbounded). The review panel's synthesis inferred that entropy dominates
+    // locality for interpreter per-node cost (the named profiles confound the two);
+    // this family measures the surface directly so a consumer can locate its
+    // residuals on it and read the tier prediction off it, and so "entropy, not
+    // size or locality, predicts per-node cost" stops being an inference.
+    // op_correlation is per-mille chance to repeat the prior op, so LOW correlation
+    // is HIGH entropy.
+    let corrs: &[(&str, u32)] = &[("c0", 0), ("c500", 500), ("c900", 900)];
+    let wins: &[(&str, &str)] = &[("w4", "4"), ("w64", "64"), ("wmax", "1usize << 20")];
+    let cells = corrs.iter().flat_map(|(ctag, corr)| {
+        wins.iter().map(move |(wtag, win)| {
+            let prep = format!(
+                "static PREP: OnceLock<Vec<u8>> = OnceLock::new(); \
+                 let bytes = PREP.get_or_init(|| {{ let mut gp = c::GenParams::default_point(); gp.node_count = N; gp.op_correlation = {corr}; gp.locality_window = {win}; c::ir::encode(&c::generate(&gp), &c::ir::REC24) }}); \
+                 let d = c::ir::Decoded::parse(bytes, c::ir::REC24).unwrap(); \
+                 let pd = c::predecode::predecode(&d); \
+                 let mut r = vec![0u64; d.node_count];"
+            );
+            cell(
+                format!("{ctag}_{wtag}").leak(),
+                prep,
+                "c::predecode::interpret_predecoded(&pd, seed, &mut r); acc ^= c::checksum(&r);".to_string(),
+                &[],
+            )
+        })
+    }).collect();
+    vec![spec("carrier_entgrid".to_string(), "Entropy x locality surface: op_correlation {0,500,900} x locality_window {4,64,unbounded}, fixed predecoded switch dispatch".to_string(), "c0_w64", "carrier_ent", cells)]
+}
+
 fn coldcycle_family() -> Vec<MatrixSpec> {
     // Cold / aliased-predictor regime. Every other family runs ONE program many
     // times under the calibration re-warm, so a small program's whole per-node
@@ -497,6 +531,7 @@ fn main() {
     all.extend(native_ceiling_family());
     all.extend(setup_cost_family());
     all.extend(coldcycle_family());
+    all.extend(entgrid_family());
 
     let mut sections: Vec<String> = Vec::new();
     let mut nvariants = 0usize;
