@@ -19,7 +19,11 @@
 //! - [`residency`] (bench 7): input buffer residency (reused warm column vs fresh cold
 //!   region per call), the registered-buffer question.
 //! - [`zig`] (bench 8): the cross-language entry-form floor, crossing into the sibling
-//!   `carrier-zig` object so the entry-form conclusion is not Rust-only.
+//!   `carrier-zig` object so the entry-form conclusion is not Rust-only (now including the
+//!   tail-threaded shape, the one closest to the shipped Zig runtime).
+//! - [`cold`]: the boundary-cold regime, cycling sixteen distinct call targets so the crossing
+//!   is measured under a mispredicted indirect branch (the real varying-call-target case),
+//!   against the warm predicted-crossing baseline.
 //!
 //! Shared machinery (constants, resolved-signature types, the runtime-handle state, the
 //! column-crossing loop, seed marshalling, the cross-validation dylib build) lives in
@@ -31,6 +35,7 @@
 //! `mockspace-bench-matrix::boundary::Runtime` (and its libloading dep), which the other
 //! carrier families do not need.
 
+pub mod cold;
 pub mod common;
 pub mod cross;
 pub mod entry;
@@ -55,6 +60,7 @@ pub fn matrix_decls() -> Vec<MatrixDecl> {
     all.extend(lifecycle::matrix_decls());
     all.extend(residency::matrix_decls());
     all.extend(zig::matrix_decls());
+    all.extend(cold::matrix_decls());
     all.extend(matrix::matrix_decls());
     all
 }

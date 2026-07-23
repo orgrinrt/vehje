@@ -345,3 +345,41 @@ export fn zr_execute_scalar_dispatch(h: *Handle, seeds: [*]const u64, w: usize) 
         else => scalarBatch(h, seeds, w),
     };
 }
+
+// ── the tail-threaded batch (the load-bearing cross-language shape) ──
+//
+// The `interpTail` dispatch (guaranteed tail calls, `@call(.always_tail)`) is the shape
+// Rust needed a nightly feature to express and the one closest to the shipped vehje runtime,
+// so a fair cross-language comparison must cross it, not only the switch shape. The fold is
+// identical to `scalarBatch`, so a tail cell cross-validates byte-exact against the Rust and
+// Zig switch entries.
+
+inline fn tailBatch(h: *Handle, seeds: [*]const u64, w: usize) u64 {
+    var acc: u64 = 0;
+    var i: usize = 0;
+    while (i < w) : (i += 1) {
+        const cs = interpTail(h.bytes.ptr, h.results.ptr, seeds[i]);
+        acc = std.math.rotl(u64, acc, 7) ^ cs;
+    }
+    return acc;
+}
+
+/// Tail-threaded, runtime batch width.
+export fn zr_execute_tail_runtime_w(h: *Handle, seeds: [*]const u64, w: usize) callconv(.c) u64 {
+    return tailBatch(h, seeds, w);
+}
+
+/// Tail-threaded dispatch-table.
+export fn zr_execute_tail_dispatch(h: *Handle, seeds: [*]const u64, w: usize) callconv(.c) u64 {
+    return switch (w) {
+        1 => tailBatch(h, seeds, 1),
+        2 => tailBatch(h, seeds, 2),
+        4 => tailBatch(h, seeds, 4),
+        8 => tailBatch(h, seeds, 8),
+        16 => tailBatch(h, seeds, 16),
+        32 => tailBatch(h, seeds, 32),
+        64 => tailBatch(h, seeds, 64),
+        128 => tailBatch(h, seeds, 128),
+        else => tailBatch(h, seeds, w),
+    };
+}

@@ -123,6 +123,29 @@ bench_matrix! {
             fill_seeds(&mut s.seeds, seed);
             cross_column(s.entry, s.handle, &s.seeds, s.w)
         }
+
+    // the tail-threaded (guaranteed-tail-call) dispatch, the shape closest to the shipped
+    // vehje runtime and the one Rust needs a nightly feature to express. runtime-W form.
+    cell zig_tail_runtime_w
+        #[feature = "boundary"]
+        setup |profile: &str, n: usize| -> StCross {
+            open_zig_cross(profile, n, b"zr_execute_tail_runtime_w\0")
+        }
+        |s, seed| {
+            fill_seeds(&mut s.seeds, seed);
+            cross_column(s.entry, s.handle, &s.seeds, s.w)
+        }
+
+    // the tail-threaded dispatch-table form.
+    cell zig_tail_dispatch
+        #[feature = "boundary"]
+        setup |profile: &str, n: usize| -> StCross {
+            open_zig_cross(profile, n, b"zr_execute_tail_dispatch\0")
+        }
+        |s, seed| {
+            fill_seeds(&mut s.seeds, seed);
+            cross_column(s.entry, s.handle, &s.seeds, s.w)
+        }
 }
 
 #[cfg(test)]
@@ -144,6 +167,8 @@ mod tests {
         let z_free: CrFree = unsafe { zig.resolve(b"zr_free\0") }.expect("zr_free");
         let z_rtw: CrEntryW =
             unsafe { zig.resolve(b"zr_execute_scalar_runtime_w\0") }.expect("zr runtime-w");
+        let z_tail: CrEntryW =
+            unsafe { zig.resolve(b"zr_execute_tail_runtime_w\0") }.expect("zr tail");
         let r_init: CrInit = unsafe { rust.resolve(b"cr_init\0") }.expect("cr_init");
         let r_free: CrFree = unsafe { rust.resolve(b"cr_free\0") }.expect("cr_free");
         let r_rtw: CrEntryW =
@@ -162,6 +187,9 @@ mod tests {
                 let z = cross_column(z_rtw, zh, &seeds, w);
                 let r = cross_column(r_rtw, rh, &seeds, w);
                 assert_eq!(z, r, "zig must equal rust for {profile}, W={w}");
+                // the tail-threaded shape folds identically to the switch shape and to rust.
+                let zt = cross_column(z_tail, zh, &seeds, w);
+                assert_eq!(zt, r, "zig tail must equal rust for {profile}, W={w}");
             }
             unsafe { z_free(zh) };
             unsafe { r_free(rh) };
@@ -177,6 +205,17 @@ mod tests {
         assert_eq!(d.baseline, "zig_runtime_w");
         assert_eq!(d.floor.as_deref(), Some("zig_null"));
         let tags: Vec<&str> = d.cells.iter().map(|c| c.tag.as_str()).collect();
-        assert_eq!(tags, ["zig_runtime_w", "zig_anchor", "zig_dispatch", "zig_per_w_set", "zig_null"]);
+        assert_eq!(
+            tags,
+            [
+                "zig_runtime_w",
+                "zig_anchor",
+                "zig_dispatch",
+                "zig_per_w_set",
+                "zig_null",
+                "zig_tail_runtime_w",
+                "zig_tail_dispatch",
+            ]
+        );
     }
 }

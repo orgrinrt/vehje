@@ -226,6 +226,93 @@ mono!(cr_execute_soa_w32, soa_batch, 32);
 mono!(cr_execute_soa_w64, soa_batch, 64);
 mono!(cr_execute_soa_w128, soa_batch, 128);
 
+// ── boundary-cold call targets (distinct addresses, identical work) ──
+//
+// Sixteen entries with the identical scalar_batch body but distinct addresses, so a
+// boundary-cold cell can cycle its crossings across many call targets and defeat the CPU's
+// indirect-branch target predictor (the warm cells always cross one resolved pointer, a
+// perfectly predicted `blr`, so they measure the best-case crossing; cycling distinct
+// targets measures the mispredicted crossing the real varying-call-target case pays). A
+// `black_box` of a distinct per-target constant (discarded) keeps identical-code-folding
+// from merging the sixteen bodies back into one address under fat LTO, without changing the
+// result: every target computes the identical fold, so a cold cell cross-validates against
+// the warm scalar entry byte-exact.
+
+/// Emit one cold call target: the scalar batch body, made a distinct address by a discarded
+/// `black_box` of `$tag`.
+macro_rules! cold_target {
+    ($name:ident, $tag:literal) => {
+        /// A boundary-cold call target: identical work, distinct address.
+        ///
+        /// # Safety
+        /// `seeds` points to `w` valid `u64`s; `h` is live.
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn $name(h: *mut Handle, seeds: *const u64, w: usize) -> u64 {
+            // distinct, discarded: prevents ICF from folding the 16 bodies to one address.
+            let _ = core::hint::black_box($tag as u64);
+            let h = unsafe { &mut *h };
+            let seeds = unsafe { core::slice::from_raw_parts(seeds, w) };
+            unsafe { scalar_batch(h, seeds, w) }
+        }
+    };
+}
+
+cold_target!(cr_cold_target_0, 0);
+cold_target!(cr_cold_target_1, 1);
+cold_target!(cr_cold_target_2, 2);
+cold_target!(cr_cold_target_3, 3);
+cold_target!(cr_cold_target_4, 4);
+cold_target!(cr_cold_target_5, 5);
+cold_target!(cr_cold_target_6, 6);
+cold_target!(cr_cold_target_7, 7);
+cold_target!(cr_cold_target_8, 8);
+cold_target!(cr_cold_target_9, 9);
+cold_target!(cr_cold_target_10, 10);
+cold_target!(cr_cold_target_11, 11);
+cold_target!(cr_cold_target_12, 12);
+cold_target!(cr_cold_target_13, 13);
+cold_target!(cr_cold_target_14, 14);
+cold_target!(cr_cold_target_15, 15);
+
+/// Emit one empty-payload cold target: the `cr_null_entry` fold (cross plus marshal, no
+/// interpret) at a distinct address, so a cold cell isolates the crossing-misprediction
+/// penalty with no payload masking it.
+macro_rules! cold_null {
+    ($name:ident, $tag:literal) => {
+        /// A boundary-cold empty-payload target: identical fold, distinct address.
+        ///
+        /// # Safety
+        /// `seeds` points to `w` valid `u64`s.
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn $name(_h: *mut Handle, seeds: *const u64, w: usize) -> u64 {
+            let _ = core::hint::black_box($tag as u64);
+            let seeds = unsafe { core::slice::from_raw_parts(seeds, w) };
+            let mut acc = 0u64;
+            for &s in seeds {
+                acc = acc.rotate_left(7) ^ s;
+            }
+            acc
+        }
+    };
+}
+
+cold_null!(cr_cold_null_0, 100);
+cold_null!(cr_cold_null_1, 101);
+cold_null!(cr_cold_null_2, 102);
+cold_null!(cr_cold_null_3, 103);
+cold_null!(cr_cold_null_4, 104);
+cold_null!(cr_cold_null_5, 105);
+cold_null!(cr_cold_null_6, 106);
+cold_null!(cr_cold_null_7, 107);
+cold_null!(cr_cold_null_8, 108);
+cold_null!(cr_cold_null_9, 109);
+cold_null!(cr_cold_null_10, 110);
+cold_null!(cr_cold_null_11, 111);
+cold_null!(cr_cold_null_12, 112);
+cold_null!(cr_cold_null_13, 113);
+cold_null!(cr_cold_null_14, 114);
+cold_null!(cr_cold_null_15, 115);
+
 // ── dispatch-table entries (one symbol, match w to the const bodies) ──
 
 /// Emit a dispatch-table entry: one exported symbol, `match w` to the const-W
@@ -551,6 +638,30 @@ mod tests {
         assert_eq!(arena2.off, w, "per-record sink commits every record");
         assert_eq!(arena2.buf, want, "per-record sink writes the same checksums as batched");
 
+        unsafe { cr_free(h) };
+    }
+
+    #[test]
+    fn cold_targets_are_distinct_addresses_with_identical_fold() {
+        let h = unsafe { handle() };
+        let seeds: Vec<u64> = (0..64u64).map(|i| 0x2222 ^ i.wrapping_mul(0x9e37_79b9)).collect();
+        let w = seeds.len();
+        // distinct addresses: ICF must not have folded the 16 bodies to one.
+        let targets: [unsafe extern "C" fn(*mut Handle, *const u64, usize) -> u64; 16] = [
+            cr_cold_target_0, cr_cold_target_1, cr_cold_target_2, cr_cold_target_3,
+            cr_cold_target_4, cr_cold_target_5, cr_cold_target_6, cr_cold_target_7,
+            cr_cold_target_8, cr_cold_target_9, cr_cold_target_10, cr_cold_target_11,
+            cr_cold_target_12, cr_cold_target_13, cr_cold_target_14, cr_cold_target_15,
+        ];
+        let addrs: std::collections::HashSet<usize> =
+            targets.iter().map(|f| *f as usize).collect();
+        assert_eq!(addrs.len(), 16, "the 16 cold targets must have distinct addresses (no ICF)");
+        // identical fold: every cold target equals the warm scalar entry.
+        let want = unsafe { cr_execute_scalar_runtime_w(h, seeds.as_ptr(), w) };
+        for (i, f) in targets.iter().enumerate() {
+            let got = unsafe { f(h, seeds.as_ptr(), w) };
+            assert_eq!(got, want, "cold target {i} must fold identically to the warm entry");
+        }
         unsafe { cr_free(h) };
     }
 
