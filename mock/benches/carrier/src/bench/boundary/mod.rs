@@ -12,6 +12,10 @@
 //!   / per-W-set), scalar payload pinned. op's vehicle: the C-boundary-mapping decision.
 //! - [`sink`] (bench 5): the output-sink shape (null / batched / per-record / batched
 //!   +decode), the real `#[repr(C)]` reserve/commit two-function-pointer struct.
+//! - [`lifecycle`] (bench 6): instance lifecycle (held handle vs fresh per column vs fresh
+//!   per batch), the session-versus-call-scoped runtime question.
+//! - [`residency`] (bench 7): input buffer residency (reused warm column vs fresh cold
+//!   region per call), the registered-buffer question.
 //!
 //! Shared machinery (constants, resolved-signature types, the runtime-handle state, the
 //! column-crossing loop, seed marshalling, the cross-validation dylib build) lives in
@@ -26,6 +30,8 @@
 pub mod common;
 pub mod cross;
 pub mod entry;
+pub mod lifecycle;
+pub mod residency;
 pub mod sink;
 pub mod soa;
 
@@ -38,5 +44,7 @@ pub fn matrix_decls() -> Vec<MatrixDecl> {
     all.extend(soa::matrix_decls());
     all.extend(entry::matrix_decls());
     all.extend(sink::matrix_decls());
+    all.extend(lifecycle::matrix_decls());
+    all.extend(residency::matrix_decls());
     all
 }
