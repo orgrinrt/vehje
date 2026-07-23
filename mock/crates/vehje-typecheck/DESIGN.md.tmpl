@@ -1,40 +1,84 @@
-# vehje-typecheck. Design
+# vehje-check. Design
 
-The framework's Core-level check pass (the `vehje-check` role; the crate
-directory retains the `vehje-typecheck` name until a later cosmetic
-rename). It checks the resolved Core IR, generic over the family set, with
-family-extension hooks. Like resolve, it is framework-owned because the
-shared passes are what make the shared IR real rather than nominal. The
-design authority is `202607192320`. `#![no_std]`, no alloc.
+The framework's graded check pass. The crate directory renames from
+`vehje-typecheck` to `vehje-check` in the source phase of this round; these
+docs are authored for the new name. It discharges the graded (co)modal
+judgment over the resolved Core IR: it infers the effect, lease, and
+binding-time grades, checks inclusion against a target's declaration, computes
+assurance, and mints the checked witness. Like resolve it is framework-owned,
+because the shared passes are what make the shared IR real rather than nominal.
+`#![no_std]`, no alloc.
 
-## Scope
+The pass is where the type-system-as-verification identity lives. The three
+static proof axes plus assurance are one graded judgment, not four analyses,
+and they discharge here during a bottom-up fold, reusing one bitmask machinery.
+The reachability and lease inference and the effect inference are fixpoint
+queries on `vehje-fixpoint`; the per-family axiom table and the lease-rule
+schema come from `vehje-signature`.
 
-- The check walk over the Core forms: the shared, target-agnostic checks
- every consumer's IR must pass (well-formed binders, arity, the family and
- effect classifications being consistent with the nodes that carry them).
-- Family-extension hooks: a family's own checks (a language's coherence and
- orphan rules, a Clausewitz family's routing checks, a doc family's block
- nesting rules) extend the walk. The Core pass runs the shared checks and
- dispatches to the family checks for family nodes.
-- Check diagnostics, carrying the construct and the rule violated.
+## The graded judgment
+
+- `check`. The entry: it runs the graded inference over the resolved IR (using
+  the `Resolution` side-table from `vehje-resolve`), checks inclusion against a
+  target, writes the grade annotations into `vehje-ir`'s `GradeTable`, and
+  returns a `Checked` witness or a `CheckError`.
+- Effect inference. The effect axis is a graded monad. The pass infers each
+  construct's effect set (the operations it invokes that are not locally
+  handled) as a thermometer-encoded bottom-up bitmask join, so the lattice join
+  is a bitwise OR and the inclusion check against a target's `Permits` is a
+  subset test (both benched negligible). A locally handled operation drops out
+  of the residual's effect the way a reduced build-environment effect did.
+- Lease and reachability inference. The lease axis is a coeffect whose grade is
+  a reachability qualifier. The pass computes the reach-mask for each value as a
+  fixpoint query: the naming set is bounded by the reachability-type binder rule
+  (at `Let` and `Lambda`, splice the bound expression's reach set where the body
+  reaches the variable, then drop the variable), and the escape set by region
+  promotion. The immutable strictly-nested depth-lease is the degenerate
+  qualifier that ships first; the full qualifier lattice is deferred. The
+  effect-coeffect interaction is graded def-use, so the link-or-consume bit is a
+  monotone function of the operand's declared effect, read from the
+  `vehje-signature` lease-rule schema.
+- Binding-time discharge. Each property discharges at the earliest binding time
+  its inputs are known: an all-early-bound property folds to a compile error, a
+  late-bound one is a bounded dynamic residual. This is the extraction objective
+  the lower stage reads.
+- Assurance grading. A property's `Assurance` grade is a projection of its
+  binding-time grade crossed with the property, so the guarantee inventory is a
+  computed grade vector, not a hand-curated list.
+- `Checked`. The typestate witness (moved here from the output crate): a program
+  proven inclusion- and effect-checked against a specific target. It is minted
+  only by `check` and consumed by `vehje-codegen`'s `emit`, so the obligation to
+  check is compile-time unskippable.
+- `CheckError`. Diagnostics carrying the construct and the rule violated (an
+  effect outside `Permits`, a lease that cannot be placed, a family outside
+  `Supports`).
+
+## The validated-data slice
+
+The pass owns the analyzer validated-data slice: the relation schemas and the
+lease-rule schema the shipped runtime's analyzer stage is specialised from. The
+Rust crate is the definition; the Zig analyzer is the specialised execution.
+
+## Family-extension hooks
+
+A family's own checks (a language's coherence rules, a document family's block
+nesting rules) extend the walk through the family-extension hooks; the Core pass
+runs the shared graded inference and dispatches to the family checks for family
+nodes.
 
 ## Non-scope
 
-- Any one consumer's type system (generics, traits, coherence as surface
- features). Those are a consumer family's checks, plugged in through the
- extension hooks, not Core.
-- Resolution (`vehje-resolve`), scheduling (`vehje-schedule`), emission
- (`vehje-codegen`).
+- Any one consumer's type system as surface features; those are a family's
+  checks, plugged in through the hooks, not Core.
+- Resolution (`vehje-resolve`), lowering (`vehje-lower`), scheduling
+  (`vehje-schedule`), emission (`vehje-codegen`).
+- The relational engine itself (`vehje-fixpoint`); this crate defines the
+  relation schemas and runs the queries.
 
 ## Dependencies
 
-- `vehje-ir` for the Core IR and the family and effect classifications.
-- `hilavitkutin-api` for the family-set typestate.
-- `hilavitkutin-str` for interned identity.
-- `notko` for `Maybe` / `Outcome`.
-- `#![no_std]`, no alloc.
-
-## Deferred (BACKLOG)
-
-The concrete family-check registration surface (lands with the first
-consumer family). The eventual `vehje-check` directory rename.
+`vehje-ir` for the IR, the grade types, and the `GradeTable`; `vehje-resolve`
+for the `Resolution` side-table; `vehje-fixpoint` for the fixpoint inference;
+`vehje-signature` for the lease-rule schema and per-family axiom table;
+`arvo-bitmask` for the grade masks; `notko` for `Maybe` and `Outcome`.
+`#![no_std]`, no alloc.

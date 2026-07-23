@@ -1,16 +1,24 @@
 # vehje-schedule. Design
 
-The framework's compile-side pass scheduler. A DAG of Core passes over
-`arvo-graph`, ordered by declared dependencies, walked once (single-shot
-topological walks). This is the compile side; the runtime side uses
-hilavitkutin's morsel-driven execution, not this crate. `#![no_std]`, no
-alloc. The design authority is the crate-surface topic (`202607192320`).
+The framework's compile-side pass scheduler. A DAG that orders a consumer's
+family passes against the Core stages by declared dependencies, over
+`arvo-graph`, walked once (single-shot topological walks). This is the
+compile side; the runtime side uses hilavitkutin's morsel-driven execution,
+not this crate. `#![no_std]`, no alloc.
+
+The remit is narrowed. The compile-and-verify side is one object, not a pass
+pipeline sequencing resolve and check as peers, so what this crate orders is
+the genuine extension mechanism: a consumer's family passes (family-specific
+checks, certified IR-to-IR macro passes) ordered against the Core stages. If
+family passes turn out to be handler instances of the compile-stage effect
+discipline, this scheduler folds into the orchestrator; it is kept because it
+exists, is small, and deleting it now bets on an unproven unification.
 
 ## Scope
 
 - `Pass`. A registered compile pass: a name, a declared read set and write
- set over the IR, and its dependencies. Resolve and check are the framework
- passes; a consumer's family passes register alongside them.
+ set over the IR, and its dependencies. The framework's Core stages and a
+ consumer's family passes register together.
 - `PassDag`. The directed acyclic graph of passes, built from registration
  plus dependency declaration, backed by an `arvo-bitmask` `BitMatrix` over
  a compile-time capacity.

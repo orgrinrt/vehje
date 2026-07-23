@@ -1,8 +1,11 @@
-# vehje-typecheck. Core check pass
+# vehje-check. graded check pass
 
-The framework's Core-level check pass (the `vehje-check` role; the crate
-dir keeps the `vehje-typecheck` name until a later cosmetic rename). Checks
-the resolved Core IR, generic over the family set, with family-extension
-hooks for family-specific checks (a consumer's coherence, routing, or
-fragment rules). A framework-owned Core pass, not a consumer pass.
-`#![no_std]`, no alloc.
+The framework's graded check pass (the crate directory renames from
+`vehje-typecheck` to `vehje-check` in this round). It discharges the graded
+(co)modal judgment over the resolved Core IR: effect inference (a
+thermometer-encoded bitmask join), lease and reachability inference (a coeffect
+fixpoint with the binder rule), binding-time discharge, and assurance grading,
+then checks inclusion against a target and mints the `Checked` witness. The
+reachability and effect inference are fixpoint queries on `vehje-fixpoint`; the
+lease-rule schema comes from `vehje-signature`. Where the type-system-as-
+verification identity lives. `#![no_std]`, no alloc.

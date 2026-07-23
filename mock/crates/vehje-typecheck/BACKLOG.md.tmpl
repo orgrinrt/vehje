@@ -1,97 +1,38 @@
-# vehje-typecheck. backlog
+# vehje-check. backlog
 
-## Deferred validator implementations
+Designed but deferred. Names stay unbackticked until they ship.
 
-One micro-round per validator body; each flips its `Vec::new()`
-skeleton stub into a real check.
+## The full reachability qualifier lattice
 
-- STRICT1 `no-shadow`. variable-shadow detection.
-- STRICT2 `unused`. dead-binding detection.
-- STRICT3 `assign-to-immut`. immutable-binding reassignment.
-- STRICT4 `int-overflow`. compile-time integer-overflow audit
- in const-eval + literal contexts.
-- STRICT5 `use-after-move`. move-semantics invariant check.
-- STRICT6 `ambiguous-imports`. use-tree ambiguity detection
- (coordinates with vehje-resolve).
-- STRICT7 `clippy-batch`. curated style / bug-prone pattern
- batch (named after Python's clippy inspiration).
-- Coherence. trait-impl overlap detection.
-- OrphanRule. foreign-type + foreign-trait impl guard.
-- BindTargetShape. target-registry entry-format check.
+The shipping lease is the immutable strictly-nested depth-lease floor. The full
+reachability qualifier lattice (mutable, aliased, and escaping cases) grows the
+reach-mask inference additively, unlocking the mutable-consumer story, gated on
+the avoidance-rate experiment (measure the inference failure rate on real
+Lua-shaped census code: a low rate is the type-system strength realised, a high
+rate is a mostly-dynamic mutable lease learned early). The floor's metatheorem is
+the proven valve.
 
-## Deferred framework features
+## The avoidance-boundary generational residual
 
-- **ValidatorCtx expansion**. diagnostics sink, workspace info,
- per-validator config. Skeleton round carries only
- `resolved: &Resolved`.
-- **Per-validator config**. Vehje.toml `[lints.validator_name]`
- subsection. Per R4 BACKLOG. Currently hardcoded per validator.
-- **Cross-validator dependencies**. some validators want to
- consult another validator's outputs (e.g. STRICT7 clippy-batch
- wants STRICT2 unused's results). Per R4 BACKLOG. Requires
- `requires(&self) -> &[&str]` on the trait and a topological
- walk in the registry.
-- **Parallel validator execution**. rayon fan-out across nodes
- once `ValidatorCtx` becomes sync-safe (`Arc` + `DashMap` or
- similar). Per R4 BACKLOG.
-- **Diagnostic localisation**. message-code table with catalogue
- IDs; translations in `.po`-style files. Per R4 BACKLOG.
-- **R4 trait-shape retrofit**. associated `NAME` / `CATEGORY`
- consts, `accepts(kind)` AST routing. Skeleton trait now carries
- the `&mut impl DiagnosticSink<Diagnostic>` sink shape; the R4
- richer trait shape with the associated-const surface and AST
- routing lands once real validator bodies surface the need.
+Where avoidance fails and a value escapes past what the reach-mask can express,
+the per-reference generational-reference check is the dynamic residual. Its
+inference (detecting the un-placeable reference) and its wire-format flag land
+with the mutable-consumer extension; the flag slot in the wire format is
+schema-now.
 
-## Per-node parallel validator execution
+## The assurance-indexed logical relation
 
-Current schedule walks validators sequentially per node. For large
-workspaces this becomes the dominant compile cost. A rayon-backed
-per-node fan-out lands once the ValidatorCtx becomes sync-safe
-(Arc + DashMap or similar).
+The full metatheory beyond the shippable grade enums (the assurance-indexed
+gradual logical relation, the lambda_veh theorems) is a proof-document artifact
+drafted in parallel with the experiments, not code in this crate. Its grade-0
+operational shadow is the runtime-generation differential harness.
 
-## Diagnostic localisation
+## The concrete family-check registration surface
 
-Current messages are English literals. Future round adds a
-message-code table with catalogue IDs; translations live in
-`.po`-style files alongside the binary.
+The family-extension hook surface (how a consumer registers its own graded
+checks) lands with the first consumer family.
 
-## Cross-validator dependencies
+## The dir rename
 
-Some validators want to consult another validator's output (e.g.
-STRICT7 clippy-batch wants to know STRICT2 unused's results).
-Current design runs validators independently. When a consumer
-surfaces a dep, the registry grows a `requires(&self) -> &[&str]`
-method and schedule walks validators in topological order.
-
-## Per-validator config
-
-Some validators need config (e.g. STRICT4 integer-overflow accepts
-a list of integer types to audit). Current design hardcodes each
-validator's behaviour; adding config means Vehje.toml grows a
-`[lints.validator_name]` subsection.
-
-## Mandatory-reason suppression
-
-Python-era convention: `#[allow(name, reason = "...")]` with a
-reason string above a threshold length. Port once the core
-suppression mechanism lands and consumers start generating
-suppression-noise pressure.
-
-## Post-review notes
-
-### Manual DiagPhase labelling on every Diagnostic
-
-`DiagPhase` is not enforced at the `Validator` trait level.
-Implementors must manually pass `DiagPhase::Typecheck` on every
-`Diagnostic::new` / `Diagnostic::error` call site in their
-`validate` body. The compiler cannot catch a typecheck validator
-that labels its diagnostics `DiagPhase::Resolve` by mistake.
-
-When the `DiagnosticSink` retrofit lands (R4 trait-shape BACKLOG
-entry above, `&mut DiagnosticSink` emission API), its
-constructor should accept a `DiagPhase` and stamp every pushed
-diagnostic automatically. That removes the manual-labelling
-obligation and the class of mis-label bugs with it.
-
-Until that retrofit lands, validator authors must keep the phase
-tag consistent by convention.
+The crate directory renames from vehje-typecheck to vehje-check in the source
+phase of this round.

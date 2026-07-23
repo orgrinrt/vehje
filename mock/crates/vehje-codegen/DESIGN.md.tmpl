@@ -1,10 +1,19 @@
 # vehje-codegen. Design
 
 The framework's output machinery. It consumes a checked IR from the Core
-passes and provides the contract by which a target plugs in, declares
-what it supports, is inclusion- and effect-checked against that
-declaration, and emits. The design authority is the output-side topic
-(`202607192310`) and the ABI topic (`202607192340`).
+passes and provides the contract by which a target plugs in, declares what
+it supports, is inclusion- and effect-checked against that declaration, and
+emits.
+
+Output generation is one spectrum from interpretation to transpilation, and a
+target is a point on it: an interpretation target reduces everything to a
+value, a transpilation target reduces nothing and re-expresses the IR in
+another surface, and every real target is a staging choice between. A
+structurally different target forks upstream of the shared IR and pays an
+honest fidelity gap rather than silently dropping. The one generic fold and
+the `Target` contract are the same whichever point on the spectrum a target
+sits at; the fold covers the twelve Core forms plus a program's families, and
+`Raw` is where a family's own sub-structure attaches.
 
 ## The spine
 
@@ -25,8 +34,9 @@ degraded.
  `AccessSet` machinery. A total fold method over the Core substrate plus
  the declared families, writing bytes through a caller-provided sink.
 - `Checked`. The typestate witness that a program has been inclusion- and
- effect-checked against a specific target. `emit` accepts only a
- `Checked`; a `Checked` is producible only by running the check for that
+ effect-checked against a specific target. It is minted by `vehje-check` (the
+ witness belongs with the prover) and re-exported here; `emit` accepts only a
+ `Checked`, and a `Checked` is producible only by running the check for that
  target. The obligation to check is enforced at compile time; for a
  statically known program the check discharges at compile time, for a
  runtime-parsed program it is a bitmask comparison the typestate makes
@@ -44,9 +54,9 @@ degraded.
 
 ## Non-scope
 
-- Concrete target backends. Each target (the native LLVM/cranelift target,
- the Clausewitz emitter, the markdown/terminal/html document writers)
- ships in its own consumer repo with its own `Target` impl.
+- Concrete target backends. Each target (a native code target, a
+ game-configuration emitter, the document writers) ships in its own consumer
+ repo with its own `Target` impl.
 - The pass DAG (`vehje-schedule`) and the Core passes (`vehje-resolve`,
  `vehje-check`).
 - The residual serialization and the C ABI (`vehje-runtime-abi`); this

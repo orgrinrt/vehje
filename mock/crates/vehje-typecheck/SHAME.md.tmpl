@@ -1,0 +1,17 @@
+# vehje-check. shame
+
+Known gaps in the shipped check pass.
+
+## Mutable-consumer lease inference
+
+The shipped lease inference computes the immutable strictly-nested depth-lease
+floor only: it proves region validity for the immutable core and much of the
+aliased case, where the reach-mask collapses to lexical nesting and the
+metatheorem is proven cheap. The full reachability qualifier inference (mutable
+and escaping values, the avoidance boundary, the per-reference generational
+residual) is not built and is gated on the avoidance-rate experiment, so a
+program that mutates or escapes a value past the depth-lease floor is not yet
+lease-checked to the full qualifier, only to the floor. This is a deliberate
+risk valve, not a hole: the floor ships on a proven metatheorem and the lattice
+grows additively, so nothing shipped is unsound, only incomplete toward the
+mutable case.
