@@ -127,9 +127,44 @@ bench_matrix! {
 
 #[cfg(test)]
 mod tests {
-    /// A fresh-per-column handle computes the identical crossing fold as the held handle
-    /// (the instance is stateless across calls beyond its scratch). Guards the shape;
-    /// crossing correctness is the shared `cross.rs` cross-validation.
+    use super::super::common::{
+        cross_column, fill_seeds, program_bytes, runtime_dylib_path, CrEntryW, CrFree, CrInit,
+        N_TOTAL,
+    };
+    use mockspace_bench_matrix::boundary::Runtime;
+
+    /// A fresh-per-column handle computes the identical crossing fold as a held handle: the
+    /// runtime instance is stateless across calls beyond its reused scratch, so re-establishing
+    /// it per pass changes only the cost, not the result. Verified here rather than only
+    /// asserted, so the lifecycle cells are known to differ only in instance cost.
+    #[test]
+    fn fresh_and_held_handles_cross_to_the_same_fold() {
+        let dylib = runtime_dylib_path();
+        let rt = unsafe { Runtime::open(dylib.to_str().unwrap()) }.expect("dylib opens");
+        let init: CrInit = unsafe { rt.resolve(b"cr_init\0") }.expect("cr_init");
+        let free: CrFree = unsafe { rt.resolve(b"cr_free\0") }.expect("cr_free");
+        let entry: CrEntryW =
+            unsafe { rt.resolve(b"cr_execute_scalar_runtime_w\0") }.expect("scalar runtime-w");
+
+        for profile in ["real", "tight"] {
+            let bytes = program_bytes(profile);
+            for w in [1usize, 8, 256] {
+                let seed = 0x6161 ^ (w as u64);
+                let mut seeds = vec![0u64; N_TOTAL];
+                fill_seeds(&mut seeds, seed);
+                // one held handle reused
+                let held = unsafe { init(bytes.as_ptr(), bytes.len()) };
+                let a = cross_column(entry, held, &seeds, w);
+                unsafe { free(held) };
+                // a distinct fresh handle for the same column
+                let fresh = unsafe { init(bytes.as_ptr(), bytes.len()) };
+                let b = cross_column(entry, fresh, &seeds, w);
+                unsafe { free(fresh) };
+                assert_eq!(a, b, "fresh vs held handle must fold identically, {profile} W={w}");
+            }
+        }
+    }
+
     #[test]
     fn matrix_decls_declare_the_family_shape() {
         let decls = super::matrix_decls();

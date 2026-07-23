@@ -43,6 +43,6 @@ boundary = ["mockspace-bench-matrix/boundary"]
 # variants call, NOT the harness transport, so default-features are off (that
 # drops the whole bench-harness tree from this per-variant-rebuilt crate). Pinned
 # to the same mockspace dev rev as the runner and the variant extra_deps.
-mockspace-bench-matrix = { git = "https://github.com/hiisi-digital/mockspace", rev = "8c5f87ae1a916c45b40c6ea690dc42402f91d199", default-features = false }
+mockspace-bench-matrix = { git = "https://github.com/hiisi-digital/mockspace", rev = "98031e439bc0a5eeb658065b2b54cac80b7b644d", default-features = false }
 # The interpreters/generators themselves keep no external RNG or runtime deps: a
 # seeded generator with no external RNG keeps runs byte-reproducible.

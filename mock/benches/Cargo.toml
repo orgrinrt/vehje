@@ -20,13 +20,13 @@ path = "src/main.rs"
 # generator, the carrier, and every generated variant must all resolve the SAME
 # bench-core rev, or a variant is rejected at dlopen by the runner's abi_hash check;
 # the variant extra_deps in carrier/src/bench/mod.rs pin the identical rev.
-mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "8c5f87ae1a916c45b40c6ea690dc42402f91d199", features = ["std"] }
-mockspace-bench-harness = { git = "https://github.com/hiisi-digital/mockspace", rev = "8c5f87ae1a916c45b40c6ea690dc42402f91d199" }
-mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", rev = "8c5f87ae1a916c45b40c6ea690dc42402f91d199" }
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "98031e439bc0a5eeb658065b2b54cac80b7b644d", features = ["std"] }
+mockspace-bench-harness = { git = "https://github.com/hiisi-digital/mockspace", rev = "98031e439bc0a5eeb658065b2b54cac80b7b644d" }
+mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", rev = "98031e439bc0a5eeb658065b2b54cac80b7b644d" }
 # the semantic-matrix layer: gen_matrix calls its `generate_all` over the
 # carrier's `all_matrix_decls()`. Default features (generate) pull the harness
 # transport the generator needs.
-mockspace-bench-matrix = { git = "https://github.com/hiisi-digital/mockspace", rev = "8c5f87ae1a916c45b40c6ea690dc42402f91d199" }
+mockspace-bench-matrix = { git = "https://github.com/hiisi-digital/mockspace", rev = "98031e439bc0a5eeb658065b2b54cac80b7b644d" }
 vehje-bench-carrier = { path = "carrier" }
 
 [features]
