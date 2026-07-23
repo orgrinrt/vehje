@@ -1,132 +1,123 @@
 # Fairness audit and built machinery: the runtime C ABI batched-execute benches
 
-**Date:** 2026-07-23
-**What this is:** the pre-run record of what the arc has BUILT and the fairness evidence for it, the
-step-6 artefact the expert panel reviews before any timing run (op's gate: build all, fairness-audit,
-panel-review the built machinery, then run). It mirrors the interpreter arc's
-`202607221230_fairness-audit-disassembly.md`. No timing numbers appear here; none have been taken.
+**Date:** 2026-07-23 (revised after the expert panel)
+**What this is:** the pre-run record of what the arc BUILT, the fairness evidence for it, and the honest scope of
+every number it can produce. It is the panel's input and now also carries the panel's outcome. No timing numbers
+appear here; the discipline is that the machinery and its caveats are settled before any number exists.
+
+The three-lens panel (agner-fog cost/fairness, chris-fallin entry-forms/codegen, haoran-xu breadth/honesty)
+reviewed the built machinery; their full reviews sit beside this file
+(`agner_fog_review-of-built-machinery.md`, `chris_fallin_review-of-built-machinery.md`,
+`haoran_xu_review-of-built-machinery.md`). This document is revised to reflect what they found and what was fixed.
 
 ## The built machinery
 
 One shared runtime cdylib plus one shared Zig object expose every entry point over the unmodified carrier
-interpreter bodies; N thin host bench families dlopen them and drive per-batch crossings in the timed region.
+interpreter bodies; ten host bench families dlopen them and drive per-batch crossings in the timed region.
 
 ### The runtime objects
 
-`mock/benches/carrier-runtime/` is a standalone-workspace cdylib. It exports, all wrapping the carrier's own
-`interpret_predecoded` (scalar) and `interpret_vertical::<8>` (SoA) bodies with zero new payload logic:
+`mock/benches/carrier-runtime/` (standalone cdylib) exports, all wrapping `interpret_predecoded` (scalar) and
+`interpret_vertical::<8>` (SoA): `cr_init`/`cr_free`; `cr_execute1` (W=1 anchor); `cr_null_entry` (empty-payload
+crossing floor); `cr_execute_{scalar,soa}_runtime_w`; `cr_execute_{scalar,soa}_w{1..128}` (per-W monomorphised);
+`cr_execute_{scalar,soa}_dispatch` (match-W); `cr_execute_sink_{batched,per_record}` (the `#[repr(C)]`
+reserve/commit sink); `cr_execute_marshal_{aos,soa,null_aos}` (multi-field layout). `carrier-zig/interp.zig`
+exports the scalar surface with a `zr_` prefix, folding the identical keep-alive so a Zig cell is byte-exact
+against Rust.
 
-| Symbol | Shape | Payload |
-|---|---|---|
-| `cr_init` / `cr_free` | handle lifecycle (parse + predecode once, reuse scratch) | n/a |
-| `cr_execute1` | W=1 anchor, one record per call | scalar |
-| `cr_null_entry` | empty payload, fold W seeds only | none (crossing floor) |
-| `cr_execute_scalar_runtime_w` / `cr_execute_soa_runtime_w` | runtime batch width, internal loop | scalar / SoA-8 |
-| `cr_execute_{scalar,soa}_w{1,2,4,8,16,32,64,128}` | per-W monomorphised (width baked into symbol) | scalar / SoA-8 |
-| `cr_execute_{scalar,soa}_dispatch` | one symbol, `match W` to const bodies | scalar / SoA-8 |
-| `cr_execute_sink_batched` / `cr_execute_sink_per_record` | results out via the `#[repr(C)]` reserve/commit sink | scalar |
+The ABI batch width `W` (1..256, Wmax 128) is distinct from the fixed SIMD lane width 8: a `W`-record batch is
+interpreted in `W/8` SoA-8 passes plus a scalar remainder, so a runtime-W entry can drive the SoA payload.
 
-`mock/benches/carrier-zig/interp.zig` exports the same scalar surface with a `zr_` prefix
-(`zr_init`/`zr_free`/`zr_execute1`/`zr_null_entry`/`zr_execute_scalar_runtime_w`/`_w{1..128}`/`_dispatch`),
-folding the identical keep-alive, so a Zig cell is a byte-exact cross-language comparator.
+### The host bench families (`carrier/src/bench/boundary/`), all built and cross-validated
 
-The ABI batch width `W` (records per call, swept 1..256, Wmax 128) is kept distinct from the SIMD lane width
-(fixed 8): a `W`-record batch is interpreted in `W/8` SoA-8 passes plus a scalar remainder. This separates the
-two 1/W knees (crossing amortisation over batch W; the fixed SoA-8 vectorisation win) and is why a runtime-W
-entry can drive the SoA payload at all.
-
-### The host bench families (`carrier/src/bench/boundary/`)
-
-Seven of the nine planned individual benches are built, each a `bench_matrix!` family in the `warm` regime whose
-cell crosses into a resolved function pointer. Shared machinery (the runtime-handle state, the column-crossing
-loop, seed marshalling, the dylib-path resolution) lives in `common.rs`.
-
-| Bench | Family | Axis isolated | Cells |
+| Bench | Family | Axis | Cross-validation |
 |---|---|---|---|
-| 1 | `abi_cross_scalar` | crossing amortisation over W (C_cross) | inproc_direct (rung a) / inproc_fnptr (rung b) / ffi_batched_scalar / null_entry (rung c) |
-| 3 | `abi_soa_win` | the vectorisation win across the boundary (headline) | scalar_payload / soa_payload / null_entry |
-| 4 | `abi_entry_form` | the entry-form (op's vehicle) | runtime_w / scalar_anchor / dispatch_table / per_w_set / null_entry |
-| 5 | `abi_sink` | the output-sink shape | null_sink / batched_sink / per_record_sink / batched_sink_decode |
-| 6 | `abi_lifecycle` | session vs call-scoped runtime | held_handle / fresh_per_column / fresh_per_batch / null_entry |
-| 7 | `abi_residency` | input buffer residency | reused_buffer / fresh_buffer / null_entry |
-| 8 | `abi_zig_entry` | the entry-form on the real target language | zig_runtime_w / zig_anchor / zig_dispatch / zig_per_w_set / zig_null |
+| 1 | `abi_cross_scalar` | crossing amortisation over W (C_cross) | ffi == in-process scalar, byte-exact |
+| 2 | `abi_marshal` | AoS / SoA-native / SoA-transposed, over field count | all layouts agree + match in-process |
+| 3 | `abi_soa_win` | the SoA-8 vectorisation win (headline) | SoA crossing == in-process SoA-8 |
+| 4 | `abi_entry_form` | scalar-anchor / runtime-W / dispatch / per-W-set | anchor + per-W == runtime-W (in-process) |
+| 5 | `abi_sink` | null / batched / per-record / +decode | arena == in-process per-record checksums |
+| 6 | `abi_lifecycle` | held vs fresh-per-column vs fresh-per-batch | fresh == held handle fold |
+| 7 | `abi_residency` | reused vs freshly allocated column | reused == fresh column fold |
+| 8 | `abi_zig_entry` | the entry-form on Zig | Zig == Rust runtime, byte-exact |
+| C | `abi_boundary_w` | composition: entry-form x payload x W + floors | (reuses the individual benches' machinery) |
 
-The measurement backbone is `pass(N, W) = (N/W) * C_cross + N * I_payload`, total record count `N = 256` held
-fixed and `W` swept as the size axis, so `k = N/W` crossings per pass with payload work constant across the
-sweep (which keeps calibration reps comparable across W and isolates C_cross in the k-slope). The C_cross fit is
-an analysis-time step over the raw `(W, time)` points with `k` as the x-axis, not `W`.
+Backbone: `pass(N, W) = (N/W)*C_cross + N*I_payload`, N=256 records fixed, W swept as the size axis; the C_cross
+fit is an analysis-time OLS over the raw (W, time) points with `k = N/W` as x. Generation was the panel's
+dominant finding (below); it is fixed and `gen_matrix` now produces all boundary variants.
 
-## Cross-validation status (byte-exact, correctness before any timing)
+## Panel outcome: what was found and what was fixed
 
-Every real crossing cell is proven to compute byte-exactly what the in-process payload computes; floors are
-exempt. All green via `cargo test` (correctness, allowed before the run gate):
+1. **Generation was broken (all three, empirically).** `mockspace-bench-matrix`'s `generate.rs` hardcoded
+   `TEMPLATE_SIZES = [64,256,1024,4096,16384]` and the variant template monomorphised `run::<N>` only over those,
+   so no boundary family (W or field-count sweep) could generate a single variant. FIXED upstream: `sizes` is now a
+   per-decl placeholder (mockspace dev `98031e4`, PR #293); `gen_matrix` generates all 22 families, 102 cells.
+2. **The ISA-shape evidence misattributed its central claim (all three).** `cr_execute_soa_runtime_w`'s own body is
+   ~59 lines, zero NEON; the NEON lives in the separately-compiled callee `interpret_vertical_checksum_into::<8>`
+   (~284 lines), reached by `bl`. The SoA-is-real property HOLDS and is in fact stronger (every SoA entry form
+   shares one compiled kernel), but the earlier table attributed the NEON to the wrong symbol. Corrected in the
+   ISA table below.
+3. **Residency measured an allocator round-trip, not cold residency (agner + haoran).** FIXED: the cell is renamed
+   `fresh_alloc` and scoped honestly (allocation-plus-fill churn, the allocator recycles the freed block); genuine
+   cold-page residency needs a non-recycled/evicted region and is a named follow-up, not this cell.
+4. **Benches 6/7 test docstrings claimed a fold-equality the bodies never checked (haoran).** FIXED: both now carry
+   real fold-equality cross-validation tests (fresh == held handle; reused == fresh column).
 
-- bench 1: `ffi_batched_scalar` crossing == in-process scalar, 4 profiles x 5 W.
-- bench 3: `soa_payload` crossing == in-process SoA-8, 4 profiles x 5 W (gated on the `vertical` feature).
-- bench 4: `scalar_anchor` == in-process; `per_w_set` == `runtime_w` at the same effective width, 3 profiles.
-- bench 5: the sink arena == in-process per-record checksums, both sink shapes, 3 profiles x 4 W. Plus a
-  carrier-runtime unit test that batched and per-record sinks write identical committed contents.
-- bench 8: the Zig batched entry == the Rust runtime entry, 4 profiles x 5 W (both objects opened, one program).
+## The scope of the numbers (what a produced number does and does not mean)
 
-The scalar and SoA payloads fold differently (per-record versus all-lanes, matching the carrier's own vertical
-bench), so cross-payload agreement is not expected; each payload cross-validates against its own replica, and
-the SoA lane-l == scalar seed-l fidelity is a carrier-runtime unit test.
+The panel established that the machinery is fit to run, with specific numbers carrying caveats that must travel
+with them. Stated before any number exists:
 
-## ISA-shape gate (bench 0): the entry forms are the shapes they claim
+- **C_cross is measured warm (predicted crossing).** Every family is the `warm` regime crossing a single resolved
+  pointer, so the indirect `blr` is perfectly predicted and C_cross is the best-case, lowest crossing cost. This is
+  the CONSERVATIVE case for the ABI decision: if batching amortises the crossing even when the crossing is cheap
+  (predicted), it amortises more when the crossing is expensive (mispredicted, the real varying-call-target case).
+  So the warm result is a lower bound on the batching benefit and the direction of the "expose a batched entry"
+  conclusion is robust to it; the boundary-cold regime (distinct call targets, agner) tightens the MAGNITUDE and
+  can only strengthen the batch conclusion, never invert it. It is a named follow-up.
+- **The high-W end of the pure-crossing floor is reps-caveated (haoran).** `null_entry` has no payload, so at large
+  W its per-pass time falls below the calibration tick floor and `calibrate_reps` swings hard; the low-W end (many
+  crossings, clear signal) is where C_cross is anchored and is unaffected. A minimum-reps floor that reports
+  `batch_count` is a named follow-up; the amortisation curve is read from the low-W anchor.
+- **Cross-language absolute deltas are payload-confounded (agner + haoran).** The Zig payload re-decodes the wire
+  bytes per record while the Rust runtime uses a predecoded form, so only the floor-subtracted crossing and
+  within-Zig entry-form deltas are fair; the Rust/Rust number is a same-toolchain lower bound, the Zig cell the
+  real cross-language comparator, and Zig's `interpTail` shape (its module's own "load-bearing" cell) is not yet
+  crossed. Named follow-ups.
+- **Bench 2 is a gather-stride proxy, not a typed multi-field decode (agner + haoran).** It measures the AoS-vs-SoA
+  access pattern and the explicit transpose over F XOR-combined fields, which is the marshalling-layout question; a
+  typed record decode is a heavier extension not built.
+- **The PMU instruction-slope gate is a run-time acceptance gate (agner), not yet enforced.** Every C_cross figure
+  must have its instruction slope track its timing slope; this is applied when the run happens.
 
-Disassembly of the release runtime cdylib (`otool -tV`, aarch64) confirms each entry is the shape its label
-claims, so a spurious delta between two cells that compiled to the same code cannot be mistaken for a real one:
+## ISA-shape gate (bench 0), corrected
+
+Disassembly of the release runtime cdylib (`otool -tV`, aarch64), corrected per the panel's direct re-derivation:
 
 | Entry | Claim | Evidence |
 |---|---|---|
-| `cr_execute_soa_runtime_w` | real NEON vectorisation | 437 NEON-shaped lines (`v*.2d`/`ld1`/`fmla`/`.16b`) |
-| `cr_execute_scalar_runtime_w` | scalar, no accidental auto-vectorisation | 0 NEON lines, a 38-line tight GPR loop |
-| `cr_execute_scalar_dispatch` | one symbol, branch on W to const bodies | 77 branch-shaped lines (`cmp`/`b.`/`cbz`) over a 382-line body |
-| `cr_execute_scalar_w64` | per-W, const width, no width dispatch | 0 NEON, a compact 33-line const-bound body, no `match`-W branch |
+| `cr_execute_soa_runtime_w` | drives real NEON via a shared kernel | thin ~59-line body, `bl` into `interpret_vertical_checksum_into::<8>` (~284 lines, real NEON) shared by every SoA form |
+| `cr_execute_scalar_runtime_w` | scalar, register loop bound, no auto-vec | 0 NEON, ~38-line tight GPR loop, data-dependent bound |
+| `cr_execute_scalar_dispatch` | one symbol, branch on W to const bodies | a power-of-two/`clz` decision tree over the const arms (sharper than a naive chain; note for the cold regime) |
+| `cr_execute_scalar_w64` | per-W, const width, no width dispatch | 0 NEON, compact const-bound body, no `match`-W branch |
 
-The load-bearing pair is the SoA-versus-scalar contrast: the headline vectorisation win is a real 437-instruction
-NEON body against a zero-NEON scalar loop, not an optimiser artefact, and the scalar payload does not accidentally
-gain SIMD nobody asked for.
+The load-bearing property (SoA vectorises, scalar does not) holds; the correction is that the NEON is in the
+shared callee, which is a stronger fairness property (all SoA entry forms execute the identical kernel).
 
-Remaining ISA confirmations are run-and-gen-time (they live in the generated per-variant cdylibs, not the shared
-runtime object): the `inproc_fnptr` rung-b cell must emit a real indirect `blr` (the `black_box` on the pointer
-forces it; confirm on the generated variant), and the runtime-W scalar cell must keep its data-dependent register
-loop bound (no const-W leak). These are checked when the variants are generated for the run.
+## The follow-ups the panel named (magnitude-tighteners, not blockers)
 
-## Trap checklist (agner confounds, chris traps, haoran traps)
+None inverts the qualitative ABI decision; each tightens a magnitude or closes a secondary axis:
 
-| Trap | Handled by | Status |
-|---|---|---|
-| optimiser inlining across the boundary | separate cdylib + resolved fn pointer (genuine cross-object `blr`) | by construction |
-| program const-fold in the runtime | program crosses as opaque wire bytes; runtime parses at init | by construction |
-| memory-latency hiding per-record cost | one cache-resident program over W distinct seeds (the vertical shape) | by construction |
-| dlsym in the timed region | symbols resolved in `setup` into the cell state, never in the cell | by construction |
-| runtime-W seeing a const W | runtime-W takes `w` as a runtime argument (register bound) | disasm-confirm on variant (pending) |
-| auto-vectorisation of the scalar cell | scalar entries disassembled: zero NEON | confirmed (above) |
-| W=1 SoA not a fair scalar anchor | the anchor is the scalar `cr_execute1`; SoA is a distinct payload axis | by construction |
-| the sink built as an inlinable closure | the real `#[repr(C)]` two-fn-ptr struct, passed by pointer, called indirect | by construction |
-| the AoS-to-SoA transpose charged to the vectorisation win | (bench 2, unbuilt) transpose to be an explicit timed stage | pending bench 2 |
-| reps-starvation at high W | N held fixed, so payload work per pass is constant across W | by construction |
-| fixed-W flattering the dispatch table | run under a boundary-cold varying-W regime too | pending run-time regime |
-| Rust/Rust cdylib reported as "the ABI cost" | the Zig cell (bench 8) is the real comparator; Rust/Rust is a same-toolchain lower bound | by construction |
-| PMU instruction-slope cross-check on C_cross | mandatory acceptance gate at run time | pending run |
+1. The boundary-cold regime (distinct call targets) for the true mispredicted-crossing C_cross.
+2. The minimum-reps floor across the W sweep, reporting `batch_count`, for high-W floor precision.
+3. The Zig `interpTail` cell and a predecoded-Zig payload for a fully payload-matched cross-language comparison.
+4. The PMU instruction-slope gate enforced on every C_cross figure at run time.
+5. A typed multi-field record decode, if the gather-stride marshalling proxy proves too coarse.
 
-## What is not yet built (before the panel and the run)
+## What is trustworthy to conclude from a run
 
-- **Bench 2 (marshalling AoS/SoA-native/SoA-transposed).** The only unbuilt timing bench. It needs a multi-field
-  record model added to the carrier (records are currently a scalar u64 seed to a u64 result, so AoS versus SoA is
-  degenerate). This is a real carrier extension and a shape call on the F-field record.
-- **The composition matrix** (`abi_boundary_w` / `abi_sink_w` / `abi_residency` curated entgrid families). It pins
-  the winning layout/payload/entry from benches 1 to 4, which the run determines, so it is built after the
-  individuals run (or as a full cross now).
-- **The run itself.** Gated on this panel review. The variants are generated by `gen_matrix --features
-  boundary,vertical`; the boundary variants need both dylibs staged and the `VEHJE_CARRIER_RUNTIME` /
-  `VEHJE_CARRIER_ZIG` environment variables set at run time.
-
-## For the panel
-
-The question is neutral: is the built machinery sound to run on, and what if anything must change before a number
-is trusted. The seven built families, their byte-exact cross-validation, and the ISA-shape evidence above are the
-material. The pending items (bench 2, the run-time ISA confirmations, the PMU gate, the boundary-cold regime) are
-named so the panel can judge whether any is a prerequisite for trusting the benches that ARE built, versus a
-follow-on.
+The amortisation SHAPE (does batching reduce per-record crossing cost, and where the knee is), the RELATIVE deltas
+(entry-form differences, the SoA vectorisation win, the sink shapes' cost, the marshalling layouts), and the
+selector-regret over `abi_boundary_w` (does one fixed ABI choice win across profiles and W, or does the optimum
+move). These are the ABI decision, and they are robust to the caveats above. The absolute C_cross magnitude and the
+`C_cross / I_payload` headline ratio's precision are the parts the named follow-ups tighten.
