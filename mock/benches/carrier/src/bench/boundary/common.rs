@@ -31,6 +31,10 @@ pub const PROG_NODES: usize = 256;
 /// the cross-validation tests open the built artifact directly and do not read it.
 pub const RT_ENV: &str = "VEHJE_CARRIER_RUNTIME";
 
+/// The environment variable a run sets to the built `carrier-zig` shared object (bench 8,
+/// the cross-language entry-form floor). Same role as [`RT_ENV`] for the Zig object.
+pub const ZIG_ENV: &str = "VEHJE_CARRIER_ZIG";
+
 /// `cr_init(bytes, len) -> *mut Handle`. The handle is opaque to the host.
 pub type CrInit = unsafe extern "C" fn(*const u8, usize) -> *mut c_void;
 /// `cr_free(handle)`.
@@ -85,14 +89,21 @@ pub fn program_bytes(profile: &str) -> Vec<u8> {
 /// the variable is unset or the library does not open: a run must stage the artifact
 /// and set the variable before the timed pass. Called once per cell setup (the S term).
 pub fn open_runtime() -> Runtime {
-    let path = std::env::var(RT_ENV).unwrap_or_else(|_| {
+    open_runtime_at(RT_ENV)
+}
+
+/// Open the runtime shared object named by the environment variable `env_var`. The Rust
+/// (`RT_ENV`) and Zig (`ZIG_ENV`) families differ only in which object they open; the
+/// resolved-symbol surface is otherwise identical.
+pub fn open_runtime_at(env_var: &str) -> Runtime {
+    let path = std::env::var(env_var).unwrap_or_else(|_| {
         panic!(
-            "boundary bench requires {RT_ENV} set to the built carrier-runtime shared object; \
-             build `mock/benches/carrier-runtime` --release and export its .dylib/.so path"
+            "boundary bench requires {env_var} set to the built runtime shared object; \
+             build the sibling runtime and export its .dylib/.so path"
         )
     });
-    // The path names a trusted, freshly built sibling runtime cdylib.
-    unsafe { Runtime::open(&path) }.unwrap_or_else(|e| panic!("opening {RT_ENV}={path}: {e}"))
+    // The path names a trusted, freshly built sibling runtime object.
+    unsafe { Runtime::open(&path) }.unwrap_or_else(|e| panic!("opening {env_var}={path}: {e}"))
 }
 
 /// Cross state for a width-taking entry: the opened runtime (kept alive for the
@@ -218,6 +229,33 @@ pub fn runtime_dylib_path() -> std::path::PathBuf {
                 .expect("cargo build of carrier-runtime spawns");
             assert!(status.success(), "carrier-runtime must build");
             rt_dir.join("target/release").join(dylib_name())
+        })
+        .clone()
+}
+
+/// Resolve the `carrier-zig` shared object path for the cross-language cross-validation.
+/// Prefers [`ZIG_ENV`]; otherwise runs `carrier-zig/build.sh` at most once per process
+/// (behind a `OnceLock`, same parallel-test rationale as [`runtime_dylib_path`]).
+#[cfg(test)]
+pub fn zig_dylib_path() -> std::path::PathBuf {
+    use std::path::{Path, PathBuf};
+    use std::process::Command;
+    use std::sync::OnceLock;
+
+    if let Ok(p) = std::env::var(ZIG_ENV) {
+        return PathBuf::from(p);
+    }
+    static BUILT: OnceLock<PathBuf> = OnceLock::new();
+    BUILT
+        .get_or_init(|| {
+            let zig_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../carrier-zig");
+            let status = Command::new("bash")
+                .arg("build.sh")
+                .current_dir(&zig_dir)
+                .status()
+                .expect("carrier-zig build.sh spawns");
+            assert!(status.success(), "carrier-zig must build");
+            zig_dir.join("libcarrier_zig.dylib")
         })
         .clone()
 }

@@ -70,9 +70,10 @@ fn open_anchor(profile: &str) -> StAnchor {
     StAnchor { rt, handle, exec1, free, seeds: vec![0u64; N_TOTAL] }
 }
 
-/// Cross the per-record entry once per record over the whole column.
+/// Cross the per-record entry once per record over the whole column. Shared with the
+/// cross-language family (bench 8), which crosses into the identical entry shape.
 #[inline(always)]
-fn anchor_column(exec1: CrExec1, handle: *mut c_void, seeds: &[u64]) -> u64 {
+pub fn anchor_column(exec1: CrExec1, handle: *mut c_void, seeds: &[u64]) -> u64 {
     let mut acc = 0u64;
     for &sd in &seeds[..N_TOTAL] {
         acc = acc.rotate_left(7) ^ unsafe { exec1(handle, sd) };
@@ -116,9 +117,10 @@ fn open_mono(profile: &str, w: usize) -> StMono {
     StMono { rt, handle, mono, free, eff, seeds: vec![0u64; N_TOTAL] }
 }
 
-/// Cross the per-W entry (no width argument) over the column in `eff`-sized chunks.
+/// Cross the per-W entry (no width argument) over the column in `eff`-sized chunks. Shared
+/// with the cross-language family (bench 8).
 #[inline(always)]
-fn mono_column(mono: CrEntryMono, handle: *mut c_void, seeds: &[u64], eff: usize) -> u64 {
+pub fn mono_column(mono: CrEntryMono, handle: *mut c_void, seeds: &[u64], eff: usize) -> u64 {
     let mut acc = 0u64;
     let mut off = 0usize;
     while off < N_TOTAL {

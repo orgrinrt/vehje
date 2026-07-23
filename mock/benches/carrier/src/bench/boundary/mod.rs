@@ -16,6 +16,8 @@
 //!   per batch), the session-versus-call-scoped runtime question.
 //! - [`residency`] (bench 7): input buffer residency (reused warm column vs fresh cold
 //!   region per call), the registered-buffer question.
+//! - [`zig`] (bench 8): the cross-language entry-form floor, crossing into the sibling
+//!   `carrier-zig` object so the entry-form conclusion is not Rust-only.
 //!
 //! Shared machinery (constants, resolved-signature types, the runtime-handle state, the
 //! column-crossing loop, seed marshalling, the cross-validation dylib build) lives in
@@ -34,6 +36,7 @@ pub mod lifecycle;
 pub mod residency;
 pub mod sink;
 pub mod soa;
+pub mod zig;
 
 use mockspace_bench_matrix::MatrixDecl;
 
@@ -46,5 +49,6 @@ pub fn matrix_decls() -> Vec<MatrixDecl> {
     all.extend(sink::matrix_decls());
     all.extend(lifecycle::matrix_decls());
     all.extend(residency::matrix_decls());
+    all.extend(zig::matrix_decls());
     all
 }

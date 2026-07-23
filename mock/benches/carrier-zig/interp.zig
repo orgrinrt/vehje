@@ -223,3 +223,125 @@ export fn carrier_zig_switch(bytes: [*]const u8, results: [*]u64, seed: u64) cal
 export fn carrier_zig_tail(bytes: [*]const u8, results: [*]u64, seed: u64) callconv(.c) u64 {
     return interpTail(bytes, results, seed);
 }
+
+// ── batched runtime C ABI (bench 8: the cross-language entry-form floor) ──
+//
+// The same symbol surface as the Rust carrier-runtime's scalar family (`zr_` prefix
+// versus `cr_`), so a host boundary cell can dlopen this Zig object and cross into the
+// identical entry forms, giving the entry-form conclusion a real target-language
+// comparator rather than a Rust-only cdylib. Each entry folds the identical keep-alive
+// (`rotl(acc, 7) ^ checksum` per record) as `scalar_batch` in carrier-runtime, so the
+// results cross-validate byte-exact. The handle owns a copy of the residual bytes and a
+// results scratch, mirroring the Rust handle (init parses/keeps the residual, calls reuse
+// the scratch), so no allocation is charged to a batched call.
+
+const Handle = struct {
+    bytes: []u8,
+    results: []u64,
+    n: usize,
+};
+
+/// Build a handle from a residual's wire bytes. Returns null if allocation fails. The
+/// host calls this once in its bench setup (the S term), never in the timed cell.
+export fn zr_init(bytes: [*]const u8, len: usize) callconv(.c) ?*Handle {
+    const alloc = std.heap.c_allocator;
+    const n: usize = rdU32(bytes, 4);
+    const h = alloc.create(Handle) catch return null;
+    const owned = alloc.alloc(u8, len) catch {
+        alloc.destroy(h);
+        return null;
+    };
+    @memcpy(owned, bytes[0..len]);
+    const res = alloc.alloc(u64, n) catch {
+        alloc.free(owned);
+        alloc.destroy(h);
+        return null;
+    };
+    h.* = .{ .bytes = owned, .results = res, .n = n };
+    return h;
+}
+
+/// Free a handle. Null is a no-op.
+export fn zr_free(h: ?*Handle) callconv(.c) void {
+    if (h) |hh| {
+        const alloc = std.heap.c_allocator;
+        alloc.free(hh.results);
+        alloc.free(hh.bytes);
+        alloc.destroy(hh);
+    }
+}
+
+/// Scalar batch: interpret each of `w` records once, folding the per-record checksum
+/// exactly as carrier-runtime's `scalar_batch`. `inline` so a const `w` (the per-W
+/// entries) unrolls while a runtime `w` keeps a register bound.
+inline fn scalarBatch(h: *Handle, seeds: [*]const u64, w: usize) u64 {
+    var acc: u64 = 0;
+    var i: usize = 0;
+    while (i < w) : (i += 1) {
+        const cs = interpSwitch(h.bytes.ptr, h.results.ptr, seeds[i]);
+        acc = std.math.rotl(u64, acc, 7) ^ cs;
+    }
+    return acc;
+}
+
+/// The W=1 anchor: one record per crossing.
+export fn zr_execute1(h: *Handle, seed: u64) callconv(.c) u64 {
+    return interpSwitch(h.bytes.ptr, h.results.ptr, seed);
+}
+
+/// The empty-payload floor: fold `w` seeds, no interpret. Matches `cr_null_entry`.
+export fn zr_null_entry(h: *Handle, seeds: [*]const u64, w: usize) callconv(.c) u64 {
+    _ = h;
+    var acc: u64 = 0;
+    var i: usize = 0;
+    while (i < w) : (i += 1) {
+        acc = std.math.rotl(u64, acc, 7) ^ seeds[i];
+    }
+    return acc;
+}
+
+/// Runtime-W: one symbol, `w` a runtime argument, internal loop.
+export fn zr_execute_scalar_runtime_w(h: *Handle, seeds: [*]const u64, w: usize) callconv(.c) u64 {
+    return scalarBatch(h, seeds, w);
+}
+
+// Per-W-monomorphised set: the width baked into the symbol identity (const loop bound).
+export fn zr_execute_scalar_w1(h: *Handle, seeds: [*]const u64) callconv(.c) u64 {
+    return scalarBatch(h, seeds, 1);
+}
+export fn zr_execute_scalar_w2(h: *Handle, seeds: [*]const u64) callconv(.c) u64 {
+    return scalarBatch(h, seeds, 2);
+}
+export fn zr_execute_scalar_w4(h: *Handle, seeds: [*]const u64) callconv(.c) u64 {
+    return scalarBatch(h, seeds, 4);
+}
+export fn zr_execute_scalar_w8(h: *Handle, seeds: [*]const u64) callconv(.c) u64 {
+    return scalarBatch(h, seeds, 8);
+}
+export fn zr_execute_scalar_w16(h: *Handle, seeds: [*]const u64) callconv(.c) u64 {
+    return scalarBatch(h, seeds, 16);
+}
+export fn zr_execute_scalar_w32(h: *Handle, seeds: [*]const u64) callconv(.c) u64 {
+    return scalarBatch(h, seeds, 32);
+}
+export fn zr_execute_scalar_w64(h: *Handle, seeds: [*]const u64) callconv(.c) u64 {
+    return scalarBatch(h, seeds, 64);
+}
+export fn zr_execute_scalar_w128(h: *Handle, seeds: [*]const u64) callconv(.c) u64 {
+    return scalarBatch(h, seeds, 128);
+}
+
+/// Dispatch-table: one symbol, `match w` to the const bodies, runtime-W past Wmax.
+export fn zr_execute_scalar_dispatch(h: *Handle, seeds: [*]const u64, w: usize) callconv(.c) u64 {
+    return switch (w) {
+        1 => scalarBatch(h, seeds, 1),
+        2 => scalarBatch(h, seeds, 2),
+        4 => scalarBatch(h, seeds, 4),
+        8 => scalarBatch(h, seeds, 8),
+        16 => scalarBatch(h, seeds, 16),
+        32 => scalarBatch(h, seeds, 32),
+        64 => scalarBatch(h, seeds, 64),
+        128 => scalarBatch(h, seeds, 128),
+        else => scalarBatch(h, seeds, w),
+    };
+}

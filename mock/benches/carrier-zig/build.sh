@@ -17,5 +17,7 @@ cd "$(dirname "$0")"
 zig build-exe -OReleaseFast -lc -femit-bin=zigcheck zigcheck.zig
 echo "built zigcheck"
 
-zig build-lib -dynamic -OReleaseFast -femit-bin=libcarrier_zig.dylib interp.zig
+# -lc: the batched runtime entries (zr_init/zr_free) use the C allocator to own the
+# residual copy and the results scratch, mirroring the Rust carrier-runtime handle.
+zig build-lib -dynamic -OReleaseFast -lc -femit-bin=libcarrier_zig.dylib interp.zig
 echo "built libcarrier_zig.dylib"
