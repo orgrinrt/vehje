@@ -35,9 +35,15 @@ impl StructuralHash {
     }
 }
 
-// The hashing arithmetic works on raw 64-bit hash words: integer hashing is
-// the hash domain, a documented boundary. All raw-word use is confined to this
-// module and the `Bits<64>` construction below.
+// This is a Merkle-style fold: a node's hash mixes its discriminant with its
+// children's content-hash WORDS. The input is hash words (a tree of already
+// content-addressed subtrees), not a flat byte image, so it is a different
+// operation from `arvo_hash::xxhash3_64` (which `vehje-fixpoint`'s incremental
+// layer and `vehje-runtime-gen` use to hash byte images at the wire boundary).
+// The word-fold avoids serialising the tree to bytes just to hash it. The
+// hashing arithmetic works on raw 64-bit hash words: integer hashing is the
+// hash domain, a documented boundary confined to this module and the
+// `Bits<64>` construction below.
 
 /// The FNV-1a offset basis and prime, the mixing constants.
 const SEED: u64 = 0xcbf2_9ce4_8422_2325; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: 64-bit hash-domain mixing constant; tracked: #207

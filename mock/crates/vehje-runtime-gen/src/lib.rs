@@ -74,6 +74,11 @@ pub struct Manifest {
     /// The content hash of the whole composed package.
     pub package_hash: ContentHash,
 }
+// FIXME: the DESIGN's manifest content-addresses each slice as well as the
+// whole package (so a specialised runtime can prove which slice it was
+// specialised from). M-level carries the whole-package hash only; the
+// per-slice hashes land with the full lens-projection handoff (the interim
+// manifest-check ships the package hash).
 
 /// The differential-check contract.
 ///

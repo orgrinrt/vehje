@@ -205,6 +205,14 @@ pub struct GradeTable<'a> {
 
 impl<'a> GradeTable<'a> {
     /// Wrap a caller-provided region sized like the node arena.
+    ///
+    /// The caller must size the region to at least the node arena's capacity;
+    /// `get` and `set` index by the node's arena index and assume it is in
+    /// range (the arena's `push` bounds-checks node creation, so a table sized
+    /// to the arena is always large enough).
+    // FIXME: return a `Maybe`/`Outcome` from `get`/`set` (or take the arena
+    // length) so an undersized region is a diagnostic rather than a panic; the
+    // check pass sizes the region to the arena today.
     pub fn new(grades: &'a mut [Grade]) -> Self {
         Self { grades }
     }

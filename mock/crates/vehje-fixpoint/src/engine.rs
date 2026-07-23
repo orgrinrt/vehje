@@ -140,6 +140,12 @@ impl Engine {
     /// that adds nothing is the fixpoint. Monotone rules over a finite set
     /// terminate. Newly inserted tuples are seen on the next round, so the
     /// derivation reaches transitive consequences.
+    // FIXME: this ships the whole-column strategy (the reach fixpoint's
+    // measured winner on shallow graphs) only. Semi-naive delta evaluation
+    // (firing a rule only on the previous round's new tuples) and the
+    // provenance-semiring grades are deferred; the `Delta` type is reserved
+    // for them. The DESIGN's "semi-naive deltas where the bookkeeping repays
+    // itself" is not yet built.
     pub fn evaluate<R, S>(&mut self, rule: &R, set: &mut S) -> USize
     where
         R: Rule,

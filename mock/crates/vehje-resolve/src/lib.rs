@@ -126,6 +126,10 @@ fn walk(arena: &Arena<'_>, at: NodeRef, scope: Maybe<&Scope<'_>>) -> Outcome<(),
             Outcome::Ok(())
         }
         Node::Iter { seq, body } => {
+            // `Node::Iter` carries no loop-variable name in the current IR, so
+            // it introduces no scope frame here. If a future IR gives `Iter` a
+            // named loop variable, resolve pushes its frame around `body`, the
+            // way `Let` and `Lambda` do.
             walk(arena, seq, scope)?;
             walk(arena, body, scope)
         }

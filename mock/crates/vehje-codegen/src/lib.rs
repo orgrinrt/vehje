@@ -67,7 +67,14 @@ where
     T::Supports: ContainsAll<Families>,
     T::Permits: ContainsAll<Effects>,
 {
-    Checked::new(arena, root)
+    // route through the sanctioned mint in vehje-typecheck (the witness crate);
+    // `Checked` cannot be constructed here directly. The `where` bounds are the
+    // inclusion witness the mint requires.
+    vehje_typecheck::mint_checked::<T, T::Supports, T::Permits, Families, Effects>(
+        arena,
+        root,
+        core::marker::PhantomData,
+    )
 }
 
 /// The one generic fold over the Core substrate: a pre-order walk that

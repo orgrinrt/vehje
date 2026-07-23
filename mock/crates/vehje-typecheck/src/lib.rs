@@ -18,7 +18,8 @@ use core::marker::PhantomData;
 use arvo::Outcome;
 
 use vehje_ir::{
-    Arena, Assurance, EffectMask, Grade, GradeTable, Knowledge, Lease, Node, NodeRef, ReachMask,
+    Arena, Assurance, ContainsAll, EffectMask, Grade, GradeTable, Knowledge, Lease, Node, NodeRef,
+    ReachMask,
 };
 
 /// A check diagnostic.
@@ -51,10 +52,14 @@ pub struct Checked<'a, T> {
 }
 
 impl<'a, T> Checked<'a, T> {
-    /// Construct the witness for a graded, inclusion-checked program. Called
-    /// by the inclusion check (compile-time in `vehje-codegen`, or the runtime
-    /// bitmask path) once the program is proven acceptable for `T`.
-    pub fn new(arena: &'a Arena<'a>, root: NodeRef) -> Self {
+    /// Construct the witness for a graded, inclusion-checked program.
+    ///
+    /// Crate-private so the witness cannot be minted outside the sanctioned
+    /// paths ([`mint_checked`], the compile-time inclusion proof, and the future
+    /// runtime-bitmask path). A consumer cannot fabricate a `Checked` and skip
+    /// the inclusion check, which is what makes the check obligation
+    /// compile-time unskippable.
+    pub(crate) fn new(arena: &'a Arena<'a>, root: NodeRef) -> Self {
         Self { arena, root, _target: PhantomData }
     }
 
@@ -69,6 +74,31 @@ impl<'a, T> Checked<'a, T> {
     }
 }
 
+/// Mint a `Checked` witness for target `T`, gated on the inclusion proof.
+///
+/// The `where` bounds are the static half of the two-stage proof: the target's
+/// `Supports` set contains every family the program uses, and its `Permits` set
+/// contains every effect. A mismatch is a compile error naming the missing
+/// family or effect. This is the only sanctioned mint path (`Checked::new` is
+/// crate-private), so `vehje-codegen`'s target-typed `check_for` and the future
+/// runtime-bitmask path both route through it. The type parameters are the
+/// target's declared sets and the program's used sets; they are supplied by the
+/// caller (`vehje-codegen` derives them from the `Target`).
+// FIXME: the program's `Families` and `Effects` are caller-supplied type
+// parameters here; the full soundness (deriving them from the program rather
+// than trusting the caller) lands with the runtime-bitmask inclusion path.
+pub fn mint_checked<'a, T, Supports, Permits, Families, Effects>(
+    arena: &'a Arena<'a>,
+    root: NodeRef,
+    _inclusion: PhantomData<(Supports, Permits, Families, Effects)>,
+) -> Checked<'a, T>
+where
+    Supports: ContainsAll<Families>,
+    Permits: ContainsAll<Effects>,
+{
+    Checked::new(arena, root)
+}
+
 /// The graded check pass over a program's IR.
 ///
 /// Walks the resolved Core forms from `root`, validating that every child
@@ -76,6 +106,12 @@ impl<'a, T> Checked<'a, T> {
 /// node's grade (effect, lease, binding time, assurance) into `grades`. The
 /// type of `Node` already enforces the per-form arity, so the Core-level check
 /// is integrity plus the graded inference plus the family dispatch.
+///
+/// The graded judgment splits in two: `check` computes and records the grades
+/// (this pass), and the target-typed inclusion proof mints the [`Checked`]
+/// witness (`check_for`, and `vehje-codegen`'s target-typed wrapper over it).
+/// So `check` returns an integrity-and-grade outcome, not a witness; a caller
+/// runs `check` then `check_for` to obtain the emit-gating `Checked`.
 // FIXME: dispatch Raw and Handle to the family-check and handler-discharge
 // hooks, and route the reach and effect inference through vehje-fixpoint as
 // relational queries; M-level runs the inference as a direct bottom-up fold.

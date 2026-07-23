@@ -35,6 +35,26 @@ pub enum ScheduleError {
     MissingDependency,
 }
 
+/// The directed acyclic graph of registered passes.
+///
+/// Built from registration plus dependency declaration, backed by an
+/// `arvo-bitmask` `BitMatrix` adjacency over a compile-time capacity, and
+/// walked once by `arvo-graph`'s topological sort to produce a [`Schedule`].
+// FIXME: build the `arvo-bitmask` `BitMatrix` adjacency from the registered
+// passes' dependency edges; M-level defines the surface, the adjacency wiring
+// lands with the first consumer family pass (the narrowed remit: ordering
+// consumer family passes against the Core stages, since the compile-and-verify
+// side is one object, not a resolve-and-check peer pipeline).
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Default)]
+pub struct PassDag;
+
+impl PassDag {
+    /// An empty pass DAG.
+    pub fn new() -> Self {
+        Self
+    }
+}
+
 /// A topological order of passes.
 ///
 /// Produced by the pass DAG's `arvo-graph` topological walk; a cycle is

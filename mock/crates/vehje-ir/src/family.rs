@@ -1,7 +1,7 @@
 //! The family axis: the extension unit.
 //!
 //! A family is a type. Each consumer contributes its own families; `Core`
-//! is the reference family (its node kinds are the eleven Core forms). A
+//! is the reference family (its node kinds are the twelve Core forms). A
 //! program carries a type-level set of the families it uses, built from
 //! the `hilavitkutin-api` `AccessSet` machinery (`Empty` / `Cons<H, T>`)
 //! with family markers as members. `Cons` requires only `H: 'static`, so
@@ -20,7 +20,7 @@
 pub trait Family: 'static + core::fmt::Debug {}
 
 /// The Core family: the shared evaluation substrate every grammar lowers
-/// into. Its node kinds are the eleven Core forms in `node`.
+/// into. Its node kinds are the twelve Core forms in `node`.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct Core;
 
