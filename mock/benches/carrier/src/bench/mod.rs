@@ -22,6 +22,12 @@
 
 use mockspace_bench_matrix::MatrixDecl;
 
+/// The runtime C ABI batched-execute boundary family (bench 1: crossing
+/// amortisation, scalar payload). Behind the `boundary` feature: its cells cross into
+/// the sibling `carrier-runtime` cdylib via `mockspace-bench-matrix::boundary::Runtime`,
+/// so the whole module pulls that feature (and libloading). Off the default build.
+#[cfg(feature = "boundary")]
+pub mod boundary;
 pub mod cfg;
 pub mod coldcycle;
 pub mod dispatch;
@@ -74,6 +80,8 @@ pub fn all_matrix_decls() -> Vec<MatrixDecl> {
     all.extend(setup_cost::matrix_decls());
     all.extend(coldcycle::matrix_decls());
     all.extend(entgrid::matrix_decls());
+    #[cfg(feature = "boundary")]
+    all.extend(boundary::matrix_decls());
     for d in &mut all {
         d.extra_deps = extra_deps();
     }
