@@ -9,8 +9,9 @@ name = "carrier_cfg_trace"
 path = "src/lib.rs"
 crate-type = ["cdylib"]
 [dependencies]
-mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "49ff5f55b8413f7046281ae1944130c10509c361", features = ["std"] }
-mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", rev = "49ff5f55b8413f7046281ae1944130c10509c361" }
+mockspace-bench-core = { path = "../../../../../mockspace/bench-core", features = ["std"] }
+mockspace-bench-macro = { path = "../../../../../mockspace/bench-macro" }
+mockspace-bench-matrix = { path = "../../../../../mockspace/bench-matrix", default-features = false }
 vehje-bench-carrier = { path = "../../carrier" }
 [profile.release]
 opt-level = 3

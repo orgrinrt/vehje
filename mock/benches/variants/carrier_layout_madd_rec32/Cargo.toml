@@ -1,0 +1,19 @@
+[workspace]
+[package]
+name = "carrier_layout_madd_rec32"
+version = "0.0.0"
+edition = "2021"
+publish = false
+[lib]
+name = "carrier_layout_madd_rec32"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+[dependencies]
+mockspace-bench-core = { path = "../../../../../mockspace/bench-core", features = ["std"] }
+mockspace-bench-macro = { path = "../../../../../mockspace/bench-macro" }
+mockspace-bench-matrix = { path = "../../../../../mockspace/bench-matrix", default-features = false }
+vehje-bench-carrier = { path = "../../carrier" }
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

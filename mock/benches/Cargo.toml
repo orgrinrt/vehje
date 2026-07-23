@@ -1,4 +1,8 @@
 [workspace]
+# carrier and every generated variant are their own workspace roots (variants are
+# built in isolation, one cdylib each). Exclude them so this workspace does not try
+# to absorb them as members; they remain usable as path dependencies.
+exclude = ["carrier", "variants"]
 
 [package]
 name = "vehje-benches"
@@ -11,9 +15,20 @@ name = "vehje-benches"
 path = "src/main.rs"
 
 [dependencies]
-mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "49ff5f55b8413f7046281ae1944130c10509c361", features = ["std"] }
-mockspace-bench-harness = { git = "https://github.com/hiisi-digital/mockspace", rev = "49ff5f55b8413f7046281ae1944130c10509c361" }
-mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", rev = "49ff5f55b8413f7046281ae1944130c10509c361" }
+# Path deps to the local mockspace `feat/bench-matrix` checkout for cross-repo
+# iteration: the runner, the gen_matrix generator, the carrier, and the variant
+# crates must all resolve the SAME bench-core (the extended FfiBenchCall ABI +
+# abi_hash) and the SAME bench-matrix, or a variant built on the new ABI is
+# rejected at dlopen by the runner's abi_hash check. Switch to a git rev once
+# feat/bench-matrix merges to mockspace dev (see .shared/state/vehje-bench-carrier.md).
+mockspace-bench-core = { path = "../../../mockspace/bench-core", features = ["std"] }
+mockspace-bench-harness = { path = "../../../mockspace/bench-harness" }
+mockspace-bench-macro = { path = "../../../mockspace/bench-macro" }
+# the semantic-matrix layer: gen_matrix calls its `generate_all` over the
+# carrier's `all_matrix_decls()`. Default features (generate) pull the harness
+# transport the generator needs.
+mockspace-bench-matrix = { path = "../../../mockspace/bench-matrix" }
+vehje-bench-carrier = { path = "carrier" }
 
 [features]
 # Enables the kperf PMU path (instructions/cycles columns). The driver must be
