@@ -1,0 +1,36 @@
+# carrier-runtime: the shared "runtime" cdylib a boundary bench crosses into.
+#
+# A boundary bench measures the host-to-runtime C ABI call itself. The crossing
+# must be a genuine cross-object call the optimizer cannot inline, so the runtime
+# is ONE separate cdylib the host bench variants dlopen and call through a resolved
+# function pointer. This crate wraps the UNMODIFIED carrier interp/vertical bodies
+# behind `extern "C"` entry points; it adds no interpretation logic of its own, so
+# a boundary number is the crossing plus the same carrier payload the in-process
+# benches already measured, never a divergent second interpreter.
+#
+# Standalone workspace (like `carrier`) so it is not swept into the vehje-benches
+# workspace; the host variants and the run flow reference its built .dylib by path.
+[workspace]
+
+[package]
+name = "vehje-bench-carrier-runtime"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "carrier_runtime"
+crate-type = ["cdylib"]
+path = "src/lib.rs"
+
+[dependencies]
+# The carrier supplies the shared IR, the predecoder, the scalar interpreter, and
+# the vertical/SoA interpreter, all unmodified. `vertical` pulls the SoA payload
+# (portable_simd); the runtime wraps it so the column-eval win is measured across
+# the real boundary, not just in-process.
+vehje-bench-carrier = { path = "../carrier", features = ["vertical"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

@@ -2,7 +2,7 @@
 # carrier and every generated variant are their own workspace roots (variants are
 # built in isolation, one cdylib each). Exclude them so this workspace does not try
 # to absorb them as members; they remain usable as path dependencies.
-exclude = ["carrier", "variants"]
+exclude = ["carrier", "carrier-runtime", "variants"]
 
 [package]
 name = "vehje-benches"
