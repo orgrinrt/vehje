@@ -1,0 +1,29 @@
+# vehje-signature. backlog
+
+Designed but deferred. Names stay unbackticked until they ship.
+
+## The full lens-projection differential check
+
+The handoff from the Rust-emitted data to the specialised Zig runtime ships in
+its cheaper content-addressed manifest-check interim (the manifest binds the
+package to the runtime and a differential harness checks the projection). The
+full one-source-two-projections lens (both sides generated projections of the
+signature, differential-checked structurally rather than by manifest hash) is
+the open handoff-staging question and lands here when it lands.
+
+## The introduction-compiled stencil projection
+
+The third projection (operations compiled to copy-and-patch machine-code
+stencils) has its schema slot in the signature from day one, but its producer
+is the deferred stencil toolchain. The signature names the slot; the bytes come
+later.
+
+## Fold into runtime-gen if the consumer set collapses
+
+If the only real consumer of the signature contract turns out to be the
+packaging crate (that is, if the check pass ends up taking lease rules as
+runtime values fed by the orchestrator rather than reading the signature), this
+crate shrinks to a data shim and folds into vehje-runtime-gen. It is kept a
+crate because the check pass reads its lease-rule schema and axiom table and
+because ecosystem grammar-as-data tooling and the proof document both want a
+citable one-source language-definition contract.

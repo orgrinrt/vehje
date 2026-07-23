@@ -1,8 +1,10 @@
 # vehje-ir. shared representation
 
-The framework's shared IR, the crate every other framework crate depends
-on. The eleven Core substrate forms, the `Family` extension trait plus
-effect classification, the family-set and effect-set typestate (reusing
-`hilavitkutin-api`'s `AccessSet`), the node builder, and interner
-integration. No algorithms; the data contract the passes and targets read
-and write. `#![no_std]`, no alloc: the IR lives in caller-provided memory.
+The framework's shared program-level representation, the crate every other
+framework crate depends on. The twelve Core substrate forms, the `Family`
+extension trait plus effect classification, the grade vocabulary (the effect,
+binding-time, lease, and assurance grades as concrete enums and bitmasks over
+the reused `AccessSet` machinery), one structural-hash definition over IR
+subtrees, the node builder, the arena, and interner integration. No algorithms;
+the data contract the passes and targets read and write. The IR lives in
+caller-provided memory. `#![no_std]`, no alloc.

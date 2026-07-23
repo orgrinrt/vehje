@@ -1,0 +1,23 @@
+# vehje-ir. shame
+
+Known gaps in the shipped representation. Each is an honest deferral, not a
+silent hole.
+
+## Match pattern representation
+
+The `Match` form stores its arm bodies as a `NodeList` and defers the pattern
+representation. No shipping consumer matches yet, so the pattern node kinds (the
+destructuring shapes a pattern binds) land with the first matching consumer
+rather than being guessed at now. Until then a `Match` carries its scrutinee and
+arm bodies but not the patterns that select them, which is enough for the
+traversal and check integrity passes and not enough to evaluate a real match.
+
+## Raw payload encoding
+
+The `Raw` escape-hatch node carries a `FamilyId` and a `NodeList` placeholder
+for its payload, but the payload encoding is family-interpreted and no shipping
+family defines one yet. The concrete payload shape (how a family serialises its
+own node kinds into the Core arena through the `Raw` seam) lands with the first
+family that needs it, so today a `Raw` node names its family and holds a
+node-list slot the family will later interpret, and the framework treats it as
+opaque.

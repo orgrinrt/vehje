@@ -1,140 +1,158 @@
 # vehje-ir. Design
 
-The shared representation every framework crate depends on: the Core
-substrate forms, the `Family` extension trait plus effect classification,
-the family-set and effect-set typestate, the node builder, and interner
-integration. The design authority is the Core-forms topic (`202607192330`)
-and the crate-surface topic (`202607192320`). `#![no_std]`, no alloc: the
-IR lives in caller-provided memory, never an ad-hoc heap.
+The shared program-level representation every framework crate depends on: the
+twelve Core substrate forms, the `Family` extension trait plus effect
+classification, the grade vocabulary (the four proof axes as concrete runtime
+types), one structural-hash definition over IR subtrees, the node builder, the
+arena, and interner integration. No algorithms; the data contract the passes
+and targets read and write. `#![no_std]`, no alloc: the IR lives in
+caller-provided memory, never an ad-hoc heap.
 
-## The Core substrate (11 forms, ratified)
+The split against `vehje-signature` is program-level versus language-level.
+`vehje-ir` is what a program is: nodes in an arena, families reached through
+`Raw`, and the per-program grade annotations. `vehje-signature` is what a
+language is: the operation catalogue with its grades and disciplines. Every
+per-program pass depends on `vehje-ir`; only the language-build path depends on
+the signature.
+
+## The Core substrate (twelve forms)
 
 Core is the shared evaluation substrate every grammar lowers into: general
-evaluation primitives, closed, in the low tens. The eleven ratified forms
-are `Lit`, `Var`, `Let`, `Lambda`, `Apply`, `Project`, `If`, `Match`,
-`Iter`, `Interp`, `Raw`. A form is a general evaluation primitive; a
-language-specific construct is a family node, not a Core form. `Raw` is the
-one typed escape hatch and, in this representation, the seam through which a
-family's own node kinds attach to the Core arena.
+evaluation primitives, closed, in the low tens. The twelve forms are `Lit`,
+`Var`, `Let`, `Lambda`, `Apply`, `Project`, `If`, `Match`, `Iter`, `Interp`,
+`Raw`, and `Handle`. Eleven are the evaluation shape; the twelfth, `Handle`, is
+user-defined resumable algebraic-effect handlers, adopted because it is a
+general evaluation primitive rather than a family construct, and because it
+unifies the effect set, the host-call boundary, and macro expansion into one
+handler discipline. `Raw` is the one typed escape hatch, the seam through which
+a family's own node kinds attach to the Core arena. `Match` is Core because
+destructuring does not desugar to `If` cleanly; there is no `Seq` because
+content is a monoid and concatenation through the child pool suffices.
 
-- `Node`. The Core node, one arena slot. An enum over the eleven forms;
- each variant carries `NodeRef` operands, a `NodeList` for variadic
- children, a `Str` for names, and a `LitRef` for literal payloads, as the
- form requires. Fixed size per slot, stored in a caller-provided node
- arena, addressed by `NodeRef`.
-- `NodeRef`. A `u32`-shaped index into the node arena (an arvo newtype, not
- a bare `u32`).
-- `NodeList`. A `{ start, len }` slice into the child-index pool, giving a
- form its variable-arity children (an `Apply`'s arguments, a `Match`'s
- arms, a `Let`'s bindings) without a per-node allocation.
-- `LitRef`. A handle into the literal arena. Fixed scalars and enums inline
- via arvo primitives; variable text and arrays are an `(offset, len)`
- handle into the generation-time byte arena, itself `Copy`.
+- `Node`. The Core node, one arena slot. An enum over the twelve forms; each
+  variant carries `NodeRef` operands, a `NodeList` for variadic children, a
+  `Str` for names, a `Literal` for literal payloads, and a `FamilyId` for
+  `Raw`, as the form requires. Fixed size per slot, stored in a caller-provided
+  node arena, addressed by `NodeRef`. `Copy`.
+- `NodeRef`. A platform-width index into the node arena (an arvo `USize`
+  newtype, not a bare integer).
+- `NodeList`. A `{ start, len }` slice into the child-index pool, giving a form
+  its variable-arity children (an `Apply`'s arguments, a `Match`'s arms, a
+  `Handle`'s clauses) without a per-node allocation.
+- `Literal`. The literal payload of a `Lit` node: `Unit`, `Bool`, `Int`, and an
+  interned `Str`. Array and blob literals via a byte arena are deferred.
+- `FamilyId`. The family identifier for the `Raw` escape hatch, an arvo
+  `Uint<16>` newtype.
+
+## The grade vocabulary (the four axes as concrete runtime types)
+
+The graded proof spine lives in the proof and in the coherence argument
+(`vehje-check` and the deep dives). At the machine level the axes are concrete
+closed enums and fixed-capacity bitmasks, and this crate owns those types
+because grade metadata on binder forms is data on existing forms. All four
+reuse one bitmask machinery: the `AccessSet` typestate for the type-level sets
+and `arvo-bitmask` for the runtime masks.
+
+- Effect. The effect axis is a graded monad, the operations a construct
+  invokes. `Effect` is the marker trait for an effect operation (a `'static`
+  ZST); an effect set is an `AccessSet` instantiation over `Effect` markers,
+  the mirror of the family axis. `EffectMask` is the runtime bitmask of
+  inferred operation ids, thermometer-shaped so the lattice join is a bitwise
+  OR and inclusion is a subset test. This supersedes the `Pure` / `Reads<E>` /
+  `Writes<E>` over `BuildEnv` / `RuntimeEnv` lattice: an effect is now an
+  operation the handler discipline services, and the build-versus-runtime split
+  moves onto the binding-time axis.
+- Binding time. `BindingTime` is the knowledge-source lattice as a closed enum:
+  `LanguageAuthor`, `Bundler`, `HostLoader`, `Runtime`. A binding-time grade is
+  a join over these (`Knowledge`, a small bitmask), so partial bundling is a
+  join rather than a special case, and the two build environments the debt
+  reckoning named are two lattice points rather than a marker split.
+- Lease. The lease coeffect's grade is a reachability qualifier: `ReachMask`, a
+  fixed-capacity bitmask over in-scope binder slots (bounded by the depth cap
+  times the per-scope binder width). `Lease` wraps a `ReachMask` as the
+  per-value grade. The degenerate immutable strictly-nested depth-lease is a
+  `ReachMask` collapsed to lexical nesting, the floor that ships first.
+- Assurance. `Assurance` is the assurance lattice as a closed enum:
+  `StaticCertified`, `StructurallyCertified`, `ReprovenPerInstance`,
+  `DynamicallyChecked`, `Tested`, `Unclaimed`. A property's assurance is a
+  projection of its binding-time grade crossed with the property.
+
+The grade metadata a `vehje-check` pass computes lands in `GradeTable`, a
+side-table parallel to the node arena keyed by `NodeRef`, exactly as the span
+side-table is, so a form carries no grade inline and the annotation is written
+by the pass that computes it.
 
 ## The arena (no-alloc, caller-provided)
 
-The IR lives in three caller-provided bump regions: a node arena
-(`&mut [Node]`), a child-index pool (`&mut [NodeRef]`) for variadic
-children, and a literal byte arena (`&mut [u8]`). Each carries a bump
-cursor; construction appends and returns a handle. The top-level driver
-sizes and provides the regions; on a hosted platform it may back them
-behind a `std`/allocator feature, on an embedded platform from static
-storage. No framework library crate allocates.
+The IR lives in caller-provided bump regions: a node arena (`&mut [Node]`), a
+child-index pool (`&mut [NodeRef]`) for variadic children, and a span
+side-table (`&mut [Span]`) parallel to the node arena. Each carries a bump
+cursor; construction appends and returns a handle. The top-level driver sizes
+and provides the regions. No framework library crate allocates.
+
+- `Arena`. Wraps the regions, appends nodes and child lists, and reads them
+  back by handle. The `GradeTable` side-table is a parallel region the check
+  pass fills.
 
 This is the hand-built equivalent of a cranelift-entity `EntityList` /
-`ListPool` (the substrate ships no such primitive today). The arena module
-is kept free of vehje-specific policy so it can be lifted upstream into
-hilavitkutin (which owns the memory and storage layer: `MemoryProviderApi`,
-`ColumnStorage`) once its shape is proven, and vehje-ir repointed at it.
-Arvo is numerics only and is not the home for arenas.
+`ListPool`. The arena module is kept free of vehje-specific policy so it can be
+lifted upstream into hilavitkutin (which owns the memory and storage layer)
+once its shape is proven.
 
-## Families and effects (the two typestate axes)
+## Structural hashing (one definition, three consumers)
 
-- `Family`. The extension trait. A family is a type (a ZST marker) with a
- `const NAME`, a family id, and an effect-classification contribution.
- `Core` is the reference family (its node kinds are the eleven forms); a
- `Doc` family and each consumer's families are separate, attaching through
- `Raw`. New families are new types, added without touching existing passes.
-- The family set. A program carries a type-level set of the families it
- uses, built from `hilavitkutin-api`'s `AccessSet` (`Empty` / `Cons<H, T>`)
- with vehje family markers as members. `Cons` requires only `H: 'static`,
- so the markers drop in with no upstream change. Inclusion against a
- target's declared set is the `ContainsAll` check; the `Contains`
- diagnostic names a missing family for free.
-- The effect vocabulary is parametrized, not enumerated: `Pure`,
- `Reads<E>`, `Writes<E>`, where `E` ranges over an open environment axis
- (`BuildEnv`, `RuntimeEnv`, and later kinds). `Pure` is the empty set. Each
- `Reads<E>` / `Writes<E>` at a concrete `E` is a distinct `'static` marker,
- so the effect set is a second `AccessSet` instantiation, a perfect mirror
- of the family axis. `Writes<BuildEnv>` exists for free; no fifth member is
- reserved.
-- Effect classification. A construct's effect set is computed from what it
- references (a build-environment read is `Reads<BuildEnv>`, a runtime input
- is `Reads<RuntimeEnv>`), decidably, never inferred probabilistically.
+`StructuralHash` is a content address of an IR subtree, computed over the arvo
+content-hash primitive. It is defined once here because three downstream
+mechanisms consume the same identity: hash-consing in `vehje-lower`, dedup
+keying in `vehje-fixpoint`'s incremental layer, and the manifest in
+`vehje-runtime-gen`. Defining it per consumer would fork the identity primitive
+the incremental mechanism's proof-preservation argument depends on. `hash_of`
+folds a subtree to its `StructuralHash`; equal subtrees hash equal, and the
+hash is stable across arenas so a cache hit across artifacts is sound.
+
+## Families and effects
+
+- `Family`. The extension trait. A family is a `'static` type (a ZST marker)
+  whose `Debug` rendering carries the human-readable name. `Core` is the
+  reference family (its node kinds are the twelve forms); a consumer's families
+  are separate, attaching through `Raw`. New families are new types, added
+  without touching existing passes.
+- The family set. A program carries a type-level set of the families it uses,
+  built from `AccessSet` (`Empty` / `Cons<H, T>`) with vehje family markers as
+  members. Inclusion against a target's declared set is the `ContainsAll`
+  check; the `Contains` diagnostic names a missing family.
+- Effect classification. A construct's effect set is the operations it invokes
+  that are not locally handled, decidable, never inferred probabilistically.
 
 ## The builder (monoid smart-constructors)
 
-- `Builder`. Holds the three arena regions and an interner; exposes one
- smart-constructor per Core form (`lit`, `var`, `let_`, `lambda`, `apply`,
- `project`, `if_`, `match_`, `iter`, `interp`, `raw`), each appending a node
- and returning its `NodeRef`. Content composition is monoidal: a sequence
- of values concatenates through the child-index pool rather than a `Seq`
- node, so there is no `Seq` Core form.
+- `Builder`. Wraps an `Arena` and exposes one smart-constructor per Core form
+  (`lit`, `var`, `let_`, `lambda`, `apply`, `project`, `if_`, `match_`, `iter`,
+  `interp`, `raw`, `handle`), each appending a node and returning its
+  `NodeRef`. Content composition is monoidal: a sequence of values concatenates
+  through the child-index pool rather than a `Seq` node.
 
-## Interner integration
+## Interner and diagnostics
 
-`Str` (the 4-byte `#![no_std]` interned handle from `hilavitkutin-str`) is
-the name identity in nodes. `StringInterner<A: ArenaInterner>` interns; the
-`ArenaInterner` impl (runtime string storage) is supplied by the driver.
-Const strings resolve through the linker-section table with zero runtime
-storage; runtime strings go through the provided arena.
-
-## Salvaged infrastructure
-
-`Span { file, start, end }`, `FileId`, `ByteOffset`, `Diagnostic`, and
-`Severity` carry over from the prior shape (generic, framework-agnostic).
-The phase discriminator is reframed to the framework's phases (resolve,
-check, emit, runtime), not a single language's compiler phases. The old
-9-kind `AstNodeKind` and the Rust-shaped `TokenKind` are dropped: they were
-the first-party language's front-end vocabulary, superseded by the Core
-forms, and tokens are a front-end concern that lives in a consumer.
+`Str` (the interned handle from `hilavitkutin-str`) is the name identity in
+nodes; `StringInterner<A: ArenaInterner>` interns, with the `ArenaInterner`
+impl supplied by the driver. `Span`, `FileId`, `ByteOffset`, `Diagnostic`,
+`Phase`, and `Severity` carry the source-location and diagnostic contract;
+`Diagnostic` is `Copy` and references only `'static` strings, so the passes
+stay alloc-free.
 
 ## Non-scope
 
-- Parsers, lexers, resolvers, checkers, emitters. Each is its own crate or
- a consumer's front-end; vehje-ir is the data contract they share.
-- Consumer family node kinds. They attach through `Raw`; vehje-ir ships the
- Core family only.
-- Runtime execution and the C ABI (`vehje-runtime-abi`).
+- Parsers, resolvers, checkers, lowerers, emitters. Each is its own crate; this
+  is the data contract they share.
+- Consumer family node kinds. They attach through `Raw`; this ships the `Core`
+  family only.
+- The language-level signature (`vehje-signature`) and runtime execution
+  (`vehje-runtime-abi`).
 
 ## Dependencies
 
-- `hilavitkutin-api` for the `AccessSet` typestate (`Empty` / `Cons` /
- `Contains` / `ContainsAll` / `Concat`).
-- `hilavitkutin-str` for `Str` and `StringInterner`.
-- `arvo` for the newtype discipline (`USize`, `Cap`, `Bool`, the `u32`-
- shaped `NodeRef` newtype).
-- `notko` for `Maybe` / `Outcome`.
-- `#![no_std]`, no alloc.
-
-## Module layout
-
-- `arena.rs`. The three bump regions and their handles (upstream-extraction
- candidate).
-- `node.rs`. `Node` (the eleven Core forms), `NodeRef`, `NodeList`,
- `LitRef`.
-- `family.rs`. The `Family` trait, the `Core` family, the family-set
- typestate over `AccessSet`.
-- `effect.rs`. `Reads<E>` / `Writes<E>` / `Pure`, the environment markers,
- the effect-set typestate, the classifier.
-- `builder.rs`. `Builder` and the monoid smart-constructors.
-- `intern.rs`. Interner integration over `hilavitkutin-str`.
-- `span.rs`, `diagnostic.rs`. Salvaged `Span` / `FileId` / `ByteOffset` /
- `Diagnostic` / `Severity`.
-- `lib.rs`. Re-exports.
-
-## Deferred (BACKLOG)
-
-The Doc family constructor list (lands with the first document consumer).
-Type-safe `NodeRef` variants. A bit-packed node encoding if profiling shows
-the enum-slot representation wastes space.
+`hilavitkutin-api` for the `AccessSet` typestate; `hilavitkutin-str` for `Str`
+and `StringInterner`; `arvo` and `arvo-bitmask` for the newtype discipline, the
+grade bitmasks, and the content hash; `notko` for `Maybe` and `Outcome`.
+`#![no_std]`, no alloc.
