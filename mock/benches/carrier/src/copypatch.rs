@@ -26,10 +26,14 @@
 //! output is byte-identical to the interpreters (same `results` array), which is
 //! the cross-validation: the JIT checksum must equal the interpreter checksum.
 //!
-//! Scope, stated honestly. The immediates are the aarch64 unsigned-offset
-//! load/store form (imm12 scaled by 8), so node and const indices must be below
-//! 4096; `codegen` returns `None` above that (a larger program needs a
-//! register-materialized base, a labelled refinement). The cell is gated to
+//! Addressing has two paths, chosen per index. Below 4096 (the aarch64 imm12
+//! unsigned-offset window at 8-byte scale) a load/store uses the immediate form
+//! directly, same code shape as before. At or above 4096 the index is
+//! materialized into the scratch register x6 (`MOVZ`, plus `MOVK #16` for the
+//! upper half when the index exceeds `0xFFFF`) and the access uses the
+//! register-offset form `LDR/STR Xt, [Xn, X6, LSL #3]` instead. Both forms
+//! compute the identical byte address; there is no size at which `emit` declines
+//! (any `u32` node or const index is representable). The cell is gated to
 //! aarch64 + macOS (the JIT path here is Apple-Silicon-specific: MAP_JIT plus
 //! `pthread_jit_write_protect_np` plus `sys_icache_invalidate`); the technique is
 //! platform-portable, this one realization is not, and that is marked, not hidden.
@@ -49,6 +53,11 @@ const HS: u32 = 2; // unsigned higher-or-same
 const LO: u32 = 3; // unsigned lower
 const LS: u32 = 9; // unsigned lower-or-same
 
+// The scratch register used to materialize an out-of-imm12-range element
+// index before a register-offset load/store. Free in every stencil here: x0
+// = results, x1 = consts, x2 = seed, x3/x4/x5 = value scratch.
+const SCRATCH_IDX: u32 = 6;
+
 // Instruction encoders. Each returns one 32-bit aarch64 word. The register
 // numbers are 0..31 (31 is XZR/SP depending on position). Verified against the
 // ARM ARM encodings; the operand fields (Rd/Rn/Rm, imm12) are the "patch" slots.
@@ -59,6 +68,28 @@ fn ldr(rt: u32, rn: u32, off_words: u32) -> u32 {
 #[inline]
 fn str_(rt: u32, rn: u32, off_words: u32) -> u32 {
     0xF900_0000 | ((off_words & 0xFFF) << 10) | (rn << 5) | rt
+}
+#[inline]
+fn ldr_reg(rt: u32, rn: u32, rm: u32) -> u32 {
+    // LDR Xt, [Xn, Xm, LSL #3]. Register-offset, 64-bit variant, S=1 (the
+    // implicit shift by log2(8)=3), option=011 (LSL, plain register offset).
+    0xF860_7800 | (rm << 16) | (rn << 5) | rt
+}
+#[inline]
+fn str_reg(rt: u32, rn: u32, rm: u32) -> u32 {
+    // STR Xt, [Xn, Xm, LSL #3]. Same shape as ldr_reg with opc=00 (store).
+    0xF820_7800 | (rm << 16) | (rn << 5) | rt
+}
+#[inline]
+fn movz(rd: u32, imm16: u32) -> u32 {
+    // MOVZ Xd, #imm16 (hw=0, shift 0). Zeros the rest of the register.
+    0xD280_0000 | ((imm16 & 0xFFFF) << 5) | rd
+}
+#[inline]
+fn movk16(rd: u32, imm16: u32) -> u32 {
+    // MOVK Xd, #imm16, LSL #16 (hw=1). Keeps the low 16 bits already placed
+    // by a prior MOVZ and inserts this into bits [31:16].
+    0xF2A0_0000 | ((imm16 & 0xFFFF) << 5) | rd
 }
 #[inline]
 fn add(rd: u32, rn: u32, rm: u32) -> u32 {
@@ -127,39 +158,70 @@ fn ret() -> u32 {
     0xD65F_03C0
 }
 
-/// Emit the machine-code words for a program, or `None` if any node or const
-/// index exceeds the imm12 unsigned-offset limit (4095). Registers: x0 =
-/// results, x1 = consts, x2 = seed; x3/x4/x5 = scratch.
-pub fn emit(prog: &Program) -> Option<Vec<u32>> {
-    if prog.nodes.len() >= 4096 || prog.consts.len() >= 4096 {
-        return None;
+/// Emit a load of `results[idx]` (or `consts[idx]` when `rn` is the consts
+/// base) into `rt`. Below the imm12 window this is a single immediate-offset
+/// `LDR`; at or above it, `idx` is materialized into the scratch register
+/// (`MOVZ`, plus `MOVK` for the upper half past `0xFFFF`) and the load uses
+/// the register-offset form. Both paths read the identical byte address.
+#[inline]
+fn emit_ldr(code: &mut Vec<u32>, rt: u32, rn: u32, idx: u32) {
+    if idx < 4096 {
+        code.push(ldr(rt, rn, idx));
+    } else {
+        code.push(movz(SCRATCH_IDX, idx & 0xFFFF));
+        if idx > 0xFFFF {
+            code.push(movk16(SCRATCH_IDX, idx >> 16));
+        }
+        code.push(ldr_reg(rt, rn, SCRATCH_IDX));
     }
+}
+
+/// Emit a store of `rt` into `results[idx]`. Mirrors `emit_ldr`'s fast/slow
+/// split; see there for the addressing rationale.
+#[inline]
+fn emit_str(code: &mut Vec<u32>, rt: u32, rn: u32, idx: u32) {
+    if idx < 4096 {
+        code.push(str_(rt, rn, idx));
+    } else {
+        code.push(movz(SCRATCH_IDX, idx & 0xFFFF));
+        if idx > 0xFFFF {
+            code.push(movk16(SCRATCH_IDX, idx >> 16));
+        }
+        code.push(str_reg(rt, rn, SCRATCH_IDX));
+    }
+}
+
+/// Emit the machine-code words for a program. Registers: x0 = results, x1 =
+/// consts, x2 = seed; x3/x4/x5 = value scratch, x6 = index-materialization
+/// scratch (used only when a node or const index is at or above the imm12
+/// window; see `emit_ldr` / `emit_str`).
+pub fn emit(prog: &Program) -> Option<Vec<u32>> {
     let mut code: Vec<u32> = Vec::with_capacity(prog.nodes.len() * 5 + 1);
     for (i, node) in prog.nodes.iter().enumerate() {
         let i = i as u32;
         let ops = &node.operands;
         match node.op {
-            op::CONST => code.push(ldr(3, 1, ops[0])),
+            op::CONST => emit_ldr(&mut code, 3, 1, ops[0]),
             op::INPUT => code.push(mov_reg(3, 2)),
             op::NEG => {
-                code.push(ldr(3, 0, ops[0]));
+                emit_ldr(&mut code, 3, 0, ops[0]);
                 code.push(neg(3, 3));
             }
             op::NOT => {
-                code.push(ldr(3, 0, ops[0]));
+                emit_ldr(&mut code, 3, 0, ops[0]);
                 code.push(mvn(3, 3));
             }
             op::SELECT => {
-                code.push(ldr(3, 0, ops[0]));
-                code.push(ldr(4, 0, ops[1]));
-                code.push(ldr(5, 0, ops[2]));
+                emit_ldr(&mut code, 3, 0, ops[0]);
+                emit_ldr(&mut code, 4, 0, ops[1]);
+                emit_ldr(&mut code, 5, 0, ops[2]);
                 code.push(cmp_zero(3));
                 code.push(csel(3, 4, 5, NE)); // ops[0] != 0 ? ops[1] : ops[2]
             }
             other => {
                 // binary ops: load both operands into x3, x4.
-                code.push(ldr(3, 0, ops[0]));
-                code.push(ldr(4, 0, ops[1]));
+                emit_ldr(&mut code, 3, 0, ops[0]);
+                emit_ldr(&mut code, 4, 0, ops[1]);
                 match other {
                     op::ADD => code.push(add(3, 3, 4)),
                     op::SUB => code.push(sub(3, 3, 4)),
@@ -189,7 +251,7 @@ pub fn emit(prog: &Program) -> Option<Vec<u32>> {
                 }
             }
         }
-        code.push(str_(3, 0, i)); // results[i] = x3
+        emit_str(&mut code, 3, 0, i); // results[i] = x3
     }
     code.push(ret());
     Some(code)
@@ -222,8 +284,8 @@ pub struct JitCode {
 }
 
 impl JitCode {
-    /// Codegen a program into executable memory. Returns `None` if `emit`
-    /// declines (program too large) or the mmap fails.
+    /// Codegen a program into executable memory. Returns `None` if the mmap
+    /// fails; `emit` itself always succeeds (any `u32` index is addressable).
     pub fn new(prog: &Program) -> Option<JitCode> {
         let code = emit(prog)?;
         let byte_len = code.len() * 4;
@@ -290,7 +352,7 @@ mod tests {
             let mut gp = GenParams::profile(name).unwrap();
             gp.node_count = 800;
             let prog = generate(&gp);
-            let jit = JitCode::new(&prog).expect("program fits the imm12 window");
+            let jit = JitCode::new(&prog).expect("program codegens");
             let bytes = encode(&prog, &REC24);
             let d = Decoded::parse(&bytes, REC24).unwrap();
             let mut ri = vec![0u64; prog.nodes.len()];
@@ -308,13 +370,52 @@ mod tests {
     }
 
     #[test]
-    fn oversize_program_declines() {
-        // Above the imm12 window emit returns None rather than emitting a wrong
-        // offset; the caller falls back (or the bench skips that size for this
-        // cell). 5000 nodes exceeds 4095.
+    fn jit_matches_interp_large_n() {
+        // Above 4095 elements the imm12 unsigned-offset window is exceeded and
+        // `emit` must switch a load/store to the register-offset form (the
+        // index materialized into x6 via MOVZ/MOVK). N=4096 sits exactly at
+        // the boundary (every node index from 4095 up needs the slow path,
+        // while operands below it still take the fast path); N=16384 is an
+        // order of magnitude past it. Bumping const_count to 5000 forces the
+        // CONST hole's own register-offset path too (the default 32-entry
+        // pool never reaches it), so the const-base (x1) addressing is
+        // exercised, not just the results-base (x0) addressing.
+        for name in ["real", "madd", "tight", "scatter", "wideselect", "leaf"] {
+            for &node_count in &[4096usize, 16384usize] {
+                let mut gp = GenParams::profile(name).unwrap();
+                gp.node_count = node_count;
+                gp.const_count = 5000;
+                let prog = generate(&gp);
+                let jit = JitCode::new(&prog).expect("large program must still codegen");
+                let bytes = encode(&prog, &REC24);
+                let d = Decoded::parse(&bytes, REC24).unwrap();
+                let mut ri = vec![0u64; prog.nodes.len()];
+                let mut rj = vec![0u64; prog.nodes.len()];
+                for seed in [0u64, 1, 42, 12345, 999_999] {
+                    crate::interp::interpret(&d, seed, &mut ri);
+                    jit.run(seed, &mut rj);
+                    assert_eq!(
+                        checksum(&ri),
+                        checksum(&rj),
+                        "{name} n={node_count}: JIT diverged from interp at seed {seed}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn very_large_program_no_longer_declines() {
+        // Historically `emit` capped out at the imm12 window (4095 elements)
+        // and returned None above it. Register-offset addressing removed
+        // that cap; any u32-representable index now codegens.
         let mut gp = GenParams::profile("real").unwrap();
-        gp.node_count = 5000;
+        gp.node_count = 20_000;
+        gp.const_count = 6000;
         let prog = generate(&gp);
-        assert!(emit(&prog).is_none(), "oversize program must decline, not miscompile");
+        assert!(
+            emit(&prog).is_some(),
+            "register-offset addressing must handle programs past the old imm12 cap"
+        );
     }
 }

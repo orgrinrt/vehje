@@ -44,7 +44,7 @@ Status legend: [ ] todo, [x] done, [~] in progress, [>] dispatched.
       the timed region so no single program's dispatch sequence is memorized (the many-residuals
       deployment shape); (b) first-rep column `algo_ns_first` for true first-touch. template +
       harness + new family. (agner F1, giesen Q1-B+C)
-- [ ] 10. imm12 lift so the JIT cells run at N=4096/16384 (register-materialized base or adrp/add),
+- [x] 10. imm12 lift so the JIT cells run at N=4096/16384 (register-materialized base or adrp/add),
       measuring native where the interpreter is saturated not memorized. `copypatch.rs`,
       `stencil.rs`, native_family sizes. (giesen Q3-C)
 - [x] 11. entropy x locality generator grid: op_correlation x locality_window as swept axes so

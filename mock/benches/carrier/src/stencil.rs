@@ -31,10 +31,19 @@
 //! and falls through to the next; the generator appends one `ret`. So the output
 //! `results` array is byte-identical to the interpreters', the cross-validation.
 //!
-//! Scope: the imm12 unsigned-offset load/store form scales by 8, so node and
-//! const indices must be below 4096; `emit_stencil` returns `None` above that,
-//! declining rather than miscompiling (the same window the direct cell has).
-//! aarch64 + macOS only (MAP_JIT / W^X / icache), marked, not hidden.
+//! Addressing has two paths, chosen per hole, per node. Below the imm12 window
+//! (element index < 4096) a hole is patched in place, same as always: the
+//! stencil's own load/store word is copied and its imm12 field overwritten with
+//! the index. At or above that window, the stencil's hole word is replaced
+//! rather than patched: the index is materialized into the scratch register x6
+//! (`MOVZ`, plus `MOVK #16` for the upper half past `0xFFFF`) immediately before
+//! it, and the load/store switches to the register-offset form. Every hole binds
+//! a fixed (register, base, direction) triple regardless of which op's stencil
+//! it came from (`hole_regs`), so this substitution needs no bit-decoding of the
+//! stencil word itself. Both paths compute the identical byte address; there is
+//! no size at which `emit_stencil` declines (any `u32` node or const index is
+//! representable). aarch64 + macOS only (MAP_JIT / W^X / icache), marked, not
+//! hidden.
 
 #![cfg(all(feature = "jit", target_arch = "aarch64", target_os = "macos"))]
 
@@ -300,27 +309,90 @@ fn patch_imm12(word: u32, idx: u32) -> u32 {
     (word & !(0xFFF << 10)) | ((idx & 0xFFF) << 10)
 }
 
-/// Copy-and-patch codegen: for each node, copy its opcode's stencil words and
-/// patch each hole with the node's actual index. Returns `None` if any index
-/// exceeds the imm12 window (4095), declining rather than miscompiling.
-pub fn emit_stencil(prog: &Program) -> Option<Vec<u32>> {
-    if prog.nodes.len() >= 4096 || prog.consts.len() >= 4096 {
-        return None;
+// The scratch register used to materialize an out-of-imm12-range element
+// index before a register-offset load/store. Free in every stencil above:
+// x0 = results, x1 = consts, x2 = seed, x3/x4/x5 = value scratch.
+const SCRATCH_IDX: u32 = 6;
+
+/// LDR Xt, [Xn, Xm, LSL #3]: register-offset, 64-bit variant, S=1 (the
+/// implicit shift by log2(8)=3), option=011 (LSL, plain register offset).
+#[inline]
+fn ldr_reg(rt: u32, rn: u32, rm: u32) -> u32 {
+    0xF860_7800 | (rm << 16) | (rn << 5) | rt
+}
+/// STR Xt, [Xn, Xm, LSL #3]: same shape as `ldr_reg` with opc=00 (store).
+#[inline]
+fn str_reg(rt: u32, rn: u32, rm: u32) -> u32 {
+    0xF820_7800 | (rm << 16) | (rn << 5) | rt
+}
+/// MOVZ Xd, #imm16 (hw=0, shift 0). Zeros the rest of the register.
+#[inline]
+fn movz(rd: u32, imm16: u32) -> u32 {
+    0xD280_0000 | ((imm16 & 0xFFFF) << 5) | rd
+}
+/// MOVK Xd, #imm16, LSL #16 (hw=1). Keeps the low 16 bits a prior MOVZ placed
+/// and inserts this into bits [31:16].
+#[inline]
+fn movk16(rd: u32, imm16: u32) -> u32 {
+    0xF2A0_0000 | ((imm16 & 0xFFFF) << 5) | rd
+}
+
+/// Which base register, data register, and direction a hole binds to. Fixed
+/// by the `Hole` variant alone: every stencil above routes A/B/C loads and
+/// the Dst store through the same registers regardless of which op's
+/// stencil they came from, so synthesizing a register-offset replacement for
+/// a hole needs no bit-decoding of the stencil word itself.
+///
+/// Returns `(rt, rn, is_store)`.
+#[inline]
+fn hole_regs(hole: Hole) -> (u32, u32, bool) {
+    match hole {
+        Hole::A => (3, 0, false),
+        Hole::B => (4, 0, false),
+        Hole::C => (5, 0, false),
+        Hole::Const => (3, 1, false),
+        Hole::Dst => (3, 0, true),
     }
+}
+
+/// Copy-and-patch codegen: for each node, copy its opcode's stencil words,
+/// substituting a hole's word for the node's actual index. Below the imm12
+/// window (4096 elements) a hole is patched in place, same as the stencil's
+/// original word; at or above it, the word is replaced with a
+/// register-offset load/store preceded by the index materialized into x6
+/// (see `hole_regs`, `emit_ldr`-style split). Both paths compute the
+/// identical byte address, so there is no size at which this declines.
+pub fn emit_stencil(prog: &Program) -> Option<Vec<u32>> {
     let mut code: Vec<u32> = Vec::with_capacity(prog.nodes.len() * 6 + 1);
     for (i, node) in prog.nodes.iter().enumerate() {
         let (stencil_words, holes) = stencil(node.op)?;
-        let base = code.len();
-        code.extend_from_slice(stencil_words); // copy
-        for &(w, hole) in holes {
-            let idx = match hole {
-                Hole::A => node.operands[0],
-                Hole::B => node.operands[1],
-                Hole::C => node.operands[2],
-                Hole::Const => node.operands[0],
-                Hole::Dst => i as u32,
-            };
-            code[base + w] = patch_imm12(code[base + w], idx); // patch
+        for (w_pos, &word) in stencil_words.iter().enumerate() {
+            match holes.iter().find(|&&(w, _)| w == w_pos) {
+                Some(&(_, hole)) => {
+                    let idx = match hole {
+                        Hole::A => node.operands[0],
+                        Hole::B => node.operands[1],
+                        Hole::C => node.operands[2],
+                        Hole::Const => node.operands[0],
+                        Hole::Dst => i as u32,
+                    };
+                    if idx < 4096 {
+                        code.push(patch_imm12(word, idx));
+                    } else {
+                        let (rt, rn, is_store) = hole_regs(hole);
+                        code.push(movz(SCRATCH_IDX, idx & 0xFFFF));
+                        if idx > 0xFFFF {
+                            code.push(movk16(SCRATCH_IDX, idx >> 16));
+                        }
+                        code.push(if is_store {
+                            str_reg(rt, rn, SCRATCH_IDX)
+                        } else {
+                            ldr_reg(rt, rn, SCRATCH_IDX)
+                        });
+                    }
+                }
+                None => code.push(word), // not a hole: copy verbatim
+            }
         }
     }
     code.push(0xD65F_03C0); // ret
@@ -354,8 +426,9 @@ pub struct StencilCode {
 }
 
 impl StencilCode {
-    /// Copy-and-patch a program into executable memory. `None` if `emit_stencil`
-    /// declines (too large) or the mmap fails.
+    /// Copy-and-patch a program into executable memory. `None` if the mmap
+    /// fails; `emit_stencil` itself always succeeds (any `u32` index is
+    /// addressable).
     pub fn new(prog: &Program) -> Option<StencilCode> {
         let code = emit_stencil(prog)?;
         let byte_len = code.len() * 4;
@@ -416,7 +489,7 @@ mod tests {
             let mut gp = GenParams::profile(name).unwrap();
             gp.node_count = 800;
             let prog = generate(&gp);
-            let jit = StencilCode::new(&prog).expect("program fits the imm12 window");
+            let jit = StencilCode::new(&prog).expect("program codegens");
             let bytes = encode(&prog, &REC24);
             let d = Decoded::parse(&bytes, REC24).unwrap();
             let mut ri = vec![0u64; prog.nodes.len()];
@@ -429,6 +502,40 @@ mod tests {
                     checksum(&rj),
                     "{name}: stencil copy-and-patch diverged from interp at seed {seed}"
                 );
+            }
+        }
+    }
+
+    #[test]
+    fn stencil_matches_interp_large_n() {
+        // Above 4095 elements a hole's index no longer fits the stencil's
+        // patched imm12 field, so `emit_stencil` must substitute the
+        // register-offset form (index materialized into x6). N=4096 sits
+        // exactly at the boundary; N=16384 is an order of magnitude past it.
+        // Bumping const_count to 5000 forces the CONST hole's own
+        // register-offset path too (the default 32-entry pool never reaches
+        // it), exercising the const-base (x1) addressing alongside the
+        // results-base (x0) addressing every other hole uses.
+        for name in ["real", "madd", "tight", "scatter", "wideselect", "leaf"] {
+            for &node_count in &[4096usize, 16384usize] {
+                let mut gp = GenParams::profile(name).unwrap();
+                gp.node_count = node_count;
+                gp.const_count = 5000;
+                let prog = generate(&gp);
+                let jit = StencilCode::new(&prog).expect("large program must still codegen");
+                let bytes = encode(&prog, &REC24);
+                let d = Decoded::parse(&bytes, REC24).unwrap();
+                let mut ri = vec![0u64; prog.nodes.len()];
+                let mut rj = vec![0u64; prog.nodes.len()];
+                for seed in [0u64, 1, 42, 12345, 999_999] {
+                    crate::interp::interpret(&d, seed, &mut ri);
+                    jit.run(seed, &mut rj);
+                    assert_eq!(
+                        checksum(&ri),
+                        checksum(&rj),
+                        "{name} n={node_count}: stencil copy-and-patch diverged from interp at seed {seed}"
+                    );
+                }
             }
         }
     }
@@ -453,10 +560,43 @@ mod tests {
     }
 
     #[test]
-    fn oversize_program_declines() {
+    fn stencil_agrees_with_direct_codegen_large_n() {
+        // Both JIT paths implement the same register-offset addressing above
+        // 4095 elements; confirm they still agree once neither can rely
+        // solely on the imm12 fast path.
+        for &node_count in &[4096usize, 16384usize] {
+            let mut gp = GenParams::profile("scatter").unwrap();
+            gp.node_count = node_count;
+            gp.const_count = 5000;
+            let prog = generate(&gp);
+            let sten = StencilCode::new(&prog).unwrap();
+            let direct = crate::copypatch::JitCode::new(&prog).unwrap();
+            let mut rs = vec![0u64; prog.nodes.len()];
+            let mut rd = vec![0u64; prog.nodes.len()];
+            for seed in [1u64, 7, 100, 65535] {
+                sten.run(seed, &mut rs);
+                direct.run(seed, &mut rd);
+                assert_eq!(
+                    checksum(&rs),
+                    checksum(&rd),
+                    "n={node_count}: stencil vs direct diverged at seed {seed}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn very_large_program_no_longer_declines() {
+        // Historically `emit_stencil` capped out at the imm12 window (4095
+        // elements) and returned None above it. Register-offset addressing
+        // removed that cap; any u32-representable index now codegens.
         let mut gp = GenParams::profile("real").unwrap();
-        gp.node_count = 5000;
+        gp.node_count = 20_000;
+        gp.const_count = 6000;
         let prog = generate(&gp);
-        assert!(emit_stencil(&prog).is_none(), "oversize program must decline, not miscompile");
+        assert!(
+            emit_stencil(&prog).is_some(),
+            "register-offset addressing must handle programs past the old imm12 cap"
+        );
     }
 }

@@ -347,12 +347,13 @@ fn native_family() -> Vec<MatrixSpec> {
             cell("direct", format!("{jit_prep} let jit = c::copypatch::JitCode::new(prog).expect(\"jit\");"), "jit.run(seed, &mut r); acc ^= c::checksum(&r);".to_string(), &["jit"]),
             cell("copypatch", format!("{jit_prep} let jit = c::stencil::StencilCode::new(prog).expect(\"jit\");"), "jit.run(seed, &mut r); acc ^= c::checksum(&r);".to_string(), &["jit"]),
         ];
-        // sizes capped below the JIT imm12 window (node/const index < 4096): the
-        // copypatch/stencil constructors decline (return None) above it, so 4096
-        // and 16384 are out of range for those two techniques. Declared out of
-        // range rather than discovered by a crash (the mandate: name it, do not
-        // silently drop it).
-        spec_sized(format!("carrier_native_{p}"), format!("Near-native tier: interp vs direct codegen vs copy-and-patch stencil, {p} profile (JIT window caps sizes at 1024)"), "interp", &format!("carrier_nat_{p}"), cells, vec![64, 256, 1024])
+        // Full sweep: the JIT imm12 window cap is lifted (copypatch/stencil now use
+        // register-offset addressing for indices >= 4096), so both JIT paths run at
+        // 4096 and 16384. This measures the native margin in the saturated-predictor
+        // regime, where the interpreter's per-node cost has quadrupled off the
+        // memorized best and native code (no dispatch branch) has not, so the true
+        // native advantage is visible instead of the memorized-regime floor.
+        spec(format!("carrier_native_{p}"), format!("Near-native tier: interp vs direct instruction-selection vs copy-and-patch stencil, {p} profile"), "interp", &format!("carrier_nat_{p}"), cells)
     }).collect()
 }
 
@@ -500,9 +501,9 @@ fn setup_cost_family() -> Vec<MatrixSpec> {
     // that copy-and-patch reaches near-native EXECUTION speed at a fraction of the
     // COMPILE cost; this family measures that compile cost directly, on the axis
     // the technique was invented for and the one the execution matrix could not see.
-    // Sizes cap at 1024 (the JIT imm12 window). `emit`/`emit_stencil` are the pure
-    // codegen (Vec<u32> of machine words), isolating the compile algorithm from the
-    // mmap/icache-flush of full JitCode/StencilCode construction.
+    // `emit`/`emit_stencil` are the pure codegen (Vec<u32> of machine words),
+    // isolating the compile algorithm from the mmap/icache-flush of full
+    // JitCode/StencilCode construction. Full sweep (the imm12 window cap is lifted).
     PROFILES.iter().map(|p| {
         let cells = vec![
             cell("parse", bytes_prep(p), "let d = c::ir::Decoded::parse(bytes, c::ir::REC24).unwrap(); acc ^= d.node_count as u64;".to_string(), &[]),
@@ -512,7 +513,7 @@ fn setup_cost_family() -> Vec<MatrixSpec> {
             cell("emitdirect", program_prep(p), "let code = c::copypatch::emit(prog).expect(\"emit\"); acc ^= code.len() as u64;".to_string(), &["jit"]),
             cell("emitcopypatch", program_prep(p), "let code = c::stencil::emit_stencil(prog).expect(\"emit\"); acc ^= code.len() as u64;".to_string(), &["jit"]),
         ];
-        spec_sized(format!("carrier_setup_{p}"), format!("Setup cost S (parse / predecode / stackbc compile / optimize / direct-emit / copypatch-emit), {p} profile"), "parse", &format!("carrier_setup_{p}"), cells, vec![64, 256, 1024])
+        spec(format!("carrier_setup_{p}"), format!("Setup cost S (parse / predecode / stackbc compile / optimize / direct-emit / copypatch-emit), {p} profile"), "parse", &format!("carrier_setup_{p}"), cells)
     }).collect()
 }
 
