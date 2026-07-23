@@ -32,5 +32,11 @@ vertical = []
 jit = []
 
 [dependencies]
-# none by design: a seeded generator with no external RNG keeps runs
-# byte-reproducible and free of any supply-chain surface.
+# The bench module (`pub mod bench`) authors the semantic matrix with the
+# bench_matrix! macro; it needs only the macro + the decl data + the scaffold the
+# variants call, NOT the harness transport, so default-features are off (that
+# drops the whole bench-harness tree from this per-variant-rebuilt crate). Path
+# dep for local cross-repo iteration; switch to the git rev before pushing.
+mockspace-bench-matrix = { path = "../../../../mockspace/bench-matrix", default-features = false }
+# The interpreters/generators themselves keep no external RNG or runtime deps: a
+# seeded generator with no external RNG keeps runs byte-reproducible.

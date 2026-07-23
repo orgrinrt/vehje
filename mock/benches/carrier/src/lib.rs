@@ -34,6 +34,7 @@
 #![cfg_attr(feature = "vertical", feature(portable_simd))]
 
 pub mod access;
+pub mod bench;
 pub mod cfg;
 #[cfg(feature = "threaded")]
 pub mod cfg_threaded;
