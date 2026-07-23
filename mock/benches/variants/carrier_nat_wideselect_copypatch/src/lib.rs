@@ -7,7 +7,7 @@ use std::sync::OnceLock;
 
 #[bench_variant("carrier_nat_wideselect_copypatch", sizes = [64, 256, 1024, 4096, 16384])]
 fn run<const N: usize>(input: &[u8; N], output: &mut [u8; 8]) -> FfiBenchCall {
-    static PREP: OnceLock<c::ir::Program> = OnceLock::new(); let prog = PREP.get_or_init(|| { let mut gp = c::GenParams::profile("wideselect").unwrap(); gp.node_count = N; c::generate(&gp) }); let mut r = vec![0u64; prog.nodes.len()]; let jit = c::copypatch::JitCode::new(prog).expect("jit");
+    static PREP: OnceLock<c::ir::Program> = OnceLock::new(); let prog = PREP.get_or_init(|| { let mut gp = c::GenParams::profile("wideselect").unwrap(); gp.node_count = N; c::generate(&gp) }); let mut r = vec![0u64; prog.nodes.len()]; let jit = c::stencil::StencilCode::new(prog).expect("jit");
     const ITERS: usize = 16;
     // timed_calibrated auto-repeats the run block until it clears the counter's
     // 2048-tick quantization floor (the 24 MHz CNTVCT means small-N regions would

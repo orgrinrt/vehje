@@ -7,7 +7,7 @@ use std::sync::OnceLock;
 
 #[bench_variant("carrier_opt_scatter_dce", sizes = [64, 256, 1024, 4096, 16384])]
 fn run<const N: usize>(input: &[u8; N], output: &mut [u8; 8]) -> FfiBenchCall {
-    static PREP: OnceLock<(Vec<u8>, Vec<u32>)> = OnceLock::new(); let (bytes, out_ids) = PREP.get_or_init(|| { let mut gp = c::GenParams::profile("scatter").unwrap(); gp.node_count = N; let prog = c::generate(&gp); let opt = c::optimize::optimize(&prog, false, false, true, false); (c::ir::encode(&opt.prog, &c::ir::REC24), opt.out_ids) }); let d = c::ir::Decoded::parse(bytes, c::ir::REC24).unwrap(); let mut r = vec![0u64; d.node_count.max(1)];
+    static PREP: OnceLock<(Vec<u8>, Vec<u32>)> = OnceLock::new(); let (bytes, out_ids) = PREP.get_or_init(|| { let mut gp = c::GenParams::profile("scatter").unwrap(); gp.node_count = N; let prog = c::generate(&gp); let opt = c::optimize::optimize(&prog, false, false, true, false, false); (c::ir::encode(&opt.prog, &c::ir::REC24), opt.out_ids) }); let d = c::ir::Decoded::parse(bytes, c::ir::REC24).unwrap(); let mut r = vec![0u64; d.node_count.max(1)];
     const ITERS: usize = 16;
     // timed_calibrated auto-repeats the run block until it clears the counter's
     // 2048-tick quantization floor (the 24 MHz CNTVCT means small-N regions would

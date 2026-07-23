@@ -1,6 +1,6 @@
 //! Copy-and-patch stencil code generation (the copy-and-patch tier, proper).
 //!
-//! This is the copy-and-patch mechanism of Xu and Kjolstad (PLDI 2021), as
+//! This is the copy-and-patch mechanism of Xu and Kjolstad (OOPSLA 2021), as
 //! distinct from the direct instruction-selecting codegen in `copypatch.rs`. Each
 //! IR op has a fixed machine-code STENCIL that the toolchain assembles once at
 //! build time (the `global_asm!` block below); codegen for a program is then a

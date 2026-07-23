@@ -81,13 +81,30 @@ fn eval_op(opcode: u8, a: &[u64]) -> u64 {
 /// motif in the profiles while keeping flat lists small.
 pub const EQSAT_WINDOW: usize = 64;
 
-/// Optimize a program with the chosen passes. `eqsat` runs a bounded
-/// associativity/commutativity equality-saturation reassociation pre-pass (the
-/// design's fourth optimize strategy, so the axis is none / CSE / eqsat /
-/// CSE+eqsat), `fold` const-folds pure constant subtrees, `cse` deduplicates
-/// structurally identical nodes, `dce` drops nodes not reachable from the
-/// live-outs. eqsat runs first so fold/CSE/DCE see the reassociated form.
-pub fn optimize(prog: &Program, cse: bool, fold: bool, dce: bool, eqsat: bool) -> Optimized {
+/// Commutative binops: `a op b == b op a`, so their operands may be reordered
+/// without changing the value (the same wrapping-integer property that makes the
+/// AC-reassociation sound, but here used only for commutativity, never
+/// reassociation, so it can never enlarge the program). SUB / SHL / SHR / LT are
+/// NOT commutative; SELECT / NEG / NOT are not binops.
+fn is_commutative(opcode: u8) -> bool {
+    matches!(
+        opcode,
+        op::ADD | op::MUL | op::AND | op::OR | op::XOR | op::MIN | op::MAX | op::EQ
+    )
+}
+
+/// Optimize a program with the chosen passes. `canon` canonicalizes the operand
+/// order of commutative binops (sorts the operands by new node id) so plain CSE
+/// deduplicates trivially-commuted duplicates (`ADD(a,b)` and `ADD(b,a)`); it is
+/// linear, allocation-free, and cannot enlarge the program. `fold` const-folds
+/// pure constant subtrees, `cse` deduplicates structurally identical nodes, `dce`
+/// drops nodes not reachable from the live-outs. `eqsat` runs a bounded
+/// AC-reassociation pre-pass; it is kept for a consumer whose residuals carry long
+/// literal AC chains (none of the synthetic profiles do), and the review panel
+/// found it zero-or-negative in the full pipeline on every profile, so it is NOT
+/// in the default strategy set. `canon` is the cheap subset of what eqsat was for.
+/// eqsat runs first so the rest see the reassociated form; canon applies during CSE.
+pub fn optimize(prog: &Program, cse: bool, fold: bool, dce: bool, eqsat: bool, canon: bool) -> Optimized {
     // eqsat reassociation pre-pass. It rewrites ADD/MUL modulo assoc+comm and
     // extracts a min-cost DAG that preserves the original live-out values, so the
     // downstream passes operate on the reassociated form. sinks(original) is
@@ -194,7 +211,11 @@ pub fn optimize(prog: &Program, cse: bool, fold: bool, dce: bool, eqsat: bool) -
                 id
             }
         } else {
-            let operands: Vec<u32> = node.operands.iter().map(|&o| map[o as usize]).collect();
+            let mut operands: Vec<u32> = node.operands.iter().map(|&o| map[o as usize]).collect();
+            // canonicalize commutative operand order so CSE catches commuted dups.
+            if canon && is_commutative(node.op) {
+                operands.sort_unstable();
+            }
             if cse {
                 let key = (node.op, operands.clone());
                 if let Some(&id) = cse_op.get(&key) {
@@ -284,42 +305,44 @@ mod tests {
     #[test]
     fn optimize_preserves_outputs() {
         let profiles = ["real", "madd", "tight", "scatter", "wideselect", "leaf"];
-        // (cse, fold, dce, eqsat): the design's optimize axis is none / CSE /
-        // eqsat / CSE+eqsat, plus fold and dce and their compositions.
+        // (cse, fold, dce, eqsat, canon): the shipped optimize axis is
+        // none / CSE / fold / DCE / canon / all; eqsat is kept in the API but not
+        // in the default set (panel-found zero-or-negative in the pipeline), tested
+        // here for value preservation regardless.
         let flags = [
-            (true, false, false, false),  // CSE only
-            (false, true, false, false),  // fold only
-            (false, false, true, false),  // DCE only
-            (false, false, false, true),  // eqsat only
-            (true, false, false, true),   // CSE + eqsat
-            (true, true, true, false),    // CSE + fold + DCE
-            (true, true, true, true),     // everything
+            (true, false, false, false, false),  // CSE only
+            (false, true, false, false, false),  // fold only
+            (false, false, true, false, false),  // DCE only
+            (false, false, false, true, false),  // eqsat only
+            (true, false, false, false, true),   // CSE + canon
+            (true, false, false, true, false),   // CSE + eqsat
+            (true, true, true, false, true),     // all (CSE + fold + DCE + canon)
+            (true, true, true, true, true),      // everything incl eqsat
         ];
         for name in profiles {
             let mut gp = GenParams::profile(name).unwrap();
             gp.node_count = 700;
             let prog = generate(&gp);
             let orig_sinks = sinks(&prog);
-            for &(cse, fold, dce, eqsat) in &flags {
-                let opt = optimize(&prog, cse, fold, dce, eqsat);
+            for &(cse, fold, dce, eqsat, canon) in &flags {
+                let opt = optimize(&prog, cse, fold, dce, eqsat, canon);
                 assert!(
                     opt.prog.is_well_formed(),
-                    "{name} ({cse},{fold},{dce},{eqsat}) ill-formed"
+                    "{name} ({cse},{fold},{dce},{eqsat},{canon}) ill-formed"
                 );
                 for seed in [0u64, 1, 42, 12345, 999_999] {
                     let a = out_fold(&prog, &orig_sinks, seed);
                     let b = out_fold(&opt.prog, &opt.out_ids, seed);
                     assert_eq!(
                         a, b,
-                        "{name} ({cse},{fold},{dce},{eqsat}) output diverged at seed {seed}"
+                        "{name} ({cse},{fold},{dce},{eqsat},{canon}) output diverged at seed {seed}"
                     );
                 }
-                // CSE/fold/DCE are size-non-increasing. eqsat is a normalization,
-                // not a shrink: on a DAG it can lose cross-consumer sharing and
-                // transiently enlarge (the CSE+eqsat combo recovers it), so the
-                // size guarantee only holds for the non-eqsat strategies. The
-                // load-bearing invariant for eqsat is value preservation, asserted
-                // in the seed loop above.
+                // CSE / fold / DCE / canon are all size-non-increasing. eqsat is a
+                // normalization that can transiently enlarge on a DAG (lost
+                // cross-consumer sharing), so the size guarantee holds only when
+                // eqsat is off. Its load-bearing invariant is value preservation,
+                // asserted in the seed loop above.
                 if !eqsat {
                     assert!(opt.prog.nodes.len() <= prog.nodes.len());
                 }

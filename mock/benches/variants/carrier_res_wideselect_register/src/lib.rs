@@ -7,7 +7,7 @@ use std::sync::OnceLock;
 
 #[bench_variant("carrier_res_wideselect_register", sizes = [64, 256, 1024, 4096, 16384])]
 fn run<const N: usize>(input: &[u8; N], output: &mut [u8; 8]) -> FfiBenchCall {
-    static PREP: OnceLock<Vec<u8>> = OnceLock::new(); let bytes = PREP.get_or_init(|| { let mut gp = c::GenParams::profile("wideselect").unwrap(); gp.node_count = N; c::ir::encode(&c::generate(&gp), &c::ir::REC24) }); let d = c::ir::Decoded::parse(bytes, c::ir::REC24).unwrap(); let mut r = vec![0u64; d.node_count];
+    static PREP: OnceLock<(c::predecode::Predecoded, Vec<u32>)> = OnceLock::new(); let (pd, sink_ids) = PREP.get_or_init(|| { let mut gp = c::GenParams::profile("wideselect").unwrap(); gp.node_count = N; let prog = c::generate(&gp); let sinks = c::optimize::sinks(&prog); let bytes = c::ir::encode(&prog, &c::ir::REC24); let d = c::ir::Decoded::parse(&bytes, c::ir::REC24).unwrap(); (c::predecode::predecode(&d), sinks) }); let mut r = vec![0u64; pd.nodes.len()];
     const ITERS: usize = 16;
     // timed_calibrated auto-repeats the run block until it clears the counter's
     // 2048-tick quantization floor (the 24 MHz CNTVCT means small-N regions would
@@ -21,7 +21,7 @@ fn run<const N: usize>(input: &[u8; N], output: &mut [u8; 8]) -> FfiBenchCall {
         let mut k = 0usize;
         while k < ITERS {
             let seed = input[k % N] as u64 ^ (k as u64);
-            c::interpret(&d, seed, &mut r); acc ^= c::checksum(&r);
+            c::predecode::interpret_predecoded(pd, seed, &mut r); acc ^= c::access::checksum_at(&r, sink_ids);
             k += 1;
         }
         output.copy_from_slice(&acc.to_le_bytes());

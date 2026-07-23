@@ -233,9 +233,23 @@ fn valrepr_family() -> Vec<MatrixSpec> {
 }
 
 fn residual_family() -> Vec<MatrixSpec> {
+    // Isolate ONE axis, register/SSA vs stack-bytecode encoding, on the identical
+    // program. Both cells must (a) run over the SAME decode form and (b) fold the
+    // SAME live-out set, or the reported ratio is a composite of encoding + decode
+    // form + checksum scope. So the register cell runs the PREDECODED interpreter
+    // (matching that the stack cell runs a predecoded `Vec<Bc>`, not the wire form),
+    // and BOTH fold `checksum_at` over the program's live-out sinks (equal element
+    // count), instead of the register side paying a full-array fold and the stack
+    // side a live-out-only fold. The earlier asymmetry burdened the register side,
+    // so it understated register's real advantage; this makes the number clean.
     PROFILES.iter().map(|p| {
+        let reg_prep = format!(
+            "static PREP: OnceLock<(c::predecode::Predecoded, Vec<u32>)> = OnceLock::new(); \
+             let (pd, sink_ids) = PREP.get_or_init(|| {{ let mut gp = c::GenParams::profile(\"{p}\").unwrap(); gp.node_count = N; let prog = c::generate(&gp); let sinks = c::optimize::sinks(&prog); let bytes = c::ir::encode(&prog, &c::ir::REC24); let d = c::ir::Decoded::parse(&bytes, c::ir::REC24).unwrap(); (c::predecode::predecode(&d), sinks) }}); \
+             let mut r = vec![0u64; pd.nodes.len()];"
+        );
         let cells = vec![
-            cell("register", wire_prep(p, "REC24"), "c::interpret(&d, seed, &mut r); acc ^= c::checksum(&r);".to_string(), &[]),
+            cell("register", reg_prep, "c::predecode::interpret_predecoded(pd, seed, &mut r); acc ^= c::access::checksum_at(&r, sink_ids);".to_string(), &[]),
             cell(
                 "stack",
                 format!("static PREP: OnceLock<c::stackbc::StackProgram> = OnceLock::new(); let sp = PREP.get_or_init(|| {{ let mut gp = c::GenParams::profile(\"{p}\").unwrap(); gp.node_count = N; c::stackbc::compile(&c::generate(&gp)) }}); let mut st = vec![0u64; 64]; let mut lo = vec![0u64; sp.num_locals];"),
@@ -243,25 +257,31 @@ fn residual_family() -> Vec<MatrixSpec> {
                 &[],
             ),
         ];
-        spec(format!("carrier_residual_{p}"), format!("Residual encoding: register/SSA vs stack bytecode, {p} profile"), "register", &format!("carrier_res_{p}"), cells)
+        spec(format!("carrier_residual_{p}"), format!("Residual encoding: predecoded register/SSA vs stack bytecode, {p} profile"), "register", &format!("carrier_res_{p}"), cells)
     }).collect()
 }
 
 fn optimize_family() -> Vec<MatrixSpec> {
-    // (tag, cse, fold, dce, eqsat): the optimize axis (none / CSE / eqsat /
-    // CSE+eqsat, plus fold, dce, all), each measured by the DOWNSTREAM interp cost
-    // over the resulting (possibly smaller) program.
-    let strategies: &[(&str, bool, bool, bool, bool)] = &[
-        ("none", false, false, false, false),
-        ("cse", true, false, false, false),
-        ("fold", false, true, false, false),
-        ("dce", false, false, true, false),
-        ("eqsat", false, false, false, true),
-        ("cseeqsat", true, false, false, true),
-        ("all", true, true, true, true),
+    // (tag, cse, fold, dce, eqsat, canon): the shipped optimize axis is
+    // none / CSE / fold / DCE / canon / all, each measured by the DOWNSTREAM interp
+    // cost over the resulting (possibly smaller) program. eqsat is dropped from the
+    // default set: the review panel replicated that `cse+eqsat` equals `eqsat` in
+    // node count on every profile (CSE recovers nothing eqsat lost) and that eqsat's
+    // marginal contribution inside the full pipeline is zero or negative everywhere,
+    // standalone inflating madd 5.6x. `canon` (commutative-operand canonicalization
+    // + CSE) is the cheap subset of what AC-reassociation was for, and `all` now
+    // means CSE + fold + DCE + canon. eqsat stays in the optimize() API, parked for
+    // a consumer whose residuals carry long literal AC chains.
+    let strategies: &[(&str, bool, bool, bool, bool, bool)] = &[
+        ("none", false, false, false, false, false),
+        ("cse", true, false, false, false, false),
+        ("fold", false, true, false, false, false),
+        ("dce", false, false, true, false, false),
+        ("canon", true, false, false, false, true),
+        ("all", true, true, true, false, true),
     ];
     PROFILES.iter().map(|p| {
-        let cells = strategies.iter().map(|(tag, cse, fold, dce, eqsat)| {
+        let cells = strategies.iter().map(|(tag, cse, fold, dce, eqsat, canon)| {
             // cache the ENCODED optimized program + its live-out ids: optimize()
             // (incl the eqsat saturation) and encode are O(N) and would otherwise
             // rerun on every timed sample. Only the cheap Decoded::parse + results
@@ -269,7 +289,7 @@ fn optimize_family() -> Vec<MatrixSpec> {
             // node count comparable across strategies.
             let prep = format!(
                 "static PREP: OnceLock<(Vec<u8>, Vec<u32>)> = OnceLock::new(); \
-                 let (bytes, out_ids) = PREP.get_or_init(|| {{ let mut gp = c::GenParams::profile(\"{p}\").unwrap(); gp.node_count = N; let prog = c::generate(&gp); let opt = c::optimize::optimize(&prog, {cse}, {fold}, {dce}, {eqsat}); (c::ir::encode(&opt.prog, &c::ir::REC24), opt.out_ids) }}); \
+                 let (bytes, out_ids) = PREP.get_or_init(|| {{ let mut gp = c::GenParams::profile(\"{p}\").unwrap(); gp.node_count = N; let prog = c::generate(&gp); let opt = c::optimize::optimize(&prog, {cse}, {fold}, {dce}, {eqsat}, {canon}); (c::ir::encode(&opt.prog, &c::ir::REC24), opt.out_ids) }}); \
                  let d = c::ir::Decoded::parse(bytes, c::ir::REC24).unwrap(); \
                  let mut r = vec![0u64; d.node_count.max(1)];"
             );
@@ -284,10 +304,15 @@ fn native_family() -> Vec<MatrixSpec> {
     // stencil, per profile. copypatch/stencil are jit (aarch64+macos) only.
     PROFILES.iter().map(|p| {
         let jit_prep = format!("{} let mut r = vec![0u64; prog.nodes.len()];", program_prep(p));
+        // Tags name the technique per Xu & Kjolstad (OOPSLA 2021): `direct` is
+        // per-node instruction selection (copypatch.rs `JitCode`); `copypatch` is
+        // the actual copy-and-patch stencil mechanism (stencil.rs `StencilCode`,
+        // memcpy + imm12 hole-patch, no per-node isel). The earlier tags inverted
+        // this (the direct-codegen cell was tagged "copypatch").
         let cells = vec![
             cell("interp", wire_prep(p, "REC24"), "c::interpret(&d, seed, &mut r); acc ^= c::checksum(&r);".to_string(), &[]),
-            cell("copypatch", format!("{jit_prep} let jit = c::copypatch::JitCode::new(prog).expect(\"jit\");"), "jit.run(seed, &mut r); acc ^= c::checksum(&r);".to_string(), &["jit"]),
-            cell("stencil", format!("{jit_prep} let jit = c::stencil::StencilCode::new(prog).expect(\"jit\");"), "jit.run(seed, &mut r); acc ^= c::checksum(&r);".to_string(), &["jit"]),
+            cell("direct", format!("{jit_prep} let jit = c::copypatch::JitCode::new(prog).expect(\"jit\");"), "jit.run(seed, &mut r); acc ^= c::checksum(&r);".to_string(), &["jit"]),
+            cell("copypatch", format!("{jit_prep} let jit = c::stencil::StencilCode::new(prog).expect(\"jit\");"), "jit.run(seed, &mut r); acc ^= c::checksum(&r);".to_string(), &["jit"]),
         ];
         // sizes capped below the JIT imm12 window (node/const index < 4096): the
         // copypatch/stencil constructors decline (return None) above it, so 4096
@@ -314,11 +339,15 @@ fn vertical_family() -> Vec<MatrixSpec> {
              let mut soa = c::vertical::make_scratch::<{w}>(pd.nodes.len());"
         );
         let cells = vec![
-            // scalar reference: 8 scalar interprets per call, reusing `r`.
+            // scalar reference: 8 PREDECODED scalar interprets per call, reusing `r`.
+            // The vert cells run over cached `Predecoded`; the baseline must too, so
+            // the only measured difference is scalar-lanes vs SIMD-lanes and NOT the
+            // per-node wire decode the vert cells never pay (that decode-in-baseline
+            // asymmetry inflated the reported vert8 win from an honest ~4.8x to ~6x).
             cell(
                 "scalar",
-                wire_prep(p, "REC24"),
-                "for j in 0..8u64 { let s = seed ^ j.wrapping_mul(0x9e37_79b9); c::interpret(&d, s, &mut r); acc ^= c::checksum(&r); }".to_string(),
+                predecode_prep(p),
+                "for j in 0..8u64 { let s = seed ^ j.wrapping_mul(0x9e37_79b9); c::predecode::interpret_predecoded(&pd, s, &mut r); acc ^= c::checksum(&r); }".to_string(),
                 &[],
             ),
             // vert4: two W=4 passes = 8 inputs, reusing the pre-allocated scratch.

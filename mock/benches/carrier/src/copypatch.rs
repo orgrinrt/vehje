@@ -9,7 +9,7 @@
 //!
 //! This is a template / baseline native-code generator (in spirit like an early
 //! full-codegen or a baseline JIT tier), NOT the stencil-extraction mechanism of
-//! copy-and-patch (Xu and Kjolstad, PLDI 2021). Copy-and-patch precompiles a
+//! copy-and-patch (Xu and Kjolstad, OOPSLA 2021). Copy-and-patch precompiles a
 //! fixed per-op stencil through a real backend and codegens by `memcpy`-ing that
 //! template and patching its recorded holes, so the JIT author never selects
 //! instructions per node. That mechanism lives in `stencil.rs` as its own cell

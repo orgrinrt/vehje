@@ -7,7 +7,7 @@ use std::sync::OnceLock;
 
 #[bench_variant("carrier_vert_real_scalar", sizes = [64, 256, 1024, 4096, 16384])]
 fn run<const N: usize>(input: &[u8; N], output: &mut [u8; 8]) -> FfiBenchCall {
-    static PREP: OnceLock<Vec<u8>> = OnceLock::new(); let bytes = PREP.get_or_init(|| { let mut gp = c::GenParams::profile("real").unwrap(); gp.node_count = N; c::ir::encode(&c::generate(&gp), &c::ir::REC24) }); let d = c::ir::Decoded::parse(bytes, c::ir::REC24).unwrap(); let mut r = vec![0u64; d.node_count];
+    static PREP: OnceLock<Vec<u8>> = OnceLock::new(); let bytes = PREP.get_or_init(|| { let mut gp = c::GenParams::profile("real").unwrap(); gp.node_count = N; c::ir::encode(&c::generate(&gp), &c::ir::REC24) }); let d = c::ir::Decoded::parse(bytes, c::ir::REC24).unwrap(); let pd = c::predecode::predecode(&d); let mut r = vec![0u64; d.node_count];
     const ITERS: usize = 16;
     // timed_calibrated auto-repeats the run block until it clears the counter's
     // 2048-tick quantization floor (the 24 MHz CNTVCT means small-N regions would
@@ -21,7 +21,7 @@ fn run<const N: usize>(input: &[u8; N], output: &mut [u8; 8]) -> FfiBenchCall {
         let mut k = 0usize;
         while k < ITERS {
             let seed = input[k % N] as u64 ^ (k as u64);
-            for j in 0..8u64 { let s = seed ^ j.wrapping_mul(0x9e37_79b9); c::interpret(&d, s, &mut r); acc ^= c::checksum(&r); }
+            for j in 0..8u64 { let s = seed ^ j.wrapping_mul(0x9e37_79b9); c::predecode::interpret_predecoded(&pd, s, &mut r); acc ^= c::checksum(&r); }
             k += 1;
         }
         output.copy_from_slice(&acc.to_le_bytes());
