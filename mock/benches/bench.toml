@@ -4404,6 +4404,222 @@ variants = ["variants/abi_payload_cost_leaf_scalar_payload/target/release/abi_pa
 n = 1024
 variants = ["variants/abi_payload_cost_leaf_scalar_payload/target/release/abi_payload_cost_leaf_scalar_payload", "variants/abi_payload_cost_leaf_soa_payload/target/release/abi_payload_cost_leaf_soa_payload", "variants/abi_payload_cost_leaf_null_entry/target/release/abi_payload_cost_leaf_null_entry"]
 
+[bench.abi_native_cross_real]
+title = "abi_native_cross (real)"
+workload = "realistic"
+master_seed = 0x5eed_ab1_c405_00d0
+[bench.abi_native_cross_real.normalise]
+baseline = "abi_native_cross_real_native_ffi_w"
+mode = "subtract"
+floor = "abi_native_cross_real_null_entry"
+[[bench.abi_native_cross_real.sizes]]
+n = 1
+variants = ["variants/abi_native_cross_real_native_ffi_w/target/release/abi_native_cross_real_native_ffi_w", "variants/abi_native_cross_real_inproc_native/target/release/abi_native_cross_real_inproc_native", "variants/abi_native_cross_real_null_entry/target/release/abi_native_cross_real_null_entry"]
+[[bench.abi_native_cross_real.sizes]]
+n = 2
+variants = ["variants/abi_native_cross_real_native_ffi_w/target/release/abi_native_cross_real_native_ffi_w", "variants/abi_native_cross_real_inproc_native/target/release/abi_native_cross_real_inproc_native", "variants/abi_native_cross_real_null_entry/target/release/abi_native_cross_real_null_entry"]
+[[bench.abi_native_cross_real.sizes]]
+n = 4
+variants = ["variants/abi_native_cross_real_native_ffi_w/target/release/abi_native_cross_real_native_ffi_w", "variants/abi_native_cross_real_inproc_native/target/release/abi_native_cross_real_inproc_native", "variants/abi_native_cross_real_null_entry/target/release/abi_native_cross_real_null_entry"]
+[[bench.abi_native_cross_real.sizes]]
+n = 8
+variants = ["variants/abi_native_cross_real_native_ffi_w/target/release/abi_native_cross_real_native_ffi_w", "variants/abi_native_cross_real_inproc_native/target/release/abi_native_cross_real_inproc_native", "variants/abi_native_cross_real_null_entry/target/release/abi_native_cross_real_null_entry"]
+[[bench.abi_native_cross_real.sizes]]
+n = 16
+variants = ["variants/abi_native_cross_real_native_ffi_w/target/release/abi_native_cross_real_native_ffi_w", "variants/abi_native_cross_real_inproc_native/target/release/abi_native_cross_real_inproc_native", "variants/abi_native_cross_real_null_entry/target/release/abi_native_cross_real_null_entry"]
+[[bench.abi_native_cross_real.sizes]]
+n = 32
+variants = ["variants/abi_native_cross_real_native_ffi_w/target/release/abi_native_cross_real_native_ffi_w", "variants/abi_native_cross_real_inproc_native/target/release/abi_native_cross_real_inproc_native", "variants/abi_native_cross_real_null_entry/target/release/abi_native_cross_real_null_entry"]
+[[bench.abi_native_cross_real.sizes]]
+n = 64
+variants = ["variants/abi_native_cross_real_native_ffi_w/target/release/abi_native_cross_real_native_ffi_w", "variants/abi_native_cross_real_inproc_native/target/release/abi_native_cross_real_inproc_native", "variants/abi_native_cross_real_null_entry/target/release/abi_native_cross_real_null_entry"]
+[[bench.abi_native_cross_real.sizes]]
+n = 128
+variants = ["variants/abi_native_cross_real_native_ffi_w/target/release/abi_native_cross_real_native_ffi_w", "variants/abi_native_cross_real_inproc_native/target/release/abi_native_cross_real_inproc_native", "variants/abi_native_cross_real_null_entry/target/release/abi_native_cross_real_null_entry"]
+[[bench.abi_native_cross_real.sizes]]
+n = 256
+variants = ["variants/abi_native_cross_real_native_ffi_w/target/release/abi_native_cross_real_native_ffi_w", "variants/abi_native_cross_real_inproc_native/target/release/abi_native_cross_real_inproc_native", "variants/abi_native_cross_real_null_entry/target/release/abi_native_cross_real_null_entry"]
+
+[bench.abi_native_cross_madd]
+title = "abi_native_cross (madd)"
+workload = "realistic"
+master_seed = 0x5eed_ab1_c405_00d0
+[bench.abi_native_cross_madd.normalise]
+baseline = "abi_native_cross_madd_native_ffi_w"
+mode = "subtract"
+floor = "abi_native_cross_madd_null_entry"
+[[bench.abi_native_cross_madd.sizes]]
+n = 1
+variants = ["variants/abi_native_cross_madd_native_ffi_w/target/release/abi_native_cross_madd_native_ffi_w", "variants/abi_native_cross_madd_inproc_native/target/release/abi_native_cross_madd_inproc_native", "variants/abi_native_cross_madd_null_entry/target/release/abi_native_cross_madd_null_entry"]
+[[bench.abi_native_cross_madd.sizes]]
+n = 2
+variants = ["variants/abi_native_cross_madd_native_ffi_w/target/release/abi_native_cross_madd_native_ffi_w", "variants/abi_native_cross_madd_inproc_native/target/release/abi_native_cross_madd_inproc_native", "variants/abi_native_cross_madd_null_entry/target/release/abi_native_cross_madd_null_entry"]
+[[bench.abi_native_cross_madd.sizes]]
+n = 4
+variants = ["variants/abi_native_cross_madd_native_ffi_w/target/release/abi_native_cross_madd_native_ffi_w", "variants/abi_native_cross_madd_inproc_native/target/release/abi_native_cross_madd_inproc_native", "variants/abi_native_cross_madd_null_entry/target/release/abi_native_cross_madd_null_entry"]
+[[bench.abi_native_cross_madd.sizes]]
+n = 8
+variants = ["variants/abi_native_cross_madd_native_ffi_w/target/release/abi_native_cross_madd_native_ffi_w", "variants/abi_native_cross_madd_inproc_native/target/release/abi_native_cross_madd_inproc_native", "variants/abi_native_cross_madd_null_entry/target/release/abi_native_cross_madd_null_entry"]
+[[bench.abi_native_cross_madd.sizes]]
+n = 16
+variants = ["variants/abi_native_cross_madd_native_ffi_w/target/release/abi_native_cross_madd_native_ffi_w", "variants/abi_native_cross_madd_inproc_native/target/release/abi_native_cross_madd_inproc_native", "variants/abi_native_cross_madd_null_entry/target/release/abi_native_cross_madd_null_entry"]
+[[bench.abi_native_cross_madd.sizes]]
+n = 32
+variants = ["variants/abi_native_cross_madd_native_ffi_w/target/release/abi_native_cross_madd_native_ffi_w", "variants/abi_native_cross_madd_inproc_native/target/release/abi_native_cross_madd_inproc_native", "variants/abi_native_cross_madd_null_entry/target/release/abi_native_cross_madd_null_entry"]
+[[bench.abi_native_cross_madd.sizes]]
+n = 64
+variants = ["variants/abi_native_cross_madd_native_ffi_w/target/release/abi_native_cross_madd_native_ffi_w", "variants/abi_native_cross_madd_inproc_native/target/release/abi_native_cross_madd_inproc_native", "variants/abi_native_cross_madd_null_entry/target/release/abi_native_cross_madd_null_entry"]
+[[bench.abi_native_cross_madd.sizes]]
+n = 128
+variants = ["variants/abi_native_cross_madd_native_ffi_w/target/release/abi_native_cross_madd_native_ffi_w", "variants/abi_native_cross_madd_inproc_native/target/release/abi_native_cross_madd_inproc_native", "variants/abi_native_cross_madd_null_entry/target/release/abi_native_cross_madd_null_entry"]
+[[bench.abi_native_cross_madd.sizes]]
+n = 256
+variants = ["variants/abi_native_cross_madd_native_ffi_w/target/release/abi_native_cross_madd_native_ffi_w", "variants/abi_native_cross_madd_inproc_native/target/release/abi_native_cross_madd_inproc_native", "variants/abi_native_cross_madd_null_entry/target/release/abi_native_cross_madd_null_entry"]
+
+[bench.abi_native_cross_tight]
+title = "abi_native_cross (tight)"
+workload = "realistic"
+master_seed = 0x5eed_ab1_c405_00d0
+[bench.abi_native_cross_tight.normalise]
+baseline = "abi_native_cross_tight_native_ffi_w"
+mode = "subtract"
+floor = "abi_native_cross_tight_null_entry"
+[[bench.abi_native_cross_tight.sizes]]
+n = 1
+variants = ["variants/abi_native_cross_tight_native_ffi_w/target/release/abi_native_cross_tight_native_ffi_w", "variants/abi_native_cross_tight_inproc_native/target/release/abi_native_cross_tight_inproc_native", "variants/abi_native_cross_tight_null_entry/target/release/abi_native_cross_tight_null_entry"]
+[[bench.abi_native_cross_tight.sizes]]
+n = 2
+variants = ["variants/abi_native_cross_tight_native_ffi_w/target/release/abi_native_cross_tight_native_ffi_w", "variants/abi_native_cross_tight_inproc_native/target/release/abi_native_cross_tight_inproc_native", "variants/abi_native_cross_tight_null_entry/target/release/abi_native_cross_tight_null_entry"]
+[[bench.abi_native_cross_tight.sizes]]
+n = 4
+variants = ["variants/abi_native_cross_tight_native_ffi_w/target/release/abi_native_cross_tight_native_ffi_w", "variants/abi_native_cross_tight_inproc_native/target/release/abi_native_cross_tight_inproc_native", "variants/abi_native_cross_tight_null_entry/target/release/abi_native_cross_tight_null_entry"]
+[[bench.abi_native_cross_tight.sizes]]
+n = 8
+variants = ["variants/abi_native_cross_tight_native_ffi_w/target/release/abi_native_cross_tight_native_ffi_w", "variants/abi_native_cross_tight_inproc_native/target/release/abi_native_cross_tight_inproc_native", "variants/abi_native_cross_tight_null_entry/target/release/abi_native_cross_tight_null_entry"]
+[[bench.abi_native_cross_tight.sizes]]
+n = 16
+variants = ["variants/abi_native_cross_tight_native_ffi_w/target/release/abi_native_cross_tight_native_ffi_w", "variants/abi_native_cross_tight_inproc_native/target/release/abi_native_cross_tight_inproc_native", "variants/abi_native_cross_tight_null_entry/target/release/abi_native_cross_tight_null_entry"]
+[[bench.abi_native_cross_tight.sizes]]
+n = 32
+variants = ["variants/abi_native_cross_tight_native_ffi_w/target/release/abi_native_cross_tight_native_ffi_w", "variants/abi_native_cross_tight_inproc_native/target/release/abi_native_cross_tight_inproc_native", "variants/abi_native_cross_tight_null_entry/target/release/abi_native_cross_tight_null_entry"]
+[[bench.abi_native_cross_tight.sizes]]
+n = 64
+variants = ["variants/abi_native_cross_tight_native_ffi_w/target/release/abi_native_cross_tight_native_ffi_w", "variants/abi_native_cross_tight_inproc_native/target/release/abi_native_cross_tight_inproc_native", "variants/abi_native_cross_tight_null_entry/target/release/abi_native_cross_tight_null_entry"]
+[[bench.abi_native_cross_tight.sizes]]
+n = 128
+variants = ["variants/abi_native_cross_tight_native_ffi_w/target/release/abi_native_cross_tight_native_ffi_w", "variants/abi_native_cross_tight_inproc_native/target/release/abi_native_cross_tight_inproc_native", "variants/abi_native_cross_tight_null_entry/target/release/abi_native_cross_tight_null_entry"]
+[[bench.abi_native_cross_tight.sizes]]
+n = 256
+variants = ["variants/abi_native_cross_tight_native_ffi_w/target/release/abi_native_cross_tight_native_ffi_w", "variants/abi_native_cross_tight_inproc_native/target/release/abi_native_cross_tight_inproc_native", "variants/abi_native_cross_tight_null_entry/target/release/abi_native_cross_tight_null_entry"]
+
+[bench.abi_native_cross_scatter]
+title = "abi_native_cross (scatter)"
+workload = "realistic"
+master_seed = 0x5eed_ab1_c405_00d0
+[bench.abi_native_cross_scatter.normalise]
+baseline = "abi_native_cross_scatter_native_ffi_w"
+mode = "subtract"
+floor = "abi_native_cross_scatter_null_entry"
+[[bench.abi_native_cross_scatter.sizes]]
+n = 1
+variants = ["variants/abi_native_cross_scatter_native_ffi_w/target/release/abi_native_cross_scatter_native_ffi_w", "variants/abi_native_cross_scatter_inproc_native/target/release/abi_native_cross_scatter_inproc_native", "variants/abi_native_cross_scatter_null_entry/target/release/abi_native_cross_scatter_null_entry"]
+[[bench.abi_native_cross_scatter.sizes]]
+n = 2
+variants = ["variants/abi_native_cross_scatter_native_ffi_w/target/release/abi_native_cross_scatter_native_ffi_w", "variants/abi_native_cross_scatter_inproc_native/target/release/abi_native_cross_scatter_inproc_native", "variants/abi_native_cross_scatter_null_entry/target/release/abi_native_cross_scatter_null_entry"]
+[[bench.abi_native_cross_scatter.sizes]]
+n = 4
+variants = ["variants/abi_native_cross_scatter_native_ffi_w/target/release/abi_native_cross_scatter_native_ffi_w", "variants/abi_native_cross_scatter_inproc_native/target/release/abi_native_cross_scatter_inproc_native", "variants/abi_native_cross_scatter_null_entry/target/release/abi_native_cross_scatter_null_entry"]
+[[bench.abi_native_cross_scatter.sizes]]
+n = 8
+variants = ["variants/abi_native_cross_scatter_native_ffi_w/target/release/abi_native_cross_scatter_native_ffi_w", "variants/abi_native_cross_scatter_inproc_native/target/release/abi_native_cross_scatter_inproc_native", "variants/abi_native_cross_scatter_null_entry/target/release/abi_native_cross_scatter_null_entry"]
+[[bench.abi_native_cross_scatter.sizes]]
+n = 16
+variants = ["variants/abi_native_cross_scatter_native_ffi_w/target/release/abi_native_cross_scatter_native_ffi_w", "variants/abi_native_cross_scatter_inproc_native/target/release/abi_native_cross_scatter_inproc_native", "variants/abi_native_cross_scatter_null_entry/target/release/abi_native_cross_scatter_null_entry"]
+[[bench.abi_native_cross_scatter.sizes]]
+n = 32
+variants = ["variants/abi_native_cross_scatter_native_ffi_w/target/release/abi_native_cross_scatter_native_ffi_w", "variants/abi_native_cross_scatter_inproc_native/target/release/abi_native_cross_scatter_inproc_native", "variants/abi_native_cross_scatter_null_entry/target/release/abi_native_cross_scatter_null_entry"]
+[[bench.abi_native_cross_scatter.sizes]]
+n = 64
+variants = ["variants/abi_native_cross_scatter_native_ffi_w/target/release/abi_native_cross_scatter_native_ffi_w", "variants/abi_native_cross_scatter_inproc_native/target/release/abi_native_cross_scatter_inproc_native", "variants/abi_native_cross_scatter_null_entry/target/release/abi_native_cross_scatter_null_entry"]
+[[bench.abi_native_cross_scatter.sizes]]
+n = 128
+variants = ["variants/abi_native_cross_scatter_native_ffi_w/target/release/abi_native_cross_scatter_native_ffi_w", "variants/abi_native_cross_scatter_inproc_native/target/release/abi_native_cross_scatter_inproc_native", "variants/abi_native_cross_scatter_null_entry/target/release/abi_native_cross_scatter_null_entry"]
+[[bench.abi_native_cross_scatter.sizes]]
+n = 256
+variants = ["variants/abi_native_cross_scatter_native_ffi_w/target/release/abi_native_cross_scatter_native_ffi_w", "variants/abi_native_cross_scatter_inproc_native/target/release/abi_native_cross_scatter_inproc_native", "variants/abi_native_cross_scatter_null_entry/target/release/abi_native_cross_scatter_null_entry"]
+
+[bench.abi_native_cross_wideselect]
+title = "abi_native_cross (wideselect)"
+workload = "realistic"
+master_seed = 0x5eed_ab1_c405_00d0
+[bench.abi_native_cross_wideselect.normalise]
+baseline = "abi_native_cross_wideselect_native_ffi_w"
+mode = "subtract"
+floor = "abi_native_cross_wideselect_null_entry"
+[[bench.abi_native_cross_wideselect.sizes]]
+n = 1
+variants = ["variants/abi_native_cross_wideselect_native_ffi_w/target/release/abi_native_cross_wideselect_native_ffi_w", "variants/abi_native_cross_wideselect_inproc_native/target/release/abi_native_cross_wideselect_inproc_native", "variants/abi_native_cross_wideselect_null_entry/target/release/abi_native_cross_wideselect_null_entry"]
+[[bench.abi_native_cross_wideselect.sizes]]
+n = 2
+variants = ["variants/abi_native_cross_wideselect_native_ffi_w/target/release/abi_native_cross_wideselect_native_ffi_w", "variants/abi_native_cross_wideselect_inproc_native/target/release/abi_native_cross_wideselect_inproc_native", "variants/abi_native_cross_wideselect_null_entry/target/release/abi_native_cross_wideselect_null_entry"]
+[[bench.abi_native_cross_wideselect.sizes]]
+n = 4
+variants = ["variants/abi_native_cross_wideselect_native_ffi_w/target/release/abi_native_cross_wideselect_native_ffi_w", "variants/abi_native_cross_wideselect_inproc_native/target/release/abi_native_cross_wideselect_inproc_native", "variants/abi_native_cross_wideselect_null_entry/target/release/abi_native_cross_wideselect_null_entry"]
+[[bench.abi_native_cross_wideselect.sizes]]
+n = 8
+variants = ["variants/abi_native_cross_wideselect_native_ffi_w/target/release/abi_native_cross_wideselect_native_ffi_w", "variants/abi_native_cross_wideselect_inproc_native/target/release/abi_native_cross_wideselect_inproc_native", "variants/abi_native_cross_wideselect_null_entry/target/release/abi_native_cross_wideselect_null_entry"]
+[[bench.abi_native_cross_wideselect.sizes]]
+n = 16
+variants = ["variants/abi_native_cross_wideselect_native_ffi_w/target/release/abi_native_cross_wideselect_native_ffi_w", "variants/abi_native_cross_wideselect_inproc_native/target/release/abi_native_cross_wideselect_inproc_native", "variants/abi_native_cross_wideselect_null_entry/target/release/abi_native_cross_wideselect_null_entry"]
+[[bench.abi_native_cross_wideselect.sizes]]
+n = 32
+variants = ["variants/abi_native_cross_wideselect_native_ffi_w/target/release/abi_native_cross_wideselect_native_ffi_w", "variants/abi_native_cross_wideselect_inproc_native/target/release/abi_native_cross_wideselect_inproc_native", "variants/abi_native_cross_wideselect_null_entry/target/release/abi_native_cross_wideselect_null_entry"]
+[[bench.abi_native_cross_wideselect.sizes]]
+n = 64
+variants = ["variants/abi_native_cross_wideselect_native_ffi_w/target/release/abi_native_cross_wideselect_native_ffi_w", "variants/abi_native_cross_wideselect_inproc_native/target/release/abi_native_cross_wideselect_inproc_native", "variants/abi_native_cross_wideselect_null_entry/target/release/abi_native_cross_wideselect_null_entry"]
+[[bench.abi_native_cross_wideselect.sizes]]
+n = 128
+variants = ["variants/abi_native_cross_wideselect_native_ffi_w/target/release/abi_native_cross_wideselect_native_ffi_w", "variants/abi_native_cross_wideselect_inproc_native/target/release/abi_native_cross_wideselect_inproc_native", "variants/abi_native_cross_wideselect_null_entry/target/release/abi_native_cross_wideselect_null_entry"]
+[[bench.abi_native_cross_wideselect.sizes]]
+n = 256
+variants = ["variants/abi_native_cross_wideselect_native_ffi_w/target/release/abi_native_cross_wideselect_native_ffi_w", "variants/abi_native_cross_wideselect_inproc_native/target/release/abi_native_cross_wideselect_inproc_native", "variants/abi_native_cross_wideselect_null_entry/target/release/abi_native_cross_wideselect_null_entry"]
+
+[bench.abi_native_cross_leaf]
+title = "abi_native_cross (leaf)"
+workload = "realistic"
+master_seed = 0x5eed_ab1_c405_00d0
+[bench.abi_native_cross_leaf.normalise]
+baseline = "abi_native_cross_leaf_native_ffi_w"
+mode = "subtract"
+floor = "abi_native_cross_leaf_null_entry"
+[[bench.abi_native_cross_leaf.sizes]]
+n = 1
+variants = ["variants/abi_native_cross_leaf_native_ffi_w/target/release/abi_native_cross_leaf_native_ffi_w", "variants/abi_native_cross_leaf_inproc_native/target/release/abi_native_cross_leaf_inproc_native", "variants/abi_native_cross_leaf_null_entry/target/release/abi_native_cross_leaf_null_entry"]
+[[bench.abi_native_cross_leaf.sizes]]
+n = 2
+variants = ["variants/abi_native_cross_leaf_native_ffi_w/target/release/abi_native_cross_leaf_native_ffi_w", "variants/abi_native_cross_leaf_inproc_native/target/release/abi_native_cross_leaf_inproc_native", "variants/abi_native_cross_leaf_null_entry/target/release/abi_native_cross_leaf_null_entry"]
+[[bench.abi_native_cross_leaf.sizes]]
+n = 4
+variants = ["variants/abi_native_cross_leaf_native_ffi_w/target/release/abi_native_cross_leaf_native_ffi_w", "variants/abi_native_cross_leaf_inproc_native/target/release/abi_native_cross_leaf_inproc_native", "variants/abi_native_cross_leaf_null_entry/target/release/abi_native_cross_leaf_null_entry"]
+[[bench.abi_native_cross_leaf.sizes]]
+n = 8
+variants = ["variants/abi_native_cross_leaf_native_ffi_w/target/release/abi_native_cross_leaf_native_ffi_w", "variants/abi_native_cross_leaf_inproc_native/target/release/abi_native_cross_leaf_inproc_native", "variants/abi_native_cross_leaf_null_entry/target/release/abi_native_cross_leaf_null_entry"]
+[[bench.abi_native_cross_leaf.sizes]]
+n = 16
+variants = ["variants/abi_native_cross_leaf_native_ffi_w/target/release/abi_native_cross_leaf_native_ffi_w", "variants/abi_native_cross_leaf_inproc_native/target/release/abi_native_cross_leaf_inproc_native", "variants/abi_native_cross_leaf_null_entry/target/release/abi_native_cross_leaf_null_entry"]
+[[bench.abi_native_cross_leaf.sizes]]
+n = 32
+variants = ["variants/abi_native_cross_leaf_native_ffi_w/target/release/abi_native_cross_leaf_native_ffi_w", "variants/abi_native_cross_leaf_inproc_native/target/release/abi_native_cross_leaf_inproc_native", "variants/abi_native_cross_leaf_null_entry/target/release/abi_native_cross_leaf_null_entry"]
+[[bench.abi_native_cross_leaf.sizes]]
+n = 64
+variants = ["variants/abi_native_cross_leaf_native_ffi_w/target/release/abi_native_cross_leaf_native_ffi_w", "variants/abi_native_cross_leaf_inproc_native/target/release/abi_native_cross_leaf_inproc_native", "variants/abi_native_cross_leaf_null_entry/target/release/abi_native_cross_leaf_null_entry"]
+[[bench.abi_native_cross_leaf.sizes]]
+n = 128
+variants = ["variants/abi_native_cross_leaf_native_ffi_w/target/release/abi_native_cross_leaf_native_ffi_w", "variants/abi_native_cross_leaf_inproc_native/target/release/abi_native_cross_leaf_inproc_native", "variants/abi_native_cross_leaf_null_entry/target/release/abi_native_cross_leaf_null_entry"]
+[[bench.abi_native_cross_leaf.sizes]]
+n = 256
+variants = ["variants/abi_native_cross_leaf_native_ffi_w/target/release/abi_native_cross_leaf_native_ffi_w", "variants/abi_native_cross_leaf_inproc_native/target/release/abi_native_cross_leaf_inproc_native", "variants/abi_native_cross_leaf_null_entry/target/release/abi_native_cross_leaf_null_entry"]
+
 [bench.abi_boundary_w_real]
 title = "abi_boundary_w (real)"
 workload = "realistic"

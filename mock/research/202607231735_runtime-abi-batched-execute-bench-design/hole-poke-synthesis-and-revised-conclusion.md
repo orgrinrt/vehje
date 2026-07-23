@@ -96,6 +96,37 @@ The decisive reads:
 Raw data committed under `.bench_history/abi_payload_cost_{real,leaf}_n*.tsv`. The `leaf` profile agrees (SoA
 2.5-4x, crossing flat). One `n=1024 leaf scalar` outlier warning is a large-program slowdown, not a defect.
 
+## The native tier answers the open crossing-amortisation question (option 1)
+
+`abi_native_cross` runs the copy-and-patch compiled residual across the boundary. A first pass at a 256-node
+native residual showed even native-compiled code costs ~860 us/column (per-node work plus the result reduction),
+so the crossing was still negligible (native_ffi_w ~= inproc_native, flat across W). Shrinking the residual to a
+4-node kernel (~ns/record, the true cheap-payload regime) makes the crossing the dominant term, and the
+amortisation is unmistakable (profile `real`, median us for the 256-record column):
+
+| W | native_ffi_w (across boundary) | inproc_native (no crossing) | null_entry (crossing floor) |
+|---|---|---|---|
+| 1 | 34.70 | 11.59 | 4.87 |
+| 2 | 17.49 | 12.09 | 3.47 |
+| 4 | 13.93 | 11.66 | 4.05 |
+| 8 | 13.54 | 11.69 | 3.08 |
+| 16 | 12.25 | 11.45 | 2.54 |
+| 64 | 12.06 | 11.39 | 2.45 |
+| 256 | 11.60 | 11.41 | 3.17 |
+
+**At the native tier, batching amortises the crossing ~3x.** `native_ffi_w` falls from 34.7 us at W=1 (256
+per-record crossings) to 11.6 us at W=256 (one crossing), converging onto `inproc_native` (~11.4 us, the identical
+native payload with no crossing). So a scalar per-record entry at native cost pays ~23 us of crossing over the
+column (~66% of its time); a column entry removes it. The per-record ABI cost here is ~90 ns (23 us / 256), not
+the ~9 ns raw `blr`, because a real per-record call also pays argument marshalling and the handle dereference,
+not just the branch; the batched entry amortises all of it.
+
+So the crossing-amortisation justification for a batched entry is REAL at the native tier (a ~3x win, and the
+larger the per-record ABI overhead the more it matters), and absent at the interpret tiers (where the payload
+dwarfs it). The batched column entry is justified at every tier, for complementary reasons: vectorisation
+everywhere, plus crossing amortisation once the payload is cheap enough (the native / copy-and-patch endgame the
+framework is aiming at). This closes the one open question the first hole-poke left.
+
 ## What genuinely holds (all three agree)
 
 The two-object cdylib discipline, the resolve-in-setup, the byte-exact cross-validation, and the ICF hygiene are
