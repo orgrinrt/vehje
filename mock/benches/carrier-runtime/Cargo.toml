@@ -28,7 +28,10 @@ path = "src/lib.rs"
 # the vertical/SoA interpreter, all unmodified. `vertical` pulls the SoA payload
 # (portable_simd); the runtime wraps it so the column-eval win is measured across
 # the real boundary, not just in-process.
-vehje-bench-carrier = { path = "../carrier", features = ["vertical"] }
+# `jit` pulls the copy-and-patch native codegen (aarch64 + macOS), so the runtime
+# can execute a residual as machine code for the native-tier crossing-amortisation
+# bench (the cheap payload where the crossing is a live fraction).
+vehje-bench-carrier = { path = "../carrier", features = ["vertical", "jit"] }
 
 [profile.release]
 opt-level = 3

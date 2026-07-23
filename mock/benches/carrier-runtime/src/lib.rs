@@ -513,6 +513,91 @@ pub unsafe extern "C" fn cr_execute_marshal_null_aos(_h: *mut Handle, recs: *con
     acc
 }
 
+// ── the native tier: a copy-and-patch machine-code payload ──
+//
+// The interpret payloads (scalar, SoA) all cost tens of ns to us per record, so a ~9 ns
+// crossing is invisible against them. The native tier (copy-and-patch compiled machine code)
+// is the cheap payload the crossing-amortisation question actually turns on: at ~ns per record
+// the crossing is a live fraction, and batching (fewer crossings per column) pays for the
+// crossing itself, not only for vectorisation. The runtime compiles the crossed residual bytes
+// to machine code once at init, then runs the compiled function per record, matching the
+// carrier's own copy-and-patch bench body. aarch64 + macOS only (the copy-and-patch backend).
+
+/// Reconstruct a canonical `Program` from a parsed `Decoded`, so the runtime can compile the
+/// residual that crossed as opaque wire bytes (the copy-and-patch backend takes a `Program`).
+#[cfg(all(target_arch = "aarch64", target_os = "macos"))]
+fn program_from_decoded(d: &c::ir::Decoded) -> c::ir::Program {
+    let consts = (0..d.const_count).map(|i| d.const_at(i)).collect();
+    let nodes = (0..d.node_count)
+        .map(|i| {
+            let arity = d.arity_at(i);
+            let operands = (0..arity).map(|k| d.operand(i, k, arity)).collect();
+            c::ir::Node { op: d.op_at(i), operands }
+        })
+        .collect();
+    c::ir::Program { consts, nodes }
+}
+
+/// A native runtime handle: the compiled machine code plus a results scratch.
+#[cfg(all(target_arch = "aarch64", target_os = "macos"))]
+pub struct NativeHandle {
+    jit:     c::copypatch::JitCode,
+    scratch: Vec<u64>,
+}
+
+/// Compile the residual's wire bytes to machine code and return a native handle. Null if the
+/// bytes do not parse or the codegen mmap fails.
+///
+/// # Safety
+/// `bytes` must point to `len` valid bytes of a REC24 carrier program.
+#[cfg(all(target_arch = "aarch64", target_os = "macos"))]
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn cr_native_init(bytes: *const u8, len: usize) -> *mut NativeHandle {
+    let slice = unsafe { core::slice::from_raw_parts(bytes, len) };
+    let Some(d) = c::ir::Decoded::parse(slice, c::ir::REC24) else {
+        return core::ptr::null_mut();
+    };
+    let prog = program_from_decoded(&d);
+    let Some(jit) = c::copypatch::JitCode::new(&prog) else {
+        return core::ptr::null_mut();
+    };
+    let handle = Box::new(NativeHandle { scratch: vec![0u64; d.node_count], jit });
+    Box::into_raw(handle)
+}
+
+/// Free a native handle. Null is a no-op.
+///
+/// # Safety
+/// `h` must be a pointer returned by [`cr_native_init`] and not already freed.
+#[cfg(all(target_arch = "aarch64", target_os = "macos"))]
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn cr_native_free(h: *mut NativeHandle) {
+    if !h.is_null() {
+        drop(unsafe { Box::from_raw(h) });
+    }
+}
+
+/// Native payload, runtime batch width: run the compiled machine code once per record, folding
+/// the identical keep-alive as the interpret batches (`rotl(acc,7) ^ checksum`). The cheap
+/// payload where the crossing amortisation over W is a live effect.
+///
+/// # Safety
+/// `seeds` points to `w` valid `u64`s; `h` is a live native handle.
+#[cfg(all(target_arch = "aarch64", target_os = "macos"))]
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn cr_execute_native_runtime_w(h: *mut NativeHandle, seeds: *const u64, w: usize) -> u64 {
+    let h = unsafe { &mut *h };
+    let seeds = unsafe { core::slice::from_raw_parts(seeds, w) };
+    let mut acc = 0u64;
+    let mut i = 0usize;
+    while i < w {
+        h.jit.run(seeds[i], &mut h.scratch);
+        acc = acc.rotate_left(7) ^ c::checksum(&h.scratch);
+        i += 1;
+    }
+    acc
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -639,6 +724,22 @@ mod tests {
         assert_eq!(arena2.buf, want, "per-record sink writes the same checksums as batched");
 
         unsafe { cr_free(h) };
+    }
+
+    #[cfg(all(target_arch = "aarch64", target_os = "macos"))]
+    #[test]
+    fn native_payload_folds_identically_to_the_interpreter() {
+        let bytes = program_bytes();
+        let interp = unsafe { cr_init(bytes.as_ptr(), bytes.len()) };
+        let native = unsafe { cr_native_init(bytes.as_ptr(), bytes.len()) };
+        assert!(!interp.is_null() && !native.is_null(), "both handles build");
+        let seeds: Vec<u64> = (0..64u64).map(|i| 0x3333 ^ i.wrapping_mul(0x9e37_79b9)).collect();
+        let w = seeds.len();
+        let want = unsafe { cr_execute_scalar_runtime_w(interp, seeds.as_ptr(), w) };
+        let got = unsafe { cr_execute_native_runtime_w(native, seeds.as_ptr(), w) };
+        assert_eq!(got, want, "copy-and-patch machine code must fold identically to the interpreter");
+        unsafe { cr_free(interp) };
+        unsafe { cr_native_free(native) };
     }
 
     #[test]

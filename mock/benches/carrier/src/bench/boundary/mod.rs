@@ -21,8 +21,10 @@
 //! - [`zig`] (bench 8): the cross-language entry-form floor, crossing into the sibling
 //!   `carrier-zig` object so the entry-form conclusion is not Rust-only (now including the
 //!   tail-threaded shape, the one closest to the shipped Zig runtime).
-//! - [`payload`]: the payload-cost sweep (residual size at fixed W), the decisive axis where
-//!   the crossing goes from a visible fraction (cheap residual) to negligible (heavy).
+//! - [`payload`]: the payload-cost sweep (residual size at fixed W), where the crossing goes
+//!   from a visible fraction (cheap residual) to negligible (heavy).
+//! - [`native`]: the native (copy-and-patch) tier, the one payload cheap enough that the
+//!   crossing is a live fraction, so the W-sweep shows crossing amortisation directly.
 //! - [`cold`]: the boundary-cold regime, cycling sixteen distinct call targets so the crossing
 //!   is measured under a mispredicted indirect branch (the real varying-call-target case),
 //!   against the warm predicted-crossing baseline.
@@ -44,6 +46,7 @@ pub mod entry;
 pub mod lifecycle;
 pub mod marshal;
 pub mod matrix;
+pub mod native;
 pub mod payload;
 pub mod residency;
 pub mod sink;
@@ -65,6 +68,7 @@ pub fn matrix_decls() -> Vec<MatrixDecl> {
     all.extend(zig::matrix_decls());
     all.extend(cold::matrix_decls());
     all.extend(payload::matrix_decls());
+    all.extend(native::matrix_decls());
     all.extend(matrix::matrix_decls());
     all
 }
