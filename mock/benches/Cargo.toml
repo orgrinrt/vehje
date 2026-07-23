@@ -15,6 +15,12 @@ mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev
 mockspace-bench-harness = { git = "https://github.com/hiisi-digital/mockspace", rev = "49ff5f55b8413f7046281ae1944130c10509c361" }
 mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", rev = "49ff5f55b8413f7046281ae1944130c10509c361" }
 
+[features]
+# Enables the kperf PMU path (instructions/cycles columns). The driver must be
+# built with this feature AND run with MOCKSPACE_BENCH_PERF=1 under sudo for the
+# columns to populate; without it they stay zero (wall-clock only).
+perf-counters = ["mockspace-bench-harness/perf-counters"]
+
 [profile.release]
 opt-level = 3
 lto = "fat"
