@@ -228,20 +228,35 @@ the strict-by-design healthy mid-build state.
 Most scope questions resolve to "build all" under op's mandate; these are the ones that genuinely need op because
 they are design inputs or contract decisions the benches depend on, not scope.
 
-**A. The error-path / partial-batch return contract (the one real blocker).** Benches 4 and 5 lock the entry and
-sink layout, and the cost-model fit is measured against the return-struct shape. That shape (per-record status
-vector / first-error-index / masked selection-vector, the AVX-512/SVE-predicate lineage) is undecided in the ABI
-design, and haoran is right that an honest timing bench cannot be built against an undecided contract. Options: (1)
-fix a placeholder shape for the bench now (a per-record status vector, the most general, floor its added cost) and
-let the real ABI design round settle it later, accepting the numbers are for that placeholder; (2) settle the
-return contract in a short design conversation before the benches lock; (3) restrict this arc to the all-success
-path and add the error-path as a fast-follow once the contract is designed. Recommendation: (1), because it
-unblocks the arc, the per-record-status cost is a cheap measurable add-on, and a placeholder the design round can
-revise is exactly the kind of reversible call the workspace prefers over blocking.
+**A. The error-path / partial-batch return contract — SETTLED (op 2026-07-23): fallibility is a value property,
+not an ABI mechanism.** op directed the most sound / future-proof / ideal shape rather than a menu pick. Reasoned
+from the round's value-form discipline (`202607201316`: absence is an explicit value form, notko's ladder applied
+to the runtime value model) and the algebraic-effects `Handle` direction (`202607210120`: an error is an effect a
+handler services), the settled contract:
 
-**B. Wmax, the ABI's maximum batch width.** Sets the runtime-W internal buffer, the top of the W-sweep, and the
-per-W-set symbol count. Need op's number or a default (recommend sweeping W in {1..128} and treating 64 as the
-provisional Wmax, matching a cache-line-friendly column and the vertical family's existing W range).
+1. A fallible record's output is an `Outcome<T, E>`-shaped value in the value-arena (a tagged value-node, the
+   introduction/constructor projection of the signature, so `E` is an arbitrarily rich value subtree, never a fixed
+   status code). Whether a record can fault is compile-time-known from its effect/type signature; an infallible
+   record produces a plain value and carries NO fault representation (illegal-states-unrepresentable). An error
+   surfaces as the value a handler determined (an unhandled `raise` is in the effect set the target `Permits`).
+2. Batch completion is a stream property: the reserve/commit sink carries a completion status (all W committed, or
+   truncated-at-K with a reason such as budget-exhausted). The one genuinely out-of-band signal, belonging to the
+   value-arena stream, consistent with streaming-with-backpressure. Not any record's value.
+3. The lane-mask is an INTERNAL SoA mechanism (mask a faulting lane and continue the column, mask-not-trap), with
+   an optional "any-fault" summary as a value-arena header field for a host fast-branch. Denormalized convenience,
+   not an ABI channel. The load-bearing truth is the per-record `Outcome` values plus the stream completion status.
+
+This is more sound than any menu option: not a rigid status vector, not SIMD-hostile fail-fast, and it drops the
+bolted-on mask+status of the earlier option (a) as vehicle-cruft. Bench consequence: the error-path cost is (a) the
+`Outcome`-tag width in fallible output value-nodes (a value-shape variant in the sink/value-arena bench) and (b) the
+internal SoA mask-and-continue cost (all-success SoA vs masked SoA in the payload bench); there is NO separate
+status channel to bench. This decision feeds the eventual `vehje-runtime-abi` topic; it is recorded here as the
+contract the benches lock against.
+
+**B. Wmax, the ABI's maximum batch width — SETTLED (op 2026-07-23): Wmax = 128, sweep W to 256.** The per-W
+monomorphised symbol set is `execute_w{2,4,8,16,32,64,128}`; the runtime-W internal buffer sizes to 128; the
+W-sweep runs {1,2,4,8,16,32,64,128,256} so the knee past Wmax is evidence-visible (a W=256 request is handled by
+the runtime-W path or as 2x128 chunking, and the sweep shows whether crossing Wmax costs anything).
 
 **C. The multi-axis harness sweep (a should-it-go-upstream call).** The composition matrix is genuinely
 multi-dimensional and `MatrixDecl` gives one axis. The arc ships fine with the curated `entgrid`-flat approach
