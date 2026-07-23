@@ -1,0 +1,50 @@
+677cebda chore: lock src changelist for the converged-design implementation
+d93c2de9 fix: seal the Checked witness and address impl-review findings
+ea9bb237 docs: regenerate rendered docs and agent rules for the twelve-crate taxonomy
+a56691ca docs: reconcile src changelist with the deferred rename and M-level scope
+85fed91d feat: implement the converged twelve-crate design ecosystem
+e225eb89 docs: open src changelist for the converged-design implementation
+459d84e2 chore: lock doc changelist for the converged design and taxonomy
+20c60d56 docs: note deepdive scope in the doc changelist
+9ab5bf9c docs: address doc-review findings on tier wording and hash layering
+06efa5bb docs: genericise the consumer census in the public design doc
+50d6e647 docs: update staging principle to the effect and binding-time split
+e61dab4e docs: converged design for runtime-abi, runtime-driver, vehje
+98f2596c docs: converged design for resolve, schedule, codegen, check
+76f8179d docs: add vehje-fixpoint, vehje-lower, vehje-runtime-gen docs
+b9bb5fc7 docs: rewrite vehje-ir and add vehje-signature docs to converged design
+fc65599d docs: open doc changelist for converged design and taxonomy
+bbcac5ee docs: consolidated design and crate taxonomy topic
+39fefe54 docs: full-arc bench and evidence findings topic
+32cc69af bench: cold regime misprediction penalty ~6x at W=1 (option 3 answered)
+d7411c0f bench: native-tier crossing amortisation ~3x (option 1 answered)
+9649c19b fix: native family uses a tiny 4-node kernel so the crossing is a live fraction
+5c34350b test: add native-tier crossing-amortisation bench (option 1)
+a2eda434 bench: payload-cost sweep (the decisive axis) + finalised conclusion
+9d932155 docs: second expert hole-poke pass + revised honest conclusion
+1c38104a fix: cold regime data-dependent index + matched warm baseline; add payload-cost family
+f0be4815 test: add boundary-cold regime and Zig tail-threaded cells (panel refinements)
+067467eb bench: soa-win first-look + results note; batched column entry unlocks ~2.4x
+65c5ac15 bench: first-look run of abi_cross_scalar (profile real), crossing-amortisation data
+c7deb4f6 fix: add boundary batch-width sizes to the bench runner dispatch
+891f533e docs: revise fairness audit after the panel; record findings, fixes, and number scope
+08b165cd chore: generate boundary bench variants; bump existing variants to mockspace 98031e4
+a156090e chore: drop unused imports in boundary matrix and zig families
+ec4f8809 fix: bump benches to mockspace 98031e4, address panel findings on lifecycle/residency
+37632841 test: add runtime-abi composition matrix abi_boundary_w (entry x payload x W)
+1e774cc0 test: add runtime-abi boundary bench 2 (marshalling aos/soa/transpose)
+13abbd30 docs: fairness-audit and built-machinery record for the runtime-abi benches
+75704f5e test: add runtime-abi boundary bench 8 (cross-language entry-form, zig)
+1dbab6fd test: add runtime-abi boundary benches 6 (lifecycle) and 7 (residency)
+a07f22b8 test: add runtime-abi boundary bench 5 (output sink) with reserve/commit struct
+441768a1 test: add runtime-abi boundary benches 3 (soa-win) and 4 (entry-form)
+5e039066 test: add runtime-abi boundary bench 1 (crossing amortisation, scalar)
+3490c6a7 chore: bump benches to mockspace 8c5f87a, add carrier boundary feature
+384c01cd feat: add carrier-runtime cdylib, the shared object boundary benches cross into
+18520586 docs: settle abi return contract (fallibility is a value) + wmax 128
+b942da64 docs: design the runtime c abi batched-execute bench arc (3 forks + synthesis)
+978f1980 docs: brief the runtime c abi batched-execute bench arc
+1daa7af2 chore: pin benches deps to merged mockspace bench-matrix rev
+ee7b8052 refactor: migrate carrier bench matrix onto bench_matrix macro
+38300740 test: begin carrier matrix dogfood onto bench_matrix! (dispatch family)
+bee10f18 docs: rewrite carrier matrix summary with corrected PMU findings
