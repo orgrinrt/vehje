@@ -1,0 +1,74 @@
+# vehje-runtime-gen. Design
+
+Runtime generation is the first of the three operations the retirement of
+"codegen" named: compiling a proven language definition into the runtime's own
+code, once per language, at our build. This crate is its home, and the home the
+third-build-locus debt demanded. Its cadence is per-language and dev-time; the
+per-script wire boundary is `vehje-runtime-abi`'s, and the embedding is
+`vehje-runtime-driver`'s. Keeping them separate keeps the language-build
+machinery out of the crate whose identity is a pure wire surface, and gives the
+manifest (the no-trusted-emitter mechanism) and the wire format (the
+untrusted-load surface) their different trust stories separate homes.
+
+The composition rule is the crate's discipline: it does not define any data
+slice. Each slice's format is owned by the stage crate that produces it (the
+family table by `vehje-ir` and `vehje-signature`, the effect masks and lease-rule
+schema by `vehje-check`, the cheap-lowering rule table by `vehje-lower`, the wire
+layout by `vehje-runtime-abi`). This crate composes those slices into one
+package and binds it, so there is one definition per mechanism and one
+aggregation point, which is how the taxonomy stays honest about the two-artifact
+model.
+
+## The validated-data package
+
+- `Package`. The composed per-language artifact: the family table, the effect
+  masks, the lease-rule schema, the binding-time defaults, the cheap-lowering
+  rule table, the wire layout, and a reserved stencil section (whose schema
+  exists from day one and whose producer is the deferred stencil toolchain).
+  The package is the data the Zig runtime's comptime specialisation reads; it is
+  data, not runtime source.
+- `Slice`. The typed handle to one stage crate's contribution, so the package
+  composes slices without knowing their internal format, and a stage crate's
+  format change does not ripple here.
+
+## The content-addressed manifest
+
+- `Manifest`. The binding between the package and the runtime: a
+  content-addressed hash (over `vehje-ir`'s one structural-hash primitive) of
+  each slice and of the whole package, so the specialised runtime can prove at
+  its own build that it was specialised from exactly this package. This is the
+  cheaper manifest-check interim of the lens-projection handoff; the full lens
+  is the open handoff-staging question and lands here when it lands.
+- `generate`. Compiles a `Signature` (plus the stage slices) into a `Package`
+  and its `Manifest`. The entry the dev-time language compiler calls to produce
+  the language artifact.
+
+## The differential-check contract
+
+- `DifferentialCheck`. The contract for the differential harness that checks the
+  specialised runtime computes what the reference does over a census corpus,
+  the grade-0 operational shadow of the assurance-indexed logical relation. The
+  proof document strengthens this existing seam rather than opening a new one;
+  the harness itself is the contract this crate owns.
+
+## The three loci and the Zig side
+
+The third build locus is a build-pipeline fact about the Zig artifact. This
+crate owns the entire Rust side of it: the package format, the manifest, and the
+differential-check contract. The Zig side (the `build.zig` step running the
+identical kernel against the package and manifest for content validation) lives
+in the repo-level runtime tree, not here. No Rust crate is the third locus; this
+crate is its emitter and binding contract.
+
+## Non-scope
+
+- Defining any data slice (the stage crates do).
+- The per-script wire format (`vehje-runtime-abi`) and the embedding
+  (`vehje-runtime-driver`).
+- The Zig runtime source and its `build.zig` (repo-level, not a crate).
+
+## Dependencies
+
+`vehje-signature` (the language definition it compiles), `vehje-check`,
+`vehje-lower`, `vehje-runtime-abi` (the stage slices it composes), `vehje-ir`
+(the structural hash), and `notko`. `#![no_std]`, no alloc.

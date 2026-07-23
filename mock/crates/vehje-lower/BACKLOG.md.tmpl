@@ -1,0 +1,25 @@
+# vehje-lower. backlog
+
+Designed but deferred. Names stay unbackticked until they ship.
+
+## The dev-time equality-saturation e-graph
+
+The heavier lowering stratum: a no-alloc bounded streaming equality-saturation
+over a slotted and colored e-graph, run ahead of time for bundled scripts where
+the e-graph can take its time. It unifies constant folding, macro expansion,
+CSE, and the algebraic identities into one saturate-then-extract, and it grows a
+measured linear (not exponential) size because hashcons congruence deduplicates
+equivalent forms, with the bounded streaming window as a hard termination and
+memory safety mechanism. This is the flagged original research; it lands behind
+the same `Lower` fold interface as the cheap subset (the reserved `Saturate`
+strategy variant), so its arrival is additive. The extractor is a bottom-up cost
+fixpoint bound to the iterative work-stack discipline, never recursive, because
+recursion is a hard compiler wall, and the cost function must be effect-and-
+machine-aware rather than pure rewrite-count (equality saturation alone can pick
+a form that is cheaper by rewrite count but worse on the machine).
+
+## Deepdive owed
+
+A deepdive on the three-way lowering seam (the cheap subset, the dev-time
+e-graph, and why lowering is a distinct operation from checking and emission)
+lands with the saturation stratum.

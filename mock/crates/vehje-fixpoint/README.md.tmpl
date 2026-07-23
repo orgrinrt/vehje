@@ -1,0 +1,12 @@
+# vehje-fixpoint. relational engine
+
+The framework's compile-stage engine: a generic, no-alloc, semi-naive
+relational-fixpoint evaluator with congruence support, over caller-provided
+columnar storage, deliberately free of any `vehje-ir` dependency. It reuses the
+`hilavitkutin-api` columnar and `AccessSet` contracts as its storage vocabulary
+and `arvo-graph` and `arvo-bitmask` as its algorithms, and adds the semi-naive
+deltas, congruence closure, and provenance grades those do not carry. Three
+clients define their own relation schemas over it: the lease and reachability
+inference in `vehje-check`, the equality-saturation lowering in `vehje-lower`,
+and the diagnostics witness reconstruction. The incremental scaling mechanism
+is its differential layer. `#![no_std]`, no alloc.

@@ -1,0 +1,12 @@
+# vehje-lower. lowering stage
+
+The framework's lowering stage, the third of the compile pipeline's operations
+(neither checking nor output generation): constant folding, common-subexpression
+elimination, and macro expansion. It ships the cheap runtime subset now (a
+bounded single bottom-up pass, hash-consing over `vehje-ir`'s one structural
+hash, a fixed rule set, no unbounded saturation, no alloc, benched at a large
+node-count reduction), with the dev-time equality-saturation e-graph as a
+deferred second stratum behind the same fold interface. Macro expansion is a
+compile-stage handler dispatch. The crate owns the cheap subset's rule table as
+its validated-data slice, the same rules the runtime's load-time lowering of
+arriving scripts is specialised from. `#![no_std]`, no alloc.

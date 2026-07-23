@@ -1,0 +1,28 @@
+# vehje-runtime-gen. backlog
+
+Designed but deferred. Names stay unbackticked until they ship.
+
+## The full lens-projection handoff
+
+The handoff ships in its content-addressed manifest-check interim: the manifest
+binds the package to the runtime and the differential harness checks the
+projection. The full one-source-two-projections lens (the Rust compile-side
+typestate and the Zig runtime consts both generated projections of the one
+signature, differential-checked structurally rather than by manifest hash) is
+the open handoff-staging question and lands here when it lands.
+
+## The stencil section producer
+
+The package schema reserves the copy-and-patch stencil section from day one, but
+its producer is the deferred stencil toolchain (a dev-tool crate, weeks of
+object-format work, never shipped to a consumer). This crate already owns the
+manifest-hash binding of stencils to the semantic-definition hash (the novel
+piece); the toolchain is a future producer of bytes for a slot that already
+exists.
+
+## Deepdive owed
+
+A deepdive on runtime generation (the three loci, the manifest as the
+no-trusted-emitter mechanism, the Deegen-style triple emission of interpreter
+arm, value-kind, and stencil per operation) lands with the first real language
+package.

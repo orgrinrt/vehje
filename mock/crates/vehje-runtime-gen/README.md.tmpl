@@ -1,0 +1,12 @@
+# vehje-runtime-gen. runtime generation
+
+The framework's runtime generation, the per-language dev-time artifact that
+compiles a language definition into the validated-data package (the family
+table, effect masks, lease-rule schema, cheap-lowering rule table, wire layout,
+and a reserved stencil section) and binds it to the shipped Zig runtime with a
+content-addressed manifest. It composes the slices the stage crates own and
+defines none itself; it owns only the package layout, the manifest, and the
+differential-check contract. It completes the runtime family as the full build
+boundary: gen (per-language, our build), abi (per-script, wire), driver
+(embedding). The Zig `build.zig` content-validation step lives in a repo-level
+tree, not a Rust crate. `#![no_std]`, no alloc.

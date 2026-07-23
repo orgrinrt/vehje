@@ -1,0 +1,32 @@
+# vehje-fixpoint. backlog
+
+Designed but deferred. Names stay unbackticked until they ship.
+
+## The full multi-relation join
+
+The shipping engine evaluates the reach and effect fixpoints (single-body and
+small-arity rules) with whole-column and semi-naive evaluation. A full
+worst-case-optimal multi-relation join (leapfrog-triejoin, with AGM bounds) is
+what a rich multi-way rule set wants and is the next lever if a client's rules
+need it; the reach and effect inference do not.
+
+## Differential retraction
+
+The incremental layer ships the additive-edit case (an edit adds and re-derives
+transitive dependents). General edit with retraction (a deletion that must
+un-derive what depended on it) needs counted differential dataflow. Defer until
+a consumer's edit pattern needs retraction rather than rebuild-the-affected-set.
+
+## Upstream promotion
+
+The engine is kept generic and vehje-ir-free partly so its semi-naive core can
+be promoted upstream into the stack if a second consumer outside vehje
+materialises. Today the congruence closure and the provenance-semiring grade
+plumbing are vehje-shaped, so it stays here; revisit if another stack consumer
+wants a bare semi-naive engine.
+
+## Deepdive owed
+
+A deepdive on the relational engine (semi-naive evaluation, congruence, the
+incremental scaling mechanism, and the bench evidence: 8M nodes and 16M edges in
+about 50 ms, the 2000-mod incremental numbers) lands with the first real client.
