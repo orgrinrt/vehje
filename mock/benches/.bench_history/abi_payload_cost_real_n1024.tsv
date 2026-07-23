@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784830251	9d932155	abi_payload_cost_real_n1024	abi_payload_cost_real_null_entry	1024	warm	2495.0	2488.1	2551.3
+1784830251	9d932155	abi_payload_cost_real_n1024	abi_payload_cost_real_scalar_payload	1024	warm	9041374.2	9039096.5	9143521.9
+1784830251	9d932155	abi_payload_cost_real_n1024	abi_payload_cost_real_soa_payload	1024	warm	3562015.4	3560977.7	3574184.2

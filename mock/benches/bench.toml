@@ -3820,31 +3820,31 @@ mode = "subtract"
 floor = "abi_zig_entry_real_zig_null"
 [[bench.abi_zig_entry_real.sizes]]
 n = 1
-variants = ["variants/abi_zig_entry_real_zig_runtime_w/target/release/abi_zig_entry_real_zig_runtime_w", "variants/abi_zig_entry_real_zig_anchor/target/release/abi_zig_entry_real_zig_anchor", "variants/abi_zig_entry_real_zig_dispatch/target/release/abi_zig_entry_real_zig_dispatch", "variants/abi_zig_entry_real_zig_per_w_set/target/release/abi_zig_entry_real_zig_per_w_set", "variants/abi_zig_entry_real_zig_null/target/release/abi_zig_entry_real_zig_null"]
+variants = ["variants/abi_zig_entry_real_zig_runtime_w/target/release/abi_zig_entry_real_zig_runtime_w", "variants/abi_zig_entry_real_zig_anchor/target/release/abi_zig_entry_real_zig_anchor", "variants/abi_zig_entry_real_zig_dispatch/target/release/abi_zig_entry_real_zig_dispatch", "variants/abi_zig_entry_real_zig_per_w_set/target/release/abi_zig_entry_real_zig_per_w_set", "variants/abi_zig_entry_real_zig_null/target/release/abi_zig_entry_real_zig_null", "variants/abi_zig_entry_real_zig_tail_runtime_w/target/release/abi_zig_entry_real_zig_tail_runtime_w", "variants/abi_zig_entry_real_zig_tail_dispatch/target/release/abi_zig_entry_real_zig_tail_dispatch"]
 [[bench.abi_zig_entry_real.sizes]]
 n = 2
-variants = ["variants/abi_zig_entry_real_zig_runtime_w/target/release/abi_zig_entry_real_zig_runtime_w", "variants/abi_zig_entry_real_zig_anchor/target/release/abi_zig_entry_real_zig_anchor", "variants/abi_zig_entry_real_zig_dispatch/target/release/abi_zig_entry_real_zig_dispatch", "variants/abi_zig_entry_real_zig_per_w_set/target/release/abi_zig_entry_real_zig_per_w_set", "variants/abi_zig_entry_real_zig_null/target/release/abi_zig_entry_real_zig_null"]
+variants = ["variants/abi_zig_entry_real_zig_runtime_w/target/release/abi_zig_entry_real_zig_runtime_w", "variants/abi_zig_entry_real_zig_anchor/target/release/abi_zig_entry_real_zig_anchor", "variants/abi_zig_entry_real_zig_dispatch/target/release/abi_zig_entry_real_zig_dispatch", "variants/abi_zig_entry_real_zig_per_w_set/target/release/abi_zig_entry_real_zig_per_w_set", "variants/abi_zig_entry_real_zig_null/target/release/abi_zig_entry_real_zig_null", "variants/abi_zig_entry_real_zig_tail_runtime_w/target/release/abi_zig_entry_real_zig_tail_runtime_w", "variants/abi_zig_entry_real_zig_tail_dispatch/target/release/abi_zig_entry_real_zig_tail_dispatch"]
 [[bench.abi_zig_entry_real.sizes]]
 n = 4
-variants = ["variants/abi_zig_entry_real_zig_runtime_w/target/release/abi_zig_entry_real_zig_runtime_w", "variants/abi_zig_entry_real_zig_anchor/target/release/abi_zig_entry_real_zig_anchor", "variants/abi_zig_entry_real_zig_dispatch/target/release/abi_zig_entry_real_zig_dispatch", "variants/abi_zig_entry_real_zig_per_w_set/target/release/abi_zig_entry_real_zig_per_w_set", "variants/abi_zig_entry_real_zig_null/target/release/abi_zig_entry_real_zig_null"]
+variants = ["variants/abi_zig_entry_real_zig_runtime_w/target/release/abi_zig_entry_real_zig_runtime_w", "variants/abi_zig_entry_real_zig_anchor/target/release/abi_zig_entry_real_zig_anchor", "variants/abi_zig_entry_real_zig_dispatch/target/release/abi_zig_entry_real_zig_dispatch", "variants/abi_zig_entry_real_zig_per_w_set/target/release/abi_zig_entry_real_zig_per_w_set", "variants/abi_zig_entry_real_zig_null/target/release/abi_zig_entry_real_zig_null", "variants/abi_zig_entry_real_zig_tail_runtime_w/target/release/abi_zig_entry_real_zig_tail_runtime_w", "variants/abi_zig_entry_real_zig_tail_dispatch/target/release/abi_zig_entry_real_zig_tail_dispatch"]
 [[bench.abi_zig_entry_real.sizes]]
 n = 8
-variants = ["variants/abi_zig_entry_real_zig_runtime_w/target/release/abi_zig_entry_real_zig_runtime_w", "variants/abi_zig_entry_real_zig_anchor/target/release/abi_zig_entry_real_zig_anchor", "variants/abi_zig_entry_real_zig_dispatch/target/release/abi_zig_entry_real_zig_dispatch", "variants/abi_zig_entry_real_zig_per_w_set/target/release/abi_zig_entry_real_zig_per_w_set", "variants/abi_zig_entry_real_zig_null/target/release/abi_zig_entry_real_zig_null"]
+variants = ["variants/abi_zig_entry_real_zig_runtime_w/target/release/abi_zig_entry_real_zig_runtime_w", "variants/abi_zig_entry_real_zig_anchor/target/release/abi_zig_entry_real_zig_anchor", "variants/abi_zig_entry_real_zig_dispatch/target/release/abi_zig_entry_real_zig_dispatch", "variants/abi_zig_entry_real_zig_per_w_set/target/release/abi_zig_entry_real_zig_per_w_set", "variants/abi_zig_entry_real_zig_null/target/release/abi_zig_entry_real_zig_null", "variants/abi_zig_entry_real_zig_tail_runtime_w/target/release/abi_zig_entry_real_zig_tail_runtime_w", "variants/abi_zig_entry_real_zig_tail_dispatch/target/release/abi_zig_entry_real_zig_tail_dispatch"]
 [[bench.abi_zig_entry_real.sizes]]
 n = 16
-variants = ["variants/abi_zig_entry_real_zig_runtime_w/target/release/abi_zig_entry_real_zig_runtime_w", "variants/abi_zig_entry_real_zig_anchor/target/release/abi_zig_entry_real_zig_anchor", "variants/abi_zig_entry_real_zig_dispatch/target/release/abi_zig_entry_real_zig_dispatch", "variants/abi_zig_entry_real_zig_per_w_set/target/release/abi_zig_entry_real_zig_per_w_set", "variants/abi_zig_entry_real_zig_null/target/release/abi_zig_entry_real_zig_null"]
+variants = ["variants/abi_zig_entry_real_zig_runtime_w/target/release/abi_zig_entry_real_zig_runtime_w", "variants/abi_zig_entry_real_zig_anchor/target/release/abi_zig_entry_real_zig_anchor", "variants/abi_zig_entry_real_zig_dispatch/target/release/abi_zig_entry_real_zig_dispatch", "variants/abi_zig_entry_real_zig_per_w_set/target/release/abi_zig_entry_real_zig_per_w_set", "variants/abi_zig_entry_real_zig_null/target/release/abi_zig_entry_real_zig_null", "variants/abi_zig_entry_real_zig_tail_runtime_w/target/release/abi_zig_entry_real_zig_tail_runtime_w", "variants/abi_zig_entry_real_zig_tail_dispatch/target/release/abi_zig_entry_real_zig_tail_dispatch"]
 [[bench.abi_zig_entry_real.sizes]]
 n = 32
-variants = ["variants/abi_zig_entry_real_zig_runtime_w/target/release/abi_zig_entry_real_zig_runtime_w", "variants/abi_zig_entry_real_zig_anchor/target/release/abi_zig_entry_real_zig_anchor", "variants/abi_zig_entry_real_zig_dispatch/target/release/abi_zig_entry_real_zig_dispatch", "variants/abi_zig_entry_real_zig_per_w_set/target/release/abi_zig_entry_real_zig_per_w_set", "variants/abi_zig_entry_real_zig_null/target/release/abi_zig_entry_real_zig_null"]
+variants = ["variants/abi_zig_entry_real_zig_runtime_w/target/release/abi_zig_entry_real_zig_runtime_w", "variants/abi_zig_entry_real_zig_anchor/target/release/abi_zig_entry_real_zig_anchor", "variants/abi_zig_entry_real_zig_dispatch/target/release/abi_zig_entry_real_zig_dispatch", "variants/abi_zig_entry_real_zig_per_w_set/target/release/abi_zig_entry_real_zig_per_w_set", "variants/abi_zig_entry_real_zig_null/target/release/abi_zig_entry_real_zig_null", "variants/abi_zig_entry_real_zig_tail_runtime_w/target/release/abi_zig_entry_real_zig_tail_runtime_w", "variants/abi_zig_entry_real_zig_tail_dispatch/target/release/abi_zig_entry_real_zig_tail_dispatch"]
 [[bench.abi_zig_entry_real.sizes]]
 n = 64
-variants = ["variants/abi_zig_entry_real_zig_runtime_w/target/release/abi_zig_entry_real_zig_runtime_w", "variants/abi_zig_entry_real_zig_anchor/target/release/abi_zig_entry_real_zig_anchor", "variants/abi_zig_entry_real_zig_dispatch/target/release/abi_zig_entry_real_zig_dispatch", "variants/abi_zig_entry_real_zig_per_w_set/target/release/abi_zig_entry_real_zig_per_w_set", "variants/abi_zig_entry_real_zig_null/target/release/abi_zig_entry_real_zig_null"]
+variants = ["variants/abi_zig_entry_real_zig_runtime_w/target/release/abi_zig_entry_real_zig_runtime_w", "variants/abi_zig_entry_real_zig_anchor/target/release/abi_zig_entry_real_zig_anchor", "variants/abi_zig_entry_real_zig_dispatch/target/release/abi_zig_entry_real_zig_dispatch", "variants/abi_zig_entry_real_zig_per_w_set/target/release/abi_zig_entry_real_zig_per_w_set", "variants/abi_zig_entry_real_zig_null/target/release/abi_zig_entry_real_zig_null", "variants/abi_zig_entry_real_zig_tail_runtime_w/target/release/abi_zig_entry_real_zig_tail_runtime_w", "variants/abi_zig_entry_real_zig_tail_dispatch/target/release/abi_zig_entry_real_zig_tail_dispatch"]
 [[bench.abi_zig_entry_real.sizes]]
 n = 128
-variants = ["variants/abi_zig_entry_real_zig_runtime_w/target/release/abi_zig_entry_real_zig_runtime_w", "variants/abi_zig_entry_real_zig_anchor/target/release/abi_zig_entry_real_zig_anchor", "variants/abi_zig_entry_real_zig_dispatch/target/release/abi_zig_entry_real_zig_dispatch", "variants/abi_zig_entry_real_zig_per_w_set/target/release/abi_zig_entry_real_zig_per_w_set", "variants/abi_zig_entry_real_zig_null/target/release/abi_zig_entry_real_zig_null"]
+variants = ["variants/abi_zig_entry_real_zig_runtime_w/target/release/abi_zig_entry_real_zig_runtime_w", "variants/abi_zig_entry_real_zig_anchor/target/release/abi_zig_entry_real_zig_anchor", "variants/abi_zig_entry_real_zig_dispatch/target/release/abi_zig_entry_real_zig_dispatch", "variants/abi_zig_entry_real_zig_per_w_set/target/release/abi_zig_entry_real_zig_per_w_set", "variants/abi_zig_entry_real_zig_null/target/release/abi_zig_entry_real_zig_null", "variants/abi_zig_entry_real_zig_tail_runtime_w/target/release/abi_zig_entry_real_zig_tail_runtime_w", "variants/abi_zig_entry_real_zig_tail_dispatch/target/release/abi_zig_entry_real_zig_tail_dispatch"]
 [[bench.abi_zig_entry_real.sizes]]
 n = 256
-variants = ["variants/abi_zig_entry_real_zig_runtime_w/target/release/abi_zig_entry_real_zig_runtime_w", "variants/abi_zig_entry_real_zig_anchor/target/release/abi_zig_entry_real_zig_anchor", "variants/abi_zig_entry_real_zig_dispatch/target/release/abi_zig_entry_real_zig_dispatch", "variants/abi_zig_entry_real_zig_per_w_set/target/release/abi_zig_entry_real_zig_per_w_set", "variants/abi_zig_entry_real_zig_null/target/release/abi_zig_entry_real_zig_null"]
+variants = ["variants/abi_zig_entry_real_zig_runtime_w/target/release/abi_zig_entry_real_zig_runtime_w", "variants/abi_zig_entry_real_zig_anchor/target/release/abi_zig_entry_real_zig_anchor", "variants/abi_zig_entry_real_zig_dispatch/target/release/abi_zig_entry_real_zig_dispatch", "variants/abi_zig_entry_real_zig_per_w_set/target/release/abi_zig_entry_real_zig_per_w_set", "variants/abi_zig_entry_real_zig_null/target/release/abi_zig_entry_real_zig_null", "variants/abi_zig_entry_real_zig_tail_runtime_w/target/release/abi_zig_entry_real_zig_tail_runtime_w", "variants/abi_zig_entry_real_zig_tail_dispatch/target/release/abi_zig_entry_real_zig_tail_dispatch"]
 
 [bench.abi_zig_entry_madd]
 title = "abi_zig_entry (madd)"
@@ -3856,31 +3856,31 @@ mode = "subtract"
 floor = "abi_zig_entry_madd_zig_null"
 [[bench.abi_zig_entry_madd.sizes]]
 n = 1
-variants = ["variants/abi_zig_entry_madd_zig_runtime_w/target/release/abi_zig_entry_madd_zig_runtime_w", "variants/abi_zig_entry_madd_zig_anchor/target/release/abi_zig_entry_madd_zig_anchor", "variants/abi_zig_entry_madd_zig_dispatch/target/release/abi_zig_entry_madd_zig_dispatch", "variants/abi_zig_entry_madd_zig_per_w_set/target/release/abi_zig_entry_madd_zig_per_w_set", "variants/abi_zig_entry_madd_zig_null/target/release/abi_zig_entry_madd_zig_null"]
+variants = ["variants/abi_zig_entry_madd_zig_runtime_w/target/release/abi_zig_entry_madd_zig_runtime_w", "variants/abi_zig_entry_madd_zig_anchor/target/release/abi_zig_entry_madd_zig_anchor", "variants/abi_zig_entry_madd_zig_dispatch/target/release/abi_zig_entry_madd_zig_dispatch", "variants/abi_zig_entry_madd_zig_per_w_set/target/release/abi_zig_entry_madd_zig_per_w_set", "variants/abi_zig_entry_madd_zig_null/target/release/abi_zig_entry_madd_zig_null", "variants/abi_zig_entry_madd_zig_tail_runtime_w/target/release/abi_zig_entry_madd_zig_tail_runtime_w", "variants/abi_zig_entry_madd_zig_tail_dispatch/target/release/abi_zig_entry_madd_zig_tail_dispatch"]
 [[bench.abi_zig_entry_madd.sizes]]
 n = 2
-variants = ["variants/abi_zig_entry_madd_zig_runtime_w/target/release/abi_zig_entry_madd_zig_runtime_w", "variants/abi_zig_entry_madd_zig_anchor/target/release/abi_zig_entry_madd_zig_anchor", "variants/abi_zig_entry_madd_zig_dispatch/target/release/abi_zig_entry_madd_zig_dispatch", "variants/abi_zig_entry_madd_zig_per_w_set/target/release/abi_zig_entry_madd_zig_per_w_set", "variants/abi_zig_entry_madd_zig_null/target/release/abi_zig_entry_madd_zig_null"]
+variants = ["variants/abi_zig_entry_madd_zig_runtime_w/target/release/abi_zig_entry_madd_zig_runtime_w", "variants/abi_zig_entry_madd_zig_anchor/target/release/abi_zig_entry_madd_zig_anchor", "variants/abi_zig_entry_madd_zig_dispatch/target/release/abi_zig_entry_madd_zig_dispatch", "variants/abi_zig_entry_madd_zig_per_w_set/target/release/abi_zig_entry_madd_zig_per_w_set", "variants/abi_zig_entry_madd_zig_null/target/release/abi_zig_entry_madd_zig_null", "variants/abi_zig_entry_madd_zig_tail_runtime_w/target/release/abi_zig_entry_madd_zig_tail_runtime_w", "variants/abi_zig_entry_madd_zig_tail_dispatch/target/release/abi_zig_entry_madd_zig_tail_dispatch"]
 [[bench.abi_zig_entry_madd.sizes]]
 n = 4
-variants = ["variants/abi_zig_entry_madd_zig_runtime_w/target/release/abi_zig_entry_madd_zig_runtime_w", "variants/abi_zig_entry_madd_zig_anchor/target/release/abi_zig_entry_madd_zig_anchor", "variants/abi_zig_entry_madd_zig_dispatch/target/release/abi_zig_entry_madd_zig_dispatch", "variants/abi_zig_entry_madd_zig_per_w_set/target/release/abi_zig_entry_madd_zig_per_w_set", "variants/abi_zig_entry_madd_zig_null/target/release/abi_zig_entry_madd_zig_null"]
+variants = ["variants/abi_zig_entry_madd_zig_runtime_w/target/release/abi_zig_entry_madd_zig_runtime_w", "variants/abi_zig_entry_madd_zig_anchor/target/release/abi_zig_entry_madd_zig_anchor", "variants/abi_zig_entry_madd_zig_dispatch/target/release/abi_zig_entry_madd_zig_dispatch", "variants/abi_zig_entry_madd_zig_per_w_set/target/release/abi_zig_entry_madd_zig_per_w_set", "variants/abi_zig_entry_madd_zig_null/target/release/abi_zig_entry_madd_zig_null", "variants/abi_zig_entry_madd_zig_tail_runtime_w/target/release/abi_zig_entry_madd_zig_tail_runtime_w", "variants/abi_zig_entry_madd_zig_tail_dispatch/target/release/abi_zig_entry_madd_zig_tail_dispatch"]
 [[bench.abi_zig_entry_madd.sizes]]
 n = 8
-variants = ["variants/abi_zig_entry_madd_zig_runtime_w/target/release/abi_zig_entry_madd_zig_runtime_w", "variants/abi_zig_entry_madd_zig_anchor/target/release/abi_zig_entry_madd_zig_anchor", "variants/abi_zig_entry_madd_zig_dispatch/target/release/abi_zig_entry_madd_zig_dispatch", "variants/abi_zig_entry_madd_zig_per_w_set/target/release/abi_zig_entry_madd_zig_per_w_set", "variants/abi_zig_entry_madd_zig_null/target/release/abi_zig_entry_madd_zig_null"]
+variants = ["variants/abi_zig_entry_madd_zig_runtime_w/target/release/abi_zig_entry_madd_zig_runtime_w", "variants/abi_zig_entry_madd_zig_anchor/target/release/abi_zig_entry_madd_zig_anchor", "variants/abi_zig_entry_madd_zig_dispatch/target/release/abi_zig_entry_madd_zig_dispatch", "variants/abi_zig_entry_madd_zig_per_w_set/target/release/abi_zig_entry_madd_zig_per_w_set", "variants/abi_zig_entry_madd_zig_null/target/release/abi_zig_entry_madd_zig_null", "variants/abi_zig_entry_madd_zig_tail_runtime_w/target/release/abi_zig_entry_madd_zig_tail_runtime_w", "variants/abi_zig_entry_madd_zig_tail_dispatch/target/release/abi_zig_entry_madd_zig_tail_dispatch"]
 [[bench.abi_zig_entry_madd.sizes]]
 n = 16
-variants = ["variants/abi_zig_entry_madd_zig_runtime_w/target/release/abi_zig_entry_madd_zig_runtime_w", "variants/abi_zig_entry_madd_zig_anchor/target/release/abi_zig_entry_madd_zig_anchor", "variants/abi_zig_entry_madd_zig_dispatch/target/release/abi_zig_entry_madd_zig_dispatch", "variants/abi_zig_entry_madd_zig_per_w_set/target/release/abi_zig_entry_madd_zig_per_w_set", "variants/abi_zig_entry_madd_zig_null/target/release/abi_zig_entry_madd_zig_null"]
+variants = ["variants/abi_zig_entry_madd_zig_runtime_w/target/release/abi_zig_entry_madd_zig_runtime_w", "variants/abi_zig_entry_madd_zig_anchor/target/release/abi_zig_entry_madd_zig_anchor", "variants/abi_zig_entry_madd_zig_dispatch/target/release/abi_zig_entry_madd_zig_dispatch", "variants/abi_zig_entry_madd_zig_per_w_set/target/release/abi_zig_entry_madd_zig_per_w_set", "variants/abi_zig_entry_madd_zig_null/target/release/abi_zig_entry_madd_zig_null", "variants/abi_zig_entry_madd_zig_tail_runtime_w/target/release/abi_zig_entry_madd_zig_tail_runtime_w", "variants/abi_zig_entry_madd_zig_tail_dispatch/target/release/abi_zig_entry_madd_zig_tail_dispatch"]
 [[bench.abi_zig_entry_madd.sizes]]
 n = 32
-variants = ["variants/abi_zig_entry_madd_zig_runtime_w/target/release/abi_zig_entry_madd_zig_runtime_w", "variants/abi_zig_entry_madd_zig_anchor/target/release/abi_zig_entry_madd_zig_anchor", "variants/abi_zig_entry_madd_zig_dispatch/target/release/abi_zig_entry_madd_zig_dispatch", "variants/abi_zig_entry_madd_zig_per_w_set/target/release/abi_zig_entry_madd_zig_per_w_set", "variants/abi_zig_entry_madd_zig_null/target/release/abi_zig_entry_madd_zig_null"]
+variants = ["variants/abi_zig_entry_madd_zig_runtime_w/target/release/abi_zig_entry_madd_zig_runtime_w", "variants/abi_zig_entry_madd_zig_anchor/target/release/abi_zig_entry_madd_zig_anchor", "variants/abi_zig_entry_madd_zig_dispatch/target/release/abi_zig_entry_madd_zig_dispatch", "variants/abi_zig_entry_madd_zig_per_w_set/target/release/abi_zig_entry_madd_zig_per_w_set", "variants/abi_zig_entry_madd_zig_null/target/release/abi_zig_entry_madd_zig_null", "variants/abi_zig_entry_madd_zig_tail_runtime_w/target/release/abi_zig_entry_madd_zig_tail_runtime_w", "variants/abi_zig_entry_madd_zig_tail_dispatch/target/release/abi_zig_entry_madd_zig_tail_dispatch"]
 [[bench.abi_zig_entry_madd.sizes]]
 n = 64
-variants = ["variants/abi_zig_entry_madd_zig_runtime_w/target/release/abi_zig_entry_madd_zig_runtime_w", "variants/abi_zig_entry_madd_zig_anchor/target/release/abi_zig_entry_madd_zig_anchor", "variants/abi_zig_entry_madd_zig_dispatch/target/release/abi_zig_entry_madd_zig_dispatch", "variants/abi_zig_entry_madd_zig_per_w_set/target/release/abi_zig_entry_madd_zig_per_w_set", "variants/abi_zig_entry_madd_zig_null/target/release/abi_zig_entry_madd_zig_null"]
+variants = ["variants/abi_zig_entry_madd_zig_runtime_w/target/release/abi_zig_entry_madd_zig_runtime_w", "variants/abi_zig_entry_madd_zig_anchor/target/release/abi_zig_entry_madd_zig_anchor", "variants/abi_zig_entry_madd_zig_dispatch/target/release/abi_zig_entry_madd_zig_dispatch", "variants/abi_zig_entry_madd_zig_per_w_set/target/release/abi_zig_entry_madd_zig_per_w_set", "variants/abi_zig_entry_madd_zig_null/target/release/abi_zig_entry_madd_zig_null", "variants/abi_zig_entry_madd_zig_tail_runtime_w/target/release/abi_zig_entry_madd_zig_tail_runtime_w", "variants/abi_zig_entry_madd_zig_tail_dispatch/target/release/abi_zig_entry_madd_zig_tail_dispatch"]
 [[bench.abi_zig_entry_madd.sizes]]
 n = 128
-variants = ["variants/abi_zig_entry_madd_zig_runtime_w/target/release/abi_zig_entry_madd_zig_runtime_w", "variants/abi_zig_entry_madd_zig_anchor/target/release/abi_zig_entry_madd_zig_anchor", "variants/abi_zig_entry_madd_zig_dispatch/target/release/abi_zig_entry_madd_zig_dispatch", "variants/abi_zig_entry_madd_zig_per_w_set/target/release/abi_zig_entry_madd_zig_per_w_set", "variants/abi_zig_entry_madd_zig_null/target/release/abi_zig_entry_madd_zig_null"]
+variants = ["variants/abi_zig_entry_madd_zig_runtime_w/target/release/abi_zig_entry_madd_zig_runtime_w", "variants/abi_zig_entry_madd_zig_anchor/target/release/abi_zig_entry_madd_zig_anchor", "variants/abi_zig_entry_madd_zig_dispatch/target/release/abi_zig_entry_madd_zig_dispatch", "variants/abi_zig_entry_madd_zig_per_w_set/target/release/abi_zig_entry_madd_zig_per_w_set", "variants/abi_zig_entry_madd_zig_null/target/release/abi_zig_entry_madd_zig_null", "variants/abi_zig_entry_madd_zig_tail_runtime_w/target/release/abi_zig_entry_madd_zig_tail_runtime_w", "variants/abi_zig_entry_madd_zig_tail_dispatch/target/release/abi_zig_entry_madd_zig_tail_dispatch"]
 [[bench.abi_zig_entry_madd.sizes]]
 n = 256
-variants = ["variants/abi_zig_entry_madd_zig_runtime_w/target/release/abi_zig_entry_madd_zig_runtime_w", "variants/abi_zig_entry_madd_zig_anchor/target/release/abi_zig_entry_madd_zig_anchor", "variants/abi_zig_entry_madd_zig_dispatch/target/release/abi_zig_entry_madd_zig_dispatch", "variants/abi_zig_entry_madd_zig_per_w_set/target/release/abi_zig_entry_madd_zig_per_w_set", "variants/abi_zig_entry_madd_zig_null/target/release/abi_zig_entry_madd_zig_null"]
+variants = ["variants/abi_zig_entry_madd_zig_runtime_w/target/release/abi_zig_entry_madd_zig_runtime_w", "variants/abi_zig_entry_madd_zig_anchor/target/release/abi_zig_entry_madd_zig_anchor", "variants/abi_zig_entry_madd_zig_dispatch/target/release/abi_zig_entry_madd_zig_dispatch", "variants/abi_zig_entry_madd_zig_per_w_set/target/release/abi_zig_entry_madd_zig_per_w_set", "variants/abi_zig_entry_madd_zig_null/target/release/abi_zig_entry_madd_zig_null", "variants/abi_zig_entry_madd_zig_tail_runtime_w/target/release/abi_zig_entry_madd_zig_tail_runtime_w", "variants/abi_zig_entry_madd_zig_tail_dispatch/target/release/abi_zig_entry_madd_zig_tail_dispatch"]
 
 [bench.abi_zig_entry_tight]
 title = "abi_zig_entry (tight)"
@@ -3892,31 +3892,31 @@ mode = "subtract"
 floor = "abi_zig_entry_tight_zig_null"
 [[bench.abi_zig_entry_tight.sizes]]
 n = 1
-variants = ["variants/abi_zig_entry_tight_zig_runtime_w/target/release/abi_zig_entry_tight_zig_runtime_w", "variants/abi_zig_entry_tight_zig_anchor/target/release/abi_zig_entry_tight_zig_anchor", "variants/abi_zig_entry_tight_zig_dispatch/target/release/abi_zig_entry_tight_zig_dispatch", "variants/abi_zig_entry_tight_zig_per_w_set/target/release/abi_zig_entry_tight_zig_per_w_set", "variants/abi_zig_entry_tight_zig_null/target/release/abi_zig_entry_tight_zig_null"]
+variants = ["variants/abi_zig_entry_tight_zig_runtime_w/target/release/abi_zig_entry_tight_zig_runtime_w", "variants/abi_zig_entry_tight_zig_anchor/target/release/abi_zig_entry_tight_zig_anchor", "variants/abi_zig_entry_tight_zig_dispatch/target/release/abi_zig_entry_tight_zig_dispatch", "variants/abi_zig_entry_tight_zig_per_w_set/target/release/abi_zig_entry_tight_zig_per_w_set", "variants/abi_zig_entry_tight_zig_null/target/release/abi_zig_entry_tight_zig_null", "variants/abi_zig_entry_tight_zig_tail_runtime_w/target/release/abi_zig_entry_tight_zig_tail_runtime_w", "variants/abi_zig_entry_tight_zig_tail_dispatch/target/release/abi_zig_entry_tight_zig_tail_dispatch"]
 [[bench.abi_zig_entry_tight.sizes]]
 n = 2
-variants = ["variants/abi_zig_entry_tight_zig_runtime_w/target/release/abi_zig_entry_tight_zig_runtime_w", "variants/abi_zig_entry_tight_zig_anchor/target/release/abi_zig_entry_tight_zig_anchor", "variants/abi_zig_entry_tight_zig_dispatch/target/release/abi_zig_entry_tight_zig_dispatch", "variants/abi_zig_entry_tight_zig_per_w_set/target/release/abi_zig_entry_tight_zig_per_w_set", "variants/abi_zig_entry_tight_zig_null/target/release/abi_zig_entry_tight_zig_null"]
+variants = ["variants/abi_zig_entry_tight_zig_runtime_w/target/release/abi_zig_entry_tight_zig_runtime_w", "variants/abi_zig_entry_tight_zig_anchor/target/release/abi_zig_entry_tight_zig_anchor", "variants/abi_zig_entry_tight_zig_dispatch/target/release/abi_zig_entry_tight_zig_dispatch", "variants/abi_zig_entry_tight_zig_per_w_set/target/release/abi_zig_entry_tight_zig_per_w_set", "variants/abi_zig_entry_tight_zig_null/target/release/abi_zig_entry_tight_zig_null", "variants/abi_zig_entry_tight_zig_tail_runtime_w/target/release/abi_zig_entry_tight_zig_tail_runtime_w", "variants/abi_zig_entry_tight_zig_tail_dispatch/target/release/abi_zig_entry_tight_zig_tail_dispatch"]
 [[bench.abi_zig_entry_tight.sizes]]
 n = 4
-variants = ["variants/abi_zig_entry_tight_zig_runtime_w/target/release/abi_zig_entry_tight_zig_runtime_w", "variants/abi_zig_entry_tight_zig_anchor/target/release/abi_zig_entry_tight_zig_anchor", "variants/abi_zig_entry_tight_zig_dispatch/target/release/abi_zig_entry_tight_zig_dispatch", "variants/abi_zig_entry_tight_zig_per_w_set/target/release/abi_zig_entry_tight_zig_per_w_set", "variants/abi_zig_entry_tight_zig_null/target/release/abi_zig_entry_tight_zig_null"]
+variants = ["variants/abi_zig_entry_tight_zig_runtime_w/target/release/abi_zig_entry_tight_zig_runtime_w", "variants/abi_zig_entry_tight_zig_anchor/target/release/abi_zig_entry_tight_zig_anchor", "variants/abi_zig_entry_tight_zig_dispatch/target/release/abi_zig_entry_tight_zig_dispatch", "variants/abi_zig_entry_tight_zig_per_w_set/target/release/abi_zig_entry_tight_zig_per_w_set", "variants/abi_zig_entry_tight_zig_null/target/release/abi_zig_entry_tight_zig_null", "variants/abi_zig_entry_tight_zig_tail_runtime_w/target/release/abi_zig_entry_tight_zig_tail_runtime_w", "variants/abi_zig_entry_tight_zig_tail_dispatch/target/release/abi_zig_entry_tight_zig_tail_dispatch"]
 [[bench.abi_zig_entry_tight.sizes]]
 n = 8
-variants = ["variants/abi_zig_entry_tight_zig_runtime_w/target/release/abi_zig_entry_tight_zig_runtime_w", "variants/abi_zig_entry_tight_zig_anchor/target/release/abi_zig_entry_tight_zig_anchor", "variants/abi_zig_entry_tight_zig_dispatch/target/release/abi_zig_entry_tight_zig_dispatch", "variants/abi_zig_entry_tight_zig_per_w_set/target/release/abi_zig_entry_tight_zig_per_w_set", "variants/abi_zig_entry_tight_zig_null/target/release/abi_zig_entry_tight_zig_null"]
+variants = ["variants/abi_zig_entry_tight_zig_runtime_w/target/release/abi_zig_entry_tight_zig_runtime_w", "variants/abi_zig_entry_tight_zig_anchor/target/release/abi_zig_entry_tight_zig_anchor", "variants/abi_zig_entry_tight_zig_dispatch/target/release/abi_zig_entry_tight_zig_dispatch", "variants/abi_zig_entry_tight_zig_per_w_set/target/release/abi_zig_entry_tight_zig_per_w_set", "variants/abi_zig_entry_tight_zig_null/target/release/abi_zig_entry_tight_zig_null", "variants/abi_zig_entry_tight_zig_tail_runtime_w/target/release/abi_zig_entry_tight_zig_tail_runtime_w", "variants/abi_zig_entry_tight_zig_tail_dispatch/target/release/abi_zig_entry_tight_zig_tail_dispatch"]
 [[bench.abi_zig_entry_tight.sizes]]
 n = 16
-variants = ["variants/abi_zig_entry_tight_zig_runtime_w/target/release/abi_zig_entry_tight_zig_runtime_w", "variants/abi_zig_entry_tight_zig_anchor/target/release/abi_zig_entry_tight_zig_anchor", "variants/abi_zig_entry_tight_zig_dispatch/target/release/abi_zig_entry_tight_zig_dispatch", "variants/abi_zig_entry_tight_zig_per_w_set/target/release/abi_zig_entry_tight_zig_per_w_set", "variants/abi_zig_entry_tight_zig_null/target/release/abi_zig_entry_tight_zig_null"]
+variants = ["variants/abi_zig_entry_tight_zig_runtime_w/target/release/abi_zig_entry_tight_zig_runtime_w", "variants/abi_zig_entry_tight_zig_anchor/target/release/abi_zig_entry_tight_zig_anchor", "variants/abi_zig_entry_tight_zig_dispatch/target/release/abi_zig_entry_tight_zig_dispatch", "variants/abi_zig_entry_tight_zig_per_w_set/target/release/abi_zig_entry_tight_zig_per_w_set", "variants/abi_zig_entry_tight_zig_null/target/release/abi_zig_entry_tight_zig_null", "variants/abi_zig_entry_tight_zig_tail_runtime_w/target/release/abi_zig_entry_tight_zig_tail_runtime_w", "variants/abi_zig_entry_tight_zig_tail_dispatch/target/release/abi_zig_entry_tight_zig_tail_dispatch"]
 [[bench.abi_zig_entry_tight.sizes]]
 n = 32
-variants = ["variants/abi_zig_entry_tight_zig_runtime_w/target/release/abi_zig_entry_tight_zig_runtime_w", "variants/abi_zig_entry_tight_zig_anchor/target/release/abi_zig_entry_tight_zig_anchor", "variants/abi_zig_entry_tight_zig_dispatch/target/release/abi_zig_entry_tight_zig_dispatch", "variants/abi_zig_entry_tight_zig_per_w_set/target/release/abi_zig_entry_tight_zig_per_w_set", "variants/abi_zig_entry_tight_zig_null/target/release/abi_zig_entry_tight_zig_null"]
+variants = ["variants/abi_zig_entry_tight_zig_runtime_w/target/release/abi_zig_entry_tight_zig_runtime_w", "variants/abi_zig_entry_tight_zig_anchor/target/release/abi_zig_entry_tight_zig_anchor", "variants/abi_zig_entry_tight_zig_dispatch/target/release/abi_zig_entry_tight_zig_dispatch", "variants/abi_zig_entry_tight_zig_per_w_set/target/release/abi_zig_entry_tight_zig_per_w_set", "variants/abi_zig_entry_tight_zig_null/target/release/abi_zig_entry_tight_zig_null", "variants/abi_zig_entry_tight_zig_tail_runtime_w/target/release/abi_zig_entry_tight_zig_tail_runtime_w", "variants/abi_zig_entry_tight_zig_tail_dispatch/target/release/abi_zig_entry_tight_zig_tail_dispatch"]
 [[bench.abi_zig_entry_tight.sizes]]
 n = 64
-variants = ["variants/abi_zig_entry_tight_zig_runtime_w/target/release/abi_zig_entry_tight_zig_runtime_w", "variants/abi_zig_entry_tight_zig_anchor/target/release/abi_zig_entry_tight_zig_anchor", "variants/abi_zig_entry_tight_zig_dispatch/target/release/abi_zig_entry_tight_zig_dispatch", "variants/abi_zig_entry_tight_zig_per_w_set/target/release/abi_zig_entry_tight_zig_per_w_set", "variants/abi_zig_entry_tight_zig_null/target/release/abi_zig_entry_tight_zig_null"]
+variants = ["variants/abi_zig_entry_tight_zig_runtime_w/target/release/abi_zig_entry_tight_zig_runtime_w", "variants/abi_zig_entry_tight_zig_anchor/target/release/abi_zig_entry_tight_zig_anchor", "variants/abi_zig_entry_tight_zig_dispatch/target/release/abi_zig_entry_tight_zig_dispatch", "variants/abi_zig_entry_tight_zig_per_w_set/target/release/abi_zig_entry_tight_zig_per_w_set", "variants/abi_zig_entry_tight_zig_null/target/release/abi_zig_entry_tight_zig_null", "variants/abi_zig_entry_tight_zig_tail_runtime_w/target/release/abi_zig_entry_tight_zig_tail_runtime_w", "variants/abi_zig_entry_tight_zig_tail_dispatch/target/release/abi_zig_entry_tight_zig_tail_dispatch"]
 [[bench.abi_zig_entry_tight.sizes]]
 n = 128
-variants = ["variants/abi_zig_entry_tight_zig_runtime_w/target/release/abi_zig_entry_tight_zig_runtime_w", "variants/abi_zig_entry_tight_zig_anchor/target/release/abi_zig_entry_tight_zig_anchor", "variants/abi_zig_entry_tight_zig_dispatch/target/release/abi_zig_entry_tight_zig_dispatch", "variants/abi_zig_entry_tight_zig_per_w_set/target/release/abi_zig_entry_tight_zig_per_w_set", "variants/abi_zig_entry_tight_zig_null/target/release/abi_zig_entry_tight_zig_null"]
+variants = ["variants/abi_zig_entry_tight_zig_runtime_w/target/release/abi_zig_entry_tight_zig_runtime_w", "variants/abi_zig_entry_tight_zig_anchor/target/release/abi_zig_entry_tight_zig_anchor", "variants/abi_zig_entry_tight_zig_dispatch/target/release/abi_zig_entry_tight_zig_dispatch", "variants/abi_zig_entry_tight_zig_per_w_set/target/release/abi_zig_entry_tight_zig_per_w_set", "variants/abi_zig_entry_tight_zig_null/target/release/abi_zig_entry_tight_zig_null", "variants/abi_zig_entry_tight_zig_tail_runtime_w/target/release/abi_zig_entry_tight_zig_tail_runtime_w", "variants/abi_zig_entry_tight_zig_tail_dispatch/target/release/abi_zig_entry_tight_zig_tail_dispatch"]
 [[bench.abi_zig_entry_tight.sizes]]
 n = 256
-variants = ["variants/abi_zig_entry_tight_zig_runtime_w/target/release/abi_zig_entry_tight_zig_runtime_w", "variants/abi_zig_entry_tight_zig_anchor/target/release/abi_zig_entry_tight_zig_anchor", "variants/abi_zig_entry_tight_zig_dispatch/target/release/abi_zig_entry_tight_zig_dispatch", "variants/abi_zig_entry_tight_zig_per_w_set/target/release/abi_zig_entry_tight_zig_per_w_set", "variants/abi_zig_entry_tight_zig_null/target/release/abi_zig_entry_tight_zig_null"]
+variants = ["variants/abi_zig_entry_tight_zig_runtime_w/target/release/abi_zig_entry_tight_zig_runtime_w", "variants/abi_zig_entry_tight_zig_anchor/target/release/abi_zig_entry_tight_zig_anchor", "variants/abi_zig_entry_tight_zig_dispatch/target/release/abi_zig_entry_tight_zig_dispatch", "variants/abi_zig_entry_tight_zig_per_w_set/target/release/abi_zig_entry_tight_zig_per_w_set", "variants/abi_zig_entry_tight_zig_null/target/release/abi_zig_entry_tight_zig_null", "variants/abi_zig_entry_tight_zig_tail_runtime_w/target/release/abi_zig_entry_tight_zig_tail_runtime_w", "variants/abi_zig_entry_tight_zig_tail_dispatch/target/release/abi_zig_entry_tight_zig_tail_dispatch"]
 
 [bench.abi_zig_entry_scatter]
 title = "abi_zig_entry (scatter)"
@@ -3928,31 +3928,31 @@ mode = "subtract"
 floor = "abi_zig_entry_scatter_zig_null"
 [[bench.abi_zig_entry_scatter.sizes]]
 n = 1
-variants = ["variants/abi_zig_entry_scatter_zig_runtime_w/target/release/abi_zig_entry_scatter_zig_runtime_w", "variants/abi_zig_entry_scatter_zig_anchor/target/release/abi_zig_entry_scatter_zig_anchor", "variants/abi_zig_entry_scatter_zig_dispatch/target/release/abi_zig_entry_scatter_zig_dispatch", "variants/abi_zig_entry_scatter_zig_per_w_set/target/release/abi_zig_entry_scatter_zig_per_w_set", "variants/abi_zig_entry_scatter_zig_null/target/release/abi_zig_entry_scatter_zig_null"]
+variants = ["variants/abi_zig_entry_scatter_zig_runtime_w/target/release/abi_zig_entry_scatter_zig_runtime_w", "variants/abi_zig_entry_scatter_zig_anchor/target/release/abi_zig_entry_scatter_zig_anchor", "variants/abi_zig_entry_scatter_zig_dispatch/target/release/abi_zig_entry_scatter_zig_dispatch", "variants/abi_zig_entry_scatter_zig_per_w_set/target/release/abi_zig_entry_scatter_zig_per_w_set", "variants/abi_zig_entry_scatter_zig_null/target/release/abi_zig_entry_scatter_zig_null", "variants/abi_zig_entry_scatter_zig_tail_runtime_w/target/release/abi_zig_entry_scatter_zig_tail_runtime_w", "variants/abi_zig_entry_scatter_zig_tail_dispatch/target/release/abi_zig_entry_scatter_zig_tail_dispatch"]
 [[bench.abi_zig_entry_scatter.sizes]]
 n = 2
-variants = ["variants/abi_zig_entry_scatter_zig_runtime_w/target/release/abi_zig_entry_scatter_zig_runtime_w", "variants/abi_zig_entry_scatter_zig_anchor/target/release/abi_zig_entry_scatter_zig_anchor", "variants/abi_zig_entry_scatter_zig_dispatch/target/release/abi_zig_entry_scatter_zig_dispatch", "variants/abi_zig_entry_scatter_zig_per_w_set/target/release/abi_zig_entry_scatter_zig_per_w_set", "variants/abi_zig_entry_scatter_zig_null/target/release/abi_zig_entry_scatter_zig_null"]
+variants = ["variants/abi_zig_entry_scatter_zig_runtime_w/target/release/abi_zig_entry_scatter_zig_runtime_w", "variants/abi_zig_entry_scatter_zig_anchor/target/release/abi_zig_entry_scatter_zig_anchor", "variants/abi_zig_entry_scatter_zig_dispatch/target/release/abi_zig_entry_scatter_zig_dispatch", "variants/abi_zig_entry_scatter_zig_per_w_set/target/release/abi_zig_entry_scatter_zig_per_w_set", "variants/abi_zig_entry_scatter_zig_null/target/release/abi_zig_entry_scatter_zig_null", "variants/abi_zig_entry_scatter_zig_tail_runtime_w/target/release/abi_zig_entry_scatter_zig_tail_runtime_w", "variants/abi_zig_entry_scatter_zig_tail_dispatch/target/release/abi_zig_entry_scatter_zig_tail_dispatch"]
 [[bench.abi_zig_entry_scatter.sizes]]
 n = 4
-variants = ["variants/abi_zig_entry_scatter_zig_runtime_w/target/release/abi_zig_entry_scatter_zig_runtime_w", "variants/abi_zig_entry_scatter_zig_anchor/target/release/abi_zig_entry_scatter_zig_anchor", "variants/abi_zig_entry_scatter_zig_dispatch/target/release/abi_zig_entry_scatter_zig_dispatch", "variants/abi_zig_entry_scatter_zig_per_w_set/target/release/abi_zig_entry_scatter_zig_per_w_set", "variants/abi_zig_entry_scatter_zig_null/target/release/abi_zig_entry_scatter_zig_null"]
+variants = ["variants/abi_zig_entry_scatter_zig_runtime_w/target/release/abi_zig_entry_scatter_zig_runtime_w", "variants/abi_zig_entry_scatter_zig_anchor/target/release/abi_zig_entry_scatter_zig_anchor", "variants/abi_zig_entry_scatter_zig_dispatch/target/release/abi_zig_entry_scatter_zig_dispatch", "variants/abi_zig_entry_scatter_zig_per_w_set/target/release/abi_zig_entry_scatter_zig_per_w_set", "variants/abi_zig_entry_scatter_zig_null/target/release/abi_zig_entry_scatter_zig_null", "variants/abi_zig_entry_scatter_zig_tail_runtime_w/target/release/abi_zig_entry_scatter_zig_tail_runtime_w", "variants/abi_zig_entry_scatter_zig_tail_dispatch/target/release/abi_zig_entry_scatter_zig_tail_dispatch"]
 [[bench.abi_zig_entry_scatter.sizes]]
 n = 8
-variants = ["variants/abi_zig_entry_scatter_zig_runtime_w/target/release/abi_zig_entry_scatter_zig_runtime_w", "variants/abi_zig_entry_scatter_zig_anchor/target/release/abi_zig_entry_scatter_zig_anchor", "variants/abi_zig_entry_scatter_zig_dispatch/target/release/abi_zig_entry_scatter_zig_dispatch", "variants/abi_zig_entry_scatter_zig_per_w_set/target/release/abi_zig_entry_scatter_zig_per_w_set", "variants/abi_zig_entry_scatter_zig_null/target/release/abi_zig_entry_scatter_zig_null"]
+variants = ["variants/abi_zig_entry_scatter_zig_runtime_w/target/release/abi_zig_entry_scatter_zig_runtime_w", "variants/abi_zig_entry_scatter_zig_anchor/target/release/abi_zig_entry_scatter_zig_anchor", "variants/abi_zig_entry_scatter_zig_dispatch/target/release/abi_zig_entry_scatter_zig_dispatch", "variants/abi_zig_entry_scatter_zig_per_w_set/target/release/abi_zig_entry_scatter_zig_per_w_set", "variants/abi_zig_entry_scatter_zig_null/target/release/abi_zig_entry_scatter_zig_null", "variants/abi_zig_entry_scatter_zig_tail_runtime_w/target/release/abi_zig_entry_scatter_zig_tail_runtime_w", "variants/abi_zig_entry_scatter_zig_tail_dispatch/target/release/abi_zig_entry_scatter_zig_tail_dispatch"]
 [[bench.abi_zig_entry_scatter.sizes]]
 n = 16
-variants = ["variants/abi_zig_entry_scatter_zig_runtime_w/target/release/abi_zig_entry_scatter_zig_runtime_w", "variants/abi_zig_entry_scatter_zig_anchor/target/release/abi_zig_entry_scatter_zig_anchor", "variants/abi_zig_entry_scatter_zig_dispatch/target/release/abi_zig_entry_scatter_zig_dispatch", "variants/abi_zig_entry_scatter_zig_per_w_set/target/release/abi_zig_entry_scatter_zig_per_w_set", "variants/abi_zig_entry_scatter_zig_null/target/release/abi_zig_entry_scatter_zig_null"]
+variants = ["variants/abi_zig_entry_scatter_zig_runtime_w/target/release/abi_zig_entry_scatter_zig_runtime_w", "variants/abi_zig_entry_scatter_zig_anchor/target/release/abi_zig_entry_scatter_zig_anchor", "variants/abi_zig_entry_scatter_zig_dispatch/target/release/abi_zig_entry_scatter_zig_dispatch", "variants/abi_zig_entry_scatter_zig_per_w_set/target/release/abi_zig_entry_scatter_zig_per_w_set", "variants/abi_zig_entry_scatter_zig_null/target/release/abi_zig_entry_scatter_zig_null", "variants/abi_zig_entry_scatter_zig_tail_runtime_w/target/release/abi_zig_entry_scatter_zig_tail_runtime_w", "variants/abi_zig_entry_scatter_zig_tail_dispatch/target/release/abi_zig_entry_scatter_zig_tail_dispatch"]
 [[bench.abi_zig_entry_scatter.sizes]]
 n = 32
-variants = ["variants/abi_zig_entry_scatter_zig_runtime_w/target/release/abi_zig_entry_scatter_zig_runtime_w", "variants/abi_zig_entry_scatter_zig_anchor/target/release/abi_zig_entry_scatter_zig_anchor", "variants/abi_zig_entry_scatter_zig_dispatch/target/release/abi_zig_entry_scatter_zig_dispatch", "variants/abi_zig_entry_scatter_zig_per_w_set/target/release/abi_zig_entry_scatter_zig_per_w_set", "variants/abi_zig_entry_scatter_zig_null/target/release/abi_zig_entry_scatter_zig_null"]
+variants = ["variants/abi_zig_entry_scatter_zig_runtime_w/target/release/abi_zig_entry_scatter_zig_runtime_w", "variants/abi_zig_entry_scatter_zig_anchor/target/release/abi_zig_entry_scatter_zig_anchor", "variants/abi_zig_entry_scatter_zig_dispatch/target/release/abi_zig_entry_scatter_zig_dispatch", "variants/abi_zig_entry_scatter_zig_per_w_set/target/release/abi_zig_entry_scatter_zig_per_w_set", "variants/abi_zig_entry_scatter_zig_null/target/release/abi_zig_entry_scatter_zig_null", "variants/abi_zig_entry_scatter_zig_tail_runtime_w/target/release/abi_zig_entry_scatter_zig_tail_runtime_w", "variants/abi_zig_entry_scatter_zig_tail_dispatch/target/release/abi_zig_entry_scatter_zig_tail_dispatch"]
 [[bench.abi_zig_entry_scatter.sizes]]
 n = 64
-variants = ["variants/abi_zig_entry_scatter_zig_runtime_w/target/release/abi_zig_entry_scatter_zig_runtime_w", "variants/abi_zig_entry_scatter_zig_anchor/target/release/abi_zig_entry_scatter_zig_anchor", "variants/abi_zig_entry_scatter_zig_dispatch/target/release/abi_zig_entry_scatter_zig_dispatch", "variants/abi_zig_entry_scatter_zig_per_w_set/target/release/abi_zig_entry_scatter_zig_per_w_set", "variants/abi_zig_entry_scatter_zig_null/target/release/abi_zig_entry_scatter_zig_null"]
+variants = ["variants/abi_zig_entry_scatter_zig_runtime_w/target/release/abi_zig_entry_scatter_zig_runtime_w", "variants/abi_zig_entry_scatter_zig_anchor/target/release/abi_zig_entry_scatter_zig_anchor", "variants/abi_zig_entry_scatter_zig_dispatch/target/release/abi_zig_entry_scatter_zig_dispatch", "variants/abi_zig_entry_scatter_zig_per_w_set/target/release/abi_zig_entry_scatter_zig_per_w_set", "variants/abi_zig_entry_scatter_zig_null/target/release/abi_zig_entry_scatter_zig_null", "variants/abi_zig_entry_scatter_zig_tail_runtime_w/target/release/abi_zig_entry_scatter_zig_tail_runtime_w", "variants/abi_zig_entry_scatter_zig_tail_dispatch/target/release/abi_zig_entry_scatter_zig_tail_dispatch"]
 [[bench.abi_zig_entry_scatter.sizes]]
 n = 128
-variants = ["variants/abi_zig_entry_scatter_zig_runtime_w/target/release/abi_zig_entry_scatter_zig_runtime_w", "variants/abi_zig_entry_scatter_zig_anchor/target/release/abi_zig_entry_scatter_zig_anchor", "variants/abi_zig_entry_scatter_zig_dispatch/target/release/abi_zig_entry_scatter_zig_dispatch", "variants/abi_zig_entry_scatter_zig_per_w_set/target/release/abi_zig_entry_scatter_zig_per_w_set", "variants/abi_zig_entry_scatter_zig_null/target/release/abi_zig_entry_scatter_zig_null"]
+variants = ["variants/abi_zig_entry_scatter_zig_runtime_w/target/release/abi_zig_entry_scatter_zig_runtime_w", "variants/abi_zig_entry_scatter_zig_anchor/target/release/abi_zig_entry_scatter_zig_anchor", "variants/abi_zig_entry_scatter_zig_dispatch/target/release/abi_zig_entry_scatter_zig_dispatch", "variants/abi_zig_entry_scatter_zig_per_w_set/target/release/abi_zig_entry_scatter_zig_per_w_set", "variants/abi_zig_entry_scatter_zig_null/target/release/abi_zig_entry_scatter_zig_null", "variants/abi_zig_entry_scatter_zig_tail_runtime_w/target/release/abi_zig_entry_scatter_zig_tail_runtime_w", "variants/abi_zig_entry_scatter_zig_tail_dispatch/target/release/abi_zig_entry_scatter_zig_tail_dispatch"]
 [[bench.abi_zig_entry_scatter.sizes]]
 n = 256
-variants = ["variants/abi_zig_entry_scatter_zig_runtime_w/target/release/abi_zig_entry_scatter_zig_runtime_w", "variants/abi_zig_entry_scatter_zig_anchor/target/release/abi_zig_entry_scatter_zig_anchor", "variants/abi_zig_entry_scatter_zig_dispatch/target/release/abi_zig_entry_scatter_zig_dispatch", "variants/abi_zig_entry_scatter_zig_per_w_set/target/release/abi_zig_entry_scatter_zig_per_w_set", "variants/abi_zig_entry_scatter_zig_null/target/release/abi_zig_entry_scatter_zig_null"]
+variants = ["variants/abi_zig_entry_scatter_zig_runtime_w/target/release/abi_zig_entry_scatter_zig_runtime_w", "variants/abi_zig_entry_scatter_zig_anchor/target/release/abi_zig_entry_scatter_zig_anchor", "variants/abi_zig_entry_scatter_zig_dispatch/target/release/abi_zig_entry_scatter_zig_dispatch", "variants/abi_zig_entry_scatter_zig_per_w_set/target/release/abi_zig_entry_scatter_zig_per_w_set", "variants/abi_zig_entry_scatter_zig_null/target/release/abi_zig_entry_scatter_zig_null", "variants/abi_zig_entry_scatter_zig_tail_runtime_w/target/release/abi_zig_entry_scatter_zig_tail_runtime_w", "variants/abi_zig_entry_scatter_zig_tail_dispatch/target/release/abi_zig_entry_scatter_zig_tail_dispatch"]
 
 [bench.abi_zig_entry_wideselect]
 title = "abi_zig_entry (wideselect)"
@@ -3964,31 +3964,31 @@ mode = "subtract"
 floor = "abi_zig_entry_wideselect_zig_null"
 [[bench.abi_zig_entry_wideselect.sizes]]
 n = 1
-variants = ["variants/abi_zig_entry_wideselect_zig_runtime_w/target/release/abi_zig_entry_wideselect_zig_runtime_w", "variants/abi_zig_entry_wideselect_zig_anchor/target/release/abi_zig_entry_wideselect_zig_anchor", "variants/abi_zig_entry_wideselect_zig_dispatch/target/release/abi_zig_entry_wideselect_zig_dispatch", "variants/abi_zig_entry_wideselect_zig_per_w_set/target/release/abi_zig_entry_wideselect_zig_per_w_set", "variants/abi_zig_entry_wideselect_zig_null/target/release/abi_zig_entry_wideselect_zig_null"]
+variants = ["variants/abi_zig_entry_wideselect_zig_runtime_w/target/release/abi_zig_entry_wideselect_zig_runtime_w", "variants/abi_zig_entry_wideselect_zig_anchor/target/release/abi_zig_entry_wideselect_zig_anchor", "variants/abi_zig_entry_wideselect_zig_dispatch/target/release/abi_zig_entry_wideselect_zig_dispatch", "variants/abi_zig_entry_wideselect_zig_per_w_set/target/release/abi_zig_entry_wideselect_zig_per_w_set", "variants/abi_zig_entry_wideselect_zig_null/target/release/abi_zig_entry_wideselect_zig_null", "variants/abi_zig_entry_wideselect_zig_tail_runtime_w/target/release/abi_zig_entry_wideselect_zig_tail_runtime_w", "variants/abi_zig_entry_wideselect_zig_tail_dispatch/target/release/abi_zig_entry_wideselect_zig_tail_dispatch"]
 [[bench.abi_zig_entry_wideselect.sizes]]
 n = 2
-variants = ["variants/abi_zig_entry_wideselect_zig_runtime_w/target/release/abi_zig_entry_wideselect_zig_runtime_w", "variants/abi_zig_entry_wideselect_zig_anchor/target/release/abi_zig_entry_wideselect_zig_anchor", "variants/abi_zig_entry_wideselect_zig_dispatch/target/release/abi_zig_entry_wideselect_zig_dispatch", "variants/abi_zig_entry_wideselect_zig_per_w_set/target/release/abi_zig_entry_wideselect_zig_per_w_set", "variants/abi_zig_entry_wideselect_zig_null/target/release/abi_zig_entry_wideselect_zig_null"]
+variants = ["variants/abi_zig_entry_wideselect_zig_runtime_w/target/release/abi_zig_entry_wideselect_zig_runtime_w", "variants/abi_zig_entry_wideselect_zig_anchor/target/release/abi_zig_entry_wideselect_zig_anchor", "variants/abi_zig_entry_wideselect_zig_dispatch/target/release/abi_zig_entry_wideselect_zig_dispatch", "variants/abi_zig_entry_wideselect_zig_per_w_set/target/release/abi_zig_entry_wideselect_zig_per_w_set", "variants/abi_zig_entry_wideselect_zig_null/target/release/abi_zig_entry_wideselect_zig_null", "variants/abi_zig_entry_wideselect_zig_tail_runtime_w/target/release/abi_zig_entry_wideselect_zig_tail_runtime_w", "variants/abi_zig_entry_wideselect_zig_tail_dispatch/target/release/abi_zig_entry_wideselect_zig_tail_dispatch"]
 [[bench.abi_zig_entry_wideselect.sizes]]
 n = 4
-variants = ["variants/abi_zig_entry_wideselect_zig_runtime_w/target/release/abi_zig_entry_wideselect_zig_runtime_w", "variants/abi_zig_entry_wideselect_zig_anchor/target/release/abi_zig_entry_wideselect_zig_anchor", "variants/abi_zig_entry_wideselect_zig_dispatch/target/release/abi_zig_entry_wideselect_zig_dispatch", "variants/abi_zig_entry_wideselect_zig_per_w_set/target/release/abi_zig_entry_wideselect_zig_per_w_set", "variants/abi_zig_entry_wideselect_zig_null/target/release/abi_zig_entry_wideselect_zig_null"]
+variants = ["variants/abi_zig_entry_wideselect_zig_runtime_w/target/release/abi_zig_entry_wideselect_zig_runtime_w", "variants/abi_zig_entry_wideselect_zig_anchor/target/release/abi_zig_entry_wideselect_zig_anchor", "variants/abi_zig_entry_wideselect_zig_dispatch/target/release/abi_zig_entry_wideselect_zig_dispatch", "variants/abi_zig_entry_wideselect_zig_per_w_set/target/release/abi_zig_entry_wideselect_zig_per_w_set", "variants/abi_zig_entry_wideselect_zig_null/target/release/abi_zig_entry_wideselect_zig_null", "variants/abi_zig_entry_wideselect_zig_tail_runtime_w/target/release/abi_zig_entry_wideselect_zig_tail_runtime_w", "variants/abi_zig_entry_wideselect_zig_tail_dispatch/target/release/abi_zig_entry_wideselect_zig_tail_dispatch"]
 [[bench.abi_zig_entry_wideselect.sizes]]
 n = 8
-variants = ["variants/abi_zig_entry_wideselect_zig_runtime_w/target/release/abi_zig_entry_wideselect_zig_runtime_w", "variants/abi_zig_entry_wideselect_zig_anchor/target/release/abi_zig_entry_wideselect_zig_anchor", "variants/abi_zig_entry_wideselect_zig_dispatch/target/release/abi_zig_entry_wideselect_zig_dispatch", "variants/abi_zig_entry_wideselect_zig_per_w_set/target/release/abi_zig_entry_wideselect_zig_per_w_set", "variants/abi_zig_entry_wideselect_zig_null/target/release/abi_zig_entry_wideselect_zig_null"]
+variants = ["variants/abi_zig_entry_wideselect_zig_runtime_w/target/release/abi_zig_entry_wideselect_zig_runtime_w", "variants/abi_zig_entry_wideselect_zig_anchor/target/release/abi_zig_entry_wideselect_zig_anchor", "variants/abi_zig_entry_wideselect_zig_dispatch/target/release/abi_zig_entry_wideselect_zig_dispatch", "variants/abi_zig_entry_wideselect_zig_per_w_set/target/release/abi_zig_entry_wideselect_zig_per_w_set", "variants/abi_zig_entry_wideselect_zig_null/target/release/abi_zig_entry_wideselect_zig_null", "variants/abi_zig_entry_wideselect_zig_tail_runtime_w/target/release/abi_zig_entry_wideselect_zig_tail_runtime_w", "variants/abi_zig_entry_wideselect_zig_tail_dispatch/target/release/abi_zig_entry_wideselect_zig_tail_dispatch"]
 [[bench.abi_zig_entry_wideselect.sizes]]
 n = 16
-variants = ["variants/abi_zig_entry_wideselect_zig_runtime_w/target/release/abi_zig_entry_wideselect_zig_runtime_w", "variants/abi_zig_entry_wideselect_zig_anchor/target/release/abi_zig_entry_wideselect_zig_anchor", "variants/abi_zig_entry_wideselect_zig_dispatch/target/release/abi_zig_entry_wideselect_zig_dispatch", "variants/abi_zig_entry_wideselect_zig_per_w_set/target/release/abi_zig_entry_wideselect_zig_per_w_set", "variants/abi_zig_entry_wideselect_zig_null/target/release/abi_zig_entry_wideselect_zig_null"]
+variants = ["variants/abi_zig_entry_wideselect_zig_runtime_w/target/release/abi_zig_entry_wideselect_zig_runtime_w", "variants/abi_zig_entry_wideselect_zig_anchor/target/release/abi_zig_entry_wideselect_zig_anchor", "variants/abi_zig_entry_wideselect_zig_dispatch/target/release/abi_zig_entry_wideselect_zig_dispatch", "variants/abi_zig_entry_wideselect_zig_per_w_set/target/release/abi_zig_entry_wideselect_zig_per_w_set", "variants/abi_zig_entry_wideselect_zig_null/target/release/abi_zig_entry_wideselect_zig_null", "variants/abi_zig_entry_wideselect_zig_tail_runtime_w/target/release/abi_zig_entry_wideselect_zig_tail_runtime_w", "variants/abi_zig_entry_wideselect_zig_tail_dispatch/target/release/abi_zig_entry_wideselect_zig_tail_dispatch"]
 [[bench.abi_zig_entry_wideselect.sizes]]
 n = 32
-variants = ["variants/abi_zig_entry_wideselect_zig_runtime_w/target/release/abi_zig_entry_wideselect_zig_runtime_w", "variants/abi_zig_entry_wideselect_zig_anchor/target/release/abi_zig_entry_wideselect_zig_anchor", "variants/abi_zig_entry_wideselect_zig_dispatch/target/release/abi_zig_entry_wideselect_zig_dispatch", "variants/abi_zig_entry_wideselect_zig_per_w_set/target/release/abi_zig_entry_wideselect_zig_per_w_set", "variants/abi_zig_entry_wideselect_zig_null/target/release/abi_zig_entry_wideselect_zig_null"]
+variants = ["variants/abi_zig_entry_wideselect_zig_runtime_w/target/release/abi_zig_entry_wideselect_zig_runtime_w", "variants/abi_zig_entry_wideselect_zig_anchor/target/release/abi_zig_entry_wideselect_zig_anchor", "variants/abi_zig_entry_wideselect_zig_dispatch/target/release/abi_zig_entry_wideselect_zig_dispatch", "variants/abi_zig_entry_wideselect_zig_per_w_set/target/release/abi_zig_entry_wideselect_zig_per_w_set", "variants/abi_zig_entry_wideselect_zig_null/target/release/abi_zig_entry_wideselect_zig_null", "variants/abi_zig_entry_wideselect_zig_tail_runtime_w/target/release/abi_zig_entry_wideselect_zig_tail_runtime_w", "variants/abi_zig_entry_wideselect_zig_tail_dispatch/target/release/abi_zig_entry_wideselect_zig_tail_dispatch"]
 [[bench.abi_zig_entry_wideselect.sizes]]
 n = 64
-variants = ["variants/abi_zig_entry_wideselect_zig_runtime_w/target/release/abi_zig_entry_wideselect_zig_runtime_w", "variants/abi_zig_entry_wideselect_zig_anchor/target/release/abi_zig_entry_wideselect_zig_anchor", "variants/abi_zig_entry_wideselect_zig_dispatch/target/release/abi_zig_entry_wideselect_zig_dispatch", "variants/abi_zig_entry_wideselect_zig_per_w_set/target/release/abi_zig_entry_wideselect_zig_per_w_set", "variants/abi_zig_entry_wideselect_zig_null/target/release/abi_zig_entry_wideselect_zig_null"]
+variants = ["variants/abi_zig_entry_wideselect_zig_runtime_w/target/release/abi_zig_entry_wideselect_zig_runtime_w", "variants/abi_zig_entry_wideselect_zig_anchor/target/release/abi_zig_entry_wideselect_zig_anchor", "variants/abi_zig_entry_wideselect_zig_dispatch/target/release/abi_zig_entry_wideselect_zig_dispatch", "variants/abi_zig_entry_wideselect_zig_per_w_set/target/release/abi_zig_entry_wideselect_zig_per_w_set", "variants/abi_zig_entry_wideselect_zig_null/target/release/abi_zig_entry_wideselect_zig_null", "variants/abi_zig_entry_wideselect_zig_tail_runtime_w/target/release/abi_zig_entry_wideselect_zig_tail_runtime_w", "variants/abi_zig_entry_wideselect_zig_tail_dispatch/target/release/abi_zig_entry_wideselect_zig_tail_dispatch"]
 [[bench.abi_zig_entry_wideselect.sizes]]
 n = 128
-variants = ["variants/abi_zig_entry_wideselect_zig_runtime_w/target/release/abi_zig_entry_wideselect_zig_runtime_w", "variants/abi_zig_entry_wideselect_zig_anchor/target/release/abi_zig_entry_wideselect_zig_anchor", "variants/abi_zig_entry_wideselect_zig_dispatch/target/release/abi_zig_entry_wideselect_zig_dispatch", "variants/abi_zig_entry_wideselect_zig_per_w_set/target/release/abi_zig_entry_wideselect_zig_per_w_set", "variants/abi_zig_entry_wideselect_zig_null/target/release/abi_zig_entry_wideselect_zig_null"]
+variants = ["variants/abi_zig_entry_wideselect_zig_runtime_w/target/release/abi_zig_entry_wideselect_zig_runtime_w", "variants/abi_zig_entry_wideselect_zig_anchor/target/release/abi_zig_entry_wideselect_zig_anchor", "variants/abi_zig_entry_wideselect_zig_dispatch/target/release/abi_zig_entry_wideselect_zig_dispatch", "variants/abi_zig_entry_wideselect_zig_per_w_set/target/release/abi_zig_entry_wideselect_zig_per_w_set", "variants/abi_zig_entry_wideselect_zig_null/target/release/abi_zig_entry_wideselect_zig_null", "variants/abi_zig_entry_wideselect_zig_tail_runtime_w/target/release/abi_zig_entry_wideselect_zig_tail_runtime_w", "variants/abi_zig_entry_wideselect_zig_tail_dispatch/target/release/abi_zig_entry_wideselect_zig_tail_dispatch"]
 [[bench.abi_zig_entry_wideselect.sizes]]
 n = 256
-variants = ["variants/abi_zig_entry_wideselect_zig_runtime_w/target/release/abi_zig_entry_wideselect_zig_runtime_w", "variants/abi_zig_entry_wideselect_zig_anchor/target/release/abi_zig_entry_wideselect_zig_anchor", "variants/abi_zig_entry_wideselect_zig_dispatch/target/release/abi_zig_entry_wideselect_zig_dispatch", "variants/abi_zig_entry_wideselect_zig_per_w_set/target/release/abi_zig_entry_wideselect_zig_per_w_set", "variants/abi_zig_entry_wideselect_zig_null/target/release/abi_zig_entry_wideselect_zig_null"]
+variants = ["variants/abi_zig_entry_wideselect_zig_runtime_w/target/release/abi_zig_entry_wideselect_zig_runtime_w", "variants/abi_zig_entry_wideselect_zig_anchor/target/release/abi_zig_entry_wideselect_zig_anchor", "variants/abi_zig_entry_wideselect_zig_dispatch/target/release/abi_zig_entry_wideselect_zig_dispatch", "variants/abi_zig_entry_wideselect_zig_per_w_set/target/release/abi_zig_entry_wideselect_zig_per_w_set", "variants/abi_zig_entry_wideselect_zig_null/target/release/abi_zig_entry_wideselect_zig_null", "variants/abi_zig_entry_wideselect_zig_tail_runtime_w/target/release/abi_zig_entry_wideselect_zig_tail_runtime_w", "variants/abi_zig_entry_wideselect_zig_tail_dispatch/target/release/abi_zig_entry_wideselect_zig_tail_dispatch"]
 
 [bench.abi_zig_entry_leaf]
 title = "abi_zig_entry (leaf)"
@@ -4000,31 +4000,409 @@ mode = "subtract"
 floor = "abi_zig_entry_leaf_zig_null"
 [[bench.abi_zig_entry_leaf.sizes]]
 n = 1
-variants = ["variants/abi_zig_entry_leaf_zig_runtime_w/target/release/abi_zig_entry_leaf_zig_runtime_w", "variants/abi_zig_entry_leaf_zig_anchor/target/release/abi_zig_entry_leaf_zig_anchor", "variants/abi_zig_entry_leaf_zig_dispatch/target/release/abi_zig_entry_leaf_zig_dispatch", "variants/abi_zig_entry_leaf_zig_per_w_set/target/release/abi_zig_entry_leaf_zig_per_w_set", "variants/abi_zig_entry_leaf_zig_null/target/release/abi_zig_entry_leaf_zig_null"]
+variants = ["variants/abi_zig_entry_leaf_zig_runtime_w/target/release/abi_zig_entry_leaf_zig_runtime_w", "variants/abi_zig_entry_leaf_zig_anchor/target/release/abi_zig_entry_leaf_zig_anchor", "variants/abi_zig_entry_leaf_zig_dispatch/target/release/abi_zig_entry_leaf_zig_dispatch", "variants/abi_zig_entry_leaf_zig_per_w_set/target/release/abi_zig_entry_leaf_zig_per_w_set", "variants/abi_zig_entry_leaf_zig_null/target/release/abi_zig_entry_leaf_zig_null", "variants/abi_zig_entry_leaf_zig_tail_runtime_w/target/release/abi_zig_entry_leaf_zig_tail_runtime_w", "variants/abi_zig_entry_leaf_zig_tail_dispatch/target/release/abi_zig_entry_leaf_zig_tail_dispatch"]
 [[bench.abi_zig_entry_leaf.sizes]]
 n = 2
-variants = ["variants/abi_zig_entry_leaf_zig_runtime_w/target/release/abi_zig_entry_leaf_zig_runtime_w", "variants/abi_zig_entry_leaf_zig_anchor/target/release/abi_zig_entry_leaf_zig_anchor", "variants/abi_zig_entry_leaf_zig_dispatch/target/release/abi_zig_entry_leaf_zig_dispatch", "variants/abi_zig_entry_leaf_zig_per_w_set/target/release/abi_zig_entry_leaf_zig_per_w_set", "variants/abi_zig_entry_leaf_zig_null/target/release/abi_zig_entry_leaf_zig_null"]
+variants = ["variants/abi_zig_entry_leaf_zig_runtime_w/target/release/abi_zig_entry_leaf_zig_runtime_w", "variants/abi_zig_entry_leaf_zig_anchor/target/release/abi_zig_entry_leaf_zig_anchor", "variants/abi_zig_entry_leaf_zig_dispatch/target/release/abi_zig_entry_leaf_zig_dispatch", "variants/abi_zig_entry_leaf_zig_per_w_set/target/release/abi_zig_entry_leaf_zig_per_w_set", "variants/abi_zig_entry_leaf_zig_null/target/release/abi_zig_entry_leaf_zig_null", "variants/abi_zig_entry_leaf_zig_tail_runtime_w/target/release/abi_zig_entry_leaf_zig_tail_runtime_w", "variants/abi_zig_entry_leaf_zig_tail_dispatch/target/release/abi_zig_entry_leaf_zig_tail_dispatch"]
 [[bench.abi_zig_entry_leaf.sizes]]
 n = 4
-variants = ["variants/abi_zig_entry_leaf_zig_runtime_w/target/release/abi_zig_entry_leaf_zig_runtime_w", "variants/abi_zig_entry_leaf_zig_anchor/target/release/abi_zig_entry_leaf_zig_anchor", "variants/abi_zig_entry_leaf_zig_dispatch/target/release/abi_zig_entry_leaf_zig_dispatch", "variants/abi_zig_entry_leaf_zig_per_w_set/target/release/abi_zig_entry_leaf_zig_per_w_set", "variants/abi_zig_entry_leaf_zig_null/target/release/abi_zig_entry_leaf_zig_null"]
+variants = ["variants/abi_zig_entry_leaf_zig_runtime_w/target/release/abi_zig_entry_leaf_zig_runtime_w", "variants/abi_zig_entry_leaf_zig_anchor/target/release/abi_zig_entry_leaf_zig_anchor", "variants/abi_zig_entry_leaf_zig_dispatch/target/release/abi_zig_entry_leaf_zig_dispatch", "variants/abi_zig_entry_leaf_zig_per_w_set/target/release/abi_zig_entry_leaf_zig_per_w_set", "variants/abi_zig_entry_leaf_zig_null/target/release/abi_zig_entry_leaf_zig_null", "variants/abi_zig_entry_leaf_zig_tail_runtime_w/target/release/abi_zig_entry_leaf_zig_tail_runtime_w", "variants/abi_zig_entry_leaf_zig_tail_dispatch/target/release/abi_zig_entry_leaf_zig_tail_dispatch"]
 [[bench.abi_zig_entry_leaf.sizes]]
 n = 8
-variants = ["variants/abi_zig_entry_leaf_zig_runtime_w/target/release/abi_zig_entry_leaf_zig_runtime_w", "variants/abi_zig_entry_leaf_zig_anchor/target/release/abi_zig_entry_leaf_zig_anchor", "variants/abi_zig_entry_leaf_zig_dispatch/target/release/abi_zig_entry_leaf_zig_dispatch", "variants/abi_zig_entry_leaf_zig_per_w_set/target/release/abi_zig_entry_leaf_zig_per_w_set", "variants/abi_zig_entry_leaf_zig_null/target/release/abi_zig_entry_leaf_zig_null"]
+variants = ["variants/abi_zig_entry_leaf_zig_runtime_w/target/release/abi_zig_entry_leaf_zig_runtime_w", "variants/abi_zig_entry_leaf_zig_anchor/target/release/abi_zig_entry_leaf_zig_anchor", "variants/abi_zig_entry_leaf_zig_dispatch/target/release/abi_zig_entry_leaf_zig_dispatch", "variants/abi_zig_entry_leaf_zig_per_w_set/target/release/abi_zig_entry_leaf_zig_per_w_set", "variants/abi_zig_entry_leaf_zig_null/target/release/abi_zig_entry_leaf_zig_null", "variants/abi_zig_entry_leaf_zig_tail_runtime_w/target/release/abi_zig_entry_leaf_zig_tail_runtime_w", "variants/abi_zig_entry_leaf_zig_tail_dispatch/target/release/abi_zig_entry_leaf_zig_tail_dispatch"]
 [[bench.abi_zig_entry_leaf.sizes]]
 n = 16
-variants = ["variants/abi_zig_entry_leaf_zig_runtime_w/target/release/abi_zig_entry_leaf_zig_runtime_w", "variants/abi_zig_entry_leaf_zig_anchor/target/release/abi_zig_entry_leaf_zig_anchor", "variants/abi_zig_entry_leaf_zig_dispatch/target/release/abi_zig_entry_leaf_zig_dispatch", "variants/abi_zig_entry_leaf_zig_per_w_set/target/release/abi_zig_entry_leaf_zig_per_w_set", "variants/abi_zig_entry_leaf_zig_null/target/release/abi_zig_entry_leaf_zig_null"]
+variants = ["variants/abi_zig_entry_leaf_zig_runtime_w/target/release/abi_zig_entry_leaf_zig_runtime_w", "variants/abi_zig_entry_leaf_zig_anchor/target/release/abi_zig_entry_leaf_zig_anchor", "variants/abi_zig_entry_leaf_zig_dispatch/target/release/abi_zig_entry_leaf_zig_dispatch", "variants/abi_zig_entry_leaf_zig_per_w_set/target/release/abi_zig_entry_leaf_zig_per_w_set", "variants/abi_zig_entry_leaf_zig_null/target/release/abi_zig_entry_leaf_zig_null", "variants/abi_zig_entry_leaf_zig_tail_runtime_w/target/release/abi_zig_entry_leaf_zig_tail_runtime_w", "variants/abi_zig_entry_leaf_zig_tail_dispatch/target/release/abi_zig_entry_leaf_zig_tail_dispatch"]
 [[bench.abi_zig_entry_leaf.sizes]]
 n = 32
-variants = ["variants/abi_zig_entry_leaf_zig_runtime_w/target/release/abi_zig_entry_leaf_zig_runtime_w", "variants/abi_zig_entry_leaf_zig_anchor/target/release/abi_zig_entry_leaf_zig_anchor", "variants/abi_zig_entry_leaf_zig_dispatch/target/release/abi_zig_entry_leaf_zig_dispatch", "variants/abi_zig_entry_leaf_zig_per_w_set/target/release/abi_zig_entry_leaf_zig_per_w_set", "variants/abi_zig_entry_leaf_zig_null/target/release/abi_zig_entry_leaf_zig_null"]
+variants = ["variants/abi_zig_entry_leaf_zig_runtime_w/target/release/abi_zig_entry_leaf_zig_runtime_w", "variants/abi_zig_entry_leaf_zig_anchor/target/release/abi_zig_entry_leaf_zig_anchor", "variants/abi_zig_entry_leaf_zig_dispatch/target/release/abi_zig_entry_leaf_zig_dispatch", "variants/abi_zig_entry_leaf_zig_per_w_set/target/release/abi_zig_entry_leaf_zig_per_w_set", "variants/abi_zig_entry_leaf_zig_null/target/release/abi_zig_entry_leaf_zig_null", "variants/abi_zig_entry_leaf_zig_tail_runtime_w/target/release/abi_zig_entry_leaf_zig_tail_runtime_w", "variants/abi_zig_entry_leaf_zig_tail_dispatch/target/release/abi_zig_entry_leaf_zig_tail_dispatch"]
 [[bench.abi_zig_entry_leaf.sizes]]
 n = 64
-variants = ["variants/abi_zig_entry_leaf_zig_runtime_w/target/release/abi_zig_entry_leaf_zig_runtime_w", "variants/abi_zig_entry_leaf_zig_anchor/target/release/abi_zig_entry_leaf_zig_anchor", "variants/abi_zig_entry_leaf_zig_dispatch/target/release/abi_zig_entry_leaf_zig_dispatch", "variants/abi_zig_entry_leaf_zig_per_w_set/target/release/abi_zig_entry_leaf_zig_per_w_set", "variants/abi_zig_entry_leaf_zig_null/target/release/abi_zig_entry_leaf_zig_null"]
+variants = ["variants/abi_zig_entry_leaf_zig_runtime_w/target/release/abi_zig_entry_leaf_zig_runtime_w", "variants/abi_zig_entry_leaf_zig_anchor/target/release/abi_zig_entry_leaf_zig_anchor", "variants/abi_zig_entry_leaf_zig_dispatch/target/release/abi_zig_entry_leaf_zig_dispatch", "variants/abi_zig_entry_leaf_zig_per_w_set/target/release/abi_zig_entry_leaf_zig_per_w_set", "variants/abi_zig_entry_leaf_zig_null/target/release/abi_zig_entry_leaf_zig_null", "variants/abi_zig_entry_leaf_zig_tail_runtime_w/target/release/abi_zig_entry_leaf_zig_tail_runtime_w", "variants/abi_zig_entry_leaf_zig_tail_dispatch/target/release/abi_zig_entry_leaf_zig_tail_dispatch"]
 [[bench.abi_zig_entry_leaf.sizes]]
 n = 128
-variants = ["variants/abi_zig_entry_leaf_zig_runtime_w/target/release/abi_zig_entry_leaf_zig_runtime_w", "variants/abi_zig_entry_leaf_zig_anchor/target/release/abi_zig_entry_leaf_zig_anchor", "variants/abi_zig_entry_leaf_zig_dispatch/target/release/abi_zig_entry_leaf_zig_dispatch", "variants/abi_zig_entry_leaf_zig_per_w_set/target/release/abi_zig_entry_leaf_zig_per_w_set", "variants/abi_zig_entry_leaf_zig_null/target/release/abi_zig_entry_leaf_zig_null"]
+variants = ["variants/abi_zig_entry_leaf_zig_runtime_w/target/release/abi_zig_entry_leaf_zig_runtime_w", "variants/abi_zig_entry_leaf_zig_anchor/target/release/abi_zig_entry_leaf_zig_anchor", "variants/abi_zig_entry_leaf_zig_dispatch/target/release/abi_zig_entry_leaf_zig_dispatch", "variants/abi_zig_entry_leaf_zig_per_w_set/target/release/abi_zig_entry_leaf_zig_per_w_set", "variants/abi_zig_entry_leaf_zig_null/target/release/abi_zig_entry_leaf_zig_null", "variants/abi_zig_entry_leaf_zig_tail_runtime_w/target/release/abi_zig_entry_leaf_zig_tail_runtime_w", "variants/abi_zig_entry_leaf_zig_tail_dispatch/target/release/abi_zig_entry_leaf_zig_tail_dispatch"]
 [[bench.abi_zig_entry_leaf.sizes]]
 n = 256
-variants = ["variants/abi_zig_entry_leaf_zig_runtime_w/target/release/abi_zig_entry_leaf_zig_runtime_w", "variants/abi_zig_entry_leaf_zig_anchor/target/release/abi_zig_entry_leaf_zig_anchor", "variants/abi_zig_entry_leaf_zig_dispatch/target/release/abi_zig_entry_leaf_zig_dispatch", "variants/abi_zig_entry_leaf_zig_per_w_set/target/release/abi_zig_entry_leaf_zig_per_w_set", "variants/abi_zig_entry_leaf_zig_null/target/release/abi_zig_entry_leaf_zig_null"]
+variants = ["variants/abi_zig_entry_leaf_zig_runtime_w/target/release/abi_zig_entry_leaf_zig_runtime_w", "variants/abi_zig_entry_leaf_zig_anchor/target/release/abi_zig_entry_leaf_zig_anchor", "variants/abi_zig_entry_leaf_zig_dispatch/target/release/abi_zig_entry_leaf_zig_dispatch", "variants/abi_zig_entry_leaf_zig_per_w_set/target/release/abi_zig_entry_leaf_zig_per_w_set", "variants/abi_zig_entry_leaf_zig_null/target/release/abi_zig_entry_leaf_zig_null", "variants/abi_zig_entry_leaf_zig_tail_runtime_w/target/release/abi_zig_entry_leaf_zig_tail_runtime_w", "variants/abi_zig_entry_leaf_zig_tail_dispatch/target/release/abi_zig_entry_leaf_zig_tail_dispatch"]
+
+[bench.abi_cross_cold_real]
+title = "abi_cross_cold (real)"
+workload = "realistic"
+master_seed = 0x5eed_ab1_c405_0c01
+[bench.abi_cross_cold_real.normalise]
+baseline = "abi_cross_cold_real_warm_null"
+mode = "subtract"
+floor = "abi_cross_cold_real_warm_null"
+[[bench.abi_cross_cold_real.sizes]]
+n = 1
+variants = ["variants/abi_cross_cold_real_warm_null/target/release/abi_cross_cold_real_warm_null", "variants/abi_cross_cold_real_cold_null/target/release/abi_cross_cold_real_cold_null", "variants/abi_cross_cold_real_warm_scalar/target/release/abi_cross_cold_real_warm_scalar", "variants/abi_cross_cold_real_cold_scalar/target/release/abi_cross_cold_real_cold_scalar"]
+[[bench.abi_cross_cold_real.sizes]]
+n = 2
+variants = ["variants/abi_cross_cold_real_warm_null/target/release/abi_cross_cold_real_warm_null", "variants/abi_cross_cold_real_cold_null/target/release/abi_cross_cold_real_cold_null", "variants/abi_cross_cold_real_warm_scalar/target/release/abi_cross_cold_real_warm_scalar", "variants/abi_cross_cold_real_cold_scalar/target/release/abi_cross_cold_real_cold_scalar"]
+[[bench.abi_cross_cold_real.sizes]]
+n = 4
+variants = ["variants/abi_cross_cold_real_warm_null/target/release/abi_cross_cold_real_warm_null", "variants/abi_cross_cold_real_cold_null/target/release/abi_cross_cold_real_cold_null", "variants/abi_cross_cold_real_warm_scalar/target/release/abi_cross_cold_real_warm_scalar", "variants/abi_cross_cold_real_cold_scalar/target/release/abi_cross_cold_real_cold_scalar"]
+[[bench.abi_cross_cold_real.sizes]]
+n = 8
+variants = ["variants/abi_cross_cold_real_warm_null/target/release/abi_cross_cold_real_warm_null", "variants/abi_cross_cold_real_cold_null/target/release/abi_cross_cold_real_cold_null", "variants/abi_cross_cold_real_warm_scalar/target/release/abi_cross_cold_real_warm_scalar", "variants/abi_cross_cold_real_cold_scalar/target/release/abi_cross_cold_real_cold_scalar"]
+[[bench.abi_cross_cold_real.sizes]]
+n = 16
+variants = ["variants/abi_cross_cold_real_warm_null/target/release/abi_cross_cold_real_warm_null", "variants/abi_cross_cold_real_cold_null/target/release/abi_cross_cold_real_cold_null", "variants/abi_cross_cold_real_warm_scalar/target/release/abi_cross_cold_real_warm_scalar", "variants/abi_cross_cold_real_cold_scalar/target/release/abi_cross_cold_real_cold_scalar"]
+[[bench.abi_cross_cold_real.sizes]]
+n = 32
+variants = ["variants/abi_cross_cold_real_warm_null/target/release/abi_cross_cold_real_warm_null", "variants/abi_cross_cold_real_cold_null/target/release/abi_cross_cold_real_cold_null", "variants/abi_cross_cold_real_warm_scalar/target/release/abi_cross_cold_real_warm_scalar", "variants/abi_cross_cold_real_cold_scalar/target/release/abi_cross_cold_real_cold_scalar"]
+[[bench.abi_cross_cold_real.sizes]]
+n = 64
+variants = ["variants/abi_cross_cold_real_warm_null/target/release/abi_cross_cold_real_warm_null", "variants/abi_cross_cold_real_cold_null/target/release/abi_cross_cold_real_cold_null", "variants/abi_cross_cold_real_warm_scalar/target/release/abi_cross_cold_real_warm_scalar", "variants/abi_cross_cold_real_cold_scalar/target/release/abi_cross_cold_real_cold_scalar"]
+[[bench.abi_cross_cold_real.sizes]]
+n = 128
+variants = ["variants/abi_cross_cold_real_warm_null/target/release/abi_cross_cold_real_warm_null", "variants/abi_cross_cold_real_cold_null/target/release/abi_cross_cold_real_cold_null", "variants/abi_cross_cold_real_warm_scalar/target/release/abi_cross_cold_real_warm_scalar", "variants/abi_cross_cold_real_cold_scalar/target/release/abi_cross_cold_real_cold_scalar"]
+[[bench.abi_cross_cold_real.sizes]]
+n = 256
+variants = ["variants/abi_cross_cold_real_warm_null/target/release/abi_cross_cold_real_warm_null", "variants/abi_cross_cold_real_cold_null/target/release/abi_cross_cold_real_cold_null", "variants/abi_cross_cold_real_warm_scalar/target/release/abi_cross_cold_real_warm_scalar", "variants/abi_cross_cold_real_cold_scalar/target/release/abi_cross_cold_real_cold_scalar"]
+
+[bench.abi_cross_cold_madd]
+title = "abi_cross_cold (madd)"
+workload = "realistic"
+master_seed = 0x5eed_ab1_c405_0c01
+[bench.abi_cross_cold_madd.normalise]
+baseline = "abi_cross_cold_madd_warm_null"
+mode = "subtract"
+floor = "abi_cross_cold_madd_warm_null"
+[[bench.abi_cross_cold_madd.sizes]]
+n = 1
+variants = ["variants/abi_cross_cold_madd_warm_null/target/release/abi_cross_cold_madd_warm_null", "variants/abi_cross_cold_madd_cold_null/target/release/abi_cross_cold_madd_cold_null", "variants/abi_cross_cold_madd_warm_scalar/target/release/abi_cross_cold_madd_warm_scalar", "variants/abi_cross_cold_madd_cold_scalar/target/release/abi_cross_cold_madd_cold_scalar"]
+[[bench.abi_cross_cold_madd.sizes]]
+n = 2
+variants = ["variants/abi_cross_cold_madd_warm_null/target/release/abi_cross_cold_madd_warm_null", "variants/abi_cross_cold_madd_cold_null/target/release/abi_cross_cold_madd_cold_null", "variants/abi_cross_cold_madd_warm_scalar/target/release/abi_cross_cold_madd_warm_scalar", "variants/abi_cross_cold_madd_cold_scalar/target/release/abi_cross_cold_madd_cold_scalar"]
+[[bench.abi_cross_cold_madd.sizes]]
+n = 4
+variants = ["variants/abi_cross_cold_madd_warm_null/target/release/abi_cross_cold_madd_warm_null", "variants/abi_cross_cold_madd_cold_null/target/release/abi_cross_cold_madd_cold_null", "variants/abi_cross_cold_madd_warm_scalar/target/release/abi_cross_cold_madd_warm_scalar", "variants/abi_cross_cold_madd_cold_scalar/target/release/abi_cross_cold_madd_cold_scalar"]
+[[bench.abi_cross_cold_madd.sizes]]
+n = 8
+variants = ["variants/abi_cross_cold_madd_warm_null/target/release/abi_cross_cold_madd_warm_null", "variants/abi_cross_cold_madd_cold_null/target/release/abi_cross_cold_madd_cold_null", "variants/abi_cross_cold_madd_warm_scalar/target/release/abi_cross_cold_madd_warm_scalar", "variants/abi_cross_cold_madd_cold_scalar/target/release/abi_cross_cold_madd_cold_scalar"]
+[[bench.abi_cross_cold_madd.sizes]]
+n = 16
+variants = ["variants/abi_cross_cold_madd_warm_null/target/release/abi_cross_cold_madd_warm_null", "variants/abi_cross_cold_madd_cold_null/target/release/abi_cross_cold_madd_cold_null", "variants/abi_cross_cold_madd_warm_scalar/target/release/abi_cross_cold_madd_warm_scalar", "variants/abi_cross_cold_madd_cold_scalar/target/release/abi_cross_cold_madd_cold_scalar"]
+[[bench.abi_cross_cold_madd.sizes]]
+n = 32
+variants = ["variants/abi_cross_cold_madd_warm_null/target/release/abi_cross_cold_madd_warm_null", "variants/abi_cross_cold_madd_cold_null/target/release/abi_cross_cold_madd_cold_null", "variants/abi_cross_cold_madd_warm_scalar/target/release/abi_cross_cold_madd_warm_scalar", "variants/abi_cross_cold_madd_cold_scalar/target/release/abi_cross_cold_madd_cold_scalar"]
+[[bench.abi_cross_cold_madd.sizes]]
+n = 64
+variants = ["variants/abi_cross_cold_madd_warm_null/target/release/abi_cross_cold_madd_warm_null", "variants/abi_cross_cold_madd_cold_null/target/release/abi_cross_cold_madd_cold_null", "variants/abi_cross_cold_madd_warm_scalar/target/release/abi_cross_cold_madd_warm_scalar", "variants/abi_cross_cold_madd_cold_scalar/target/release/abi_cross_cold_madd_cold_scalar"]
+[[bench.abi_cross_cold_madd.sizes]]
+n = 128
+variants = ["variants/abi_cross_cold_madd_warm_null/target/release/abi_cross_cold_madd_warm_null", "variants/abi_cross_cold_madd_cold_null/target/release/abi_cross_cold_madd_cold_null", "variants/abi_cross_cold_madd_warm_scalar/target/release/abi_cross_cold_madd_warm_scalar", "variants/abi_cross_cold_madd_cold_scalar/target/release/abi_cross_cold_madd_cold_scalar"]
+[[bench.abi_cross_cold_madd.sizes]]
+n = 256
+variants = ["variants/abi_cross_cold_madd_warm_null/target/release/abi_cross_cold_madd_warm_null", "variants/abi_cross_cold_madd_cold_null/target/release/abi_cross_cold_madd_cold_null", "variants/abi_cross_cold_madd_warm_scalar/target/release/abi_cross_cold_madd_warm_scalar", "variants/abi_cross_cold_madd_cold_scalar/target/release/abi_cross_cold_madd_cold_scalar"]
+
+[bench.abi_cross_cold_tight]
+title = "abi_cross_cold (tight)"
+workload = "realistic"
+master_seed = 0x5eed_ab1_c405_0c01
+[bench.abi_cross_cold_tight.normalise]
+baseline = "abi_cross_cold_tight_warm_null"
+mode = "subtract"
+floor = "abi_cross_cold_tight_warm_null"
+[[bench.abi_cross_cold_tight.sizes]]
+n = 1
+variants = ["variants/abi_cross_cold_tight_warm_null/target/release/abi_cross_cold_tight_warm_null", "variants/abi_cross_cold_tight_cold_null/target/release/abi_cross_cold_tight_cold_null", "variants/abi_cross_cold_tight_warm_scalar/target/release/abi_cross_cold_tight_warm_scalar", "variants/abi_cross_cold_tight_cold_scalar/target/release/abi_cross_cold_tight_cold_scalar"]
+[[bench.abi_cross_cold_tight.sizes]]
+n = 2
+variants = ["variants/abi_cross_cold_tight_warm_null/target/release/abi_cross_cold_tight_warm_null", "variants/abi_cross_cold_tight_cold_null/target/release/abi_cross_cold_tight_cold_null", "variants/abi_cross_cold_tight_warm_scalar/target/release/abi_cross_cold_tight_warm_scalar", "variants/abi_cross_cold_tight_cold_scalar/target/release/abi_cross_cold_tight_cold_scalar"]
+[[bench.abi_cross_cold_tight.sizes]]
+n = 4
+variants = ["variants/abi_cross_cold_tight_warm_null/target/release/abi_cross_cold_tight_warm_null", "variants/abi_cross_cold_tight_cold_null/target/release/abi_cross_cold_tight_cold_null", "variants/abi_cross_cold_tight_warm_scalar/target/release/abi_cross_cold_tight_warm_scalar", "variants/abi_cross_cold_tight_cold_scalar/target/release/abi_cross_cold_tight_cold_scalar"]
+[[bench.abi_cross_cold_tight.sizes]]
+n = 8
+variants = ["variants/abi_cross_cold_tight_warm_null/target/release/abi_cross_cold_tight_warm_null", "variants/abi_cross_cold_tight_cold_null/target/release/abi_cross_cold_tight_cold_null", "variants/abi_cross_cold_tight_warm_scalar/target/release/abi_cross_cold_tight_warm_scalar", "variants/abi_cross_cold_tight_cold_scalar/target/release/abi_cross_cold_tight_cold_scalar"]
+[[bench.abi_cross_cold_tight.sizes]]
+n = 16
+variants = ["variants/abi_cross_cold_tight_warm_null/target/release/abi_cross_cold_tight_warm_null", "variants/abi_cross_cold_tight_cold_null/target/release/abi_cross_cold_tight_cold_null", "variants/abi_cross_cold_tight_warm_scalar/target/release/abi_cross_cold_tight_warm_scalar", "variants/abi_cross_cold_tight_cold_scalar/target/release/abi_cross_cold_tight_cold_scalar"]
+[[bench.abi_cross_cold_tight.sizes]]
+n = 32
+variants = ["variants/abi_cross_cold_tight_warm_null/target/release/abi_cross_cold_tight_warm_null", "variants/abi_cross_cold_tight_cold_null/target/release/abi_cross_cold_tight_cold_null", "variants/abi_cross_cold_tight_warm_scalar/target/release/abi_cross_cold_tight_warm_scalar", "variants/abi_cross_cold_tight_cold_scalar/target/release/abi_cross_cold_tight_cold_scalar"]
+[[bench.abi_cross_cold_tight.sizes]]
+n = 64
+variants = ["variants/abi_cross_cold_tight_warm_null/target/release/abi_cross_cold_tight_warm_null", "variants/abi_cross_cold_tight_cold_null/target/release/abi_cross_cold_tight_cold_null", "variants/abi_cross_cold_tight_warm_scalar/target/release/abi_cross_cold_tight_warm_scalar", "variants/abi_cross_cold_tight_cold_scalar/target/release/abi_cross_cold_tight_cold_scalar"]
+[[bench.abi_cross_cold_tight.sizes]]
+n = 128
+variants = ["variants/abi_cross_cold_tight_warm_null/target/release/abi_cross_cold_tight_warm_null", "variants/abi_cross_cold_tight_cold_null/target/release/abi_cross_cold_tight_cold_null", "variants/abi_cross_cold_tight_warm_scalar/target/release/abi_cross_cold_tight_warm_scalar", "variants/abi_cross_cold_tight_cold_scalar/target/release/abi_cross_cold_tight_cold_scalar"]
+[[bench.abi_cross_cold_tight.sizes]]
+n = 256
+variants = ["variants/abi_cross_cold_tight_warm_null/target/release/abi_cross_cold_tight_warm_null", "variants/abi_cross_cold_tight_cold_null/target/release/abi_cross_cold_tight_cold_null", "variants/abi_cross_cold_tight_warm_scalar/target/release/abi_cross_cold_tight_warm_scalar", "variants/abi_cross_cold_tight_cold_scalar/target/release/abi_cross_cold_tight_cold_scalar"]
+
+[bench.abi_cross_cold_scatter]
+title = "abi_cross_cold (scatter)"
+workload = "realistic"
+master_seed = 0x5eed_ab1_c405_0c01
+[bench.abi_cross_cold_scatter.normalise]
+baseline = "abi_cross_cold_scatter_warm_null"
+mode = "subtract"
+floor = "abi_cross_cold_scatter_warm_null"
+[[bench.abi_cross_cold_scatter.sizes]]
+n = 1
+variants = ["variants/abi_cross_cold_scatter_warm_null/target/release/abi_cross_cold_scatter_warm_null", "variants/abi_cross_cold_scatter_cold_null/target/release/abi_cross_cold_scatter_cold_null", "variants/abi_cross_cold_scatter_warm_scalar/target/release/abi_cross_cold_scatter_warm_scalar", "variants/abi_cross_cold_scatter_cold_scalar/target/release/abi_cross_cold_scatter_cold_scalar"]
+[[bench.abi_cross_cold_scatter.sizes]]
+n = 2
+variants = ["variants/abi_cross_cold_scatter_warm_null/target/release/abi_cross_cold_scatter_warm_null", "variants/abi_cross_cold_scatter_cold_null/target/release/abi_cross_cold_scatter_cold_null", "variants/abi_cross_cold_scatter_warm_scalar/target/release/abi_cross_cold_scatter_warm_scalar", "variants/abi_cross_cold_scatter_cold_scalar/target/release/abi_cross_cold_scatter_cold_scalar"]
+[[bench.abi_cross_cold_scatter.sizes]]
+n = 4
+variants = ["variants/abi_cross_cold_scatter_warm_null/target/release/abi_cross_cold_scatter_warm_null", "variants/abi_cross_cold_scatter_cold_null/target/release/abi_cross_cold_scatter_cold_null", "variants/abi_cross_cold_scatter_warm_scalar/target/release/abi_cross_cold_scatter_warm_scalar", "variants/abi_cross_cold_scatter_cold_scalar/target/release/abi_cross_cold_scatter_cold_scalar"]
+[[bench.abi_cross_cold_scatter.sizes]]
+n = 8
+variants = ["variants/abi_cross_cold_scatter_warm_null/target/release/abi_cross_cold_scatter_warm_null", "variants/abi_cross_cold_scatter_cold_null/target/release/abi_cross_cold_scatter_cold_null", "variants/abi_cross_cold_scatter_warm_scalar/target/release/abi_cross_cold_scatter_warm_scalar", "variants/abi_cross_cold_scatter_cold_scalar/target/release/abi_cross_cold_scatter_cold_scalar"]
+[[bench.abi_cross_cold_scatter.sizes]]
+n = 16
+variants = ["variants/abi_cross_cold_scatter_warm_null/target/release/abi_cross_cold_scatter_warm_null", "variants/abi_cross_cold_scatter_cold_null/target/release/abi_cross_cold_scatter_cold_null", "variants/abi_cross_cold_scatter_warm_scalar/target/release/abi_cross_cold_scatter_warm_scalar", "variants/abi_cross_cold_scatter_cold_scalar/target/release/abi_cross_cold_scatter_cold_scalar"]
+[[bench.abi_cross_cold_scatter.sizes]]
+n = 32
+variants = ["variants/abi_cross_cold_scatter_warm_null/target/release/abi_cross_cold_scatter_warm_null", "variants/abi_cross_cold_scatter_cold_null/target/release/abi_cross_cold_scatter_cold_null", "variants/abi_cross_cold_scatter_warm_scalar/target/release/abi_cross_cold_scatter_warm_scalar", "variants/abi_cross_cold_scatter_cold_scalar/target/release/abi_cross_cold_scatter_cold_scalar"]
+[[bench.abi_cross_cold_scatter.sizes]]
+n = 64
+variants = ["variants/abi_cross_cold_scatter_warm_null/target/release/abi_cross_cold_scatter_warm_null", "variants/abi_cross_cold_scatter_cold_null/target/release/abi_cross_cold_scatter_cold_null", "variants/abi_cross_cold_scatter_warm_scalar/target/release/abi_cross_cold_scatter_warm_scalar", "variants/abi_cross_cold_scatter_cold_scalar/target/release/abi_cross_cold_scatter_cold_scalar"]
+[[bench.abi_cross_cold_scatter.sizes]]
+n = 128
+variants = ["variants/abi_cross_cold_scatter_warm_null/target/release/abi_cross_cold_scatter_warm_null", "variants/abi_cross_cold_scatter_cold_null/target/release/abi_cross_cold_scatter_cold_null", "variants/abi_cross_cold_scatter_warm_scalar/target/release/abi_cross_cold_scatter_warm_scalar", "variants/abi_cross_cold_scatter_cold_scalar/target/release/abi_cross_cold_scatter_cold_scalar"]
+[[bench.abi_cross_cold_scatter.sizes]]
+n = 256
+variants = ["variants/abi_cross_cold_scatter_warm_null/target/release/abi_cross_cold_scatter_warm_null", "variants/abi_cross_cold_scatter_cold_null/target/release/abi_cross_cold_scatter_cold_null", "variants/abi_cross_cold_scatter_warm_scalar/target/release/abi_cross_cold_scatter_warm_scalar", "variants/abi_cross_cold_scatter_cold_scalar/target/release/abi_cross_cold_scatter_cold_scalar"]
+
+[bench.abi_cross_cold_wideselect]
+title = "abi_cross_cold (wideselect)"
+workload = "realistic"
+master_seed = 0x5eed_ab1_c405_0c01
+[bench.abi_cross_cold_wideselect.normalise]
+baseline = "abi_cross_cold_wideselect_warm_null"
+mode = "subtract"
+floor = "abi_cross_cold_wideselect_warm_null"
+[[bench.abi_cross_cold_wideselect.sizes]]
+n = 1
+variants = ["variants/abi_cross_cold_wideselect_warm_null/target/release/abi_cross_cold_wideselect_warm_null", "variants/abi_cross_cold_wideselect_cold_null/target/release/abi_cross_cold_wideselect_cold_null", "variants/abi_cross_cold_wideselect_warm_scalar/target/release/abi_cross_cold_wideselect_warm_scalar", "variants/abi_cross_cold_wideselect_cold_scalar/target/release/abi_cross_cold_wideselect_cold_scalar"]
+[[bench.abi_cross_cold_wideselect.sizes]]
+n = 2
+variants = ["variants/abi_cross_cold_wideselect_warm_null/target/release/abi_cross_cold_wideselect_warm_null", "variants/abi_cross_cold_wideselect_cold_null/target/release/abi_cross_cold_wideselect_cold_null", "variants/abi_cross_cold_wideselect_warm_scalar/target/release/abi_cross_cold_wideselect_warm_scalar", "variants/abi_cross_cold_wideselect_cold_scalar/target/release/abi_cross_cold_wideselect_cold_scalar"]
+[[bench.abi_cross_cold_wideselect.sizes]]
+n = 4
+variants = ["variants/abi_cross_cold_wideselect_warm_null/target/release/abi_cross_cold_wideselect_warm_null", "variants/abi_cross_cold_wideselect_cold_null/target/release/abi_cross_cold_wideselect_cold_null", "variants/abi_cross_cold_wideselect_warm_scalar/target/release/abi_cross_cold_wideselect_warm_scalar", "variants/abi_cross_cold_wideselect_cold_scalar/target/release/abi_cross_cold_wideselect_cold_scalar"]
+[[bench.abi_cross_cold_wideselect.sizes]]
+n = 8
+variants = ["variants/abi_cross_cold_wideselect_warm_null/target/release/abi_cross_cold_wideselect_warm_null", "variants/abi_cross_cold_wideselect_cold_null/target/release/abi_cross_cold_wideselect_cold_null", "variants/abi_cross_cold_wideselect_warm_scalar/target/release/abi_cross_cold_wideselect_warm_scalar", "variants/abi_cross_cold_wideselect_cold_scalar/target/release/abi_cross_cold_wideselect_cold_scalar"]
+[[bench.abi_cross_cold_wideselect.sizes]]
+n = 16
+variants = ["variants/abi_cross_cold_wideselect_warm_null/target/release/abi_cross_cold_wideselect_warm_null", "variants/abi_cross_cold_wideselect_cold_null/target/release/abi_cross_cold_wideselect_cold_null", "variants/abi_cross_cold_wideselect_warm_scalar/target/release/abi_cross_cold_wideselect_warm_scalar", "variants/abi_cross_cold_wideselect_cold_scalar/target/release/abi_cross_cold_wideselect_cold_scalar"]
+[[bench.abi_cross_cold_wideselect.sizes]]
+n = 32
+variants = ["variants/abi_cross_cold_wideselect_warm_null/target/release/abi_cross_cold_wideselect_warm_null", "variants/abi_cross_cold_wideselect_cold_null/target/release/abi_cross_cold_wideselect_cold_null", "variants/abi_cross_cold_wideselect_warm_scalar/target/release/abi_cross_cold_wideselect_warm_scalar", "variants/abi_cross_cold_wideselect_cold_scalar/target/release/abi_cross_cold_wideselect_cold_scalar"]
+[[bench.abi_cross_cold_wideselect.sizes]]
+n = 64
+variants = ["variants/abi_cross_cold_wideselect_warm_null/target/release/abi_cross_cold_wideselect_warm_null", "variants/abi_cross_cold_wideselect_cold_null/target/release/abi_cross_cold_wideselect_cold_null", "variants/abi_cross_cold_wideselect_warm_scalar/target/release/abi_cross_cold_wideselect_warm_scalar", "variants/abi_cross_cold_wideselect_cold_scalar/target/release/abi_cross_cold_wideselect_cold_scalar"]
+[[bench.abi_cross_cold_wideselect.sizes]]
+n = 128
+variants = ["variants/abi_cross_cold_wideselect_warm_null/target/release/abi_cross_cold_wideselect_warm_null", "variants/abi_cross_cold_wideselect_cold_null/target/release/abi_cross_cold_wideselect_cold_null", "variants/abi_cross_cold_wideselect_warm_scalar/target/release/abi_cross_cold_wideselect_warm_scalar", "variants/abi_cross_cold_wideselect_cold_scalar/target/release/abi_cross_cold_wideselect_cold_scalar"]
+[[bench.abi_cross_cold_wideselect.sizes]]
+n = 256
+variants = ["variants/abi_cross_cold_wideselect_warm_null/target/release/abi_cross_cold_wideselect_warm_null", "variants/abi_cross_cold_wideselect_cold_null/target/release/abi_cross_cold_wideselect_cold_null", "variants/abi_cross_cold_wideselect_warm_scalar/target/release/abi_cross_cold_wideselect_warm_scalar", "variants/abi_cross_cold_wideselect_cold_scalar/target/release/abi_cross_cold_wideselect_cold_scalar"]
+
+[bench.abi_cross_cold_leaf]
+title = "abi_cross_cold (leaf)"
+workload = "realistic"
+master_seed = 0x5eed_ab1_c405_0c01
+[bench.abi_cross_cold_leaf.normalise]
+baseline = "abi_cross_cold_leaf_warm_null"
+mode = "subtract"
+floor = "abi_cross_cold_leaf_warm_null"
+[[bench.abi_cross_cold_leaf.sizes]]
+n = 1
+variants = ["variants/abi_cross_cold_leaf_warm_null/target/release/abi_cross_cold_leaf_warm_null", "variants/abi_cross_cold_leaf_cold_null/target/release/abi_cross_cold_leaf_cold_null", "variants/abi_cross_cold_leaf_warm_scalar/target/release/abi_cross_cold_leaf_warm_scalar", "variants/abi_cross_cold_leaf_cold_scalar/target/release/abi_cross_cold_leaf_cold_scalar"]
+[[bench.abi_cross_cold_leaf.sizes]]
+n = 2
+variants = ["variants/abi_cross_cold_leaf_warm_null/target/release/abi_cross_cold_leaf_warm_null", "variants/abi_cross_cold_leaf_cold_null/target/release/abi_cross_cold_leaf_cold_null", "variants/abi_cross_cold_leaf_warm_scalar/target/release/abi_cross_cold_leaf_warm_scalar", "variants/abi_cross_cold_leaf_cold_scalar/target/release/abi_cross_cold_leaf_cold_scalar"]
+[[bench.abi_cross_cold_leaf.sizes]]
+n = 4
+variants = ["variants/abi_cross_cold_leaf_warm_null/target/release/abi_cross_cold_leaf_warm_null", "variants/abi_cross_cold_leaf_cold_null/target/release/abi_cross_cold_leaf_cold_null", "variants/abi_cross_cold_leaf_warm_scalar/target/release/abi_cross_cold_leaf_warm_scalar", "variants/abi_cross_cold_leaf_cold_scalar/target/release/abi_cross_cold_leaf_cold_scalar"]
+[[bench.abi_cross_cold_leaf.sizes]]
+n = 8
+variants = ["variants/abi_cross_cold_leaf_warm_null/target/release/abi_cross_cold_leaf_warm_null", "variants/abi_cross_cold_leaf_cold_null/target/release/abi_cross_cold_leaf_cold_null", "variants/abi_cross_cold_leaf_warm_scalar/target/release/abi_cross_cold_leaf_warm_scalar", "variants/abi_cross_cold_leaf_cold_scalar/target/release/abi_cross_cold_leaf_cold_scalar"]
+[[bench.abi_cross_cold_leaf.sizes]]
+n = 16
+variants = ["variants/abi_cross_cold_leaf_warm_null/target/release/abi_cross_cold_leaf_warm_null", "variants/abi_cross_cold_leaf_cold_null/target/release/abi_cross_cold_leaf_cold_null", "variants/abi_cross_cold_leaf_warm_scalar/target/release/abi_cross_cold_leaf_warm_scalar", "variants/abi_cross_cold_leaf_cold_scalar/target/release/abi_cross_cold_leaf_cold_scalar"]
+[[bench.abi_cross_cold_leaf.sizes]]
+n = 32
+variants = ["variants/abi_cross_cold_leaf_warm_null/target/release/abi_cross_cold_leaf_warm_null", "variants/abi_cross_cold_leaf_cold_null/target/release/abi_cross_cold_leaf_cold_null", "variants/abi_cross_cold_leaf_warm_scalar/target/release/abi_cross_cold_leaf_warm_scalar", "variants/abi_cross_cold_leaf_cold_scalar/target/release/abi_cross_cold_leaf_cold_scalar"]
+[[bench.abi_cross_cold_leaf.sizes]]
+n = 64
+variants = ["variants/abi_cross_cold_leaf_warm_null/target/release/abi_cross_cold_leaf_warm_null", "variants/abi_cross_cold_leaf_cold_null/target/release/abi_cross_cold_leaf_cold_null", "variants/abi_cross_cold_leaf_warm_scalar/target/release/abi_cross_cold_leaf_warm_scalar", "variants/abi_cross_cold_leaf_cold_scalar/target/release/abi_cross_cold_leaf_cold_scalar"]
+[[bench.abi_cross_cold_leaf.sizes]]
+n = 128
+variants = ["variants/abi_cross_cold_leaf_warm_null/target/release/abi_cross_cold_leaf_warm_null", "variants/abi_cross_cold_leaf_cold_null/target/release/abi_cross_cold_leaf_cold_null", "variants/abi_cross_cold_leaf_warm_scalar/target/release/abi_cross_cold_leaf_warm_scalar", "variants/abi_cross_cold_leaf_cold_scalar/target/release/abi_cross_cold_leaf_cold_scalar"]
+[[bench.abi_cross_cold_leaf.sizes]]
+n = 256
+variants = ["variants/abi_cross_cold_leaf_warm_null/target/release/abi_cross_cold_leaf_warm_null", "variants/abi_cross_cold_leaf_cold_null/target/release/abi_cross_cold_leaf_cold_null", "variants/abi_cross_cold_leaf_warm_scalar/target/release/abi_cross_cold_leaf_warm_scalar", "variants/abi_cross_cold_leaf_cold_scalar/target/release/abi_cross_cold_leaf_cold_scalar"]
+
+[bench.abi_payload_cost_real]
+title = "abi_payload_cost (real)"
+workload = "realistic"
+master_seed = 0x5eed_ab1_c405_00b0
+[bench.abi_payload_cost_real.normalise]
+baseline = "abi_payload_cost_real_scalar_payload"
+mode = "subtract"
+floor = "abi_payload_cost_real_null_entry"
+[[bench.abi_payload_cost_real.sizes]]
+n = 1
+variants = ["variants/abi_payload_cost_real_scalar_payload/target/release/abi_payload_cost_real_scalar_payload", "variants/abi_payload_cost_real_soa_payload/target/release/abi_payload_cost_real_soa_payload", "variants/abi_payload_cost_real_null_entry/target/release/abi_payload_cost_real_null_entry"]
+[[bench.abi_payload_cost_real.sizes]]
+n = 4
+variants = ["variants/abi_payload_cost_real_scalar_payload/target/release/abi_payload_cost_real_scalar_payload", "variants/abi_payload_cost_real_soa_payload/target/release/abi_payload_cost_real_soa_payload", "variants/abi_payload_cost_real_null_entry/target/release/abi_payload_cost_real_null_entry"]
+[[bench.abi_payload_cost_real.sizes]]
+n = 16
+variants = ["variants/abi_payload_cost_real_scalar_payload/target/release/abi_payload_cost_real_scalar_payload", "variants/abi_payload_cost_real_soa_payload/target/release/abi_payload_cost_real_soa_payload", "variants/abi_payload_cost_real_null_entry/target/release/abi_payload_cost_real_null_entry"]
+[[bench.abi_payload_cost_real.sizes]]
+n = 64
+variants = ["variants/abi_payload_cost_real_scalar_payload/target/release/abi_payload_cost_real_scalar_payload", "variants/abi_payload_cost_real_soa_payload/target/release/abi_payload_cost_real_soa_payload", "variants/abi_payload_cost_real_null_entry/target/release/abi_payload_cost_real_null_entry"]
+[[bench.abi_payload_cost_real.sizes]]
+n = 256
+variants = ["variants/abi_payload_cost_real_scalar_payload/target/release/abi_payload_cost_real_scalar_payload", "variants/abi_payload_cost_real_soa_payload/target/release/abi_payload_cost_real_soa_payload", "variants/abi_payload_cost_real_null_entry/target/release/abi_payload_cost_real_null_entry"]
+[[bench.abi_payload_cost_real.sizes]]
+n = 1024
+variants = ["variants/abi_payload_cost_real_scalar_payload/target/release/abi_payload_cost_real_scalar_payload", "variants/abi_payload_cost_real_soa_payload/target/release/abi_payload_cost_real_soa_payload", "variants/abi_payload_cost_real_null_entry/target/release/abi_payload_cost_real_null_entry"]
+
+[bench.abi_payload_cost_madd]
+title = "abi_payload_cost (madd)"
+workload = "realistic"
+master_seed = 0x5eed_ab1_c405_00b0
+[bench.abi_payload_cost_madd.normalise]
+baseline = "abi_payload_cost_madd_scalar_payload"
+mode = "subtract"
+floor = "abi_payload_cost_madd_null_entry"
+[[bench.abi_payload_cost_madd.sizes]]
+n = 1
+variants = ["variants/abi_payload_cost_madd_scalar_payload/target/release/abi_payload_cost_madd_scalar_payload", "variants/abi_payload_cost_madd_soa_payload/target/release/abi_payload_cost_madd_soa_payload", "variants/abi_payload_cost_madd_null_entry/target/release/abi_payload_cost_madd_null_entry"]
+[[bench.abi_payload_cost_madd.sizes]]
+n = 4
+variants = ["variants/abi_payload_cost_madd_scalar_payload/target/release/abi_payload_cost_madd_scalar_payload", "variants/abi_payload_cost_madd_soa_payload/target/release/abi_payload_cost_madd_soa_payload", "variants/abi_payload_cost_madd_null_entry/target/release/abi_payload_cost_madd_null_entry"]
+[[bench.abi_payload_cost_madd.sizes]]
+n = 16
+variants = ["variants/abi_payload_cost_madd_scalar_payload/target/release/abi_payload_cost_madd_scalar_payload", "variants/abi_payload_cost_madd_soa_payload/target/release/abi_payload_cost_madd_soa_payload", "variants/abi_payload_cost_madd_null_entry/target/release/abi_payload_cost_madd_null_entry"]
+[[bench.abi_payload_cost_madd.sizes]]
+n = 64
+variants = ["variants/abi_payload_cost_madd_scalar_payload/target/release/abi_payload_cost_madd_scalar_payload", "variants/abi_payload_cost_madd_soa_payload/target/release/abi_payload_cost_madd_soa_payload", "variants/abi_payload_cost_madd_null_entry/target/release/abi_payload_cost_madd_null_entry"]
+[[bench.abi_payload_cost_madd.sizes]]
+n = 256
+variants = ["variants/abi_payload_cost_madd_scalar_payload/target/release/abi_payload_cost_madd_scalar_payload", "variants/abi_payload_cost_madd_soa_payload/target/release/abi_payload_cost_madd_soa_payload", "variants/abi_payload_cost_madd_null_entry/target/release/abi_payload_cost_madd_null_entry"]
+[[bench.abi_payload_cost_madd.sizes]]
+n = 1024
+variants = ["variants/abi_payload_cost_madd_scalar_payload/target/release/abi_payload_cost_madd_scalar_payload", "variants/abi_payload_cost_madd_soa_payload/target/release/abi_payload_cost_madd_soa_payload", "variants/abi_payload_cost_madd_null_entry/target/release/abi_payload_cost_madd_null_entry"]
+
+[bench.abi_payload_cost_tight]
+title = "abi_payload_cost (tight)"
+workload = "realistic"
+master_seed = 0x5eed_ab1_c405_00b0
+[bench.abi_payload_cost_tight.normalise]
+baseline = "abi_payload_cost_tight_scalar_payload"
+mode = "subtract"
+floor = "abi_payload_cost_tight_null_entry"
+[[bench.abi_payload_cost_tight.sizes]]
+n = 1
+variants = ["variants/abi_payload_cost_tight_scalar_payload/target/release/abi_payload_cost_tight_scalar_payload", "variants/abi_payload_cost_tight_soa_payload/target/release/abi_payload_cost_tight_soa_payload", "variants/abi_payload_cost_tight_null_entry/target/release/abi_payload_cost_tight_null_entry"]
+[[bench.abi_payload_cost_tight.sizes]]
+n = 4
+variants = ["variants/abi_payload_cost_tight_scalar_payload/target/release/abi_payload_cost_tight_scalar_payload", "variants/abi_payload_cost_tight_soa_payload/target/release/abi_payload_cost_tight_soa_payload", "variants/abi_payload_cost_tight_null_entry/target/release/abi_payload_cost_tight_null_entry"]
+[[bench.abi_payload_cost_tight.sizes]]
+n = 16
+variants = ["variants/abi_payload_cost_tight_scalar_payload/target/release/abi_payload_cost_tight_scalar_payload", "variants/abi_payload_cost_tight_soa_payload/target/release/abi_payload_cost_tight_soa_payload", "variants/abi_payload_cost_tight_null_entry/target/release/abi_payload_cost_tight_null_entry"]
+[[bench.abi_payload_cost_tight.sizes]]
+n = 64
+variants = ["variants/abi_payload_cost_tight_scalar_payload/target/release/abi_payload_cost_tight_scalar_payload", "variants/abi_payload_cost_tight_soa_payload/target/release/abi_payload_cost_tight_soa_payload", "variants/abi_payload_cost_tight_null_entry/target/release/abi_payload_cost_tight_null_entry"]
+[[bench.abi_payload_cost_tight.sizes]]
+n = 256
+variants = ["variants/abi_payload_cost_tight_scalar_payload/target/release/abi_payload_cost_tight_scalar_payload", "variants/abi_payload_cost_tight_soa_payload/target/release/abi_payload_cost_tight_soa_payload", "variants/abi_payload_cost_tight_null_entry/target/release/abi_payload_cost_tight_null_entry"]
+[[bench.abi_payload_cost_tight.sizes]]
+n = 1024
+variants = ["variants/abi_payload_cost_tight_scalar_payload/target/release/abi_payload_cost_tight_scalar_payload", "variants/abi_payload_cost_tight_soa_payload/target/release/abi_payload_cost_tight_soa_payload", "variants/abi_payload_cost_tight_null_entry/target/release/abi_payload_cost_tight_null_entry"]
+
+[bench.abi_payload_cost_scatter]
+title = "abi_payload_cost (scatter)"
+workload = "realistic"
+master_seed = 0x5eed_ab1_c405_00b0
+[bench.abi_payload_cost_scatter.normalise]
+baseline = "abi_payload_cost_scatter_scalar_payload"
+mode = "subtract"
+floor = "abi_payload_cost_scatter_null_entry"
+[[bench.abi_payload_cost_scatter.sizes]]
+n = 1
+variants = ["variants/abi_payload_cost_scatter_scalar_payload/target/release/abi_payload_cost_scatter_scalar_payload", "variants/abi_payload_cost_scatter_soa_payload/target/release/abi_payload_cost_scatter_soa_payload", "variants/abi_payload_cost_scatter_null_entry/target/release/abi_payload_cost_scatter_null_entry"]
+[[bench.abi_payload_cost_scatter.sizes]]
+n = 4
+variants = ["variants/abi_payload_cost_scatter_scalar_payload/target/release/abi_payload_cost_scatter_scalar_payload", "variants/abi_payload_cost_scatter_soa_payload/target/release/abi_payload_cost_scatter_soa_payload", "variants/abi_payload_cost_scatter_null_entry/target/release/abi_payload_cost_scatter_null_entry"]
+[[bench.abi_payload_cost_scatter.sizes]]
+n = 16
+variants = ["variants/abi_payload_cost_scatter_scalar_payload/target/release/abi_payload_cost_scatter_scalar_payload", "variants/abi_payload_cost_scatter_soa_payload/target/release/abi_payload_cost_scatter_soa_payload", "variants/abi_payload_cost_scatter_null_entry/target/release/abi_payload_cost_scatter_null_entry"]
+[[bench.abi_payload_cost_scatter.sizes]]
+n = 64
+variants = ["variants/abi_payload_cost_scatter_scalar_payload/target/release/abi_payload_cost_scatter_scalar_payload", "variants/abi_payload_cost_scatter_soa_payload/target/release/abi_payload_cost_scatter_soa_payload", "variants/abi_payload_cost_scatter_null_entry/target/release/abi_payload_cost_scatter_null_entry"]
+[[bench.abi_payload_cost_scatter.sizes]]
+n = 256
+variants = ["variants/abi_payload_cost_scatter_scalar_payload/target/release/abi_payload_cost_scatter_scalar_payload", "variants/abi_payload_cost_scatter_soa_payload/target/release/abi_payload_cost_scatter_soa_payload", "variants/abi_payload_cost_scatter_null_entry/target/release/abi_payload_cost_scatter_null_entry"]
+[[bench.abi_payload_cost_scatter.sizes]]
+n = 1024
+variants = ["variants/abi_payload_cost_scatter_scalar_payload/target/release/abi_payload_cost_scatter_scalar_payload", "variants/abi_payload_cost_scatter_soa_payload/target/release/abi_payload_cost_scatter_soa_payload", "variants/abi_payload_cost_scatter_null_entry/target/release/abi_payload_cost_scatter_null_entry"]
+
+[bench.abi_payload_cost_wideselect]
+title = "abi_payload_cost (wideselect)"
+workload = "realistic"
+master_seed = 0x5eed_ab1_c405_00b0
+[bench.abi_payload_cost_wideselect.normalise]
+baseline = "abi_payload_cost_wideselect_scalar_payload"
+mode = "subtract"
+floor = "abi_payload_cost_wideselect_null_entry"
+[[bench.abi_payload_cost_wideselect.sizes]]
+n = 1
+variants = ["variants/abi_payload_cost_wideselect_scalar_payload/target/release/abi_payload_cost_wideselect_scalar_payload", "variants/abi_payload_cost_wideselect_soa_payload/target/release/abi_payload_cost_wideselect_soa_payload", "variants/abi_payload_cost_wideselect_null_entry/target/release/abi_payload_cost_wideselect_null_entry"]
+[[bench.abi_payload_cost_wideselect.sizes]]
+n = 4
+variants = ["variants/abi_payload_cost_wideselect_scalar_payload/target/release/abi_payload_cost_wideselect_scalar_payload", "variants/abi_payload_cost_wideselect_soa_payload/target/release/abi_payload_cost_wideselect_soa_payload", "variants/abi_payload_cost_wideselect_null_entry/target/release/abi_payload_cost_wideselect_null_entry"]
+[[bench.abi_payload_cost_wideselect.sizes]]
+n = 16
+variants = ["variants/abi_payload_cost_wideselect_scalar_payload/target/release/abi_payload_cost_wideselect_scalar_payload", "variants/abi_payload_cost_wideselect_soa_payload/target/release/abi_payload_cost_wideselect_soa_payload", "variants/abi_payload_cost_wideselect_null_entry/target/release/abi_payload_cost_wideselect_null_entry"]
+[[bench.abi_payload_cost_wideselect.sizes]]
+n = 64
+variants = ["variants/abi_payload_cost_wideselect_scalar_payload/target/release/abi_payload_cost_wideselect_scalar_payload", "variants/abi_payload_cost_wideselect_soa_payload/target/release/abi_payload_cost_wideselect_soa_payload", "variants/abi_payload_cost_wideselect_null_entry/target/release/abi_payload_cost_wideselect_null_entry"]
+[[bench.abi_payload_cost_wideselect.sizes]]
+n = 256
+variants = ["variants/abi_payload_cost_wideselect_scalar_payload/target/release/abi_payload_cost_wideselect_scalar_payload", "variants/abi_payload_cost_wideselect_soa_payload/target/release/abi_payload_cost_wideselect_soa_payload", "variants/abi_payload_cost_wideselect_null_entry/target/release/abi_payload_cost_wideselect_null_entry"]
+[[bench.abi_payload_cost_wideselect.sizes]]
+n = 1024
+variants = ["variants/abi_payload_cost_wideselect_scalar_payload/target/release/abi_payload_cost_wideselect_scalar_payload", "variants/abi_payload_cost_wideselect_soa_payload/target/release/abi_payload_cost_wideselect_soa_payload", "variants/abi_payload_cost_wideselect_null_entry/target/release/abi_payload_cost_wideselect_null_entry"]
+
+[bench.abi_payload_cost_leaf]
+title = "abi_payload_cost (leaf)"
+workload = "realistic"
+master_seed = 0x5eed_ab1_c405_00b0
+[bench.abi_payload_cost_leaf.normalise]
+baseline = "abi_payload_cost_leaf_scalar_payload"
+mode = "subtract"
+floor = "abi_payload_cost_leaf_null_entry"
+[[bench.abi_payload_cost_leaf.sizes]]
+n = 1
+variants = ["variants/abi_payload_cost_leaf_scalar_payload/target/release/abi_payload_cost_leaf_scalar_payload", "variants/abi_payload_cost_leaf_soa_payload/target/release/abi_payload_cost_leaf_soa_payload", "variants/abi_payload_cost_leaf_null_entry/target/release/abi_payload_cost_leaf_null_entry"]
+[[bench.abi_payload_cost_leaf.sizes]]
+n = 4
+variants = ["variants/abi_payload_cost_leaf_scalar_payload/target/release/abi_payload_cost_leaf_scalar_payload", "variants/abi_payload_cost_leaf_soa_payload/target/release/abi_payload_cost_leaf_soa_payload", "variants/abi_payload_cost_leaf_null_entry/target/release/abi_payload_cost_leaf_null_entry"]
+[[bench.abi_payload_cost_leaf.sizes]]
+n = 16
+variants = ["variants/abi_payload_cost_leaf_scalar_payload/target/release/abi_payload_cost_leaf_scalar_payload", "variants/abi_payload_cost_leaf_soa_payload/target/release/abi_payload_cost_leaf_soa_payload", "variants/abi_payload_cost_leaf_null_entry/target/release/abi_payload_cost_leaf_null_entry"]
+[[bench.abi_payload_cost_leaf.sizes]]
+n = 64
+variants = ["variants/abi_payload_cost_leaf_scalar_payload/target/release/abi_payload_cost_leaf_scalar_payload", "variants/abi_payload_cost_leaf_soa_payload/target/release/abi_payload_cost_leaf_soa_payload", "variants/abi_payload_cost_leaf_null_entry/target/release/abi_payload_cost_leaf_null_entry"]
+[[bench.abi_payload_cost_leaf.sizes]]
+n = 256
+variants = ["variants/abi_payload_cost_leaf_scalar_payload/target/release/abi_payload_cost_leaf_scalar_payload", "variants/abi_payload_cost_leaf_soa_payload/target/release/abi_payload_cost_leaf_soa_payload", "variants/abi_payload_cost_leaf_null_entry/target/release/abi_payload_cost_leaf_null_entry"]
+[[bench.abi_payload_cost_leaf.sizes]]
+n = 1024
+variants = ["variants/abi_payload_cost_leaf_scalar_payload/target/release/abi_payload_cost_leaf_scalar_payload", "variants/abi_payload_cost_leaf_soa_payload/target/release/abi_payload_cost_leaf_soa_payload", "variants/abi_payload_cost_leaf_null_entry/target/release/abi_payload_cost_leaf_null_entry"]
 
 [bench.abi_boundary_w_real]
 title = "abi_boundary_w (real)"

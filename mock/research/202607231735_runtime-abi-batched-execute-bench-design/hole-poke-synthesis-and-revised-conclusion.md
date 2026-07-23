@@ -63,11 +63,38 @@ enablement" the first look claimed. Precisely:
 
 ## What the payload-cost family adds (the decisive axis, now built)
 
-`abi_payload_cost` sweeps the residual size (the payload cost) at fixed W=64, so `null_entry / scalar_payload` is
-the `C_cross / I_payload` curve measured directly, from a 1-node residual (cheapest, closest to the native tier)
-to 1024 nodes. This is the experiment the design named and the earlier families omitted. (Data appended when the
-run lands; the cheap-residual end is where, if anywhere, the crossing is a non-trivial fraction and batching pays
-for crossing amortisation rather than only for the vectorisation it enables.)
+`abi_payload_cost` sweeps the residual size (the payload cost) at fixed W=64, so the crossing floor is constant
+and the payload moves. Measured (profile `real`, median ns for the 256-record column at W=64):
+
+| residual nodes | null_entry (crossing+fill) | scalar_payload | soa_payload | SoA vs scalar |
+|---|---|---|---|---|
+| 1 | 2,630 | 9,710 | 2,640 | 3.7x faster |
+| 4 | 2,670 | 26,790 | 6,520 | 4.1x |
+| 16 | 2,610 | 114,020 | 33,000 | 3.5x |
+| 64 | 2,540 | 481,890 | 208,780 | 2.3x |
+| 256 | 2,530 | 2,150,000 | 887,950 | 2.4x |
+| 1024 | 2,500 | 9,040,000 | 3,560,000 | 2.5x |
+
+The decisive reads:
+
+1. **The crossing is negligible against ANY interpret payload, including the cheapest.** `null_entry` is ~2.5 us
+   flat across the whole sweep, but that is dominated by the constant `fill_seeds` (256 seeds), not the crossing:
+   the actual crossing is ~9 ns x 4 = ~36 ns for the column. Even the 1-node residual (scalar 9.71 us = ~2.5 us
+   fill plus ~28 ns/record interpret) dwarfs the crossing ~200:1. The crossing only becomes a live term BELOW
+   interpret cost, at the native / copy-and-patch tier (~ns/record), which no interpret-based bench reaches. So
+   the crossing-amortisation justification for batching is real ONLY at the native tier, and that tier is still
+   unmeasured; for every interpret tier the crossing does not matter.
+2. **The SoA win holds across the whole payload range** (2.3x to 4.1x, largest at tiny residuals), so a batched
+   column entry is justified by the vectorisation it enables at every interpret size, not by crossing cost. This
+   is the load-bearing, robust result.
+3. So the corrected conclusion tightens to: **expose a batched column entry because the runtime vectorises the
+   resident column (a 2.3-4x throughput win that survives the boundary byte-exact); the crossing itself is free
+   (~9 ns) at every interpret tier, so the ABI needs no per-W symbol zoo and no crossing-amortisation
+   cleverness.** Whether crossing amortisation ever matters is a native-tier question left open, to be answered
+   by wiring the copy-and-patch payload across the boundary (a named follow-up), not by these interpret numbers.
+
+Raw data committed under `.bench_history/abi_payload_cost_{real,leaf}_n*.tsv`. The `leaf` profile agrees (SoA
+2.5-4x, crossing flat). One `n=1024 leaf scalar` outlier warning is a large-program slowdown, not a defect.
 
 ## What genuinely holds (all three agree)
 
