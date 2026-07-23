@@ -1,0 +1,78 @@
+# Deepdive: certified generation and the two-artifact model
+
+vehje's identity is the type system as the verification layer and certified
+generation as the mechanism. This deepdive states the two-artifact model, what
+certified generation actually certifies, and why the proof is compiled away
+rather than carried.
+
+## Two artifacts, and Rust entirely out of the runtimes
+
+There are exactly two artifacts. The dev-time compiler is a Rust program that
+compiles a language definition (a grammar, its families, its effects, its lease
+rules, its targets), proves the language's disciplines sound, and emits validated
+data (the family table, the effect masks, the lease-rule schema, the wire layout)
+plus proofs carried in the structure of what it emits. It never sees a script and
+never ships. The Rust crate ecosystem is this compiler.
+
+The shipped artifact is a composed runtime written in Zig: one hand-authored
+general engine (a parser, the analyzers, a macro expander, an interpreter, the
+output targets) that the Zig compiler specialises at build time to the validated
+data the Rust compiler emitted. It runs every program, whether bundled at build
+or arriving at load, and it carries no Rust compiler and no LLVM at the consumer.
+
+The crux precision, re-confirmed by the certified-generation sketch: the Rust
+compiler emits data, not runtime source. The specialised runtime is produced from
+that data by the Zig compiler's own comptime, which is the route chosen over
+emitting foreign source because a metaprogram emitting foreign source is the
+harder-to-certify path. The runtime internally has a compile stage and an execute
+stage, two stages of one artifact, not two loci and not Rust. A host embedding
+the runtime over the wire ABI may itself be written in Rust, but that host is a
+consumer, not part of the runtime.
+
+## What "certified" means, precisely
+
+Certified generation means the language's typestate proves the composition sound
+at language-compile time, and the proof is compiled into the structure of the
+generated runtime rather than shipped as a checker. Concretely: illegal states
+are unrepresentable in the generated engine, dispatch over the family set is
+total, and the inclusion check folds to a constant mask comparison. The Rust
+compiler typing its own generator and data is the first certification; the Zig
+compiler typing the specialised engine is the second; both are at our build,
+neither at the consumer.
+
+The scope is stated honestly. "Certified" is partial evaluation plus per-instance
+re-type-checking plus translation validation, not typed metaprogramming and not
+verified compilation in the CompCert sense. It scopes to structural
+well-formedness: the generated engine cannot represent an unhandled, unpermitted
+operation, or a family it does not support, or a program whose effect set is not
+included in a target's permitted set. Semantics are checked by a differential
+harness (the grade-0 shadow of the assurance-indexed logical relation), not
+proven. Termination is not claimed; there is a runtime budget, not a totality
+axiom.
+
+## The handoff and the manifest
+
+The one place the story could leak is the handoff from the Rust-emitted data to
+the specialised Zig runtime. It is closed by a content-addressed manifest
+(`vehje-runtime-gen`): the manifest hashes each validated-data slice and the whole
+package over the one structural-hash primitive, so the specialised runtime proves
+at its own build that it was specialised from exactly this package. This is the
+cheaper manifest-check interim of the full lens-projection handoff (both sides
+generated projections of the one signature, differential-checked structurally),
+which is the open handoff-staging question. The differential test over a census
+corpus is defence in depth on the data handoff, not the primary assurance a
+two-backend design would be forced to lean on, because the dual-locus split
+dissolved to one comptime-specialised engine and one shared object is bit-identical
+whether a Rust dev host or a C runtime host links it.
+
+## Why compile the proof away
+
+The runtime is a fast evaluator with no collector, no null, and no re-run of the
+proof. Every static axis (family inclusion, effect inclusion, lease and region
+validity, and assurance) is discharged before lowering and erased into the
+structure of the residual and the generated engine, so the runtime inherits
+proven-safe programs and re-runs nothing except the genuinely-unknowable-until-load
+structural rejection of malformed input and the numeric and lease dynamic
+residuals. This is what lets the type-system-as-verification identity coexist with
+a runtime small and fast enough for the authoring and templating majority: the
+verification is real and total, and none of it is present at the consumer.

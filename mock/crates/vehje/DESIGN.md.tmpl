@@ -1,49 +1,69 @@
 # vehje. Design (public API and composition)
 
-The framework's public crate. It defines the two plug-in contracts a
-consumer builds against, re-exports the surface, orchestrates a program
-from grammar through the Core passes to a `Checked` residual, and composes a
-distribution's targets at compile time. No algorithmic logic lives here; it
-is the framework's front door. The design authority is the identity,
-input-side, and output-side topics (`202607192254`, `202607192300`,
-`202607192310`). `#![no_std]`, no alloc.
+The framework's public crate and front door. It defines the two plug-in
+contracts a consumer builds against, re-exports the surface, orchestrates the
+dev-time language compiler, and composes a distribution's targets at compile
+time. No algorithmic logic lives here; it is where the crates the round split
+apart are wired into the two-artifact compiler. `#![no_std]`, no alloc.
 
 ## The two contracts
 
-- `Grammar`. The input-side plug-in: a consumer's front-end produces
- well-formed Core-plus-family IR. The framework mandates the IR contract
- and offers, but does not mandate, front-end scaffolding.
-- `Target`. Re-exported from `vehje-codegen`: the output-side plug-in
- declaring `Supports` and `Permits` and emitting.
+- `Grammar`. The input-side plug-in: a consumer's front-end produces well-formed
+  Core-plus-family IR. The framework mandates the IR contract and offers, but
+  does not mandate, front-end scaffolding.
+- `Target`. Re-exported from `vehje-codegen`: the output-side plug-in declaring
+  `Supports` and `Permits` and emitting.
 
-## Scope
+## Orchestration: the dev-time language compiler
 
-- The `Grammar` contract and the `Target` re-export.
-- Orchestration: run a grammar's IR through resolve, check, and the family
- and effect inclusion checks to produce a `Checked` residual, then hand it
- to the runtime driver.
-- Compile-time distribution composition: a distribution links the targets
- it supports; a generated match resolves a target name to a monomorphised
- emit. No `dyn`, no runtime plugin loading at the compiler layer.
-- A reference distribution demonstrating the composition end to end.
+The crate's orchestration is the dev-time language compiler, and it drives two
+paths that share the compile stages:
+
+- The per-program path. `run` takes a grammar's IR and drives it through
+  `vehje-resolve`, the `vehje-check` graded judgment, `vehje-lower`, and the
+  inclusion checks to a `Checked` residual, then hands it to
+  `vehje-runtime-driver`. This is the path a bundled program takes.
+- The per-language path. `compile_language` drives a `vehje-signature` through
+  the check and lower stages to `vehje-runtime-gen`, producing the validated-data
+  package and its manifest, the language artifact the Zig runtime is specialised
+  from. This is the path run once per language at build.
+
+The check-and-lower interleave (proof discharge folded into lowering) lives here,
+in the orchestrator, routed through `vehje-ir` grade annotations: `vehje-check`
+writes grade annotations onto the IR, `vehje-lower` reads the annotated IR, and
+the interleaved graded fold is driven here, so `vehje-check` and `vehje-lower`
+stay acyclic and neither imports the other. If the interleave ever needs per-node
+alternation rather than phase-wise alternation, a `vehje-ir` fold-observer trait
+is the seam.
+
+## Compile-time distribution composition
+
+- A distribution links the targets it supports; a generated match resolves a
+  target name to a monomorphised emit. No `dyn`, no runtime plugin loading at the
+  compiler layer. Target selection by name is a runtime string resolving through
+  the generated match; the emit itself is monomorphised.
+- `DebugTarget`. A reference target that emits a pre-order tag dump of the Core
+  forms, exercising the whole pipeline end to end. It supports the `Core` family,
+  permits no effects, and folds the checked residual through the shared
+  `fold_core`, not as a production backend.
 
 ## Non-scope
 
-- Any consumer's surface syntax, family, or targets. The old
- language-oriented CLI (lex, parse, check, build, run over source files)
- was the first-party language's front-end; it moves to that consumer. The
- framework crate ships the contracts and the composition, not a language.
-- The Core passes, the output machinery, and the ABI (their own crates).
+- Any consumer's surface syntax, family, or targets. The framework ships the
+  contracts and the composition, not a language.
+- The Core passes, the output machinery, the wire ABI, and the runtime
+  generation (their own crates).
 
 ## Dependencies
 
-- `vehje-ir`, `vehje-codegen`, `vehje-schedule`, `vehje-resolve`,
- `vehje-typecheck`, `vehje-runtime-driver`.
-- `#![no_std]`, no alloc. A runnable reference distribution, being the
- deployment host, supplies the arena-backing `MemoryProvider` and the I/O;
- the framework library crates stay strict.
+`vehje-ir`, `vehje-signature`, `vehje-resolve`, `vehje-check`, `vehje-lower`,
+`vehje-codegen`, `vehje-runtime-gen`, `vehje-runtime-driver`; `hilavitkutin-api`
+and `notko` for the primitives. `#![no_std]`, no alloc. A runnable reference
+distribution, being the deployment host, supplies the arena-backing memory and
+the I/O; the framework library crates stay strict.
 
 ## Deferred (BACKLOG)
 
-The reference distribution's concrete target set (lands as consumers do).
-The distribution-composition macro surface.
+The reference distribution's concrete target set (lands as consumers do). The
+distribution-composition macro surface. The full orchestration wiring past the
+first-light path.

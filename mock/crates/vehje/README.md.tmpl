@@ -1,8 +1,10 @@
 # vehje. public API and composition
 
-The framework's public crate: the two plug-in contracts (the grammar
-contract on the input side, the target contract on the output side), the
-re-exports a consumer builds against, the orchestration that runs a program
-from grammar through the Core passes to a `Checked` residual, and the
-distribution-composition entry point that links a set of targets at compile
-time. A reference distribution lives here. `#![no_std]`, no alloc.
+The framework's public crate and front door: the two plug-in contracts a
+consumer builds against (the `Grammar` input-side contract, the `Target`
+output-side re-export), the orchestration that is the dev-time language compiler
+(the per-program path through resolve, check, lower, and emit; the per-language
+path through the signature to runtime generation; the check-and-lower interleave
+routed through IR grade annotations), the compile-time distribution composition
+that links a set of targets with no `dyn`, and a reference distribution
+(`DebugTarget`) exercising the whole pipeline. `#![no_std]`, no alloc.

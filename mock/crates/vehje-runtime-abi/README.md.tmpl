@@ -1,8 +1,11 @@
-# vehje-runtime-abi. tier-tagged C ABI
+# vehje-runtime-abi. wire family
 
-The framework's compiler-to-runtime C ABI. A `Checked` residual crosses
-tier-tagged: a flat serialized IR arena (baseline), an optimized bytecode,
-or native code. Pure `#[repr(C)]` type surface plus the runtime-environment
-interface descriptor. No runtime logic. Bare primitives appear only at the
-`#[repr(C)]` wire boundary (the documented FFI exception). `#![no_std]`,
-no alloc.
+The framework's per-script wire family and C ABI. The residual as a
+control-flow-graph-of-blocks arena (block and function tables), the value-arena
+a produced value crosses back in (children-first, no back-patch, region-table
+indirection), the reserve-commit two-function sink contract, the diagnostics
+schema, and the one runtime-W batched-column `extern "C"` entry (W at least two,
+an `Outcome`-in-the-value-arena return). One crate split into `wire`, `value`,
+`sink`, and `entry` modules, because the residual arena and value-arena are one
+structural family with one record-layout definition. Pure `#[repr(C)]` type
+surface, no runtime logic. `#![no_std]`, no alloc.

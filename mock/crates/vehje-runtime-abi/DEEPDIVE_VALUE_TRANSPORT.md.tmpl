@@ -1,0 +1,73 @@
+# Deepdive: value transport and the batched-column ABI
+
+A produced value crosses from the runtime back to the host through a
+value-arena and a reserve-then-commit sink, and the host-to-runtime interface
+takes a column of records per call. This deepdive states the transport shape,
+why it is one protocol for two boundaries, and the bench evidence that settled
+the batched-column entry.
+
+## The value-arena and the one-shot coroutine
+
+The value is a value-arena: fixed-width value-node records, a flat child-index
+pool, a self-contained byte blob, and relative index links, the same structural
+family as the residual wire form, reused for produced values rather than IR. It
+is closed and versioned (the framework owns producer and reader, so there are no
+vtables), and tier-orthogonal (a native tier emits the same value-arena a tier-0
+interpreter does). The value serialises depth-first, children-before-parents, so
+a parent records already-emitted child indices with no back-patching; a typed
+structural decode over an untrusted arena is then linear and acyclic by
+construction (child-before-parent makes acyclicity a single monotone index
+check), which is what makes the untrusted-load path safe and fast.
+
+The streaming producer is a defunctionalised one-shot coroutine whose suspended
+frames are the chunks: each chunk is a self-contained mini value-arena, a parent
+refers to an already-emitted child by chunk and index, and frontier boundedness
+is the linearity of the continuation, which proves the cross-chunk lemma and the
+oversized-subtree property as one linearity statement. This is the same
+bounded-frontier one-shot-coroutine abstraction the compile-stage streaming uses,
+so the frontier bound, the depth-cap sizing, and the acyclicity argument are
+proven once and used at both ends. Region structure rides the arena: each value
+node carries a region id through a region-table indirection, and region open and
+close markers free a region's segment on stack discipline, no collector.
+
+## One sink, two boundaries
+
+The transfer contract is reserve-then-commit, an iteratee, a host-lent
+object-capability whose backpressure is inherent. In-process it is a
+`#[repr(C)]` struct of two function pointers plus opaque userdata; out-of-process
+it is the executable's stdout pipe, where the OS pipe buffer is the
+backpressure. Whole-value mode is the degenerate single-reserve case. The
+backing memory is host-lent up front, so the runtime holds no output memory
+after a call, which is what the no-alloc discipline forces and what makes the
+wire form equal to the in-process form.
+
+## The batched-column entry, and the bench evidence
+
+vehje's real workload is per-record column evaluation: one residual over a
+column of many records. The biggest measured throughput lever is vertical SIMD
+interpretation (up to about 4.8x on a symmetric baseline), which needs the
+boundary to take a column of W records per call so the runtime can vectorise
+across them. So the decision is to expose one runtime-W batched column entry
+taking W at least two.
+
+The bench arc settled the shape and, importantly, its justification. The crossing
+itself is nearly free (about 9 ns warm), which kills two tempting but wrong
+designs: it kills "FFI is expensive, so the ABI must batch to amortise the
+crossing" (the crossing is negligible against any interpret payload), and it
+kills "the ABI must ship per-W monomorphised symbols" (a runtime-W entry with an
+internal loop pays essentially nothing over the monomorphised forms at this
+crossing cost). So the batched entry is justified by the vectorisation it enables
+(the SoA win survives the object boundary byte-exact, 2.3x to 4.1x across residual
+sizes), not by crossing cost, at every interpret tier. Crossing amortisation
+becomes a live term only at the native and copy-and-patch tier, where the payload
+is cheap enough (a tiny native kernel amortises the crossing about 3x from W=1 to
+W=256, and under realistic call-target misprediction the per-record crossing is
+about 6x its warm cost), so the batched entry is justified there for the
+complementary reason. Either way the runtime, not the ABI, owns the SIMD width.
+
+The return contract follows from this: fallibility is a value property (an
+`Outcome`-shaped value in the value-arena where a record fails), batch completion
+is a stream property on the sink, and the SoA lane mask is an internal
+mask-and-continue mechanism, so there is no separate status vector crossing the
+boundary. Raw bench data lives in the bench history; the full-arc findings topic
+is the durable record.

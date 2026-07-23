@@ -1,45 +1,95 @@
 # vehje-runtime-abi. Design
 
-The framework's compiler-to-runtime C ABI: what crosses the boundary and in
-what representation. Pure type surface plus `extern "C"` entry points, no
-runtime logic. The design authority is the ABI topic (`202607192340`).
-`#![no_std]`, no alloc. Bare primitives appear only at the `#[repr(C)]` wire
-boundary, the one documented FFI exception, not in the crate's own logic.
+The framework's per-script wire family: what crosses the compiler-to-runtime
+boundary and in what representation. Pure type surface plus the `extern "C"`
+entry, no runtime logic. `#![no_std]`, no alloc. Bare primitives appear only at
+the `#[repr(C)]` wire boundary, the one documented FFI exception, not in the
+crate's own logic.
 
-## What crosses: a tier-tagged residual
+One crate, not two, even though it carries a residual arena and a value-arena:
+they are one structural family (the value-arena reuses the residual arena's
+child-index-and-blob layout) and the record layout must have exactly one
+definition. Internally it splits into four modules, `wire`, `value`, `sink`, and
+`entry`, drawn so that if the value side outgrows the file-size smell it splits
+as files under one crate, never a second crate with a copied layout.
 
-The compiler reduces a program to a `Checked` residual whose effect set is
-proven included in the runtime's permitted set (no build-environment effect
-survives). The residual crosses tier-tagged, the tier being an optimization
-axis orthogonal to correctness (the effect proof is discharged in Rust
-before any lowering):
+## The residual (the wire module)
 
-- Tier 0, the flat serialized IR arena: the `vehje-ir` arena serialized as
- one contiguous buffer of `#[repr(C)]` nodes, the child-index pool, a
- string blob, and a root node id. The reference semantics, and the tier the
- first working version ships.
-- Tier 1, an optimized bytecode (reserved tag, encoder deferred).
-- Tier 2, native code (reserved tag, encoder deferred), where the runtime
- collapses to environment plumbing around LLVM/cranelift output.
+The residual is a control-flow-graph-of-blocks program, not a flat value. The
+runtime parses, lowers, and executes it for arriving scripts, so the wire form
+models a program, and this is where the debt that the runtime contains a compile
+stage lands.
 
-## Scope
+- `Residual`. The crossing descriptor: the serialized node arena, the child-index
+  pool, the string blob, the block table, the function table, and the root. The
+  node records carry inline operands (pool indirection is the measured expensive
+  part, so operands stay inline; the exact inline count is a measure-then-lock
+  constant with a provisional value, the earlier 24-byte-three-operand figure
+  having washed to a null result at scale).
+- The block and function tables. A block is a maximal straight-line region (a
+  contiguous node range with backward-only child indices); the block table
+  records each block's node range, terminator kind, successor block ids, and
+  block-argument signature, and the function table records each function's entry
+  block and argument and result signatures. Control flow lives only at
+  terminators; a loop is a back-edge with block-argument-passed loop-carried
+  values, and a call saves a return record on a frame stack bounded by the depth
+  cap.
+- `Tier`. Narrowed to name only the internal execution form (interpret the arena
+  versus run the bytecode), not a native-versus-managed axis. Native is a
+  method-agnostic point on the output spectrum, chosen where a per-region grade
+  proves it wins, not a tier tag here.
+- The diagnostics schema. The six additions that let the single engine
+  reconstruct a lease or effect error's witness lazily on the failure path: the
+  span table, the binder-site table, the per-relation provenance arrays, the
+  violation seeds, an optional residual debug section, and the
+  provenance-complete engine boundary. Landed in the wire format now so the
+  reconstruction query has them.
 
-- The tier tag and the wire struct carrying the residual (node buffer,
- child-index pool, string blob, root id) at tier 0.
-- The runtime-environment interface descriptor: the permitted host-call
- surface a residual may touch (the runtime-tier effects).
-- `extern "C"` entry points for handing a residual to the runtime and
- reading back its result and diagnostics.
+## The value-arena (the value module)
+
+The produced value crosses back as a value-arena: fixed-width value-node records,
+a flat child-index pool, a self-contained byte blob, and relative index links,
+the same structural family as the residual. It is region-structured: each value
+node carries a region id through a region-table indirection (the table finalises
+at chunk close, so no byte is touched twice and there is no back-patch), and
+region open and close markers let the runtime free a region's segment on stack
+discipline with no collector and no refcount.
+
+- `ValueArena`. The value-arena format and its region table.
+- `ValueNode`. One value-node record.
+- The backing memory is host-lent up front; the runtime holds no output memory
+  after a call.
+
+## The sink (the sink module)
+
+- `VehjeSink`. The reserve-then-commit two-function transfer contract, one
+  protocol for both boundaries: in-process a `#[repr(C)]` struct of two function
+  pointers plus opaque userdata, out-of-process the executable's stdout pipe
+  (the OS pipe buffer is the backpressure). The value serialises depth-first,
+  children-before-parents, so a parent records already-known child indices with
+  no back-patching, and streaming happens at whole-subtree chunk boundaries under
+  a residency budget.
+
+## The entry (the entry module)
+
+- The one runtime-W batched-column `extern "C"` entry. It takes a column of W
+  records per call (W at least two), so the runtime vectorises across the column,
+  which is where the measured throughput lives. The crossing itself is nearly
+  free, so there is no per-W symbol zoo and no crossing-amortisation cleverness
+  beyond the column entry. The return contract is a value property: fallibility
+  is an `Outcome`-shaped value in the value-arena, batch completion is a stream
+  property on the sink, and the lane mask is an internal mask-and-continue
+  mechanism, not a separate status vector.
 - An `abi_version` on the public boundary.
 
 ## Non-scope
 
 - Runtime execution (the Zig runtime).
 - Compiler-side dispatch (`vehje-runtime-driver`).
-- The tier-1 and tier-2 encoders (deferred behind the reserved tags).
+- The validated-data package and manifest (`vehje-runtime-gen`).
 
 ## Dependencies
 
-- `vehje-ir` for the residual node layout the tier-0 wire form mirrors.
-- `arvo` for the newtype discipline outside the FFI boundary.
-- `#![no_std]`, no alloc.
+`vehje-ir` for the residual node layout the wire form mirrors; `arvo` for the
+newtype discipline outside the FFI boundary; `hilavitkutin-str` for the string
+blob identity. `#![no_std]`, no alloc.
