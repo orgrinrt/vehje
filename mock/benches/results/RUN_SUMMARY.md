@@ -1,672 +1,902 @@
-# Carrier interpreter-composition matrix: first full-run summary
+# Carrier interpreter-composition matrix: PMU re-run summary (corrected)
 
-45 benches, one coherent wall-clock run (2026-07-23). Every cell derives its op
-semantics from the single `ops::binop_body!` / `binop_simd!` source, shares the
-unchecked `access::rload/rstore` fidelity path, and runs each `(variant, size,
-mode)` as its own release cdylib subprocess. Times are median `algo_ns` across
-the replicated passes. Full per-variant tables at the bottom; per-bench CSV +
-findings under `results/carrier_*/`.
+This is the full-run summary for the 58-bench carrier matrix, re-run in one
+coherent batch with the PMU pass armed (`MOCKSPACE_BENCH_PERF=1`), so every
+result carries the instructions/cycles columns and a derived IPC. The findings
+below supersede the first-run summary: a four-expert review panel
+(`mock/research/202607230922_carrier-matrix-result-review-panel/`) audited the
+first run and its methodology, and several first-run headlines were artifacts of
+the reporting layer, not real effects. Each corrected finding names what changed
+and why.
 
-Wall-clock only: the `instructions` / `cycles` columns are zero because the PMU
-path is gated behind an op-controlled `sudo MOCKSPACE_BENCH_PERF=1` session (the
-kperf fixed counters validated on M1). A PMU re-run reproduces the identical
-matrix with those two columns populated; nothing else changes.
+The single most important framing correction: the honest column is **N=16384**,
+not the small sizes. At small N the branch predictor memorizes the whole opcode
+stream, so dispatch-shape differences collapse to ties (the "dispatch barely
+matters" reading of the first run). The N=1024 to N=4096 cost step is the
+predictor running out of capacity, after which the near-cold behaviour shows.
+Read every dispatch and interpreter table at its largest size.
+
+The PMU caveat, stated up front: this machine's kperf path exposes the two fixed
+counters (instructions retired and cycles) only, not branch-mispredict or
+L1D-miss events. So IPC corroborates the instruction-count and stall stories, but
+it cannot by itself adjudicate predictor-versus-cache for the N=4096 step; that
+adjudication rests on the panel's structural argument (below), which the IPC data
+is consistent with.
 
 ## Headline findings
 
-1. **Dispatch shape barely matters on straight-line bytecode.** Across the six
-   dispatch programs, switch, natural if-chain, frequency-ascending if-chain,
-   function-table, and bit-tree cluster within roughly 2 to 15 percent at scale.
-   The natural if-chain ties the switch (never slower), and the function table
-   often edges the switch on wide programs (0.90x on real/scatter at N=16384).
-   The `nullfloor` control (loop with no dispatch) sits at 0.2 to 0.8x, so
-   dispatch is a minority of per-op cost on this ISA. The only real penalty is
-   the barrier-forced linear scan (`ifchainlin`, 1.25 to 1.27x), which exists
-   precisely as the "what a bad linear probe costs" control.
+1. **Dispatch shape matters 10 to 35% at the honest size; the small-N ties were
+   a predictor-memorization artifact.** At N=16384 on real control flow
+   (`carrier_dispatch_real`), `fntable` leads at 0.90x while `threaded` trails at
+   1.12x and `ifchainlin` at 1.23x, a ~35% span. On straight-line madd/tight the
+   span tightens to ~15%. The first run read the memorized small-N column and
+   concluded shape was irrelevant; it is not, once the predictor is past its
+   capacity. The `carrier_entgrid` family isolates the mechanism directly (finding
+   11).
 
-2. **Preserve-none threading wins only where control flow is real.** On
-   straight-line dispatch, threading loses (1.12 to 1.17x slower than switch).
-   On the CFG register-VM (`carrier_cfg`) with actual branches and back-edges,
-   trace-threading drops to 0.45x and preserve-none threading to 0.79x of the
-   switch. The advantage materializes exactly where the mechanism predicts:
-   branchy loops with indirect transfers, not a flat opcode stream.
+2. **Threading wins only where control flow is real, and the PMU shows the
+   mechanism: it retires far fewer instructions.** On the CFG workload
+   (`carrier_cfg`), `trace` runs at 0.44x of `switch`, and the counters confirm
+   the win is structural: trace retires ~40M instructions to switch's ~90M (2.25x
+   fewer) at N=16384. Threading real branches removes dispatch work that straight
+   line bytecode never had, which is why on the straight-line dispatch families
+   `threaded` is slower (1.12 to 1.17x), not faster. Preserve-none threading is a
+   control-flow lever, not a general dispatch win.
 
-3. **Record width is a null result, refuting the 24-byte-optimal hypothesis.**
-   REC12 / 16 / 20 / 24 / 32 land within under one percent of each other on
-   every profile. Decode is not the bottleneck; per-op work dominates. There is
-   no width to "tune" for speed; the choice is a density/padding decision, not a
-   throughput one.
+3. **Record width is a null result: a density choice, refuting 24-byte-optimal.**
+   `carrier_layout` holds every width (12/16/20/24/32) within 1% at every size and
+   profile, with IPC flat across widths. Width buys nothing for throughput; it is
+   purely a cache-footprint/density knob. Choose REC16 for density (panel Q5).
 
-4. **Register VM decisively beats stack VM.** The register residual wins every
-   profile; the stack machine runs up to 1.91x slower (madd and tight, nearly
-   2x). For arithmetic-heavy residuals the register machine is the clear pick.
+4. **Register VM beats stack VM decisively, on the corrected symmetric baseline.**
+   With both cells predecoded and folding the same live-out set (the panel's fix
+   for the first run's three-axis asymmetry), register wins every profile:
+   `carrier_residual` shows tight 3.06x, madd 2.29x, wideselect 1.63x, leaf 1.53x,
+   real/scatter 1.41x. The first run's 1.91x headline was a composite that
+   burdened the register side (wire decode plus a full-array checksum); the
+   corrected comparison still favors register. The PMU corroborates: register runs
+   at higher IPC (0.36 to 1.41) than stack (0.24 to 0.53), the stack VM stalling on
+   its operand-stack memory traffic. The stack-bytecode middle tier is closed on
+   this evidence.
 
-5. **Value representation: nan-boxing and tagging beat a static u64 at scale**
-   on the valrepr program (0.78x and 0.83x at N=16384). Worth carrying forward,
-   but this is one program shape and should not be over-generalized.
+5. **Value representation: nan-boxing beats a static u64 at scale.**
+   `carrier_valrepr` at N=16384: `nanbox` 0.80x, `tagged` 0.93x, `static` 1.00x
+   baseline, so nan-boxing wins ~20% at the honest size. The static u64's higher
+   IPC (0.78 vs nanbox 0.45) is doing more memory work, not going faster. One-shape
+   choice, low-to-medium confidence.
 
-6. **Optimization payoff is entirely program-dependent, and eqsat alone can
-   pessimize.** On the madd chain, the full pipeline (`all`) runs 15 to 142x
-   faster than the alternatives (it folds the chain to almost nothing). On
-   real/scatter there is nothing to fold and every level is a wash. Equality
-   saturation on its own produces a residual slower than no optimization for
-   madd (the AC-reassociation without folding rearranges without shrinking); it
-   only pays when paired with folding inside `all`. The lesson: run the whole
-   pipeline, do not ship eqsat as a standalone stage.
+6. **Optimizer: ship fold+CSE+DCE always on; eqsat is OUT. (Corrected.)** The
+   first-run finding claimed "CSE+eqsat recovers, run the whole pipeline"; the
+   run's own data contradicts it. The full pipeline `all` wins or ties everywhere,
+   but eqsat's marginal contribution to it is zero-or-negative: on
+   `carrier_optimize_scatter`, `cse` alone (1.00x) matches `all`, and on
+   `wideselect` `all` leads only marginally. Standalone eqsat inflated madd (the
+   first run's 142x was eqsat-alone pessimization presented as a win, not a
+   speedup). The real optimizer payoff is program-dependent: 13 to 25x on
+   madd/tight (dead code and constant folding over generated redundancy), ~1.17x on
+   real (little to remove). Ship fold+CSE+DCE; park eqsat/DAG-aware extraction
+   behind a named trigger (panel Q2).
 
-7. **Native codegen delivers about 3x, and copy-and-patch equals the stencil.**
-   The copy-and-patch JIT and the hand-written `global_asm` aarch64 stencil both
-   hit 2.6 to 4.3x over the interpreter and sit within one percent of each
-   other; the stencil occasionally edges copypatch (leaf, 0.93x). The PoC proves
-   both paths are viable and neither dominates, so the copy-and-patch route (far
-   cheaper to maintain than per-op hand asm) is the sound default.
+7. **Native codegen: a 2.6 to 4.3x warm floor; direct isel and copy-and-patch tie
+   at warm execution, but that is the wrong axis. (Tags un-inverted.)** The cell
+   tagged `direct` is direct instruction-selection; the cell tagged `copypatch` is
+   the real Xu-Kjolstad copy-and-patch (OOPSLA 2021). At warm execution they are
+   within 1% of each other (`carrier_native_real`: both ~0.41ms vs interp 2.65ms =
+   6.48x; native_tight 1.90x, native_madd 1.21x). Warm parity says nothing about
+   the axis that actually separates them, which is compile cost. See finding 8.
 
-8. **Vertical SIMD is the single biggest win: 3 to 6x.** `vert8` (eight-wide
-   `portable_simd`, one dispatch amortized over eight records) runs at 0.17 to
-   0.37x of scalar across every profile, up to roughly 6x on real and scatter.
-   This is the corrected honest measurement: every cell processes exactly eight
-   inputs per call with pre-allocated scratch, so the raw times are directly
-   comparable. It maps straight onto vehje's per-record column evaluation and is
-   the highest-leverage beyond-runtime shape in the matrix.
+8. **Compile cost S is now measured, and it reorders the native tiers. (New; the
+   panel's number-one gap.)** `carrier_setup` times the construction itself. Direct
+   isel (`emitdirect`) compiles ~2x cheaper than copy-and-patch (`emitcopypatch`)
+   on every profile (setup_real: emitdirect 0.55x vs emitcopypatch 1.00x baseline).
+   Predecode is by far the cheapest form to build (0.12 to 0.31x) and cheap to run;
+   `optall` is the most expensive construction (3 to 8x). So for short-lived
+   residuals, direct isel is the better native tier (equal warm speed, half the
+   compile cost), and predecode dominates when the residual runs only a few times.
+   With S measured alongside the per-iteration I, the tier breakeven `k*` (the run
+   count at which a heavier-to-build tier repays itself) is now computable from the
+   matrix rather than unknowable.
 
-9. **Native throughput ceiling: about 1.5x.** The shape-specialized native madd
-   loop over a byte stream (the O(N^2) throughput idiom, not per-execution
-   latency) beats the interpreter by ~1.5x at N=1024. The narrower margin than
-   the per-execution native tier reflects that this idiom is throughput and
-   memory bound, not dispatch bound.
+9. **Vertical SIMD is the single biggest lever: vert8 up to 4.8x. (Magnitude
+   corrected from 6x.)** `carrier_vertical` at N=16384: `vert8` 0.21x on
+   real/scatter (scalar 17.16ms to vert8 3.59ms = 4.8x), 0.34 to 0.43x on
+   leaf/tight. The first run's 6x included ~20% wire-versus-predecoded decode
+   asymmetry in the scalar baseline; against a predecoded scalar the win is ~4.8x.
+   This maps directly onto vehje's column evaluation and is the one ABI-shaping
+   result (finding below).
+
+10. **Native throughput ceiling is ~1.5x over the best interpreter.**
+    `carrier_native_ceiling`: native 0.67x of interp at N=1024 (28.9ms vs 43.1ms =
+    1.49x). The interpreter at its best (predecoded, optimized) is within ~1.5x of
+    native throughput; the larger 2.6 to 4.3x native wins are all measured against
+    the plain warm interpreter, not its best form.
+
+11. **Dispatch cost is regime-dependent on op-stream predictability. (New.)**
+    `carrier_entgrid` sweeps op-correlation x locality window. The
+    high-correlation variants (`900_*`) run at 0.40x, the zero-correlation
+    (random-stream) variants (`0_*`) at 1.00x baseline: a 2.5x span from
+    predictability alone, flat across the locality window. This is the mechanism
+    under the small-N dispatch ties: a correlated or memorized op stream hides
+    dispatch cost, a random stream exposes it. It is why finding 1's honest reading
+    needs the near-cold size.
 
 ## What this says for vehje's runtime tiers
 
-The residual tiers the runtime already plans map cleanly onto the evidence. The
-flat interpreter is a fine baseline and its dispatch shape is not worth agonizing
-over (finding 1); a register layout and the full optimizer pipeline are free wins
-worth defaulting on (findings 4, 6). The two places real speed lives are
-vectorized per-record column evaluation (finding 8, 3 to 6x, and it is exactly
-vehje's column-eval shape) and native codegen via copy-and-patch (finding 7,
-about 3x, cheap to maintain). Threading is a targeted tool for branchy residuals
-(finding 2), not a general default. Record width is a layout decision, not a perf
-lever (finding 3).
+- **Baseline tier: predecoded register interpreter.** Cheapest form to build
+  (finding 8), beats stack decisively (finding 4), and dispatch shape is a
+  second-order 10 to 35% choice on top (finding 1). Use `switch` or `fntable`
+  dispatch; add threading only for real-control-flow residuals (finding 2).
+- **Middle tier: predecoded register + fold/CSE/DCE.** The optimizer pays 13 to
+  25x on redundant generated code and never hurts once eqsat is dropped (finding
+  6). Stack bytecode is closed out (finding 4). This is panel Q4's redefinition.
+- **Native tier: direct isel for short-lived residuals, measured against k\*.**
+  Direct isel and copy-and-patch tie at warm speed but direct isel is ~2x cheaper
+  to compile (finding 8); native's honest ceiling over the best interpreter is
+  ~1.5x (finding 10), larger only over the plain interpreter.
+- **The column-eval lever: vert8.** The 4.8x vertical win (finding 9) is the
+  biggest single lever and the one non-deferrable ABI decision: reserve a batched
+  `execute(residual, inputs[W], outputs[W])` entry in the runtime C ABI now, so
+  column evaluation has the batched arity it needs (panel Q4).
 
 ## Caveats
 
-All figures are `CNTVCT` wall-clock; `timed_calibrated!` auto-repeats small-N
-cells to clear the 2048-tick quantization floor. Coefficient of variation is
-mostly under one percent; a few cells show throttle bounce (the native_ceiling
-interpreter autocorrelation is -0.65, a thermal alternation, not a code effect).
-The PMU columns await the op-gated sudo re-run. `native_ceiling` is capped at
-N<=1024 because its O(N^2) sweep at N=4096 exceeds the driver window for no
-insight beyond the 64/256/1024 curve.
+- Values are per-16-execution warm-throughput means with integer-truncation bias,
+  not cold latency; the calibrated re-warm makes the surrounding workload
+  irrelevant to `algo_ns`. Read them as steady-state throughput.
+- PMU counters are instructions and cycles only (fixed counters); IPC corroborates
+  but does not isolate branch-mispredict or cache-miss events. The N=4096 step's
+  predictor-versus-cache attribution rests on the panel's structural argument
+  (madd/tight share real's footprint yet show no step; nullfloor is flat; the step
+  orders by op-stream entropy), which the IPC data is consistent with.
+- `carrier_setup`'s `parse` cell reads 0.0ns because parsing a REC24 buffer is
+  below the counter floor even under calibration; treat parse as free relative to
+  the other constructions.
+- Every `nullfloor` / `null` row is the null-dispatch floor cell (a real
+  interpreter loop with the opcode branch removed); it is the subtrahend for
+  isolating pure dispatch cost, not a competing variant.
 
 ## Full matrix
 
-## carrier_dispatch_real
+The per-bench tables follow (median `algo_ns` across replicated passes, with the
+IPC column from the PMU pass; the leading `**<-**` marks the fastest variant at
+the largest size, and `vs base` is the ratio against each family's reference
+cell).
 
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| nullfloor **<-** | 1.65us | 7.21us | 28.77us | 116.48us | 585.69us | 0.22x |
-| fntable | 2.88us | 13.06us | 54.21us | 560.76us | 2.343ms | 0.90x |
-| ifchain | 2.27us | 10.59us | 41.18us | 585.10us | 2.603ms | 1.00x |
-| switch | 2.35us | 10.55us | 41.27us | 608.10us | 2.612ms | 1.00x (base) |
-| ifchainasc | 2.27us | 10.30us | 41.89us | 591.02us | 2.613ms | 1.00x |
-| bittree | 2.89us | 12.81us | 50.10us | 250.71us | 2.653ms | 1.02x |
-| threaded | 2.82us | 11.83us | 45.61us | 645.47us | 2.923ms | 1.12x |
-| ifchainlin | 5.16us | 21.86us | 87.19us | 539.98us | 3.255ms | 1.25x |
+## carrier_cfg
 
-_baseline: `switch`; fastest at N=16384: `nullfloor`_
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| trace **<-** | 26.23us | 100.43us | 407.27us | 1.603ms | 6.418ms | 0.44x | 0.25 |
+| threaded | 47.13us | 179.86us | 703.61us | 2.854ms | 11.412ms | 0.79x | 0.52 |
+| fntable | 57.63us | 218.22us | 865.99us | 3.504ms | 14.067ms | 0.97x | 0.42 |
+| switch | 57.17us | 223.64us | 902.90us | 3.606ms | 14.444ms | 1.00x (base) | 0.48 |
 
-
-## carrier_dispatch_madd
-
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| nullfloor **<-** | 1.96us | 10.65us | 42.41us | 161.03us | 650.33us | 0.83x |
-| ifchainlin | 2.53us | 11.53us | 45.39us | 172.42us | 691.86us | 0.88x |
-| bittree | 2.60us | 11.64us | 46.15us | 176.85us | 715.81us | 0.91x |
-| ifchainasc | 2.67us | 12.46us | 48.74us | 193.49us | 776.50us | 0.99x |
-| ifchain | 2.69us | 12.65us | 48.80us | 194.72us | 779.70us | 1.00x |
-| switch | 2.69us | 12.51us | 50.33us | 199.55us | 783.58us | 1.00x (base) |
-| fntable | 2.94us | 13.79us | 54.62us | 214.19us | 868.63us | 1.11x |
-| threaded | 2.94us | 13.11us | 54.44us | 213.29us | 892.18us | 1.14x |
-
-_baseline: `switch`; fastest at N=16384: `nullfloor`_
+_baseline: `switch`; fastest at N=16384: `trace`; IPC = instructions/cycles from the PMU pass_
 
 
-## carrier_dispatch_tight
+## carrier_coldcycle_leaf
 
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| nullfloor **<-** | 1.83us | 8.31us | 32.91us | 127.84us | 499.46us | 0.60x |
-| bittree | 2.55us | 11.63us | 45.27us | 174.31us | 730.05us | 0.88x |
-| switch | 2.27us | 11.17us | 45.55us | 186.86us | 828.34us | 1.00x (base) |
-| ifchainasc | 2.45us | 11.37us | 45.06us | 185.59us | 832.40us | 1.00x |
-| ifchain | 2.28us | 11.38us | 45.43us | 190.04us | 839.74us | 1.01x |
-| fntable | 3.02us | 13.08us | 53.68us | 217.55us | 940.73us | 1.14x |
-| threaded | 2.90us | 12.49us | 46.91us | 195.63us | 955.38us | 1.15x |
-| ifchainlin | 3.95us | 17.18us | 60.43us | 236.95us | 977.47us | 1.18x |
+| variant | N=64 | N=256 | N=1024 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|
+| null **<-** | 1.06us | 5.12us | 28.34us | 0.54x | 0.31 |
+| threaded | 1.34us | 5.51us | 51.25us | 0.98x | 0.49 |
+| switch | 1.51us | 9.42us | 52.04us | 1.00x (base) | 0.52 |
+| fntable | 2.97us | 16.21us | 64.46us | 1.24x | 0.50 |
 
-_baseline: `switch`; fastest at N=16384: `nullfloor`_
+_baseline: `switch`; fastest at N=1024: `null`; IPC = instructions/cycles from the PMU pass_
 
 
-## carrier_dispatch_scatter
+## carrier_coldcycle_madd
 
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| nullfloor **<-** | 1.77us | 7.91us | 30.25us | 121.05us | 593.13us | 0.23x |
-| fntable | 3.26us | 14.28us | 56.35us | 556.12us | 2.333ms | 0.90x |
-| ifchainasc | 2.55us | 11.28us | 43.26us | 612.62us | 2.590ms | 1.00x |
-| switch | 2.52us | 11.10us | 43.94us | 598.11us | 2.596ms | 1.00x (base) |
-| ifchain | 2.57us | 11.19us | 43.72us | 590.78us | 2.600ms | 1.00x |
-| bittree | 3.03us | 13.63us | 52.73us | 307.95us | 2.685ms | 1.03x |
-| threaded | 2.88us | 12.63us | 46.93us | 647.72us | 2.900ms | 1.12x |
-| ifchainlin | 5.93us | 23.86us | 94.09us | 561.83us | 3.242ms | 1.25x |
+| variant | N=64 | N=256 | N=1024 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|
+| null **<-** | 1.82us | 9.57us | 42.70us | 0.90x | 0.37 |
+| switch | 2.28us | 11.09us | 47.43us | 1.00x (base) | 0.44 |
+| threaded | 2.27us | 11.06us | 47.53us | 1.00x | 0.42 |
+| fntable | 2.52us | 11.73us | 48.50us | 1.02x | 0.37 |
 
-_baseline: `switch`; fastest at N=16384: `nullfloor`_
+_baseline: `switch`; fastest at N=1024: `null`; IPC = instructions/cycles from the PMU pass_
 
 
-## carrier_dispatch_wideselect
+## carrier_coldcycle_real
 
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| nullfloor **<-** | 1.80us | 8.02us | 31.05us | 119.98us | 517.78us | 0.24x |
-| bittree | 2.78us | 12.31us | 48.33us | 189.79us | 1.666ms | 0.78x |
-| fntable | 3.08us | 13.30us | 52.82us | 453.33us | 2.073ms | 0.97x |
-| switch | 2.38us | 10.86us | 42.76us | 475.64us | 2.138ms | 1.00x (base) |
-| ifchainasc | 2.39us | 10.79us | 42.38us | 475.67us | 2.146ms | 1.00x |
-| ifchain | 2.50us | 11.38us | 44.33us | 486.77us | 2.190ms | 1.02x |
-| threaded | 2.90us | 12.05us | 46.65us | 447.91us | 2.311ms | 1.08x |
-| ifchainlin | 5.31us | 24.40us | 101.84us | 523.37us | 2.722ms | 1.27x |
+| variant | N=64 | N=256 | N=1024 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|
+| null **<-** | 1.37us | 6.02us | 31.95us | 0.24x | 0.33 |
+| switch | 2.14us | 29.45us | 133.62us | 1.00x (base) | 1.23 |
+| threaded | 2.00us | 29.62us | 138.90us | 1.04x | 1.19 |
+| fntable | 3.00us | 34.18us | 151.54us | 1.13x | 1.10 |
 
-_baseline: `switch`; fastest at N=16384: `nullfloor`_
+_baseline: `switch`; fastest at N=1024: `null`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_coldcycle_scatter
+
+| variant | N=64 | N=256 | N=1024 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|
+| null **<-** | 1.24us | 5.83us | 31.76us | 0.24x | 0.29 |
+| switch | 2.10us | 28.94us | 133.09us | 1.00x (base) | 1.22 |
+| threaded | 2.06us | 30.05us | 140.10us | 1.05x | 1.19 |
+| fntable | 2.97us | 33.78us | 151.17us | 1.14x | 1.08 |
+
+_baseline: `switch`; fastest at N=1024: `null`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_coldcycle_tight
+
+| variant | N=64 | N=256 | N=1024 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|
+| null **<-** | 1.54us | 7.16us | 31.84us | 0.76x | 0.27 |
+| threaded | 1.67us | 8.27us | 36.50us | 0.87x | 0.33 |
+| switch | 1.77us | 8.35us | 42.10us | 1.00x (base) | 0.40 |
+| fntable | 2.24us | 10.94us | 51.64us | 1.23x | 0.40 |
+
+_baseline: `switch`; fastest at N=1024: `null`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_coldcycle_wideselect
+
+| variant | N=64 | N=256 | N=1024 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|
+| null **<-** | 1.25us | 6.00us | 30.44us | 0.28x | 0.28 |
+| switch | 2.16us | 22.15us | 107.73us | 1.00x (base) | 0.99 |
+| threaded | 1.98us | 19.23us | 109.61us | 1.02x | 0.90 |
+| fntable | 2.80us | 27.45us | 122.48us | 1.14x | 0.84 |
+
+_baseline: `switch`; fastest at N=1024: `null`; IPC = instructions/cycles from the PMU pass_
 
 
 ## carrier_dispatch_leaf
 
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| nullfloor **<-** | 1.66us | 7.45us | 28.59us | 115.57us | 569.76us | 0.54x |
-| bittree | 2.40us | 10.48us | 40.94us | 166.93us | 779.43us | 0.73x |
-| ifchainlin | 3.04us | 12.83us | 51.12us | 216.01us | 979.50us | 0.92x |
-| ifchainasc | 2.12us | 10.01us | 48.03us | 237.56us | 1.063ms | 1.00x |
-| switch | 2.14us | 9.63us | 46.19us | 226.29us | 1.064ms | 1.00x (base) |
-| ifchain | 2.14us | 9.57us | 49.48us | 247.55us | 1.082ms | 1.02x |
-| fntable | 2.66us | 12.71us | 56.00us | 264.25us | 1.138ms | 1.07x |
-| threaded | 2.80us | 11.76us | 44.93us | 218.27us | 1.244ms | 1.17x |
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| nullfloor **<-** | 1.56us | 6.97us | 26.88us | 109.99us | 539.93us | 0.50x | 0.22 |
+| bittree | 2.29us | 10.02us | 38.16us | 165.31us | 782.51us | 0.73x | 0.27 |
+| ifchainlin | 2.80us | 12.02us | 47.95us | 210.07us | 984.07us | 0.92x | 0.26 |
+| ifchainasc | 1.93us | 9.37us | 46.14us | 231.17us | 1.075ms | 1.00x | 0.36 |
+| switch | 1.99us | 9.23us | 43.97us | 221.36us | 1.075ms | 1.00x (base) | 0.37 |
+| ifchain | 2.04us | 9.38us | 46.14us | 241.92us | 1.085ms | 1.01x | 0.37 |
+| fntable | 2.47us | 11.71us | 52.08us | 264.51us | 1.153ms | 1.07x | 0.28 |
+| threaded | 2.69us | 11.16us | 42.70us | 224.88us | 1.246ms | 1.16x | 0.31 |
 
-_baseline: `switch`; fastest at N=16384: `nullfloor`_
-
-
-## carrier_predecode_real
-
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| null **<-** | 1.40us | 6.67us | 26.15us | 101.55us | 455.55us | 0.22x |
-| direct | 1.63us | 7.90us | 32.08us | 378.88us | 1.709ms | 0.81x |
-| switch | 2.14us | 9.57us | 38.22us | 496.19us | 2.102ms | 1.00x (base) |
-| threaded | 1.89us | 9.26us | 36.65us | 471.92us | 2.200ms | 1.05x |
-| regcache | 2.46us | 10.94us | 42.86us | 492.98us | 2.211ms | 1.05x |
-| fntable | 3.06us | 13.64us | 54.11us | 566.72us | 2.402ms | 1.14x |
-
-_baseline: `switch`; fastest at N=16384: `null`_
+_baseline: `switch`; fastest at N=16384: `nullfloor`; IPC = instructions/cycles from the PMU pass_
 
 
-## carrier_predecode_madd
+## carrier_dispatch_madd
 
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| null **<-** | 2.08us | 10.82us | 45.36us | 171.42us | 692.48us | 0.90x |
-| threaded | 2.25us | 11.84us | 49.66us | 189.81us | 761.37us | 0.99x |
-| fntable | 2.48us | 11.83us | 49.22us | 187.57us | 761.42us | 0.99x |
-| switch | 2.38us | 11.97us | 50.20us | 189.49us | 765.85us | 1.00x (base) |
-| direct | 2.22us | 12.06us | 50.32us | 190.64us | 765.89us | 1.00x |
-| regcache | 2.08us | 9.84us | 38.09us | 147.08us | 1.012ms | 1.32x |
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| nullfloor **<-** | 1.92us | 10.41us | 41.11us | 161.13us | 655.32us | 0.83x | 0.24 |
+| ifchainlin | 2.32us | 10.70us | 44.23us | 171.88us | 697.74us | 0.89x | 0.21 |
+| bittree | 2.41us | 11.21us | 45.17us | 179.43us | 717.95us | 0.91x | 0.23 |
+| ifchain | 2.63us | 12.55us | 48.19us | 197.25us | 783.87us | 1.00x | 0.25 |
+| ifchainasc | 2.61us | 11.87us | 47.88us | 195.99us | 784.15us | 1.00x | 0.25 |
+| switch | 2.62us | 12.33us | 48.61us | 200.21us | 787.40us | 1.00x (base) | 0.26 |
+| fntable | 2.89us | 13.44us | 52.89us | 216.35us | 871.80us | 1.11x | 0.20 |
+| threaded | 2.94us | 12.37us | 52.99us | 216.59us | 912.86us | 1.16x | 0.22 |
 
-_baseline: `switch`; fastest at N=16384: `null`_
-
-
-## carrier_predecode_tight
-
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| null **<-** | 1.58us | 8.08us | 34.09us | 130.37us | 518.78us | 0.81x |
-| direct | 1.98us | 9.95us | 39.11us | 146.30us | 590.84us | 0.92x |
-| threaded | 2.07us | 9.53us | 39.37us | 144.08us | 597.00us | 0.93x |
-| switch | 2.25us | 8.99us | 41.90us | 148.45us | 642.24us | 1.00x (base) |
-| fntable | 2.13us | 9.54us | 41.42us | 174.61us | 811.32us | 1.26x |
-| regcache | 2.19us | 8.95us | 35.43us | 140.79us | 841.27us | 1.31x |
-
-_baseline: `switch`; fastest at N=16384: `null`_
+_baseline: `switch`; fastest at N=16384: `nullfloor`; IPC = instructions/cycles from the PMU pass_
 
 
-## carrier_predecode_scatter
+## carrier_dispatch_real
 
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| null **<-** | 1.44us | 6.47us | 25.83us | 98.08us | 421.70us | 0.20x |
-| direct | 1.54us | 7.84us | 31.56us | 393.76us | 1.708ms | 0.81x |
-| switch | 2.18us | 9.44us | 38.02us | 503.40us | 2.098ms | 1.00x (base) |
-| threaded | 1.82us | 9.16us | 36.85us | 514.37us | 2.197ms | 1.05x |
-| regcache | 2.44us | 10.69us | 42.68us | 511.72us | 2.203ms | 1.05x |
-| fntable | 3.19us | 13.52us | 53.45us | 582.89us | 2.387ms | 1.14x |
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| nullfloor **<-** | 1.67us | 7.69us | 29.44us | 115.38us | 513.74us | 0.20x | 0.20 |
+| fntable | 3.05us | 13.78us | 52.75us | 555.57us | 2.355ms | 0.90x | 0.56 |
+| bittree | 2.85us | 12.91us | 50.61us | 230.91us | 2.608ms | 0.99x | 0.84 |
+| ifchain | 2.37us | 10.97us | 40.78us | 571.92us | 2.609ms | 0.99x | 0.87 |
+| ifchainasc | 2.38us | 10.28us | 41.72us | 564.44us | 2.616ms | 1.00x | 0.87 |
+| switch | 2.40us | 11.05us | 41.37us | 537.16us | 2.623ms | 1.00x (base) | 0.89 |
+| threaded | 2.83us | 11.82us | 46.39us | 628.67us | 2.929ms | 1.12x | 0.72 |
+| ifchainlin | 5.13us | 22.01us | 85.11us | 479.36us | 3.226ms | 1.23x | 0.39 |
 
-_baseline: `switch`; fastest at N=16384: `null`_
-
-
-## carrier_predecode_wideselect
-
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| null **<-** | 1.37us | 6.30us | 25.29us | 103.24us | 520.87us | 0.31x |
-| direct | 1.48us | 6.68us | 27.97us | 227.70us | 1.349ms | 0.80x |
-| threaded | 1.79us | 8.18us | 32.88us | 332.82us | 1.694ms | 1.00x |
-| switch | 2.13us | 9.19us | 37.10us | 379.30us | 1.694ms | 1.00x (base) |
-| regcache | 2.32us | 10.28us | 40.12us | 376.33us | 1.802ms | 1.06x |
-| fntable | 2.96us | 11.86us | 49.44us | 451.46us | 1.936ms | 1.14x |
-
-_baseline: `switch`; fastest at N=16384: `null`_
+_baseline: `switch`; fastest at N=16384: `nullfloor`; IPC = instructions/cycles from the PMU pass_
 
 
-## carrier_predecode_leaf
+## carrier_dispatch_scatter
 
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| null **<-** | 1.11us | 5.13us | 20.33us | 81.94us | 480.83us | 0.59x |
-| direct | 994.1ns | 4.89us | 20.12us | 78.91us | 641.58us | 0.79x |
-| threaded | 1.28us | 5.76us | 22.92us | 95.66us | 782.18us | 0.96x |
-| switch | 1.36us | 6.48us | 26.00us | 146.69us | 813.83us | 1.00x (base) |
-| regcache | 1.42us | 6.73us | 27.69us | 149.18us | 829.08us | 1.02x |
-| fntable | 1.84us | 8.85us | 54.73us | 247.69us | 1.016ms | 1.25x |
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| nullfloor **<-** | 1.75us | 7.49us | 28.89us | 116.91us | 563.73us | 0.22x | 0.21 |
+| fntable | 3.18us | 13.83us | 53.75us | 556.65us | 2.356ms | 0.90x | 0.55 |
+| bittree | 2.98us | 13.07us | 50.24us | 290.72us | 2.579ms | 0.98x | 0.81 |
+| ifchain | 2.51us | 11.10us | 42.74us | 583.30us | 2.602ms | 0.99x | 0.85 |
+| switch | 2.44us | 11.09us | 41.52us | 565.86us | 2.621ms | 1.00x (base) | 0.87 |
+| ifchainasc | 2.52us | 11.08us | 42.28us | 565.03us | 2.625ms | 1.00x | 0.85 |
+| threaded | 2.86us | 12.60us | 46.18us | 589.17us | 2.941ms | 1.12x | 0.70 |
+| ifchainlin | 5.75us | 22.83us | 89.83us | 555.88us | 3.264ms | 1.25x | 0.39 |
 
-_baseline: `switch`; fastest at N=16384: `null`_
-
-
-## carrier_cfg
-
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| trace **<-** | 27.19us | 105.51us | 399.28us | 1.588ms | 6.331ms | 0.45x |
-| threaded | 47.71us | 182.65us | 697.15us | 2.802ms | 11.153ms | 0.79x |
-| fntable | 56.58us | 221.58us | 862.52us | 3.448ms | 13.732ms | 0.97x |
-| switch | 60.06us | 228.44us | 883.65us | 3.547ms | 14.134ms | 1.00x (base) |
-
-_baseline: `switch`; fastest at N=16384: `trace`_
+_baseline: `switch`; fastest at N=16384: `nullfloor`; IPC = instructions/cycles from the PMU pass_
 
 
-## carrier_layout_real
+## carrier_dispatch_tight
 
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| 24 **<-** | 2.47us | 11.22us | 42.47us | 601.60us | 2.588ms | 1.00x |
-| 32 | 2.49us | 11.20us | 42.67us | 603.13us | 2.596ms | 1.00x |
-| 20 | 2.48us | 11.27us | 42.80us | 585.32us | 2.596ms | 1.00x |
-| 12 | 2.52us | 11.32us | 42.54us | 600.75us | 2.597ms | 1.00x (base) |
-| 16 | 2.50us | 11.23us | 42.31us | 609.62us | 2.603ms | 1.00x |
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| nullfloor **<-** | 1.77us | 8.12us | 31.04us | 126.36us | 510.57us | 0.61x | 0.19 |
+| bittree | 2.51us | 11.60us | 43.13us | 174.31us | 729.31us | 0.87x | 0.23 |
+| switch | 2.25us | 11.12us | 42.83us | 186.84us | 835.92us | 1.00x (base) | 0.27 |
+| ifchainasc | 2.26us | 10.75us | 43.54us | 187.22us | 838.12us | 1.00x | 0.27 |
+| ifchain | 2.27us | 11.19us | 43.45us | 188.57us | 845.62us | 1.01x | 0.27 |
+| fntable | 3.07us | 12.96us | 52.63us | 214.41us | 946.51us | 1.13x | 0.22 |
+| threaded | 2.91us | 12.41us | 46.05us | 198.32us | 975.59us | 1.17x | 0.23 |
+| ifchainlin | 3.75us | 16.69us | 57.95us | 238.71us | 983.87us | 1.18x | 0.21 |
 
-_baseline: `12`; fastest at N=16384: `24`_
-
-
-## carrier_layout_madd
-
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| 20 **<-** | 2.67us | 12.46us | 49.60us | 191.11us | 769.15us | 1.00x |
-| 12 | 2.67us | 12.50us | 49.47us | 190.82us | 769.29us | 1.00x (base) |
-| 16 | 2.66us | 12.50us | 49.46us | 191.12us | 769.59us | 1.00x |
-| 24 | 2.72us | 12.44us | 49.64us | 190.99us | 769.67us | 1.00x |
-| 32 | 2.69us | 12.48us | 49.57us | 193.96us | 771.28us | 1.00x |
-
-_baseline: `12`; fastest at N=16384: `20`_
+_baseline: `switch`; fastest at N=16384: `nullfloor`; IPC = instructions/cycles from the PMU pass_
 
 
-## carrier_layout_tight
+## carrier_dispatch_wideselect
 
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| 24 **<-** | 2.29us | 11.20us | 45.87us | 187.84us | 832.29us | 1.00x |
-| 20 | 2.27us | 11.22us | 45.82us | 189.28us | 832.32us | 1.00x |
-| 16 | 2.28us | 11.19us | 45.85us | 187.20us | 832.71us | 1.00x |
-| 32 | 2.29us | 11.15us | 46.17us | 188.65us | 832.72us | 1.00x |
-| 12 | 2.26us | 11.24us | 45.89us | 188.19us | 833.45us | 1.00x (base) |
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| nullfloor **<-** | 1.79us | 7.84us | 29.75us | 118.04us | 512.56us | 0.24x | 0.19 |
+| bittree | 2.77us | 12.10us | 48.23us | 187.78us | 1.691ms | 0.79x | 0.52 |
+| fntable | 2.92us | 12.36us | 50.75us | 452.24us | 2.039ms | 0.95x | 0.47 |
+| switch | 2.36us | 10.42us | 40.21us | 442.18us | 2.140ms | 1.00x (base) | 0.70 |
+| ifchainasc | 2.33us | 10.21us | 39.98us | 429.39us | 2.151ms | 1.00x | 0.68 |
+| ifchain | 2.51us | 10.79us | 42.49us | 458.78us | 2.199ms | 1.03x | 0.70 |
+| threaded | 2.77us | 11.69us | 44.06us | 446.35us | 2.351ms | 1.10x | 0.56 |
+| ifchainlin | 5.23us | 23.92us | 96.94us | 515.41us | 2.737ms | 1.28x | 0.32 |
 
-_baseline: `12`; fastest at N=16384: `24`_
-
-
-## carrier_layout_scatter
-
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| 16 **<-** | 2.51us | 11.14us | 44.51us | 576.53us | 2.584ms | 1.00x |
-| 12 | 2.55us | 11.26us | 44.78us | 587.66us | 2.591ms | 1.00x (base) |
-| 32 | 2.53us | 11.18us | 44.28us | 577.28us | 2.594ms | 1.00x |
-| 20 | 2.50us | 11.16us | 44.34us | 571.46us | 2.595ms | 1.00x |
-| 24 | 2.51us | 11.15us | 44.48us | 571.68us | 2.596ms | 1.00x |
-
-_baseline: `12`; fastest at N=16384: `16`_
+_baseline: `switch`; fastest at N=16384: `nullfloor`; IPC = instructions/cycles from the PMU pass_
 
 
-## carrier_layout_wideselect
+## carrier_entgrid
 
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| 16 **<-** | 2.40us | 10.81us | 42.19us | 480.51us | 2.127ms | 1.00x |
-| 12 | 2.51us | 11.20us | 43.24us | 439.60us | 2.135ms | 1.00x (base) |
-| 24 | 2.39us | 10.86us | 41.53us | 466.47us | 2.136ms | 1.00x |
-| 20 | 2.39us | 10.87us | 42.22us | 472.46us | 2.138ms | 1.00x |
-| 32 | 2.39us | 10.85us | 42.02us | 471.13us | 2.144ms | 1.00x |
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| 900_w64 **<-** | 1.59us | 6.59us | 27.20us | 133.92us | 855.32us | 0.40x | 0.48 |
+| 900_w4 | 1.89us | 11.58us | 44.58us | 177.11us | 856.15us | 0.40x | 0.47 |
+| 900_wmax | 1.58us | 7.14us | 27.58us | 132.82us | 871.35us | 0.41x | 0.48 |
+| 500_wmax | 1.94us | 8.51us | 34.10us | 436.49us | 1.913ms | 0.90x | 1.07 |
+| 500_w64 | 1.90us | 8.46us | 34.33us | 433.90us | 1.925ms | 0.91x | 1.06 |
+| 500_w4 | 1.93us | 8.61us | 35.50us | 430.32us | 1.931ms | 0.91x | 1.08 |
+| 0_wmax | 2.11us | 9.44us | 37.60us | 499.21us | 2.109ms | 0.99x | 1.19 |
+| 0_w4 | 2.14us | 9.09us | 37.94us | 475.62us | 2.121ms | 1.00x (base) | 1.20 |
+| 0_w64 | 2.11us | 8.82us | 37.21us | 476.14us | 2.126ms | 1.00x | 1.19 |
 
-_baseline: `12`; fastest at N=16384: `16`_
+_baseline: `0_w4`; fastest at N=16384: `900_w64`; IPC = instructions/cycles from the PMU pass_
 
 
 ## carrier_layout_leaf
 
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| 12 **<-** | 2.13us | 9.79us | 60.34us | 284.17us | 1.126ms | 1.00x (base) |
-| 32 | 2.15us | 9.92us | 58.88us | 290.11us | 1.130ms | 1.00x |
-| 20 | 2.17us | 10.29us | 59.38us | 284.23us | 1.131ms | 1.00x |
-| 24 | 2.15us | 9.84us | 59.45us | 284.47us | 1.131ms | 1.00x |
-| 16 | 2.15us | 10.04us | 60.39us | 284.02us | 1.131ms | 1.01x |
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| 16 **<-** | 2.12us | 9.34us | 56.63us | 282.91us | 1.141ms | 0.99x | 0.40 |
+| 32 | 2.05us | 9.45us | 55.71us | 287.00us | 1.143ms | 1.00x | 0.40 |
+| 20 | 2.12us | 9.26us | 56.18us | 284.48us | 1.146ms | 1.00x | 0.40 |
+| 24 | 2.09us | 9.32us | 56.45us | 283.36us | 1.147ms | 1.00x | 0.40 |
+| 12 | 2.01us | 9.39us | 56.67us | 283.32us | 1.147ms | 1.00x (base) | 0.40 |
 
-_baseline: `12`; fastest at N=16384: `12`_
+_baseline: `12`; fastest at N=16384: `16`; IPC = instructions/cycles from the PMU pass_
 
 
-## carrier_valrepr
+## carrier_layout_madd
 
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| nanbox **<-** | 2.12us | 8.96us | 33.40us | 174.62us | 1.491ms | 0.78x |
-| tagged | 2.25us | 9.45us | 35.90us | 147.87us | 1.580ms | 0.83x |
-| static | 2.46us | 10.67us | 40.38us | 183.22us | 1.906ms | 1.00x (base) |
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| 20 **<-** | 2.66us | 11.36us | 48.73us | 191.87us | 770.20us | 1.00x | 0.25 |
+| 12 | 2.67us | 11.93us | 47.85us | 191.54us | 770.31us | 1.00x (base) | 0.25 |
+| 24 | 2.63us | 11.48us | 48.16us | 192.12us | 770.50us | 1.00x | 0.25 |
+| 16 | 2.60us | 11.89us | 48.54us | 191.34us | 770.78us | 1.00x | 0.25 |
+| 32 | 2.61us | 11.99us | 48.44us | 194.60us | 772.33us | 1.00x | 0.25 |
 
-_baseline: `static`; fastest at N=16384: `nanbox`_
+_baseline: `12`; fastest at N=16384: `20`; IPC = instructions/cycles from the PMU pass_
 
 
-## carrier_residual_real
+## carrier_layout_real
 
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| register **<-** | 2.35us | 10.44us | 43.44us | 566.26us | 2.607ms | 1.00x (base) |
-| stack | 5.93us | 25.37us | 120.02us | 613.53us | 2.812ms | 1.08x |
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| 12 **<-** | 2.50us | 11.27us | 42.05us | 576.24us | 2.622ms | 1.00x (base) | 0.89 |
+| 20 | 2.47us | 11.17us | 41.60us | 584.27us | 2.624ms | 1.00x | 0.90 |
+| 32 | 2.46us | 11.17us | 41.92us | 567.41us | 2.625ms | 1.00x | 0.90 |
+| 24 | 2.47us | 11.21us | 41.75us | 559.13us | 2.627ms | 1.00x | 0.90 |
+| 16 | 2.45us | 11.21us | 41.76us | 572.21us | 2.631ms | 1.00x | 0.90 |
 
-_baseline: `register`; fastest at N=16384: `register`_
+_baseline: `12`; fastest at N=16384: `12`; IPC = instructions/cycles from the PMU pass_
 
 
-## carrier_residual_madd
+## carrier_layout_scatter
 
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| register **<-** | 2.48us | 12.11us | 46.84us | 198.53us | 784.77us | 1.00x (base) |
-| stack | 5.72us | 24.16us | 93.27us | 379.82us | 1.497ms | 1.91x |
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| 24 **<-** | 2.44us | 10.68us | 41.98us | 576.66us | 2.614ms | 1.00x | 0.87 |
+| 12 | 2.48us | 10.71us | 41.24us | 578.86us | 2.615ms | 1.00x (base) | 0.86 |
+| 20 | 2.41us | 10.72us | 41.44us | 576.60us | 2.621ms | 1.00x | 0.87 |
+| 16 | 2.41us | 10.66us | 41.73us | 574.65us | 2.622ms | 1.00x | 0.87 |
+| 32 | 2.43us | 10.68us | 42.08us | 576.62us | 2.622ms | 1.00x | 0.87 |
 
-_baseline: `register`; fastest at N=16384: `register`_
+_baseline: `12`; fastest at N=16384: `24`; IPC = instructions/cycles from the PMU pass_
 
 
-## carrier_residual_tight
+## carrier_layout_tight
 
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| register **<-** | 2.10us | 10.50us | 42.37us | 187.06us | 831.19us | 1.00x (base) |
-| stack | 6.06us | 26.33us | 95.56us | 399.87us | 1.591ms | 1.91x |
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| 16 **<-** | 2.18us | 10.37us | 42.42us | 188.82us | 840.72us | 1.00x | 0.28 |
+| 12 | 2.19us | 10.46us | 43.44us | 188.17us | 841.06us | 1.00x (base) | 0.28 |
+| 32 | 2.21us | 10.54us | 43.18us | 189.82us | 841.54us | 1.00x | 0.28 |
+| 20 | 2.19us | 10.51us | 42.58us | 187.81us | 845.81us | 1.01x | 0.28 |
+| 24 | 2.21us | 10.52us | 43.35us | 189.65us | 847.13us | 1.01x | 0.28 |
 
-_baseline: `register`; fastest at N=16384: `register`_
+_baseline: `12`; fastest at N=16384: `16`; IPC = instructions/cycles from the PMU pass_
 
 
-## carrier_residual_scatter
+## carrier_layout_wideselect
 
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| register **<-** | 2.33us | 10.17us | 43.72us | 585.33us | 2.604ms | 1.00x (base) |
-| stack | 7.27us | 24.97us | 107.23us | 625.47us | 2.838ms | 1.09x |
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| 12 **<-** | 2.43us | 10.05us | 41.57us | 420.15us | 2.158ms | 1.00x (base) | 0.64 |
+| 20 | 2.30us | 10.06us | 40.17us | 439.57us | 2.164ms | 1.00x | 0.70 |
+| 24 | 2.31us | 9.81us | 40.45us | 441.59us | 2.165ms | 1.00x | 0.70 |
+| 16 | 2.24us | 10.01us | 40.20us | 452.74us | 2.166ms | 1.00x | 0.70 |
+| 32 | 2.32us | 10.02us | 40.66us | 444.10us | 2.167ms | 1.00x | 0.70 |
 
-_baseline: `register`; fastest at N=16384: `register`_
-
-
-## carrier_residual_wideselect
-
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| register **<-** | 2.20us | 10.16us | 42.73us | 458.79us | 2.147ms | 1.00x (base) |
-| stack | 5.66us | 22.98us | 104.87us | 568.36us | 2.521ms | 1.17x |
-
-_baseline: `register`; fastest at N=16384: `register`_
-
-
-## carrier_residual_leaf
-
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| register **<-** | 1.97us | 9.13us | 44.46us | 218.62us | 1.062ms | 1.00x (base) |
-| stack | 2.93us | 12.59us | 68.71us | 253.15us | 1.148ms | 1.08x |
-
-_baseline: `register`; fastest at N=16384: `register`_
-
-
-## carrier_optimize_real
-
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| all **<-** | 1.92us | 8.45us | 31.71us | 473.09us | 2.120ms | 1.00x (base) |
-| cseeqsat | 2.10us | 8.54us | 32.12us | 470.43us | 2.130ms | 1.00x |
-| eqsat | 2.11us | 8.47us | 31.96us | 456.24us | 2.131ms | 1.01x |
-| cse | 2.06us | 8.63us | 32.16us | 466.90us | 2.144ms | 1.01x |
-| fold | 2.21us | 8.96us | 34.56us | 537.92us | 2.463ms | 1.16x |
-| none | 2.21us | 8.96us | 34.55us | 536.34us | 2.471ms | 1.17x |
-| dce | 2.24us | 9.08us | 34.85us | 546.60us | 2.476ms | 1.17x |
-
-_baseline: `all`; fastest at N=16384: `all`_
-
-
-## carrier_optimize_madd
-
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| all **<-** | 428.8ns | 625.2ns | 1.59us | 6.99us | 25.16us | 1.00x (base) |
-| fold | 1.92us | 7.00us | 26.07us | 105.72us | 398.66us | 15.85x |
-| cse | 2.06us | 9.49us | 39.26us | 155.13us | 601.74us | 23.92x |
-| dce | 2.33us | 9.93us | 39.95us | 156.30us | 629.31us | 25.02x |
-| none | 2.33us | 10.07us | 40.85us | 163.02us | 648.11us | 25.76x |
-| cseeqsat | 15.16us | 53.42us | 228.23us | 890.13us | 3.571ms | 141.96x |
-| eqsat | 15.16us | 53.73us | 227.96us | 890.41us | 3.573ms | 142.04x |
-
-_baseline: `all`; fastest at N=16384: `all`_
-
-
-## carrier_optimize_tight
-
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| all **<-** | 458.7ns | 631.2ns | 2.62us | 8.29us | 30.53us | 1.00x (base) |
-| fold | 1.93us | 7.12us | 27.00us | 100.38us | 400.90us | 13.13x |
-| cse | 1.91us | 8.38us | 35.62us | 147.54us | 650.17us | 21.30x |
-| dce | 1.95us | 8.72us | 36.09us | 153.64us | 690.73us | 22.62x |
-| none | 1.93us | 8.73us | 36.01us | 151.44us | 697.91us | 22.86x |
-| eqsat | 2.27us | 23.33us | 107.55us | 450.95us | 2.031ms | 66.51x |
-| cseeqsat | 2.26us | 23.07us | 107.10us | 449.02us | 2.051ms | 67.19x |
-
-_baseline: `all`; fastest at N=16384: `all`_
-
-
-## carrier_optimize_scatter
-
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| all **<-** | 2.16us | 8.68us | 34.32us | 499.76us | 2.259ms | 1.00x (base) |
-| eqsat | 2.20us | 8.89us | 34.90us | 504.20us | 2.261ms | 1.00x |
-| cseeqsat | 2.22us | 8.90us | 34.72us | 483.74us | 2.268ms | 1.00x |
-| cse | 2.25us | 8.89us | 34.91us | 500.46us | 2.298ms | 1.02x |
-| dce | 2.31us | 9.29us | 36.86us | 565.98us | 2.497ms | 1.11x |
-| fold | 2.20us | 9.39us | 37.14us | 531.66us | 2.502ms | 1.11x |
-| none | 2.31us | 9.35us | 37.36us | 569.66us | 2.506ms | 1.11x |
-
-_baseline: `all`; fastest at N=16384: `all`_
-
-
-## carrier_optimize_wideselect
-
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| cse **<-** | 2.07us | 8.08us | 28.96us | 330.53us | 1.574ms | 0.97x |
-| all | 1.86us | 8.10us | 29.50us | 322.10us | 1.621ms | 1.00x (base) |
-| eqsat | 2.14us | 8.27us | 30.27us | 328.76us | 1.625ms | 1.00x |
-| cseeqsat | 2.15us | 8.31us | 30.20us | 335.01us | 1.627ms | 1.00x |
-| dce | 2.13us | 8.51us | 33.26us | 424.99us | 1.990ms | 1.23x |
-| fold | 2.05us | 8.45us | 33.16us | 434.76us | 2.002ms | 1.24x |
-| none | 2.15us | 8.50us | 33.27us | 435.17us | 2.009ms | 1.24x |
-
-_baseline: `all`; fastest at N=16384: `cse`_
-
-
-## carrier_optimize_leaf
-
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| all **<-** | 1.15us | 3.58us | 11.68us | 43.62us | 151.46us | 1.00x (base) |
-| cseeqsat | 1.88us | 4.55us | 17.27us | 99.49us | 293.97us | 1.94x |
-| eqsat | 1.87us | 4.52us | 22.14us | 101.51us | 295.87us | 1.95x |
-| cse | 1.37us | 3.98us | 14.39us | 98.26us | 341.34us | 2.25x |
-| fold | 2.17us | 8.65us | 33.90us | 126.53us | 488.82us | 3.23x |
-| dce | 2.03us | 8.99us | 45.51us | 222.82us | 1.018ms | 6.72x |
-| none | 2.03us | 8.80us | 46.54us | 226.30us | 1.022ms | 6.75x |
-
-_baseline: `all`; fastest at N=16384: `all`_
-
-
-## carrier_native_real
-
-| variant | N=64 | N=256 | N=1024 | vs base (N max) |
-|---|---|---|---|---|
-| stencil **<-** | 591.9ns | 3.77us | 15.63us | 0.99x |
-| copypatch | 567.1ns | 3.80us | 15.81us | 1.00x (base) |
-| interp | 2.32us | 11.13us | 44.66us | 2.82x |
-
-_baseline: `copypatch`; fastest at N=1024: `stencil`_
-
-
-## carrier_native_madd
-
-| variant | N=64 | N=256 | N=1024 | vs base (N max) |
-|---|---|---|---|---|
-| copypatch **<-** | 1.03us | 7.39us | 34.38us | 1.00x (base) |
-| stencil | 1.03us | 7.31us | 34.70us | 1.01x |
-| interp | 2.40us | 12.30us | 49.44us | 1.44x |
-
-_baseline: `copypatch`; fastest at N=1024: `copypatch`_
-
-
-## carrier_native_tight
-
-| variant | N=64 | N=256 | N=1024 | vs base (N max) |
-|---|---|---|---|---|
-| stencil **<-** | 828.5ns | 5.06us | 22.86us | 0.99x |
-| copypatch | 815.8ns | 5.12us | 23.10us | 1.00x (base) |
-| interp | 2.09us | 11.06us | 45.72us | 1.98x |
-
-_baseline: `copypatch`; fastest at N=1024: `stencil`_
-
-
-## carrier_native_scatter
-
-| variant | N=64 | N=256 | N=1024 | vs base (N max) |
-|---|---|---|---|---|
-| stencil **<-** | 574.1ns | 3.71us | 15.57us | 1.00x |
-| copypatch | 599.1ns | 3.77us | 15.62us | 1.00x (base) |
-| interp | 2.30us | 11.26us | 44.98us | 2.88x |
-
-_baseline: `copypatch`; fastest at N=1024: `stencil`_
-
-
-## carrier_native_wideselect
-
-| variant | N=64 | N=256 | N=1024 | vs base (N max) |
-|---|---|---|---|---|
-| copypatch **<-** | 623.4ns | 4.06us | 16.41us | 1.00x (base) |
-| stencil | 650.7ns | 4.03us | 16.51us | 1.01x |
-| interp | 2.18us | 10.74us | 43.30us | 2.64x |
-
-_baseline: `copypatch`; fastest at N=1024: `copypatch`_
-
-
-## carrier_native_leaf
-
-| variant | N=64 | N=256 | N=1024 | vs base (N max) |
-|---|---|---|---|---|
-| stencil **<-** | 552.5ns | 3.57us | 13.63us | 0.93x |
-| copypatch | 552.5ns | 3.58us | 14.63us | 1.00x (base) |
-| interp | 1.98us | 9.66us | 62.38us | 4.26x |
-
-_baseline: `copypatch`; fastest at N=1024: `stencil`_
-
-
-## carrier_vertical_real
-
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| vert8 **<-** | 7.29us | 30.54us | 115.83us | 841.49us | 3.519ms | 0.17x |
-| vert4 | 7.95us | 35.51us | 266.42us | 1.331ms | 5.479ms | 0.26x |
-| scalar | 19.39us | 83.60us | 322.79us | 4.280ms | 20.821ms | 1.00x (base) |
-
-_baseline: `scalar`; fastest at N=16384: `vert8`_
-
-
-## carrier_vertical_madd
-
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| vert8 **<-** | 8.48us | 34.62us | 141.96us | 574.75us | 2.347ms | 0.37x |
-| vert4 | 10.36us | 51.65us | 207.21us | 837.22us | 3.392ms | 0.54x |
-| scalar | 21.28us | 91.13us | 373.02us | 1.575ms | 6.289ms | 1.00x (base) |
-
-_baseline: `scalar`; fastest at N=16384: `vert8`_
-
-
-## carrier_vertical_tight
-
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| vert8 **<-** | 7.56us | 31.71us | 121.23us | 512.47us | 2.187ms | 0.33x |
-| vert4 | 8.49us | 40.59us | 163.37us | 637.91us | 2.726ms | 0.41x |
-| scalar | 16.90us | 81.83us | 338.70us | 1.475ms | 6.658ms | 1.00x (base) |
-
-_baseline: `scalar`; fastest at N=16384: `vert8`_
-
-
-## carrier_vertical_scatter
-
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| vert8 **<-** | 6.85us | 29.98us | 113.95us | 843.42us | 3.513ms | 0.17x |
-| vert4 | 7.44us | 35.04us | 268.77us | 1.336ms | 5.485ms | 0.26x |
-| scalar | 18.72us | 82.90us | 327.67us | 4.461ms | 20.774ms | 1.00x (base) |
-
-_baseline: `scalar`; fastest at N=16384: `vert8`_
-
-
-## carrier_vertical_wideselect
-
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| vert8 **<-** | 7.78us | 31.38us | 120.93us | 738.35us | 3.194ms | 0.19x |
-| vert4 | 7.50us | 33.12us | 175.61us | 1.143ms | 4.674ms | 0.27x |
-| scalar | 17.78us | 81.09us | 314.78us | 3.585ms | 17.039ms | 1.00x (base) |
-
-_baseline: `scalar`; fastest at N=16384: `vert8`_
-
-
-## carrier_vertical_leaf
-
-| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) |
-|---|---|---|---|---|---|---|
-| vert8 **<-** | 6.71us | 28.23us | 109.77us | 483.71us | 2.177ms | 0.26x |
-| vert4 | 7.32us | 29.90us | 123.54us | 668.30us | 2.893ms | 0.34x |
-| scalar | 16.25us | 70.42us | 330.28us | 1.746ms | 8.487ms | 1.00x (base) |
-
-_baseline: `scalar`; fastest at N=16384: `vert8`_
+_baseline: `12`; fastest at N=16384: `12`; IPC = instructions/cycles from the PMU pass_
 
 
 ## carrier_native_ceiling
 
-| variant | N=64 | N=256 | N=1024 | vs base (N max) |
-|---|---|---|---|---|
-| native **<-** | 105.52us | 1.806ms | 28.927ms | 0.67x |
-| interp | 171.52us | 2.626ms | 43.172ms | 1.00x (base) |
+| variant | N=64 | N=256 | N=1024 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|
+| native **<-** | 109.20us | 1.821ms | 28.883ms | 0.67x | 0.21 |
+| interp | 176.31us | 2.597ms | 43.092ms | 1.00x (base) | 0.23 |
 
-_baseline: `interp`; fastest at N=1024: `native`_
+_baseline: `interp`; fastest at N=1024: `native`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_native_leaf
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| copypatch **<-** | 520.4ns | 3.40us | 13.42us | 55.58us | 296.02us | 1.00x (base) | 0.39 |
+| direct | 529.0ns | 3.52us | 14.32us | 54.80us | 297.43us | 1.00x | 0.42 |
+| interp | 2.12us | 9.62us | 61.39us | 285.94us | 1.150ms | 3.88x | 0.40 |
+
+_baseline: `copypatch`; fastest at N=16384: `copypatch`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_native_madd
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| direct **<-** | 990.6ns | 6.87us | 33.18us | 134.74us | 643.92us | 1.00x | 0.61 |
+| copypatch | 995.0ns | 7.27us | 33.16us | 133.17us | 644.21us | 1.00x (base) | 0.54 |
+| interp | 2.41us | 11.44us | 47.85us | 193.47us | 780.78us | 1.21x | 0.25 |
+
+_baseline: `copypatch`; fastest at N=16384: `direct`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_native_real
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| copypatch **<-** | 626.2ns | 3.70us | 14.84us | 58.90us | 408.72us | 1.00x (base) | 0.43 |
+| direct | 587.2ns | 3.82us | 14.80us | 58.46us | 409.44us | 1.00x | 0.47 |
+| interp | 2.19us | 10.74us | 43.27us | 559.83us | 2.647ms | 6.48x | 0.90 |
+
+_baseline: `copypatch`; fastest at N=16384: `copypatch`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_native_scatter
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| copypatch **<-** | 562.3ns | 3.49us | 14.69us | 58.06us | 389.86us | 1.00x (base) | 0.45 |
+| direct | 558.5ns | 3.79us | 15.02us | 57.75us | 392.71us | 1.01x | 0.49 |
+| interp | 2.23us | 10.61us | 43.44us | 569.56us | 2.627ms | 6.74x | 0.87 |
+
+_baseline: `copypatch`; fastest at N=16384: `copypatch`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_native_tight
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| direct **<-** | 845.2ns | 4.90us | 21.95us | 86.66us | 440.99us | 0.99x | 0.45 |
+| copypatch | 803.4ns | 4.99us | 21.89us | 86.78us | 443.87us | 1.00x (base) | 0.42 |
+| interp | 2.07us | 10.25us | 45.11us | 187.30us | 844.44us | 1.90x | 0.27 |
+
+_baseline: `copypatch`; fastest at N=16384: `direct`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_native_wideselect
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| direct **<-** | 647.1ns | 3.94us | 15.83us | 61.20us | 456.36us | 0.99x | 0.46 |
+| copypatch | 665.2ns | 3.80us | 16.05us | 61.47us | 459.72us | 1.00x (base) | 0.42 |
+| interp | 2.20us | 10.36us | 42.64us | 459.29us | 2.178ms | 4.74x | 0.70 |
+
+_baseline: `copypatch`; fastest at N=16384: `direct`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_optimize_leaf
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| all **<-** | 1.12us | 3.51us | 11.00us | 40.52us | 150.74us | 1.00x (base) | 0.24 |
+| canon | 1.28us | 3.91us | 13.60us | 91.05us | 302.46us | 2.01x | 0.41 |
+| cse | 1.29us | 3.87us | 13.65us | 93.75us | 344.98us | 2.29x | 0.43 |
+| fold | 2.11us | 8.62us | 31.98us | 124.60us | 493.53us | 3.27x | 0.18 |
+| none | 1.97us | 8.62us | 44.72us | 220.49us | 1.032ms | 6.84x | 0.36 |
+| dce | 1.86us | 8.61us | 43.88us | 220.74us | 1.036ms | 6.87x | 0.36 |
+
+_baseline: `all`; fastest at N=16384: `all`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_optimize_madd
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| all **<-** | 413.5ns | 609.1ns | 1.56us | 7.36us | 26.16us | 1.00x (base) | 0.23 |
+| fold | 1.79us | 6.82us | 25.18us | 101.48us | 402.98us | 15.40x | 0.16 |
+| canon | 1.94us | 8.91us | 37.30us | 153.08us | 604.88us | 23.12x | 0.25 |
+| cse | 1.91us | 9.20us | 38.16us | 155.75us | 608.12us | 23.24x | 0.24 |
+| dce | 2.24us | 9.27us | 38.26us | 157.34us | 633.09us | 24.20x | 0.23 |
+| none | 2.17us | 9.41us | 39.22us | 166.12us | 656.11us | 25.08x | 0.24 |
+
+_baseline: `all`; fastest at N=16384: `all`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_optimize_real
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| all **<-** | 1.74us | 8.04us | 30.88us | 443.48us | 2.141ms | 1.00x (base) | 0.89 |
+| canon | 1.98us | 8.29us | 30.41us | 447.99us | 2.156ms | 1.01x | 0.89 |
+| cse | 1.89us | 8.26us | 30.40us | 446.64us | 2.157ms | 1.01x | 0.89 |
+| none | 2.14us | 8.52us | 34.34us | 507.84us | 2.497ms | 1.17x | 0.94 |
+| fold | 2.01us | 8.40us | 33.24us | 512.36us | 2.501ms | 1.17x | 0.93 |
+| dce | 2.11us | 8.24us | 33.69us | 497.67us | 2.502ms | 1.17x | 0.94 |
+
+_baseline: `all`; fastest at N=16384: `all`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_optimize_scatter
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| cse **<-** | 2.11us | 8.59us | 33.67us | 499.49us | 2.327ms | 1.00x | 0.87 |
+| all | 2.14us | 8.65us | 33.91us | 493.09us | 2.330ms | 1.00x (base) | 0.87 |
+| canon | 2.22us | 8.75us | 33.24us | 500.83us | 2.338ms | 1.00x | 0.87 |
+| dce | 2.27us | 9.07us | 35.27us | 546.47us | 2.517ms | 1.08x | 0.89 |
+| fold | 2.15us | 8.73us | 35.68us | 533.57us | 2.519ms | 1.08x | 0.89 |
+| none | 2.12us | 8.88us | 36.03us | 541.43us | 2.524ms | 1.08x | 0.89 |
+
+_baseline: `all`; fastest at N=16384: `cse`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_optimize_tight
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| all **<-** | 437.2ns | 612.5ns | 2.09us | 8.21us | 30.99us | 1.00x (base) | 0.23 |
+| fold | 1.88us | 7.03us | 25.88us | 101.11us | 407.10us | 13.13x | 0.16 |
+| canon | 1.70us | 7.95us | 32.94us | 144.66us | 646.61us | 20.86x | 0.25 |
+| cse | 1.85us | 8.28us | 34.34us | 149.01us | 665.04us | 21.46x | 0.25 |
+| dce | 1.88us | 8.50us | 35.19us | 152.62us | 699.11us | 22.56x | 0.25 |
+| none | 1.76us | 8.45us | 34.85us | 152.06us | 703.84us | 22.71x | 0.26 |
+
+_baseline: `all`; fastest at N=16384: `all`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_optimize_wideselect
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| all **<-** | 1.83us | 7.54us | 26.83us | 280.04us | 1.559ms | 1.00x (base) | 0.64 |
+| canon | 2.07us | 7.59us | 27.86us | 272.42us | 1.573ms | 1.01x | 0.64 |
+| cse | 1.99us | 7.58us | 27.18us | 303.47us | 1.575ms | 1.01x | 0.65 |
+| none | 2.09us | 7.98us | 31.61us | 408.25us | 2.004ms | 1.28x | 0.72 |
+| dce | 2.11us | 8.14us | 32.13us | 400.29us | 2.015ms | 1.29x | 0.73 |
+| fold | 1.96us | 7.90us | 31.44us | 422.37us | 2.017ms | 1.29x | 0.73 |
+
+_baseline: `all`; fastest at N=16384: `all`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_predecode_leaf
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| null **<-** | 1.11us | 5.08us | 19.96us | 80.77us | 547.75us | 0.68x | 0.35 |
+| direct | 975.6ns | 4.95us | 20.03us | 78.51us | 648.17us | 0.81x | 0.54 |
+| switch | 1.35us | 6.41us | 25.66us | 146.46us | 800.27us | 1.00x (base) | 0.50 |
+| threaded | 1.37us | 6.43us | 25.73us | 108.54us | 824.36us | 1.03x | 0.49 |
+| regcache | 1.40us | 6.73us | 27.26us | 153.16us | 835.94us | 1.04x | 0.43 |
+| fntable | 1.84us | 9.22us | 55.54us | 249.19us | 1.010ms | 1.26x | 0.51 |
+
+_baseline: `switch`; fastest at N=16384: `null`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_predecode_madd
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| null **<-** | 2.08us | 10.68us | 45.07us | 171.85us | 694.11us | 0.91x | 0.36 |
+| switch | 2.37us | 11.86us | 49.81us | 190.74us | 765.80us | 1.00x (base) | 0.43 |
+| threaded | 2.22us | 11.82us | 49.16us | 188.00us | 767.70us | 1.00x | 0.42 |
+| direct | 2.18us | 11.95us | 49.73us | 189.88us | 772.26us | 1.01x | 0.56 |
+| fntable | 2.46us | 11.63us | 48.48us | 191.50us | 774.48us | 1.01x | 0.37 |
+| regcache | 2.07us | 9.73us | 37.75us | 145.59us | 1.058ms | 1.38x | 0.43 |
+
+_baseline: `switch`; fastest at N=16384: `null`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_predecode_real
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| null **<-** | 1.39us | 6.59us | 25.84us | 102.06us | 508.36us | 0.24x | 0.29 |
+| direct | 1.61us | 7.90us | 32.01us | 387.01us | 1.734ms | 0.80x | 1.24 |
+| switch | 2.12us | 9.47us | 37.40us | 503.27us | 2.154ms | 1.00x (base) | 1.20 |
+| threaded | 1.87us | 9.24us | 36.65us | 489.92us | 2.248ms | 1.04x | 1.20 |
+| regcache | 2.46us | 10.94us | 42.61us | 502.78us | 2.255ms | 1.05x | 0.92 |
+| fntable | 3.04us | 13.64us | 53.64us | 573.94us | 2.449ms | 1.14x | 1.14 |
+
+_baseline: `switch`; fastest at N=16384: `null`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_predecode_scatter
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| null **<-** | 1.35us | 5.98us | 25.25us | 100.15us | 493.33us | 0.23x | 0.26 |
+| direct | 1.46us | 7.43us | 30.98us | 357.13us | 1.732ms | 0.82x | 1.21 |
+| switch | 2.03us | 8.68us | 37.24us | 484.99us | 2.117ms | 1.00x (base) | 1.18 |
+| regcache | 2.32us | 9.90us | 40.30us | 471.06us | 2.227ms | 1.05x | 0.90 |
+| threaded | 1.70us | 8.71us | 34.78us | 471.23us | 2.237ms | 1.06x | 1.18 |
+| fntable | 2.99us | 12.67us | 52.90us | 544.62us | 2.411ms | 1.14x | 1.12 |
+
+_baseline: `switch`; fastest at N=16384: `null`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_predecode_tight
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| null **<-** | 1.54us | 7.69us | 32.44us | 131.08us | 523.95us | 0.80x | 0.28 |
+| direct | 1.92us | 9.50us | 37.43us | 148.57us | 596.86us | 0.91x | 0.44 |
+| threaded | 1.99us | 8.89us | 36.76us | 144.47us | 600.33us | 0.92x | 0.33 |
+| switch | 2.18us | 8.56us | 39.72us | 140.96us | 652.67us | 1.00x (base) | 0.37 |
+| fntable | 2.07us | 9.24us | 38.95us | 178.16us | 805.66us | 1.23x | 0.39 |
+| regcache | 2.14us | 8.55us | 33.81us | 140.95us | 873.58us | 1.34x | 0.35 |
+
+_baseline: `switch`; fastest at N=16384: `null`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_predecode_wideselect
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| null **<-** | 1.31us | 5.94us | 23.68us | 97.90us | 480.14us | 0.28x | 0.28 |
+| direct | 1.42us | 6.41us | 26.05us | 235.83us | 1.382ms | 0.80x | 0.91 |
+| switch | 2.07us | 8.69us | 34.63us | 389.41us | 1.733ms | 1.00x (base) | 0.98 |
+| threaded | 1.74us | 7.76us | 31.39us | 320.98us | 1.744ms | 1.01x | 0.88 |
+| regcache | 2.24us | 9.77us | 37.83us | 376.09us | 1.825ms | 1.05x | 0.73 |
+| fntable | 2.83us | 11.31us | 45.46us | 460.30us | 1.943ms | 1.12x | 0.87 |
+
+_baseline: `switch`; fastest at N=16384: `null`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_residual_leaf
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| register **<-** | 1.21us | 5.36us | 21.94us | 132.34us | 759.05us | 1.00x (base) | 0.48 |
+| stack | 3.25us | 13.21us | 66.31us | 263.21us | 1.165ms | 1.53x | 0.35 |
+
+_baseline: `register`; fastest at N=16384: `register`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_residual_madd
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| register **<-** | 1.57us | 9.68us | 41.24us | 151.30us | 624.16us | 1.00x (base) | 0.45 |
+| stack | 5.70us | 23.42us | 95.05us | 363.61us | 1.431ms | 2.29x | 0.24 |
+
+_baseline: `register`; fastest at N=16384: `register`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_residual_real
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| register **<-** | 1.83us | 7.04us | 27.39us | 442.13us | 1.991ms | 1.00x (base) | 1.41 |
+| stack | 5.71us | 23.42us | 127.10us | 603.45us | 2.802ms | 1.41x | 0.51 |
+
+_baseline: `register`; fastest at N=16384: `register`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_residual_scatter
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| register **<-** | 1.91us | 7.26us | 31.72us | 456.41us | 2.006ms | 1.00x (base) | 1.31 |
+| stack | 5.92us | 24.30us | 112.00us | 623.96us | 2.844ms | 1.42x | 0.53 |
+
+_baseline: `register`; fastest at N=16384: `register`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_residual_tight
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| register **<-** | 1.75us | 7.25us | 32.63us | 111.18us | 503.70us | 1.00x (base) | 0.36 |
+| stack | 5.94us | 23.29us | 98.76us | 378.95us | 1.543ms | 3.06x | 0.26 |
+
+_baseline: `register`; fastest at N=16384: `register`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_residual_wideselect
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| register **<-** | 1.82us | 6.54us | 26.43us | 342.84us | 1.569ms | 1.00x (base) | 1.13 |
+| stack | 6.04us | 24.11us | 100.77us | 581.46us | 2.557ms | 1.63x | 0.43 |
+
+_baseline: `register`; fastest at N=16384: `register`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_setup_leaf
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| predecode **<-** | 3.26us | 10.63us | 42.99us | 187.89us | 755.52us | 0.31x | 0.24 |
+| emitdirect | 2.81us | 10.09us | 44.55us | 204.01us | 1.284ms | 0.52x | 0.26 |
+| stackcompile | 7.85us | 19.17us | 60.61us | 294.01us | 1.642ms | 0.67x | 0.34 |
+| emitcopypatch | 10.01us | 36.68us | 139.22us | 580.57us | 2.465ms | 1.00x (base) | 0.23 |
+| optall | 108.04us | 253.85us | 742.47us | 2.914ms | 10.373ms | 4.21x | 0.26 |
+| parse | 0.0ns | 0.0ns | 0.0ns | 0.0ns | 0.0ns | - | 0.24 |
+
+_baseline: `emitcopypatch`; fastest at N=16384: `predecode`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_setup_madd
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| predecode **<-** | 3.71us | 10.78us | 36.90us | 141.15us | 547.85us | 0.14x | 0.13 |
+| stackcompile | 8.59us | 22.86us | 75.37us | 343.75us | 1.291ms | 0.34x | 0.19 |
+| emitdirect | 4.56us | 16.97us | 64.70us | 247.33us | 1.563ms | 0.41x | 0.19 |
+| emitcopypatch | 14.61us | 57.44us | 216.86us | 853.63us | 3.787ms | 1.00x (base) | 0.22 |
+| optall | 129.14us | 368.26us | 983.82us | 3.823ms | 12.010ms | 3.17x | 0.19 |
+| parse | 0.0ns | 0.0ns | 0.0ns | 0.0ns | 0.0ns | - | 0.23 |
+
+_baseline: `emitcopypatch`; fastest at N=16384: `predecode`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_setup_real
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| predecode **<-** | 3.49us | 10.02us | 35.73us | 148.72us | 836.51us | 0.16x | 0.21 |
+| stackcompile | 9.52us | 24.12us | 79.42us | 337.03us | 1.998ms | 0.39x | 0.31 |
+| emitdirect | 4.17us | 16.71us | 68.06us | 500.64us | 2.854ms | 0.55x | 0.36 |
+| emitcopypatch | 15.02us | 66.13us | 283.15us | 1.186ms | 5.153ms | 1.00x (base) | 0.31 |
+| optall | 155.20us | 596.29us | 2.461ms | 9.932ms | 40.501ms | 7.86x | 0.23 |
+| parse | 0.0ns | 0.0ns | 0.0ns | 0.0ns | 0.0ns | - | 0.23 |
+
+_baseline: `emitcopypatch`; fastest at N=16384: `predecode`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_setup_scatter
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| predecode **<-** | 3.35us | 9.64us | 35.31us | 142.93us | 726.30us | 0.12x | 0.18 |
+| stackcompile | 8.69us | 24.03us | 81.94us | 332.90us | 1.934ms | 0.32x | 0.29 |
+| emitdirect | 4.02us | 15.93us | 67.62us | 514.39us | 3.527ms | 0.59x | 0.47 |
+| emitcopypatch | 13.67us | 66.23us | 292.21us | 1.209ms | 5.967ms | 1.00x (base) | 0.36 |
+| optall | 167.05us | 643.77us | 2.557ms | 12.318ms | 50.281ms | 8.43x | 0.24 |
+| parse | 0.0ns | 0.0ns | 0.0ns | 0.0ns | 0.0ns | - | 0.23 |
+
+_baseline: `emitcopypatch`; fastest at N=16384: `predecode`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_setup_tight
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| predecode **<-** | 3.50us | 10.16us | 36.12us | 143.30us | 553.65us | 0.14x | 0.14 |
+| stackcompile | 7.85us | 23.31us | 76.80us | 331.44us | 1.224ms | 0.32x | 0.18 |
+| emitdirect | 4.31us | 15.82us | 64.56us | 269.09us | 1.616ms | 0.42x | 0.19 |
+| emitcopypatch | 13.74us | 56.38us | 220.42us | 882.29us | 3.883ms | 1.00x (base) | 0.23 |
+| optall | 108.06us | 224.74us | 823.21us | 3.229ms | 12.067ms | 3.11x | 0.20 |
+| parse | 0.0ns | 0.0ns | 0.0ns | 0.0ns | 0.0ns | - | 0.24 |
+
+_baseline: `emitcopypatch`; fastest at N=16384: `predecode`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_setup_wideselect
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| predecode **<-** | 3.52us | 10.21us | 37.32us | 169.21us | 1.265ms | 0.23x | 0.30 |
+| stackcompile | 9.03us | 24.05us | 81.51us | 396.63us | 2.622ms | 0.47x | 0.38 |
+| emitdirect | 3.88us | 15.69us | 69.08us | 381.93us | 2.631ms | 0.48x | 0.30 |
+| emitcopypatch | 18.53us | 80.48us | 315.82us | 1.275ms | 5.524ms | 1.00x (base) | 0.27 |
+| optall | 156.95us | 651.00us | 2.480ms | 10.756ms | 44.147ms | 7.99x | 0.25 |
+| parse | 0.0ns | 0.0ns | 0.0ns | 0.0ns | 0.0ns | - | 0.23 |
+
+_baseline: `emitcopypatch`; fastest at N=16384: `predecode`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_valrepr
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| nanbox **<-** | 2.08us | 8.06us | 31.69us | 143.05us | 1.432ms | 0.80x | 0.45 |
+| tagged | 2.26us | 8.53us | 34.21us | 145.12us | 1.653ms | 0.93x | 0.49 |
+| static | 2.14us | 8.46us | 33.50us | 154.35us | 1.779ms | 1.00x (base) | 0.78 |
+
+_baseline: `static`; fastest at N=16384: `nanbox`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_vertical_leaf
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| vert8 **<-** | 6.41us | 26.29us | 107.03us | 490.06us | 2.209ms | 0.34x | 0.67 |
+| vert4 | 6.87us | 29.13us | 119.77us | 680.82us | 2.950ms | 0.45x | 0.60 |
+| scalar | 10.01us | 46.31us | 195.04us | 1.115ms | 6.578ms | 1.00x (base) | 0.52 |
+
+_baseline: `scalar`; fastest at N=16384: `vert8`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_vertical_madd
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| vert8 **<-** | 7.91us | 35.57us | 140.58us | 579.10us | 2.381ms | 0.38x | 0.59 |
+| vert4 | 9.54us | 50.52us | 210.41us | 846.18us | 3.450ms | 0.55x | 0.62 |
+| scalar | 17.57us | 87.05us | 378.44us | 1.526ms | 6.222ms | 1.00x (base) | 0.46 |
+
+_baseline: `scalar`; fastest at N=16384: `vert8`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_vertical_real
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| vert8 **<-** | 6.68us | 28.23us | 117.91us | 839.62us | 3.586ms | 0.21x | 1.00 |
+| vert4 | 7.23us | 33.00us | 264.62us | 1.353ms | 5.566ms | 0.32x | 1.08 |
+| scalar | 15.59us | 67.68us | 294.84us | 3.886ms | 17.161ms | 1.00x (base) | 1.26 |
+
+_baseline: `scalar`; fastest at N=16384: `vert8`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_vertical_scatter
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| vert8 **<-** | 6.75us | 28.24us | 115.78us | 825.61us | 3.556ms | 0.21x | 0.99 |
+| vert4 | 7.52us | 32.95us | 273.24us | 1.341ms | 5.575ms | 0.33x | 1.08 |
+| scalar | 16.50us | 67.23us | 294.15us | 3.851ms | 17.063ms | 1.00x (base) | 1.25 |
+
+_baseline: `scalar`; fastest at N=16384: `vert8`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_vertical_tight
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| vert8 **<-** | 7.31us | 30.68us | 122.73us | 520.81us | 2.229ms | 0.43x | 0.62 |
+| vert4 | 8.16us | 38.18us | 162.65us | 648.60us | 2.777ms | 0.54x | 0.54 |
+| scalar | 16.31us | 64.06us | 319.77us | 1.201ms | 5.129ms | 1.00x (base) | 0.38 |
+
+_baseline: `scalar`; fastest at N=16384: `vert8`; IPC = instructions/cycles from the PMU pass_
+
+
+## carrier_vertical_wideselect
+
+| variant | N=64 | N=256 | N=1024 | N=4096 | N=16384 | vs base (N max) | IPC (N max) |
+|---|---|---|---|---|---|---|---|
+| vert8 **<-** | 7.30us | 29.69us | 118.93us | 751.70us | 3.232ms | 0.23x | 0.83 |
+| vert4 | 7.62us | 31.67us | 180.51us | 1.156ms | 4.732ms | 0.34x | 0.86 |
+| scalar | 15.79us | 65.28us | 278.84us | 3.022ms | 13.847ms | 1.00x (base) | 1.01 |
+
+_baseline: `scalar`; fastest at N=16384: `vert8`; IPC = instructions/cycles from the PMU pass_
