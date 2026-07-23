@@ -41,7 +41,11 @@ fn main() -> ExitCode {
         routine_for,
         byte_dispatch: byte_routine_dispatch!(
             out = 8,
-            sizes = [64, 256, 1024, 2048, 3072, 4096, 6144, 8192, 16384]
+            // the small leading sizes (1..32, 128) are the runtime-abi boundary families'
+            // batch-width and field-count sweep; the rest are the interpreter benches'.
+            sizes = [
+                1, 2, 4, 8, 16, 32, 64, 128, 256, 1024, 2048, 3072, 4096, 6144, 8192, 16384
+            ]
         ),
     })
 }
