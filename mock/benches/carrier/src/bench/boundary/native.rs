@@ -21,9 +21,16 @@
 use mockspace_bench_matrix::bench_matrix;
 
 use super::common::{
-    cross_column, fill_seeds, open_and_init, open_runtime, program_bytes, CrEntryW, CrFree, CrInit,
-    StCross, N_TOTAL,
+    cross_column, fill_seeds, open_and_init, open_runtime, program_bytes_n, CrEntryW, CrFree,
+    CrInit, StCross, N_TOTAL,
 };
+
+/// The native residual is deliberately TINY (a few nodes), so the compiled machine code is
+/// ~ns per record and the ~7-9 ns crossing is a live fraction. At a realistic residual size
+/// even native-compiled code costs microseconds per record (dominated by per-node work and
+/// the result reduction), which the payload-cost family already shows drowns the crossing;
+/// this family isolates the one regime where crossing amortisation over W is the effect.
+const NATIVE_NODES: usize = 4;
 
 /// Open the runtime, resolve the native init/free and the native entry, and compile the
 /// residual to machine code. Reuses [`StCross`] with `free` bound to `cr_native_free`, so the
@@ -34,7 +41,7 @@ fn open_native(profile: &str, w: usize) -> StCross {
     let free: CrFree = unsafe { rt.resolve(b"cr_native_free\0") }.expect("cr_native_free");
     let entry: CrEntryW =
         unsafe { rt.resolve(b"cr_execute_native_runtime_w\0") }.expect("native entry resolves");
-    let bytes = program_bytes(profile);
+    let bytes = program_bytes_n(profile, NATIVE_NODES);
     let handle = unsafe { init(bytes.as_ptr(), bytes.len()) };
     assert!(!handle.is_null(), "cr_native_init must compile the residual");
     StCross { rt, handle, entry, free, seeds: vec![0u64; N_TOTAL], w }
@@ -80,7 +87,7 @@ bench_matrix! {
         #[feature = "boundary"]
         #[feature = "jit"]
         setup |profile: &str, n: usize| -> StInprocNative {
-            let bytes = program_bytes(profile);
+            let bytes = program_bytes_n(profile, NATIVE_NODES);
             let d = crate::ir::Decoded::parse(&bytes, crate::ir::REC24).expect("residual parses");
             // reconstruct the program the same way the runtime does, then compile it.
             let consts: Vec<u64> = (0..d.const_count).map(|i| d.const_at(i)).collect();
@@ -120,7 +127,7 @@ bench_matrix! {
 
 #[cfg(all(test, feature = "jit"))]
 mod tests {
-    use super::super::common::{program_bytes, runtime_dylib_path, CrFree, CrInit};
+    use super::super::common::{program_bytes_n, runtime_dylib_path, CrFree, CrInit};
     use super::*;
     use crate as c;
     use mockspace_bench_matrix::boundary::Runtime;
@@ -138,7 +145,7 @@ mod tests {
             unsafe { rt.resolve(b"cr_execute_native_runtime_w\0") }.expect("native entry");
 
         for profile in ["real", "tight"] {
-            let bytes = program_bytes(profile);
+            let bytes = program_bytes_n(profile, NATIVE_NODES);
             let d = c::ir::Decoded::parse(&bytes, c::ir::REC24).unwrap();
             let pd = c::predecode::predecode(&d);
             let handle = unsafe { ninit(bytes.as_ptr(), bytes.len()) };
