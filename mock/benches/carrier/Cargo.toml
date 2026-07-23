@@ -35,8 +35,8 @@ jit = []
 # The bench module (`pub mod bench`) authors the semantic matrix with the
 # bench_matrix! macro; it needs only the macro + the decl data + the scaffold the
 # variants call, NOT the harness transport, so default-features are off (that
-# drops the whole bench-harness tree from this per-variant-rebuilt crate). Path
-# dep for local cross-repo iteration; switch to the git rev before pushing.
-mockspace-bench-matrix = { path = "../../../../mockspace/bench-matrix", default-features = false }
+# drops the whole bench-harness tree from this per-variant-rebuilt crate). Pinned
+# to the same mockspace dev rev as the runner and the variant extra_deps.
+mockspace-bench-matrix = { git = "https://github.com/hiisi-digital/mockspace", rev = "688db96028fd0333576a9a704c199b22a6fd0d32", default-features = false }
 # The interpreters/generators themselves keep no external RNG or runtime deps: a
 # seeded generator with no external RNG keeps runs byte-reproducible.

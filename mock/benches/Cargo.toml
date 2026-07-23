@@ -15,19 +15,18 @@ name = "vehje-benches"
 path = "src/main.rs"
 
 [dependencies]
-# Path deps to the local mockspace `feat/bench-matrix` checkout for cross-repo
-# iteration: the runner, the gen_matrix generator, the carrier, and the variant
-# crates must all resolve the SAME bench-core (the extended FfiBenchCall ABI +
-# abi_hash) and the SAME bench-matrix, or a variant built on the new ABI is
-# rejected at dlopen by the runner's abi_hash check. Switch to a git rev once
-# feat/bench-matrix merges to mockspace dev (see .shared/state/vehje-bench-carrier.md).
-mockspace-bench-core = { path = "../../../mockspace/bench-core", features = ["std"] }
-mockspace-bench-harness = { path = "../../../mockspace/bench-harness" }
-mockspace-bench-macro = { path = "../../../mockspace/bench-macro" }
+# Pinned to the mockspace dev rev that landed the semantic-matrix layer (the
+# extended FfiBenchCall ABI + abi_hash + bench_matrix). The runner, the gen_matrix
+# generator, the carrier, and every generated variant must all resolve the SAME
+# bench-core rev, or a variant is rejected at dlopen by the runner's abi_hash check;
+# the variant extra_deps in carrier/src/bench/mod.rs pin the identical rev.
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "688db96028fd0333576a9a704c199b22a6fd0d32", features = ["std"] }
+mockspace-bench-harness = { git = "https://github.com/hiisi-digital/mockspace", rev = "688db96028fd0333576a9a704c199b22a6fd0d32" }
+mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", rev = "688db96028fd0333576a9a704c199b22a6fd0d32" }
 # the semantic-matrix layer: gen_matrix calls its `generate_all` over the
 # carrier's `all_matrix_decls()`. Default features (generate) pull the harness
 # transport the generator needs.
-mockspace-bench-matrix = { path = "../../../mockspace/bench-matrix" }
+mockspace-bench-matrix = { git = "https://github.com/hiisi-digital/mockspace", rev = "688db96028fd0333576a9a704c199b22a6fd0d32" }
 vehje-bench-carrier = { path = "carrier" }
 
 [features]

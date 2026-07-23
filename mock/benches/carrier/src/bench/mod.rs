@@ -36,19 +36,23 @@ pub mod setup_cost;
 pub mod valrepr;
 pub mod vertical;
 
-/// The variant `Cargo.toml` dependency lines. Path deps to the local mockspace
-/// checkout for cross-repo iteration (five levels up from `variants/<name>/`);
-/// switch to the git rev before pushing. The variants need the scaffold + the FFI
-/// struct + the bench_variant macro, never the harness transport, so bench-matrix
-/// is `default-features = false`.
-const EXTRA_DEPS: &[&str] = &[
-    "mockspace-bench-core = { path = \"../../../../../mockspace/bench-core\", features = [\"std\"] }",
-    "mockspace-bench-macro = { path = \"../../../../../mockspace/bench-macro\" }",
-    "mockspace-bench-matrix = { path = \"../../../../../mockspace/bench-matrix\", default-features = false }",
-];
+/// The mockspace dev rev that landed the semantic-matrix layer. The runner
+/// (`mock/benches/Cargo.toml`), the carrier (`carrier/Cargo.toml`), and the variant
+/// extra_deps below all pin this one rev, so the whole graph resolves one bench-core:
+/// a variant's `FfiBenchCall` + `abi_hash` must match the runner's or it is rejected
+/// at dlopen. Bump all four sites together when re-pinning.
+const MOCKSPACE_REV: &str = "688db96028fd0333576a9a704c199b22a6fd0d32";
 
+/// The variant `Cargo.toml` dependency lines. The variants need the scaffold + the
+/// FFI struct + the bench_variant macro, never the harness transport, so bench-matrix
+/// is `default-features = false`.
 fn extra_deps() -> Vec<String> {
-    EXTRA_DEPS.iter().map(|s| s.to_string()).collect()
+    let git = "git = \"https://github.com/hiisi-digital/mockspace\"";
+    vec![
+        format!("mockspace-bench-core = {{ {git}, rev = \"{MOCKSPACE_REV}\", features = [\"std\"] }}"),
+        format!("mockspace-bench-macro = {{ {git}, rev = \"{MOCKSPACE_REV}\" }}"),
+        format!("mockspace-bench-matrix = {{ {git}, rev = \"{MOCKSPACE_REV}\", default-features = false }}"),
+    ]
 }
 
 /// Every family's matrix declarations, for the generator binary. Each family's
