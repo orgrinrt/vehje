@@ -1,0 +1,19 @@
+[workspace]
+[package]
+name = "abi_boundary_w_scatter_zig_runtime_w"
+version = "0.0.0"
+edition = "2021"
+publish = false
+[lib]
+name = "abi_boundary_w_scatter_zig_runtime_w"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+[dependencies]
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "98031e439bc0a5eeb658065b2b54cac80b7b644d", features = ["std"] }
+mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", rev = "98031e439bc0a5eeb658065b2b54cac80b7b644d" }
+mockspace-bench-matrix = { git = "https://github.com/hiisi-digital/mockspace", rev = "98031e439bc0a5eeb658065b2b54cac80b7b644d", default-features = false }
+vehje-bench-carrier = { path = "../../carrier", features = ["boundary"] }
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

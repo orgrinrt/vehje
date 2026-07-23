@@ -9,9 +9,9 @@ name = "carrier_optimize_madd_cse"
 path = "src/lib.rs"
 crate-type = ["cdylib"]
 [dependencies]
-mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "8c5f87ae1a916c45b40c6ea690dc42402f91d199", features = ["std"] }
-mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", rev = "8c5f87ae1a916c45b40c6ea690dc42402f91d199" }
-mockspace-bench-matrix = { git = "https://github.com/hiisi-digital/mockspace", rev = "8c5f87ae1a916c45b40c6ea690dc42402f91d199", default-features = false }
+mockspace-bench-core = { git = "https://github.com/hiisi-digital/mockspace", rev = "98031e439bc0a5eeb658065b2b54cac80b7b644d", features = ["std"] }
+mockspace-bench-macro = { git = "https://github.com/hiisi-digital/mockspace", rev = "98031e439bc0a5eeb658065b2b54cac80b7b644d" }
+mockspace-bench-matrix = { git = "https://github.com/hiisi-digital/mockspace", rev = "98031e439bc0a5eeb658065b2b54cac80b7b644d", default-features = false }
 vehje-bench-carrier = { path = "../../carrier" }
 [profile.release]
 opt-level = 3

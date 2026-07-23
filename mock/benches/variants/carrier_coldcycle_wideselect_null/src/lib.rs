@@ -2,7 +2,7 @@
 use mockspace_bench_core::FfiBenchCall;
 use mockspace_bench_macro::bench_variant;
 
-#[bench_variant("carrier_coldcycle_wideselect_null", sizes = [64, 256, 1024, 4096, 16384])]
+#[bench_variant("carrier_coldcycle_wideselect_null", sizes = [64, 256, 1024])]
 fn run<const N: usize>(input: &[u8; N], output: &mut [u8; 8]) -> FfiBenchCall {
     mockspace_bench_matrix::scaffold::cold_cycle::<N, _, _, _>(
         input,
