@@ -40,8 +40,22 @@ use mockspace_bench_macro::bench_variant;
 #[allow(unused_imports)]
 use std::sync::OnceLock;
 
+// A fixed 16-entry seed table, SHARED across every size and every variant. The
+// prior template drew seeds from `input[k % N]`, i.e. the first 16 harness input
+// bytes, which the harness fills per-size from the master seed, so cross-size
+// tables were computed over DIFFERENT seeds. A fixed table makes the seeds
+// identical across sizes AND variants, so the only thing a cross-size or
+// cross-variant comparison varies is program size and dispatch shape.
+const SEEDS: [u64; 16] = [
+    0x9e37_79b9_7f4a_7c15, 0xf1bb_cdcb_fa53_e0a9, 0x2545_f491_4f6c_dd1d, 0x8ebc_6af0_9c88_c2b2,
+    0xc2b2_ae3d_27d4_eb4f, 0x1656_67b1_9e37_79f9, 0x27d4_eb2f_1656_67c5, 0x1656_67b1_9e37_79b9,
+    0x3c6e_f372_fe94_f82b, 0xa54f_f53a_5f1d_36f1, 0x510e_527f_ade6_82d1, 0x9b05_688c_2b3e_6c1f,
+    0x1f83_d9ab_fb41_bd6b, 0x5be0_cd19_137e_2179, 0x6a09_e667_f3bc_c908, 0xbb67_ae85_84ca_a73b,
+];
+
 #[bench_variant("{name}", sizes = [64, 256, 1024, 4096, 16384])]
 fn run<const N: usize>(input: &[u8; N], output: &mut [u8; 8]) -> FfiBenchCall {{
+    let _ = &input; // some cells (native_ceiling) sweep `input`; others use SEEDS.
     {prep}
     const ITERS: usize = 16;
     // timed_calibrated auto-repeats the run block until it clears the counter's
@@ -51,11 +65,21 @@ fn run<const N: usize>(input: &[u8; N], output: &mut [u8; 8]) -> FfiBenchCall {{
     // rep's output byte so the calibrated reps form a dependency chain, which
     // (together with writing `output`, which the harness reads) anchors the whole
     // acc/checksum/interpret chain against DCE and cross-rep hoisting.
+    //
+    // FIDELITY NOTE: because the anti-hoist chain IS the `output` write and the
+    // calibrated rep count is per-variant, the final `output` bytes are
+    // reps-variant, so the harness's cross-variant output byte compare is not a
+    // reliable fidelity witness under calibration (see the review panel's agner-fog
+    // finding). The real fidelity anchor is the carrier crate's own byte-exact
+    // cross-validation tests (every cell vs `interp`, every JIT vs `interp`, every
+    // vertical lane vs scalar), which are stronger than a runtime byte compare and
+    // run under `cargo test`. This is architectural: the anti-hoist requires
+    // reps-variance and `output` is its only channel.
     timed_calibrated! {{ run {{
         let mut acc: u64 = output[0] as u64;
         let mut k = 0usize;
         while k < ITERS {{
-            let seed = input[k % N] as u64 ^ (k as u64);
+            let seed = SEEDS[k] ^ (k as u64);
             {body}
             k += 1;
         }}
@@ -150,6 +174,15 @@ fn program_prep(profile: &str) -> String {
     format!(
         "static PREP: OnceLock<c::ir::Program> = OnceLock::new(); \
          let prog = PREP.get_or_init(|| {{ let mut gp = c::GenParams::profile(\"{profile}\").unwrap(); gp.node_count = N; c::generate(&gp) }});"
+    )
+}
+
+/// Prep producing only the encoded wire `bytes` (no parse), for the S-cost family
+/// where the parse itself is what a cell times.
+fn bytes_prep(profile: &str) -> String {
+    format!(
+        "static PREP: OnceLock<Vec<u8>> = OnceLock::new(); \
+         let bytes = PREP.get_or_init(|| {{ let mut gp = c::GenParams::profile(\"{profile}\").unwrap(); gp.node_count = N; c::ir::encode(&c::generate(&gp), &c::ir::REC24) }});"
     )
 }
 
@@ -390,6 +423,65 @@ fn native_ceiling_family() -> Vec<MatrixSpec> {
     vec![spec_sized("carrier_native_ceiling".to_string(), "Native ceiling: interpreter vs shape-specialized native madd loop (THROUGHPUT over a byte stream, O(N^2), not comparable to sibling per-execution numbers)".to_string(), "interp", "carrier_ceil", cells, vec![64, 256, 1024])]
 }
 
+fn coldcycle_family() -> Vec<MatrixSpec> {
+    // Cold / aliased-predictor regime. Every other family runs ONE program many
+    // times under the calibration re-warm, so a small program's whole per-node
+    // dispatch-target sequence is memorized by the branch predictor and every
+    // dispatch shape looks nearly free (the review panel's central microarchitecture
+    // finding: the small-N "dispatch barely matters" ties are a memorization
+    // artifact, not a cold-dispatch result). This family cycles 16 DISTINCT programs
+    // (same profile+size, different generator seed) round-robin, one per inner
+    // iteration, so no single program's dispatch sequence fits the predictor: 16 x N
+    // interleaved targets is well past any predictor capacity, which is exactly the
+    // many-residuals-per-frame deployment shape a runtime actually experiences.
+    // Compare cell-for-cell against `carrier_predecode_{p}` (M=1, memorized): the
+    // delta is the memorization the warm numbers hide. Sizes stay in the memorized
+    // regime [64,256,1024] where the effect lives (N=16384 already saturates).
+    PROFILES.iter().map(|p| {
+        let cyc_prep = format!(
+            "static PREP: OnceLock<Vec<c::predecode::Predecoded>> = OnceLock::new(); \
+             let pds = PREP.get_or_init(|| {{ (0..16u64).map(|i| {{ let mut gp = c::GenParams::profile(\"{p}\").unwrap(); gp.node_count = N; gp.seed ^= i.wrapping_mul(0x9e37_79b9_7f4a_7c15); let bytes = c::ir::encode(&c::generate(&gp), &c::ir::REC24); let d = c::ir::Decoded::parse(&bytes, c::ir::REC24).unwrap(); c::predecode::predecode(&d) }}).collect() }}); \
+             let mut r = vec![0u64; pds.iter().map(|q| q.nodes.len()).max().unwrap()];"
+        );
+        let shape = |tag, f: &str, feats: &[&'static str]| cell(tag, cyc_prep.clone(), format!("let pd = &pds[k]; c::predecode::{f}(pd, seed, &mut r); acc ^= c::checksum(&r);"), feats);
+        let cells = vec![
+            shape("switch", "interpret_predecoded", &[]),
+            shape("fntable", "interpret_predecoded_fntable", &[]),
+            shape("null", "interpret_predecoded_nulldispatch", &[]),
+            cell("threaded", cyc_prep.clone(), "let pd = &pds[k]; c::predecode::interpret_predecoded_threaded(pd, seed, &mut r); acc ^= c::checksum(&r);".to_string(), &["threaded"]),
+        ];
+        spec_sized(format!("carrier_coldcycle_{p}"), format!("Cold/aliased-predictor dispatch: 16 distinct programs cycled per pass (defeats predictor memorization), {p} profile"), "switch", &format!("carrier_cold_{p}"), cells, vec![64, 256, 1024])
+    }).collect()
+}
+
+fn setup_cost_family() -> Vec<MatrixSpec> {
+    // The S term of `total(k) = S + k*I`: the ONE-TIME cost to get from wire bytes
+    // to a dispatch-ready form, which every execution family hides in untimed prep.
+    // This family TIMES the construction itself (not its downstream execution), so
+    // the tier breakeven `k* = (S_b - S_a) / (I_a - I_b)` can be computed against
+    // the per-eval `I` numbers the execution families already report. The two emit
+    // cells are the load-bearing pair: `emitdirect` is per-node instruction
+    // selection (copypatch.rs), `emitcopypatch` is the copy-and-patch stencil
+    // codegen (stencil.rs, memcpy + imm12 patch). Xu & Kjolstad's whole claim is
+    // that copy-and-patch reaches near-native EXECUTION speed at a fraction of the
+    // COMPILE cost; this family measures that compile cost directly, on the axis
+    // the technique was invented for and the one the execution matrix could not see.
+    // Sizes cap at 1024 (the JIT imm12 window). `emit`/`emit_stencil` are the pure
+    // codegen (Vec<u32> of machine words), isolating the compile algorithm from the
+    // mmap/icache-flush of full JitCode/StencilCode construction.
+    PROFILES.iter().map(|p| {
+        let cells = vec![
+            cell("parse", bytes_prep(p), "let d = c::ir::Decoded::parse(bytes, c::ir::REC24).unwrap(); acc ^= d.node_count as u64;".to_string(), &[]),
+            cell("predecode", format!("{} let d = c::ir::Decoded::parse(bytes, c::ir::REC24).unwrap();", bytes_prep(p)), "let pd = c::predecode::predecode(&d); acc ^= pd.nodes.len() as u64;".to_string(), &[]),
+            cell("stackcompile", program_prep(p), "let sp = c::stackbc::compile(prog); acc ^= sp.num_locals as u64;".to_string(), &[]),
+            cell("optall", program_prep(p), "let opt = c::optimize::optimize(prog, true, true, true, false, true); acc ^= opt.prog.nodes.len() as u64;".to_string(), &[]),
+            cell("emitdirect", program_prep(p), "let code = c::copypatch::emit(prog).expect(\"emit\"); acc ^= code.len() as u64;".to_string(), &["jit"]),
+            cell("emitcopypatch", program_prep(p), "let code = c::stencil::emit_stencil(prog).expect(\"emit\"); acc ^= code.len() as u64;".to_string(), &["jit"]),
+        ];
+        spec_sized(format!("carrier_setup_{p}"), format!("Setup cost S (parse / predecode / stackbc compile / optimize / direct-emit / copypatch-emit), {p} profile"), "parse", &format!("carrier_setup_{p}"), cells, vec![64, 256, 1024])
+    }).collect()
+}
+
 fn main() {
     let out_dir = Path::new(".");
     let mut all: Vec<MatrixSpec> = Vec::new();
@@ -403,6 +495,8 @@ fn main() {
     all.extend(native_family());
     all.extend(vertical_family());
     all.extend(native_ceiling_family());
+    all.extend(setup_cost_family());
+    all.extend(coldcycle_family());
 
     let mut sections: Vec<String> = Vec::new();
     let mut nvariants = 0usize;

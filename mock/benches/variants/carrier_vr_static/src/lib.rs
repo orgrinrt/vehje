@@ -5,8 +5,22 @@ use mockspace_bench_macro::bench_variant;
 #[allow(unused_imports)]
 use std::sync::OnceLock;
 
+// A fixed 16-entry seed table, SHARED across every size and every variant. The
+// prior template drew seeds from `input[k % N]`, i.e. the first 16 harness input
+// bytes, which the harness fills per-size from the master seed, so cross-size
+// tables were computed over DIFFERENT seeds. A fixed table makes the seeds
+// identical across sizes AND variants, so the only thing a cross-size or
+// cross-variant comparison varies is program size and dispatch shape.
+const SEEDS: [u64; 16] = [
+    0x9e37_79b9_7f4a_7c15, 0xf1bb_cdcb_fa53_e0a9, 0x2545_f491_4f6c_dd1d, 0x8ebc_6af0_9c88_c2b2,
+    0xc2b2_ae3d_27d4_eb4f, 0x1656_67b1_9e37_79f9, 0x27d4_eb2f_1656_67c5, 0x1656_67b1_9e37_79b9,
+    0x3c6e_f372_fe94_f82b, 0xa54f_f53a_5f1d_36f1, 0x510e_527f_ade6_82d1, 0x9b05_688c_2b3e_6c1f,
+    0x1f83_d9ab_fb41_bd6b, 0x5be0_cd19_137e_2179, 0x6a09_e667_f3bc_c908, 0xbb67_ae85_84ca_a73b,
+];
+
 #[bench_variant("carrier_vr_static", sizes = [64, 256, 1024, 4096, 16384])]
 fn run<const N: usize>(input: &[u8; N], output: &mut [u8; 8]) -> FfiBenchCall {
+    let _ = &input; // some cells (native_ceiling) sweep `input`; others use SEEDS.
     static PREP: OnceLock<Vec<c::valrepr::VNode>> = OnceLock::new(); let prog = PREP.get_or_init(|| c::valrepr::gen_valprog(N, 0x1234_5678)); let mut scr = vec![0u64; prog.len()];
     const ITERS: usize = 16;
     // timed_calibrated auto-repeats the run block until it clears the counter's
@@ -16,11 +30,21 @@ fn run<const N: usize>(input: &[u8; N], output: &mut [u8; 8]) -> FfiBenchCall {
     // rep's output byte so the calibrated reps form a dependency chain, which
     // (together with writing `output`, which the harness reads) anchors the whole
     // acc/checksum/interpret chain against DCE and cross-rep hoisting.
+    //
+    // FIDELITY NOTE: because the anti-hoist chain IS the `output` write and the
+    // calibrated rep count is per-variant, the final `output` bytes are
+    // reps-variant, so the harness's cross-variant output byte compare is not a
+    // reliable fidelity witness under calibration (see the review panel's agner-fog
+    // finding). The real fidelity anchor is the carrier crate's own byte-exact
+    // cross-validation tests (every cell vs `interp`, every JIT vs `interp`, every
+    // vertical lane vs scalar), which are stronger than a runtime byte compare and
+    // run under `cargo test`. This is architectural: the anti-hoist requires
+    // reps-variance and `output` is its only channel.
     timed_calibrated! { run {
         let mut acc: u64 = output[0] as u64;
         let mut k = 0usize;
         while k < ITERS {
-            let seed = input[k % N] as u64 ^ (k as u64);
+            let seed = SEEDS[k] ^ (k as u64);
             acc ^= c::valrepr::interp_static(prog, seed as i32, &mut scr);
             k += 1;
         }

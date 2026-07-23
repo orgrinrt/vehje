@@ -2059,3 +2059,207 @@ variants = ["variants/carrier_ceil_interp/target/release/carrier_ceil_interp", "
 n = 1024
 variants = ["variants/carrier_ceil_interp/target/release/carrier_ceil_interp", "variants/carrier_ceil_native/target/release/carrier_ceil_native"]
 
+[bench.carrier_setup_real]
+title = "Setup cost S (parse / predecode / stackbc compile / optimize / direct-emit / copypatch-emit), real profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_setup_real.normalise]
+baseline = "carrier_setup_real_parse"
+mode = "subtract"
+[[bench.carrier_setup_real.sizes]]
+n = 64
+variants = ["variants/carrier_setup_real_parse/target/release/carrier_setup_real_parse", "variants/carrier_setup_real_predecode/target/release/carrier_setup_real_predecode", "variants/carrier_setup_real_stackcompile/target/release/carrier_setup_real_stackcompile", "variants/carrier_setup_real_optall/target/release/carrier_setup_real_optall", "variants/carrier_setup_real_emitdirect/target/release/carrier_setup_real_emitdirect", "variants/carrier_setup_real_emitcopypatch/target/release/carrier_setup_real_emitcopypatch"]
+[[bench.carrier_setup_real.sizes]]
+n = 256
+variants = ["variants/carrier_setup_real_parse/target/release/carrier_setup_real_parse", "variants/carrier_setup_real_predecode/target/release/carrier_setup_real_predecode", "variants/carrier_setup_real_stackcompile/target/release/carrier_setup_real_stackcompile", "variants/carrier_setup_real_optall/target/release/carrier_setup_real_optall", "variants/carrier_setup_real_emitdirect/target/release/carrier_setup_real_emitdirect", "variants/carrier_setup_real_emitcopypatch/target/release/carrier_setup_real_emitcopypatch"]
+[[bench.carrier_setup_real.sizes]]
+n = 1024
+variants = ["variants/carrier_setup_real_parse/target/release/carrier_setup_real_parse", "variants/carrier_setup_real_predecode/target/release/carrier_setup_real_predecode", "variants/carrier_setup_real_stackcompile/target/release/carrier_setup_real_stackcompile", "variants/carrier_setup_real_optall/target/release/carrier_setup_real_optall", "variants/carrier_setup_real_emitdirect/target/release/carrier_setup_real_emitdirect", "variants/carrier_setup_real_emitcopypatch/target/release/carrier_setup_real_emitcopypatch"]
+
+[bench.carrier_setup_madd]
+title = "Setup cost S (parse / predecode / stackbc compile / optimize / direct-emit / copypatch-emit), madd profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_setup_madd.normalise]
+baseline = "carrier_setup_madd_parse"
+mode = "subtract"
+[[bench.carrier_setup_madd.sizes]]
+n = 64
+variants = ["variants/carrier_setup_madd_parse/target/release/carrier_setup_madd_parse", "variants/carrier_setup_madd_predecode/target/release/carrier_setup_madd_predecode", "variants/carrier_setup_madd_stackcompile/target/release/carrier_setup_madd_stackcompile", "variants/carrier_setup_madd_optall/target/release/carrier_setup_madd_optall", "variants/carrier_setup_madd_emitdirect/target/release/carrier_setup_madd_emitdirect", "variants/carrier_setup_madd_emitcopypatch/target/release/carrier_setup_madd_emitcopypatch"]
+[[bench.carrier_setup_madd.sizes]]
+n = 256
+variants = ["variants/carrier_setup_madd_parse/target/release/carrier_setup_madd_parse", "variants/carrier_setup_madd_predecode/target/release/carrier_setup_madd_predecode", "variants/carrier_setup_madd_stackcompile/target/release/carrier_setup_madd_stackcompile", "variants/carrier_setup_madd_optall/target/release/carrier_setup_madd_optall", "variants/carrier_setup_madd_emitdirect/target/release/carrier_setup_madd_emitdirect", "variants/carrier_setup_madd_emitcopypatch/target/release/carrier_setup_madd_emitcopypatch"]
+[[bench.carrier_setup_madd.sizes]]
+n = 1024
+variants = ["variants/carrier_setup_madd_parse/target/release/carrier_setup_madd_parse", "variants/carrier_setup_madd_predecode/target/release/carrier_setup_madd_predecode", "variants/carrier_setup_madd_stackcompile/target/release/carrier_setup_madd_stackcompile", "variants/carrier_setup_madd_optall/target/release/carrier_setup_madd_optall", "variants/carrier_setup_madd_emitdirect/target/release/carrier_setup_madd_emitdirect", "variants/carrier_setup_madd_emitcopypatch/target/release/carrier_setup_madd_emitcopypatch"]
+
+[bench.carrier_setup_tight]
+title = "Setup cost S (parse / predecode / stackbc compile / optimize / direct-emit / copypatch-emit), tight profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_setup_tight.normalise]
+baseline = "carrier_setup_tight_parse"
+mode = "subtract"
+[[bench.carrier_setup_tight.sizes]]
+n = 64
+variants = ["variants/carrier_setup_tight_parse/target/release/carrier_setup_tight_parse", "variants/carrier_setup_tight_predecode/target/release/carrier_setup_tight_predecode", "variants/carrier_setup_tight_stackcompile/target/release/carrier_setup_tight_stackcompile", "variants/carrier_setup_tight_optall/target/release/carrier_setup_tight_optall", "variants/carrier_setup_tight_emitdirect/target/release/carrier_setup_tight_emitdirect", "variants/carrier_setup_tight_emitcopypatch/target/release/carrier_setup_tight_emitcopypatch"]
+[[bench.carrier_setup_tight.sizes]]
+n = 256
+variants = ["variants/carrier_setup_tight_parse/target/release/carrier_setup_tight_parse", "variants/carrier_setup_tight_predecode/target/release/carrier_setup_tight_predecode", "variants/carrier_setup_tight_stackcompile/target/release/carrier_setup_tight_stackcompile", "variants/carrier_setup_tight_optall/target/release/carrier_setup_tight_optall", "variants/carrier_setup_tight_emitdirect/target/release/carrier_setup_tight_emitdirect", "variants/carrier_setup_tight_emitcopypatch/target/release/carrier_setup_tight_emitcopypatch"]
+[[bench.carrier_setup_tight.sizes]]
+n = 1024
+variants = ["variants/carrier_setup_tight_parse/target/release/carrier_setup_tight_parse", "variants/carrier_setup_tight_predecode/target/release/carrier_setup_tight_predecode", "variants/carrier_setup_tight_stackcompile/target/release/carrier_setup_tight_stackcompile", "variants/carrier_setup_tight_optall/target/release/carrier_setup_tight_optall", "variants/carrier_setup_tight_emitdirect/target/release/carrier_setup_tight_emitdirect", "variants/carrier_setup_tight_emitcopypatch/target/release/carrier_setup_tight_emitcopypatch"]
+
+[bench.carrier_setup_scatter]
+title = "Setup cost S (parse / predecode / stackbc compile / optimize / direct-emit / copypatch-emit), scatter profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_setup_scatter.normalise]
+baseline = "carrier_setup_scatter_parse"
+mode = "subtract"
+[[bench.carrier_setup_scatter.sizes]]
+n = 64
+variants = ["variants/carrier_setup_scatter_parse/target/release/carrier_setup_scatter_parse", "variants/carrier_setup_scatter_predecode/target/release/carrier_setup_scatter_predecode", "variants/carrier_setup_scatter_stackcompile/target/release/carrier_setup_scatter_stackcompile", "variants/carrier_setup_scatter_optall/target/release/carrier_setup_scatter_optall", "variants/carrier_setup_scatter_emitdirect/target/release/carrier_setup_scatter_emitdirect", "variants/carrier_setup_scatter_emitcopypatch/target/release/carrier_setup_scatter_emitcopypatch"]
+[[bench.carrier_setup_scatter.sizes]]
+n = 256
+variants = ["variants/carrier_setup_scatter_parse/target/release/carrier_setup_scatter_parse", "variants/carrier_setup_scatter_predecode/target/release/carrier_setup_scatter_predecode", "variants/carrier_setup_scatter_stackcompile/target/release/carrier_setup_scatter_stackcompile", "variants/carrier_setup_scatter_optall/target/release/carrier_setup_scatter_optall", "variants/carrier_setup_scatter_emitdirect/target/release/carrier_setup_scatter_emitdirect", "variants/carrier_setup_scatter_emitcopypatch/target/release/carrier_setup_scatter_emitcopypatch"]
+[[bench.carrier_setup_scatter.sizes]]
+n = 1024
+variants = ["variants/carrier_setup_scatter_parse/target/release/carrier_setup_scatter_parse", "variants/carrier_setup_scatter_predecode/target/release/carrier_setup_scatter_predecode", "variants/carrier_setup_scatter_stackcompile/target/release/carrier_setup_scatter_stackcompile", "variants/carrier_setup_scatter_optall/target/release/carrier_setup_scatter_optall", "variants/carrier_setup_scatter_emitdirect/target/release/carrier_setup_scatter_emitdirect", "variants/carrier_setup_scatter_emitcopypatch/target/release/carrier_setup_scatter_emitcopypatch"]
+
+[bench.carrier_setup_wideselect]
+title = "Setup cost S (parse / predecode / stackbc compile / optimize / direct-emit / copypatch-emit), wideselect profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_setup_wideselect.normalise]
+baseline = "carrier_setup_wideselect_parse"
+mode = "subtract"
+[[bench.carrier_setup_wideselect.sizes]]
+n = 64
+variants = ["variants/carrier_setup_wideselect_parse/target/release/carrier_setup_wideselect_parse", "variants/carrier_setup_wideselect_predecode/target/release/carrier_setup_wideselect_predecode", "variants/carrier_setup_wideselect_stackcompile/target/release/carrier_setup_wideselect_stackcompile", "variants/carrier_setup_wideselect_optall/target/release/carrier_setup_wideselect_optall", "variants/carrier_setup_wideselect_emitdirect/target/release/carrier_setup_wideselect_emitdirect", "variants/carrier_setup_wideselect_emitcopypatch/target/release/carrier_setup_wideselect_emitcopypatch"]
+[[bench.carrier_setup_wideselect.sizes]]
+n = 256
+variants = ["variants/carrier_setup_wideselect_parse/target/release/carrier_setup_wideselect_parse", "variants/carrier_setup_wideselect_predecode/target/release/carrier_setup_wideselect_predecode", "variants/carrier_setup_wideselect_stackcompile/target/release/carrier_setup_wideselect_stackcompile", "variants/carrier_setup_wideselect_optall/target/release/carrier_setup_wideselect_optall", "variants/carrier_setup_wideselect_emitdirect/target/release/carrier_setup_wideselect_emitdirect", "variants/carrier_setup_wideselect_emitcopypatch/target/release/carrier_setup_wideselect_emitcopypatch"]
+[[bench.carrier_setup_wideselect.sizes]]
+n = 1024
+variants = ["variants/carrier_setup_wideselect_parse/target/release/carrier_setup_wideselect_parse", "variants/carrier_setup_wideselect_predecode/target/release/carrier_setup_wideselect_predecode", "variants/carrier_setup_wideselect_stackcompile/target/release/carrier_setup_wideselect_stackcompile", "variants/carrier_setup_wideselect_optall/target/release/carrier_setup_wideselect_optall", "variants/carrier_setup_wideselect_emitdirect/target/release/carrier_setup_wideselect_emitdirect", "variants/carrier_setup_wideselect_emitcopypatch/target/release/carrier_setup_wideselect_emitcopypatch"]
+
+[bench.carrier_setup_leaf]
+title = "Setup cost S (parse / predecode / stackbc compile / optimize / direct-emit / copypatch-emit), leaf profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_setup_leaf.normalise]
+baseline = "carrier_setup_leaf_parse"
+mode = "subtract"
+[[bench.carrier_setup_leaf.sizes]]
+n = 64
+variants = ["variants/carrier_setup_leaf_parse/target/release/carrier_setup_leaf_parse", "variants/carrier_setup_leaf_predecode/target/release/carrier_setup_leaf_predecode", "variants/carrier_setup_leaf_stackcompile/target/release/carrier_setup_leaf_stackcompile", "variants/carrier_setup_leaf_optall/target/release/carrier_setup_leaf_optall", "variants/carrier_setup_leaf_emitdirect/target/release/carrier_setup_leaf_emitdirect", "variants/carrier_setup_leaf_emitcopypatch/target/release/carrier_setup_leaf_emitcopypatch"]
+[[bench.carrier_setup_leaf.sizes]]
+n = 256
+variants = ["variants/carrier_setup_leaf_parse/target/release/carrier_setup_leaf_parse", "variants/carrier_setup_leaf_predecode/target/release/carrier_setup_leaf_predecode", "variants/carrier_setup_leaf_stackcompile/target/release/carrier_setup_leaf_stackcompile", "variants/carrier_setup_leaf_optall/target/release/carrier_setup_leaf_optall", "variants/carrier_setup_leaf_emitdirect/target/release/carrier_setup_leaf_emitdirect", "variants/carrier_setup_leaf_emitcopypatch/target/release/carrier_setup_leaf_emitcopypatch"]
+[[bench.carrier_setup_leaf.sizes]]
+n = 1024
+variants = ["variants/carrier_setup_leaf_parse/target/release/carrier_setup_leaf_parse", "variants/carrier_setup_leaf_predecode/target/release/carrier_setup_leaf_predecode", "variants/carrier_setup_leaf_stackcompile/target/release/carrier_setup_leaf_stackcompile", "variants/carrier_setup_leaf_optall/target/release/carrier_setup_leaf_optall", "variants/carrier_setup_leaf_emitdirect/target/release/carrier_setup_leaf_emitdirect", "variants/carrier_setup_leaf_emitcopypatch/target/release/carrier_setup_leaf_emitcopypatch"]
+
+[bench.carrier_coldcycle_real]
+title = "Cold/aliased-predictor dispatch: 16 distinct programs cycled per pass (defeats predictor memorization), real profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_coldcycle_real.normalise]
+baseline = "carrier_cold_real_switch"
+mode = "subtract"
+[[bench.carrier_coldcycle_real.sizes]]
+n = 64
+variants = ["variants/carrier_cold_real_switch/target/release/carrier_cold_real_switch", "variants/carrier_cold_real_fntable/target/release/carrier_cold_real_fntable", "variants/carrier_cold_real_null/target/release/carrier_cold_real_null", "variants/carrier_cold_real_threaded/target/release/carrier_cold_real_threaded"]
+[[bench.carrier_coldcycle_real.sizes]]
+n = 256
+variants = ["variants/carrier_cold_real_switch/target/release/carrier_cold_real_switch", "variants/carrier_cold_real_fntable/target/release/carrier_cold_real_fntable", "variants/carrier_cold_real_null/target/release/carrier_cold_real_null", "variants/carrier_cold_real_threaded/target/release/carrier_cold_real_threaded"]
+[[bench.carrier_coldcycle_real.sizes]]
+n = 1024
+variants = ["variants/carrier_cold_real_switch/target/release/carrier_cold_real_switch", "variants/carrier_cold_real_fntable/target/release/carrier_cold_real_fntable", "variants/carrier_cold_real_null/target/release/carrier_cold_real_null", "variants/carrier_cold_real_threaded/target/release/carrier_cold_real_threaded"]
+
+[bench.carrier_coldcycle_madd]
+title = "Cold/aliased-predictor dispatch: 16 distinct programs cycled per pass (defeats predictor memorization), madd profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_coldcycle_madd.normalise]
+baseline = "carrier_cold_madd_switch"
+mode = "subtract"
+[[bench.carrier_coldcycle_madd.sizes]]
+n = 64
+variants = ["variants/carrier_cold_madd_switch/target/release/carrier_cold_madd_switch", "variants/carrier_cold_madd_fntable/target/release/carrier_cold_madd_fntable", "variants/carrier_cold_madd_null/target/release/carrier_cold_madd_null", "variants/carrier_cold_madd_threaded/target/release/carrier_cold_madd_threaded"]
+[[bench.carrier_coldcycle_madd.sizes]]
+n = 256
+variants = ["variants/carrier_cold_madd_switch/target/release/carrier_cold_madd_switch", "variants/carrier_cold_madd_fntable/target/release/carrier_cold_madd_fntable", "variants/carrier_cold_madd_null/target/release/carrier_cold_madd_null", "variants/carrier_cold_madd_threaded/target/release/carrier_cold_madd_threaded"]
+[[bench.carrier_coldcycle_madd.sizes]]
+n = 1024
+variants = ["variants/carrier_cold_madd_switch/target/release/carrier_cold_madd_switch", "variants/carrier_cold_madd_fntable/target/release/carrier_cold_madd_fntable", "variants/carrier_cold_madd_null/target/release/carrier_cold_madd_null", "variants/carrier_cold_madd_threaded/target/release/carrier_cold_madd_threaded"]
+
+[bench.carrier_coldcycle_tight]
+title = "Cold/aliased-predictor dispatch: 16 distinct programs cycled per pass (defeats predictor memorization), tight profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_coldcycle_tight.normalise]
+baseline = "carrier_cold_tight_switch"
+mode = "subtract"
+[[bench.carrier_coldcycle_tight.sizes]]
+n = 64
+variants = ["variants/carrier_cold_tight_switch/target/release/carrier_cold_tight_switch", "variants/carrier_cold_tight_fntable/target/release/carrier_cold_tight_fntable", "variants/carrier_cold_tight_null/target/release/carrier_cold_tight_null", "variants/carrier_cold_tight_threaded/target/release/carrier_cold_tight_threaded"]
+[[bench.carrier_coldcycle_tight.sizes]]
+n = 256
+variants = ["variants/carrier_cold_tight_switch/target/release/carrier_cold_tight_switch", "variants/carrier_cold_tight_fntable/target/release/carrier_cold_tight_fntable", "variants/carrier_cold_tight_null/target/release/carrier_cold_tight_null", "variants/carrier_cold_tight_threaded/target/release/carrier_cold_tight_threaded"]
+[[bench.carrier_coldcycle_tight.sizes]]
+n = 1024
+variants = ["variants/carrier_cold_tight_switch/target/release/carrier_cold_tight_switch", "variants/carrier_cold_tight_fntable/target/release/carrier_cold_tight_fntable", "variants/carrier_cold_tight_null/target/release/carrier_cold_tight_null", "variants/carrier_cold_tight_threaded/target/release/carrier_cold_tight_threaded"]
+
+[bench.carrier_coldcycle_scatter]
+title = "Cold/aliased-predictor dispatch: 16 distinct programs cycled per pass (defeats predictor memorization), scatter profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_coldcycle_scatter.normalise]
+baseline = "carrier_cold_scatter_switch"
+mode = "subtract"
+[[bench.carrier_coldcycle_scatter.sizes]]
+n = 64
+variants = ["variants/carrier_cold_scatter_switch/target/release/carrier_cold_scatter_switch", "variants/carrier_cold_scatter_fntable/target/release/carrier_cold_scatter_fntable", "variants/carrier_cold_scatter_null/target/release/carrier_cold_scatter_null", "variants/carrier_cold_scatter_threaded/target/release/carrier_cold_scatter_threaded"]
+[[bench.carrier_coldcycle_scatter.sizes]]
+n = 256
+variants = ["variants/carrier_cold_scatter_switch/target/release/carrier_cold_scatter_switch", "variants/carrier_cold_scatter_fntable/target/release/carrier_cold_scatter_fntable", "variants/carrier_cold_scatter_null/target/release/carrier_cold_scatter_null", "variants/carrier_cold_scatter_threaded/target/release/carrier_cold_scatter_threaded"]
+[[bench.carrier_coldcycle_scatter.sizes]]
+n = 1024
+variants = ["variants/carrier_cold_scatter_switch/target/release/carrier_cold_scatter_switch", "variants/carrier_cold_scatter_fntable/target/release/carrier_cold_scatter_fntable", "variants/carrier_cold_scatter_null/target/release/carrier_cold_scatter_null", "variants/carrier_cold_scatter_threaded/target/release/carrier_cold_scatter_threaded"]
+
+[bench.carrier_coldcycle_wideselect]
+title = "Cold/aliased-predictor dispatch: 16 distinct programs cycled per pass (defeats predictor memorization), wideselect profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_coldcycle_wideselect.normalise]
+baseline = "carrier_cold_wideselect_switch"
+mode = "subtract"
+[[bench.carrier_coldcycle_wideselect.sizes]]
+n = 64
+variants = ["variants/carrier_cold_wideselect_switch/target/release/carrier_cold_wideselect_switch", "variants/carrier_cold_wideselect_fntable/target/release/carrier_cold_wideselect_fntable", "variants/carrier_cold_wideselect_null/target/release/carrier_cold_wideselect_null", "variants/carrier_cold_wideselect_threaded/target/release/carrier_cold_wideselect_threaded"]
+[[bench.carrier_coldcycle_wideselect.sizes]]
+n = 256
+variants = ["variants/carrier_cold_wideselect_switch/target/release/carrier_cold_wideselect_switch", "variants/carrier_cold_wideselect_fntable/target/release/carrier_cold_wideselect_fntable", "variants/carrier_cold_wideselect_null/target/release/carrier_cold_wideselect_null", "variants/carrier_cold_wideselect_threaded/target/release/carrier_cold_wideselect_threaded"]
+[[bench.carrier_coldcycle_wideselect.sizes]]
+n = 1024
+variants = ["variants/carrier_cold_wideselect_switch/target/release/carrier_cold_wideselect_switch", "variants/carrier_cold_wideselect_fntable/target/release/carrier_cold_wideselect_fntable", "variants/carrier_cold_wideselect_null/target/release/carrier_cold_wideselect_null", "variants/carrier_cold_wideselect_threaded/target/release/carrier_cold_wideselect_threaded"]
+
+[bench.carrier_coldcycle_leaf]
+title = "Cold/aliased-predictor dispatch: 16 distinct programs cycled per pass (defeats predictor memorization), leaf profile"
+workload = "realistic"
+master_seed = 0x5eed_d15b_a7c4_0002
+[bench.carrier_coldcycle_leaf.normalise]
+baseline = "carrier_cold_leaf_switch"
+mode = "subtract"
+[[bench.carrier_coldcycle_leaf.sizes]]
+n = 64
+variants = ["variants/carrier_cold_leaf_switch/target/release/carrier_cold_leaf_switch", "variants/carrier_cold_leaf_fntable/target/release/carrier_cold_leaf_fntable", "variants/carrier_cold_leaf_null/target/release/carrier_cold_leaf_null", "variants/carrier_cold_leaf_threaded/target/release/carrier_cold_leaf_threaded"]
+[[bench.carrier_coldcycle_leaf.sizes]]
+n = 256
+variants = ["variants/carrier_cold_leaf_switch/target/release/carrier_cold_leaf_switch", "variants/carrier_cold_leaf_fntable/target/release/carrier_cold_leaf_fntable", "variants/carrier_cold_leaf_null/target/release/carrier_cold_leaf_null", "variants/carrier_cold_leaf_threaded/target/release/carrier_cold_leaf_threaded"]
+[[bench.carrier_coldcycle_leaf.sizes]]
+n = 1024
+variants = ["variants/carrier_cold_leaf_switch/target/release/carrier_cold_leaf_switch", "variants/carrier_cold_leaf_fntable/target/release/carrier_cold_leaf_fntable", "variants/carrier_cold_leaf_null/target/release/carrier_cold_leaf_null", "variants/carrier_cold_leaf_threaded/target/release/carrier_cold_leaf_threaded"]
+
