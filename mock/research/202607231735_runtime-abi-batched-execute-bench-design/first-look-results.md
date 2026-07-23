@@ -1,5 +1,13 @@
 # First-look results: the runtime C ABI batched-execute benches
 
+> **Superseded conclusion.** A second expert pass (agner-fog / linus-torvalds / john-carmack) found this note's
+> conclusion overstated: the "W >= 8 threshold" is circular (the SoA path is all-scalar below the lane width), the
+> ~2.4x is dispatch-amortisation plus partial NEON not isolated vectorisation, the quoted "2-4 us crossing" is the
+> fill intercept (the real crossing is ~9 ns), and the decisive cheap-payload regime was not measured here. Read
+> `hole-poke-synthesis-and-revised-conclusion.md` for the corrected conclusion. This file is kept as the audit
+> trail of the first claim.
+
+
 **Date:** 2026-07-23
 **What this is:** the first timing data off the built machinery, after the panel review and the blocker fixes.
 It proves the run pipeline end-to-end and gives the first evidence-backed read on the ABI decision. It is a
