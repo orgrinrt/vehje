@@ -30,6 +30,12 @@ vertical = []
 # only (the module is cfg-gated); pulls no deps, declaring the MAP_JIT externs
 # directly. Off the default build since it emits and runs native code.
 jit = []
+# opt-in boundary benches (the runtime C ABI batched-execute arc): the `bench`
+# module's `boundary` family crosses into the carrier-runtime cdylib via
+# `mockspace-bench-matrix::boundary::Runtime`, so it pulls the bench-matrix
+# `boundary` feature (and its libloading dep). Off the default build so every
+# other family compiles the carrier without libloading.
+boundary = ["mockspace-bench-matrix/boundary"]
 
 [dependencies]
 # The bench module (`pub mod bench`) authors the semantic matrix with the
@@ -37,6 +43,6 @@ jit = []
 # variants call, NOT the harness transport, so default-features are off (that
 # drops the whole bench-harness tree from this per-variant-rebuilt crate). Pinned
 # to the same mockspace dev rev as the runner and the variant extra_deps.
-mockspace-bench-matrix = { git = "https://github.com/hiisi-digital/mockspace", rev = "688db96028fd0333576a9a704c199b22a6fd0d32", default-features = false }
+mockspace-bench-matrix = { git = "https://github.com/hiisi-digital/mockspace", rev = "8c5f87ae1a916c45b40c6ea690dc42402f91d199", default-features = false }
 # The interpreters/generators themselves keep no external RNG or runtime deps: a
 # seeded generator with no external RNG keeps runs byte-reproducible.

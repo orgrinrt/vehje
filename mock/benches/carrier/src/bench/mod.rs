@@ -41,7 +41,7 @@ pub mod vertical;
 /// extra_deps below all pin this one rev, so the whole graph resolves one bench-core:
 /// a variant's `FfiBenchCall` + `abi_hash` must match the runner's or it is rejected
 /// at dlopen. Bump all four sites together when re-pinning.
-const MOCKSPACE_REV: &str = "688db96028fd0333576a9a704c199b22a6fd0d32";
+const MOCKSPACE_REV: &str = "8c5f87ae1a916c45b40c6ea690dc42402f91d199";
 
 /// The variant `Cargo.toml` dependency lines. The variants need the scaffold + the
 /// FFI struct + the bench_variant macro, never the harness transport, so bench-matrix
