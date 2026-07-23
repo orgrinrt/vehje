@@ -33,6 +33,7 @@
 
 #![feature(portable_simd)]
 
+use core::ffi::c_void;
 use core::simd::Simd;
 
 use vehje_bench_carrier as c;
@@ -262,6 +263,78 @@ macro_rules! dispatch {
 dispatch!(cr_execute_scalar_dispatch, scalar_batch);
 dispatch!(cr_execute_soa_dispatch, soa_batch);
 
+// ── the output sink: the settled reserve/commit two-function-pointer struct ──
+
+/// The value-arena output sink, the settled ABI return contract's mechanism: results
+/// flow out of the runtime through a host-supplied `reserve`/`commit` pair rather than a
+/// return value. `reserve(userdata, hint)` yields a buffer of `hint` `u64` slots the
+/// runtime writes into; `commit(userdata, n)` publishes `n` written slots. Both pointers
+/// point into the HOST object, so every reserve/commit is a genuine reverse crossing (the
+/// sink's cost, two crossings per batch or per record on top of the execute crossing).
+///
+/// `#[repr(C)]` so the host declares a layout-identical struct; passed by pointer and
+/// called indirect, never inlined. The host owns the arena `userdata` points at.
+#[repr(C)]
+pub struct CrSink {
+    /// Reserve `hint` `u64` output slots, returning a writable pointer to them.
+    pub reserve:  unsafe extern "C" fn(*mut c_void, usize) -> *mut u64,
+    /// Publish `n` written slots (advancing the host arena).
+    pub commit:   unsafe extern "C" fn(*mut c_void, usize),
+    /// Opaque host state (the output arena) the pointers operate on.
+    pub userdata: *mut c_void,
+}
+
+/// Batched sink: interpret the whole `w`-record batch, reserve `w` slots ONCE, write the
+/// `w` per-record checksums, commit ONCE. Two reverse crossings per batch (the batched
+/// columnar sink shape). No return value; the results are in the committed arena.
+///
+/// # Safety
+/// `seeds` points to `w` valid `u64`s; `h` is live; `sink`'s pointers are valid and its
+/// `reserve(w)` yields at least `w` writable `u64` slots.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn cr_execute_sink_batched(
+    h: *mut Handle,
+    seeds: *const u64,
+    w: usize,
+    sink: *const CrSink,
+) {
+    let h = unsafe { &mut *h };
+    let seeds = unsafe { core::slice::from_raw_parts(seeds, w) };
+    let sink = unsafe { &*sink };
+    let out = unsafe { (sink.reserve)(sink.userdata, w) };
+    let slots = unsafe { core::slice::from_raw_parts_mut(out, w) };
+    for i in 0..w {
+        c::interpret_predecoded(&h.pd, seeds[i], &mut h.scalar_scratch);
+        slots[i] = c::checksum(&h.scalar_scratch);
+    }
+    unsafe { (sink.commit)(sink.userdata, w) };
+}
+
+/// Per-record sink: for each of the `w` records, reserve ONE slot, interpret, write, and
+/// commit ONE. Two reverse crossings PER RECORD (the per-record reserve/commit shape, the
+/// `w`-fold sink penalty a batched entry avoids).
+///
+/// # Safety
+/// `seeds` points to `w` valid `u64`s; `h` is live; `sink`'s pointers are valid and each
+/// `reserve(1)` yields one writable `u64` slot.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn cr_execute_sink_per_record(
+    h: *mut Handle,
+    seeds: *const u64,
+    w: usize,
+    sink: *const CrSink,
+) {
+    let h = unsafe { &mut *h };
+    let seeds = unsafe { core::slice::from_raw_parts(seeds, w) };
+    let sink = unsafe { &*sink };
+    for i in 0..w {
+        let out = unsafe { (sink.reserve)(sink.userdata, 1) };
+        c::interpret_predecoded(&h.pd, seeds[i], &mut h.scalar_scratch);
+        unsafe { *out = c::checksum(&h.scalar_scratch) };
+        unsafe { (sink.commit)(sink.userdata, 1) };
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -328,6 +401,65 @@ mod tests {
         let vd = unsafe { cr_execute_soa_dispatch(h, seeds.as_ptr(), 64) };
         assert_eq!(vr, vm, "SoA runtime-W and monomorphized must agree");
         assert_eq!(vr, vd, "SoA runtime-W and dispatch-table must agree");
+        unsafe { cr_free(h) };
+    }
+
+    /// A test host sink: an arena the reserve/commit pair writes into, so the sink path
+    /// can be validated against the in-process per-record checksums.
+    struct TestArena {
+        buf: Vec<u64>,
+        off: usize,
+    }
+
+    unsafe extern "C" fn test_reserve(ud: *mut c_void, _hint: usize) -> *mut u64 {
+        let a = unsafe { &mut *(ud as *mut TestArena) };
+        unsafe { a.buf.as_mut_ptr().add(a.off) }
+    }
+
+    unsafe extern "C" fn test_commit(ud: *mut c_void, n: usize) {
+        let a = unsafe { &mut *(ud as *mut TestArena) };
+        a.off += n;
+    }
+
+    #[test]
+    fn sink_writes_per_record_checksums_batched_equals_per_record() {
+        let h = unsafe { handle() };
+        let seeds: Vec<u64> = (0..64u64).map(|i| 0x1357 ^ i.wrapping_mul(0x9e37_79b9)).collect();
+        let w = seeds.len();
+
+        // in-process reference: the per-record checksums the sink must write.
+        let hr = unsafe { &mut *h };
+        let mut scratch = vec![0u64; hr.pd.nodes.len()];
+        let want: Vec<u64> = seeds
+            .iter()
+            .map(|&sd| {
+                c::interpret_predecoded(&hr.pd, sd, &mut scratch);
+                c::checksum(&scratch)
+            })
+            .collect();
+
+        // batched sink: one reserve/commit for the whole batch.
+        let mut arena = TestArena { buf: vec![0u64; w], off: 0 };
+        let sink = CrSink {
+            reserve: test_reserve,
+            commit: test_commit,
+            userdata: &mut arena as *mut _ as *mut c_void,
+        };
+        unsafe { cr_execute_sink_batched(h, seeds.as_ptr(), w, &sink) };
+        assert_eq!(arena.off, w, "batched sink commits the whole batch");
+        assert_eq!(arena.buf, want, "batched sink writes the per-record checksums");
+
+        // per-record sink: reserve/commit per record, same committed contents.
+        let mut arena2 = TestArena { buf: vec![0u64; w], off: 0 };
+        let sink2 = CrSink {
+            reserve: test_reserve,
+            commit: test_commit,
+            userdata: &mut arena2 as *mut _ as *mut c_void,
+        };
+        unsafe { cr_execute_sink_per_record(h, seeds.as_ptr(), w, &sink2) };
+        assert_eq!(arena2.off, w, "per-record sink commits every record");
+        assert_eq!(arena2.buf, want, "per-record sink writes the same checksums as batched");
+
         unsafe { cr_free(h) };
     }
 

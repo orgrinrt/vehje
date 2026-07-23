@@ -10,6 +10,8 @@
 //!   versus SoA-8 payload at equal crossing cost. The headline family.
 //! - [`entry`] (bench 4): the entry-point form (scalar-anchor / runtime-W / dispatch-table
 //!   / per-W-set), scalar payload pinned. op's vehicle: the C-boundary-mapping decision.
+//! - [`sink`] (bench 5): the output-sink shape (null / batched / per-record / batched
+//!   +decode), the real `#[repr(C)]` reserve/commit two-function-pointer struct.
 //!
 //! Shared machinery (constants, resolved-signature types, the runtime-handle state, the
 //! column-crossing loop, seed marshalling, the cross-validation dylib build) lives in
@@ -24,15 +26,17 @@
 pub mod common;
 pub mod cross;
 pub mod entry;
+pub mod sink;
 pub mod soa;
 
 use mockspace_bench_matrix::MatrixDecl;
 
-/// The three boundary families' declarations, concatenated for the generator. `bench/mod.rs`
+/// The boundary families' declarations, concatenated for the generator. `bench/mod.rs`
 /// calls this once; the extra_deps are filled in by the caller like every other family.
 pub fn matrix_decls() -> Vec<MatrixDecl> {
     let mut all = cross::matrix_decls();
     all.extend(soa::matrix_decls());
     all.extend(entry::matrix_decls());
+    all.extend(sink::matrix_decls());
     all
 }

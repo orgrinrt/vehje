@@ -43,6 +43,24 @@ pub type CrEntryW = unsafe extern "C" fn(*mut c_void, *const u64, usize) -> u64;
 pub type CrEntryMono = unsafe extern "C" fn(*mut c_void, *const u64) -> u64;
 /// The per-record scalar anchor: `(handle, seed) -> keep_alive`, one record per call.
 pub type CrExec1 = unsafe extern "C" fn(*mut c_void, u64) -> u64;
+/// A sink-driven entry: `(handle, seeds, w, sink)`, no return; results flow out through
+/// the sink. `cr_execute_sink_batched` and `cr_execute_sink_per_record` share this shape.
+pub type CrEntrySink = unsafe extern "C" fn(*mut c_void, *const u64, usize, *const CrSink);
+
+/// The value-arena output sink, layout-identical to `carrier-runtime`'s `CrSink`: the
+/// settled reserve/commit two-function-pointer return mechanism. The runtime calls
+/// `reserve(userdata, hint)` for `hint` writable `u64` slots and `commit(userdata, n)` to
+/// publish `n`. Both pointers point into the host object, so each call is a reverse
+/// crossing (the sink's cost). Passed by pointer, called indirect, never inlined.
+#[repr(C)]
+pub struct CrSink {
+    /// Reserve `hint` `u64` output slots, returning a writable pointer to them.
+    pub reserve:  unsafe extern "C" fn(*mut c_void, usize) -> *mut u64,
+    /// Publish `n` written slots (advancing the host arena).
+    pub commit:   unsafe extern "C" fn(*mut c_void, usize),
+    /// Opaque host state (the output arena) the pointers operate on.
+    pub userdata: *mut c_void,
+}
 
 /// Fill `buf` deterministically from the per-iteration `seed`. Used identically by the
 /// cells and the cross-validation tests, so a host crossing and its in-process replica
