@@ -14,7 +14,7 @@
 //! let the runtime free a region's segment on stack discipline, with no
 //! collector and no refcount.
 
-use arvo::{Bool, Identity, USize};
+use arvo::{Bool, Identity, Maybe, USize};
 
 /// A relative index link into the value-arena's node records.
 #[repr(transparent)]
@@ -47,6 +47,10 @@ pub struct RegionId(pub USize);
 /// arena is versioned rather than vtable-dispatched. Fallibility crosses as an
 /// `Outcome`-shaped node, so a failing record is a value, not a status flag.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
+// repr(C): a stable, declared discriminant for the wire record. The C-ABI
+// default width applies for now; narrowing it to a compact fixed width is part
+// of the open wire-spec decision (see the value-transport deep dive).
+#[repr(C)]
 pub enum ValueTag {
     /// The unit value.
     Unit,
@@ -67,6 +71,7 @@ pub enum ValueTag {
 /// A slice of the value-arena's flat child-index pool: `len` consecutive
 /// [`ValueRef`] starting at `start`.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[repr(C)]
 pub struct ValueList {
     /// The first child index.
     pub start: USize,
@@ -82,6 +87,7 @@ impl ValueList {
 /// A span into the value-arena's self-contained byte blob: an offset and a
 /// length, for a string or scalar payload.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[repr(C)]
 pub struct BlobSpan {
     /// The byte offset into the blob.
     pub offset: USize,
@@ -100,6 +106,7 @@ impl BlobSpan {
 /// spans the byte blob. The record is fixed width so the runtime indexes node
 /// `i` in O(1), the same discipline as the residual node arena.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[repr(C)]
 pub struct ValueNode {
     /// The value kind.
     pub tag: ValueTag,
@@ -116,6 +123,7 @@ pub struct ValueNode {
 /// The table finalises at chunk close; a region's segment is a contiguous node
 /// range the runtime frees on stack discipline.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[repr(C)]
 pub struct Region {
     /// The first node of the region's segment.
     pub start: USize,
@@ -166,13 +174,37 @@ impl<'buf> ValueArena<'buf> {
     }
 
     /// Read a value node by relative index.
+    ///
+    /// Trusted-path accessor: valid on a trusted in-process arena, or on an
+    /// untrusted arena only after validation. It indexes directly and panics on
+    /// an out-of-range `ValueRef`; for the untrusted path before validation use
+    /// [`ValueArena::try_get`], which bounds-checks the index.
     pub fn get(&self, at: ValueRef) -> ValueNode {
         self.nodes[at.index().0]
     }
 
+    /// Read a value node by index, bounds-checked: `Isnt` if the ref is past the
+    /// arena. The untrusted-path accessor, so a malformed ref is a value, not a
+    /// panic.
+    pub fn try_get(&self, at: ValueRef) -> Maybe<ValueNode> {
+        let i = at.index().0;
+        if i < self.nodes.len() {
+            Maybe::Is(self.nodes[i])
+        } else {
+            Maybe::Isnt
+        }
+    }
+
     /// The child refs a [`ValueList`] addresses.
+    ///
+    /// Clamped to the live (filled) pool: a malformed `ValueList` whose range
+    /// runs past the pool yields a truncated or empty slice, with a saturating
+    /// add so a huge start or len cannot overflow and panic.
     pub fn children(&self, l: ValueList) -> &[ValueRef] {
-        &self.pool[l.start.0..l.start.0 + l.len.0]
+        let live = self.pool.len();
+        let start = l.start.0.min(live);
+        let end = l.start.0.saturating_add(l.len.0).min(live).max(start);
+        &self.pool[start..end]
     }
 }
 
@@ -226,5 +258,43 @@ mod tests {
         let seq_kids = arena.children(seq.children);
         assert_eq!(seq_kids[0], ValueRef::new(USize::ZERO));
         assert_eq!(arena.get(seq_kids[0]).tag, ValueTag::Unit);
+    }
+
+    #[test]
+    fn try_get_out_of_range_is_isnt() {
+        let nodes = [ValueNode {
+            tag: ValueTag::Unit,
+            region: RegionId(USize::ZERO),
+            children: ValueList::EMPTY,
+            blob: BlobSpan::EMPTY,
+        }];
+        let pool: [ValueRef; 0] = [];
+        let blob: [u8; 0] = []; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: empty test blob; bytes are the value-arena unit; tracked: #207
+        let regions = [Region { start: USize::ZERO, len: USize::ONE }];
+        let arena = ValueArena::new(&nodes, &pool, &blob, &regions, ValueRef::new(USize::ZERO));
+
+        // in range: the node comes back.
+        assert!(matches!(arena.try_get(ValueRef::new(USize::ZERO)), Maybe::Is(_)));
+        // past the end: Isnt, not a panic.
+        assert!(matches!(arena.try_get(ValueRef::new(USize(5))), Maybe::Isnt));
+    }
+
+    #[test]
+    fn children_of_a_malformed_list_does_not_panic() {
+        let nodes = [ValueNode {
+            tag: ValueTag::Unit,
+            region: RegionId(USize::ZERO),
+            children: ValueList::EMPTY,
+            blob: BlobSpan::EMPTY,
+        }];
+        let pool = [ValueRef::new(USize::ZERO)];
+        let blob: [u8; 0] = []; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: empty test blob; bytes are the value-arena unit; tracked: #207
+        let regions = [Region { start: USize::ZERO, len: USize::ONE }];
+        let arena = ValueArena::new(&nodes, &pool, &blob, &regions, ValueRef::new(USize::ZERO));
+
+        // a list whose start/len run far past the one-element pool: clamped to
+        // empty, no overflow panic, no out-of-bounds read.
+        let bogus = ValueList { start: USize(usize::MAX - 1), len: USize(usize::MAX) }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: deliberately malformed index bounds for the clamp test; tracked: #207
+        assert!(arena.children(bogus).is_empty());
     }
 }
