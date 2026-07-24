@@ -13,6 +13,7 @@
 #![no_std]
 #![deny(unused, unreachable_code, unused_must_use, unused_imports, dead_code)]
 
+use arvo::USize;
 use notko::Outcome;
 use vehje_runtime_abi::{Residual, ValueArena};
 
@@ -61,12 +62,107 @@ impl<'a> Reader<'a> {
     }
 
     /// Validate the value-arena before the host reads it: a complete, linear,
-    /// bounds-checked typed structural decode (children-before-parents makes
-    /// acyclicity a single monotone index check).
-    // FIXME: run the full typed structural decode (bounds, monotone child
-    // indices, region-table integrity); the untrusted path must run it, the
-    // in-process path may skip it. M-level accepts a well-formed arena.
+    /// bounds-checked typed structural decode.
+    ///
+    /// One forward pass over the node records. For each node it checks that the
+    /// region id is in the region table, the blob span is within the blob, the
+    /// child span is within the child pool, and every child index is strictly
+    /// below the node's own index. The children-before-parents emission order
+    /// makes that last check the acyclicity proof: a value arena that passes has
+    /// no forward reference and therefore no cycle, so a later read cannot loop
+    /// or run out of bounds. The untrusted path must run this; the trusted
+    /// in-process path may skip it.
     pub fn validate(&self) -> Outcome<(), DriverError> {
+        let a = &self.arena;
+        let n = a.len().0;
+        let blob_len = a.blob.len();
+        let pool_len = a.pool.len();
+        let region_count = a.regions.len();
+
+        if a.root.index().0 >= n {
+            return Outcome::Err(DriverError::CorruptValue);
+        }
+
+        let mut i = USize(0);
+        while i.0 < n {
+            let node = a.nodes[i.0];
+
+            // the region id names a real region-table slot.
+            if node.region.0 .0 >= region_count {
+                return Outcome::Err(DriverError::CorruptValue);
+            }
+
+            // the blob span lies within the blob (saturating so a malformed
+            // span cannot overflow the bound check).
+            let blob_end = node.blob.offset.0.saturating_add(node.blob.len.0);
+            if blob_end > blob_len {
+                return Outcome::Err(DriverError::CorruptValue);
+            }
+
+            // the child span lies within the pool.
+            let child_start = node.children.start.0;
+            let child_end = child_start.saturating_add(node.children.len.0);
+            if child_end > pool_len {
+                return Outcome::Err(DriverError::CorruptValue);
+            }
+
+            // every child index is strictly below this node's index: the
+            // monotone check the children-first order makes an acyclicity proof.
+            let mut k = child_start;
+            while k < child_end {
+                if a.pool[k].index().0 >= i.0 {
+                    return Outcome::Err(DriverError::CorruptValue);
+                }
+                k += 1;
+            }
+
+            i = USize(i.0 + 1);
+        }
         Outcome::Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use arvo::Identity;
+    use vehje_runtime_abi::{
+        BlobSpan, Region, RegionId, ValueList, ValueNode, ValueRef, ValueTag,
+    };
+
+    fn node(tag: ValueTag, children: ValueList) -> ValueNode {
+        ValueNode { tag, region: RegionId(USize::ZERO), children, blob: BlobSpan::EMPTY }
+    }
+
+    #[test]
+    fn validates_a_well_formed_arena() {
+        // outcome(seq[unit]) children-first: unit(0), seq(1)->child 0, outcome(2)->child 1.
+        let nodes = [
+            node(ValueTag::Unit, ValueList::EMPTY),
+            node(ValueTag::Seq, ValueList { start: USize::ZERO, len: USize::ONE }),
+            node(ValueTag::Outcome, ValueList { start: USize::ONE, len: USize::ONE }),
+        ];
+        let pool = [ValueRef::new(USize::ZERO), ValueRef::new(USize::ONE)];
+        let blob: [u8; 0] = []; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: empty test blob; bytes are the value-arena unit; tracked: #207
+        let regions = [Region { start: USize::ZERO, len: USize(3) }];
+        let arena = ValueArena::new(&nodes, &pool, &blob, &regions, ValueRef::new(USize(2)));
+        let reader = Reader::new(arena);
+        assert!(matches!(reader.validate(), Outcome::Ok(())));
+    }
+
+    #[test]
+    fn rejects_a_forward_reference() {
+        // node 0 points forward at node 1: a cycle-capable forward reference the
+        // monotone check must reject.
+        let nodes = [
+            node(ValueTag::Seq, ValueList { start: USize::ZERO, len: USize::ONE }),
+            node(ValueTag::Unit, ValueList::EMPTY),
+        ];
+        let pool = [ValueRef::new(USize::ONE)];
+        let blob: [u8; 0] = []; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: empty test blob; bytes are the value-arena unit; tracked: #207
+        let regions = [Region { start: USize::ZERO, len: USize(2) }];
+        let arena = ValueArena::new(&nodes, &pool, &blob, &regions, ValueRef::new(USize::ZERO));
+        let reader = Reader::new(arena);
+        assert!(matches!(reader.validate(), Outcome::Err(DriverError::CorruptValue)));
     }
 }

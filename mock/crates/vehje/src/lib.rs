@@ -125,6 +125,7 @@ mod tests {
     use hilavitkutin_str::str_const;
     use vehje_codegen::check_for;
     use vehje_ir::{Builder, Grade, GradeTable, Literal, Span};
+    use vehje_resolve::{resolve_into, Resolution};
     use vehje_typecheck::check;
 
     /// A byte sink that collects into a fixed buffer, for the test.
@@ -169,13 +170,16 @@ mod tests {
         let root = expect(b.let_(Bool::FALSE, x, unit, var, Span::default()));
         let arena = b.into_arena();
 
-        // run the graded check to obtain the evidence the mint requires, then
-        // mint the witness. the program uses only the Core family and no
-        // effects, so it is included in DebugTarget's (Core) support and ()
-        // permit sets.
+        // resolve names, then run the graded check to obtain the evidence the
+        // mint requires, then mint the witness. the program uses only the Core
+        // family and no effects, so it is included in DebugTarget's (Core)
+        // support and () permit sets.
+        let mut binders = [notko::Maybe::Isnt; 8];
+        let mut res = Resolution::new(&mut binders);
+        assert!(matches!(resolve_into(&arena, root, &mut res), Outcome::Ok(())));
         let mut grade_region = [Grade::default(); 8];
         let mut grades = GradeTable::new(&mut grade_region);
-        let graded = match check(&arena, root, &mut grades) {
+        let graded = match check(&arena, root, &res, &mut grades) {
             Outcome::Ok(g) => g,
             Outcome::Err(_) => panic!("check failed"),
         };

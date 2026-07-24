@@ -5,6 +5,7 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
+arvo.workspace = true
 vehje-ir.workspace = true
 vehje-runtime-abi.workspace = true
 vehje-schedule.workspace = true

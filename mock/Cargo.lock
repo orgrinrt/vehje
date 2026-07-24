@@ -591,6 +591,7 @@ dependencies = [
 name = "vehje-runtime-driver"
 version = "0.1.0"
 dependencies = [
+ "arvo",
  "hilavitkutin-api",
  "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
@@ -640,7 +641,9 @@ version = "0.1.0"
 dependencies = [
  "arvo",
  "arvo-bitmask",
+ "arvo-bits",
  "hilavitkutin-api",
+ "hilavitkutin-str",
  "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
  "vehje-fixpoint",

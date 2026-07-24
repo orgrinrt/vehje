@@ -11,16 +11,29 @@
 //! `#![no_std]`, no alloc.
 
 #![no_std]
+// const_trait_impl: WATCH-allowed (unstable-features.md); required by
+// hilavitkutin-str's `str_const!` for the interned name in the binder-rule test.
+#![feature(const_trait_impl)]
 #![deny(unused, unreachable_code, unused_must_use, unused_imports, dead_code)]
 
 use core::marker::PhantomData;
 
 use arvo::Outcome;
 
+use arvo::USize;
 use vehje_ir::{
     Arena, Assurance, ContainsAll, EffectMask, Grade, GradeTable, Knowledge, Lease, Node, NodeRef,
     ReachMask, TargetSets,
 };
+use vehje_resolve::Resolution;
+
+/// The reach-mask slot a binder or its variable occupies: the binder node's
+/// arena index folded into the 64-slot mask. Two binders more than 64 apart
+/// share a slot, the degenerate depth-lease floor the design names; a
+/// census-sized mask is the later refinement.
+fn slot_of(binder: NodeRef) -> USize {
+    USize(binder.index().0 % 64) // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: 64 is the ReachMask slot count (Bits<64>); a fixed mask-width index; tracked: #207
+}
 
 /// A check diagnostic.
 ///
@@ -155,19 +168,22 @@ where
 pub fn check<'a>(
     arena: &'a Arena<'a>,
     root: NodeRef,
+    res: &Resolution<'_>,
     grades: &mut GradeTable<'_>,
 ) -> Outcome<Graded<'a>, CheckError> {
-    match infer(arena, root, grades) {
+    match infer(arena, root, res, grades) {
         Outcome::Ok(_) => Outcome::Ok(Graded::new(arena, root)),
         Outcome::Err(e) => Outcome::Err(e),
     }
 }
 
 /// Bottom-up graded inference over one node, recording its grade and returning
-/// it. Integrity-checks child handles as it descends.
+/// it. Integrity-checks child handles as it descends, and computes the reach
+/// set through the binder rule using the resolution side-table.
 fn infer(
     arena: &Arena<'_>,
     at: NodeRef,
+    res: &Resolution<'_>,
     grades: &mut GradeTable<'_>,
 ) -> Outcome<Grade, CheckError> {
     if at.index().0 >= arena.len().0 {
@@ -175,12 +191,12 @@ fn infer(
     }
     let node = arena.get(at);
     // effect and lease are computed as the join of the children's grades; the
-    // per-form rules (the binder rule dropping a bound variable's reach slot,
-    // a family operation's own effect) refine this and are FIXME'd below.
+    // binder rule below drops a bound variable's reach slot, and a `Var`
+    // contributes its resolved binder's slot.
     let mut effect = EffectMask::empty();
     let mut reach = ReachMask::empty();
     let mut child = |c: NodeRef, grades: &mut GradeTable<'_>| -> Outcome<(), CheckError> {
-        match infer(arena, c, grades) {
+        match infer(arena, c, res, grades) {
             Outcome::Ok(g) => {
                 effect = effect.join(g.effect);
                 reach = reach.join(g.lease.0);
@@ -190,18 +206,26 @@ fn infer(
         }
     };
     match node {
-        Node::Lit(_) | Node::Var(_) => {}
+        Node::Lit(_) => {}
+        Node::Var(_) => {
+            // a variable reaches the binder that introduced it: contribute the
+            // binder's slot to this node's reach set.
+            if let arvo::Maybe::Is(binder) = res.binder(at.index()) {
+                reach.insert(slot_of(binder));
+            }
+        }
         Node::Let { value, body, .. } => {
             child(value, grades)?;
             child(body, grades)?;
-            // FIXME: apply the reachability binder rule here (splice the bound
-            // expression's reach where the body reaches the variable, then drop
-            // the variable's slot); M-level unions without the drop.
+            // the binder rule: the variable this `Let` introduces does not
+            // escape its own binder, so drop its slot from the combined reach.
+            reach.remove(slot_of(at));
         }
         Node::Lambda { body, .. } => {
             child(body, grades)?;
-            // FIXME: the closure-escape reach obligation (the load-bearing
-            // region-soundness case) drops the parameter slot here.
+            // the closure-escape reach obligation: the parameter this `Lambda`
+            // binds does not escape, so its slot is dropped here.
+            reach.remove(slot_of(at));
         }
         Node::Apply { callee, args } => {
             child(callee, grades)?;
@@ -255,13 +279,22 @@ fn infer(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use arvo::{Identity, USize};
+    use arvo::{Bool, Identity, Maybe, USize};
+    use hilavitkutin_str::str_const;
     use vehje_ir::{Builder, Literal, Span};
+    use vehje_resolve::resolve_into;
 
-    fn at(m: arvo::Maybe<NodeRef>) -> NodeRef {
+    fn at(m: Maybe<NodeRef>) -> NodeRef {
         match m {
-            arvo::Maybe::Is(r) => r,
-            arvo::Maybe::Isnt => panic!("arena full"),
+            Maybe::Is(r) => r,
+            Maybe::Isnt => panic!("arena full"),
+        }
+    }
+
+    fn grade_of(grades: &GradeTable<'_>, at: NodeRef) -> Grade {
+        match grades.get(at.index()) {
+            Maybe::Is(g) => g,
+            Maybe::Isnt => panic!("grade out of range"),
         }
     }
 
@@ -275,11 +308,43 @@ mod tests {
         let root = at(b.if_(unit, unit, unit, Span::default()));
         let arena = b.into_arena();
 
+        let mut binders = [Maybe::Isnt; 8];
+        let mut res = Resolution::new(&mut binders);
+        assert!(matches!(resolve_into(&arena, root, &mut res), Outcome::Ok(())));
+
         let mut grade_region = [Grade::default(); 8];
         let mut grades = GradeTable::new(&mut grade_region);
-        assert!(matches!(check(&arena, root, &mut grades), Outcome::Ok(_)));
+        assert!(matches!(check(&arena, root, &res, &mut grades), Outcome::Ok(_)));
         // the whole program is pure and reaches nothing at this stage.
-        assert_eq!(grades.get(root.index()).effect, EffectMask::empty());
+        assert_eq!(grade_of(&grades, root).effect, EffectMask::empty());
+    }
+
+    #[test]
+    fn binder_rule_drops_the_bound_slot() {
+        let mut nodes = [Node::Lit(Literal::Unit); 8];
+        let mut spans = [Span::default(); 8];
+        let mut pool = [NodeRef::new(USize::ZERO); 8];
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+
+        // let x = () in x: the body reaches the binder, and the binder rule
+        // drops the binder's own slot, so the Let's reach set is empty.
+        let x = str_const!("x");
+        let unit = at(b.lit(Literal::Unit, Span::default()));
+        let var = at(b.var(x, Span::default()));
+        let root = at(b.let_(Bool::FALSE, x, unit, var, Span::default()));
+        let arena = b.into_arena();
+
+        let mut binders = [Maybe::Isnt; 8];
+        let mut res = Resolution::new(&mut binders);
+        assert!(matches!(resolve_into(&arena, root, &mut res), Outcome::Ok(())));
+
+        let mut grade_region = [Grade::default(); 8];
+        let mut grades = GradeTable::new(&mut grade_region);
+        assert!(matches!(check(&arena, root, &res, &mut grades), Outcome::Ok(_)));
+
+        // the Let's own binder slot is dropped from its reach set.
+        let slot = USize(root.index().0 % 64); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: ReachMask slot-count index; tracked: #207
+        assert!(!grade_of(&grades, root).lease.0.contains(slot).0);
     }
 
     #[test]
@@ -294,10 +359,12 @@ mod tests {
         // than mint a Graded over a corrupt IR, so a dangling reference cannot
         // reach emit. This is the integrity half of the evidence-of-check gate.
         let dangling = NodeRef::new(USize(3));
+        let mut binders = [Maybe::Isnt; 4];
+        let res = Resolution::new(&mut binders);
         let mut grade_region = [Grade::default(); 4];
         let mut grades = GradeTable::new(&mut grade_region);
         assert!(matches!(
-            check(&arena, dangling, &mut grades),
+            check(&arena, dangling, &res, &mut grades),
             Outcome::Err(CheckError::DanglingRef { .. })
         ));
     }

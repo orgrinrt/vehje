@@ -9,7 +9,7 @@
 //! a side-table parallel to the node arena.
 
 use arvo::strategy::Hot;
-use arvo::{Bool, USize};
+use arvo::{Bool, Maybe, USize};
 use arvo_bits::Bits;
 use arvo_bitmask::Mask;
 
@@ -77,6 +77,13 @@ impl ReachMask {
     /// Record that binder slot `b` is reached.
     pub fn insert(&mut self, b: USize) {
         self.0.insert(b);
+    }
+
+    /// Drop binder slot `b` from the reach set (the binder rule: a bound
+    /// variable's slot is removed where the binder introduces it, since the
+    /// variable does not escape past its own binder).
+    pub fn remove(&mut self, b: USize) {
+        self.0.remove(b);
     }
 
     /// Whether binder slot `b` is reached.
@@ -206,24 +213,31 @@ pub struct GradeTable<'a> {
 impl<'a> GradeTable<'a> {
     /// Wrap a caller-provided region sized like the node arena.
     ///
-    /// The caller must size the region to at least the node arena's capacity;
-    /// `get` and `set` index by the node's arena index and assume it is in
-    /// range (the arena's `push` bounds-checks node creation, so a table sized
-    /// to the arena is always large enough).
-    // FIXME: return a `Maybe`/`Outcome` from `get`/`set` (or take the arena
-    // length) so an undersized region is a diagnostic rather than a panic; the
-    // check pass sizes the region to the arena today.
+    /// The caller sizes the region to at least the node arena's capacity;
+    /// `get` and `set` are bounds-checked, so an index past an undersized
+    /// region is a `Maybe::Isnt` / `Bool::FALSE`, not a panic.
     pub fn new(grades: &'a mut [Grade]) -> Self {
         Self { grades }
     }
 
-    /// Read a node's grade by its arena index.
-    pub fn get(&self, at: USize) -> Grade {
-        self.grades[at.0]
+    /// Read a node's grade by its arena index, or `Isnt` if the index is past
+    /// the region.
+    pub fn get(&self, at: USize) -> Maybe<Grade> {
+        if at.0 < self.grades.len() {
+            Maybe::Is(self.grades[at.0])
+        } else {
+            Maybe::Isnt
+        }
     }
 
-    /// Write a node's grade by its arena index.
-    pub fn set(&mut self, at: USize, grade: Grade) {
-        self.grades[at.0] = grade;
+    /// Write a node's grade by its arena index. `Bool::FALSE` if the index is
+    /// past the region (the write did not land).
+    pub fn set(&mut self, at: USize, grade: Grade) -> Bool {
+        if at.0 < self.grades.len() {
+            self.grades[at.0] = grade;
+            Bool(true)
+        } else {
+            Bool(false)
+        }
     }
 }
