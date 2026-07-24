@@ -118,6 +118,11 @@ pub struct Function {
 }
 
 /// The block table: the blocks of the residual's control-flow graph.
+// FIXME: no producer constructs `Block` / `Function` / `BlockTable` yet. The
+// lowering from `vehje_ir::Node` into blocks is owed, downstream of
+// `vehje-lower`'s `Anf` (which names the join points that give a nested branch
+// its successor blocks). These are the designed residual shape the producer
+// builds toward, not dead code to remove.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct BlockTable<'img> {
     /// The block records, indexed by [`BlockId`].

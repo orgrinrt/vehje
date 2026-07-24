@@ -1,10 +1,10 @@
 //! Structural content-addressed hashing of IR subtrees.
 //!
-//! One definition, two consumers: hash-consing in `vehje-lower` and the
-//! manifest in `vehje-runtime-gen`. `vehje-fixpoint`'s incremental layer keys
-//! its cross-artifact dedup on a separate byte-image hash (`xxhash3_64` over
-//! the serialized form), not on this word-fold, precisely because the
-//! byte-image is interner-independent.
+//! One within-stage consumer: hash-consing in `vehje-lower`. Cross-artifact
+//! identity is a separate concern: the manifest in `vehje-runtime-gen` and
+//! `vehje-fixpoint`'s incremental dedup both key on a byte-image hash
+//! (`xxhash3_64` over the serialized form), not on this word-fold, precisely
+//! because the byte-image is interner-independent.
 //!
 //! Structurally distinct subtrees hash distinct and structurally equal subtrees
 //! hash equal WITHIN ONE INTERNER: the leaf fold mixes a name's interner
