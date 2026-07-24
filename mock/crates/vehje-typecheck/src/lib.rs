@@ -69,6 +69,9 @@ pub enum CheckError {
     UnplaceableLease { at: NodeRef },
     /// A family node's own check failed.
     FamilyRule { at: NodeRef },
+    /// The caller-lent grade region is smaller than the node arena, so a
+    /// node's grade could not be recorded. A sizing error, not a program error.
+    GradeRegionFull { at: NodeRef },
 }
 
 /// A witness that a program has been graded and inclusion-checked against a
@@ -311,7 +314,9 @@ fn infer<H: FamilyCheck>(
         binding: Knowledge::empty(),
         assurance: Assurance::Unclaimed,
     };
-    grades.set(at.index(), grade);
+    if !grades.set(at.index(), grade).0 {
+        return Outcome::Err(CheckError::GradeRegionFull { at });
+    }
     Outcome::Ok(grade)
 }
 
@@ -356,6 +361,31 @@ mod tests {
         assert!(matches!(check(&arena, root, &res, &mut grades), Outcome::Ok(_)));
         // the whole program is pure and reaches nothing at this stage.
         assert_eq!(grade_of(&grades, root).effect, EffectMask::empty());
+    }
+
+    #[test]
+    fn refuses_a_too_small_grade_region() {
+        let mut nodes = [Node::Lit(Literal::Unit); 8];
+        let mut spans = [Span::default(); 8];
+        let mut pool = [NodeRef::new(USize::ZERO); 8];
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+        let unit = at(b.lit(Literal::Unit, Span::default()));
+        let root = at(b.if_(unit, unit, unit, Span::default()));
+        let arena = b.into_arena();
+
+        let mut binders = [Maybe::Isnt; 8];
+        let mut res = Resolution::new(&mut binders);
+        assert!(matches!(resolve_into(&arena, root, &mut res), Outcome::Ok(())));
+
+        // a grade region smaller than the node count: recording the If's grade
+        // (node index 1) does not land, so check refuses rather than silently
+        // passing an ungraded node.
+        let mut grade_region = [Grade::default(); 1];
+        let mut grades = GradeTable::new(&mut grade_region);
+        assert!(matches!(
+            check(&arena, root, &res, &mut grades),
+            Outcome::Err(CheckError::GradeRegionFull { .. })
+        ));
     }
 
     #[test]

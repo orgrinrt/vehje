@@ -232,6 +232,7 @@ impl<'a> GradeTable<'a> {
 
     /// Write a node's grade by its arena index. `Bool::FALSE` if the index is
     /// past the region (the write did not land).
+    #[must_use = "a false result means the grade region was too small and the write did not land; the caller must handle it, not drop it"]
     pub fn set(&mut self, at: USize, grade: Grade) -> Bool {
         if at.0 < self.grades.len() {
             self.grades[at.0] = grade;
