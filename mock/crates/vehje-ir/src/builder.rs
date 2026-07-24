@@ -9,6 +9,7 @@
 use arvo::{Bool, Maybe};
 
 use hilavitkutin_str::Str;
+use hilavitkutin_sym::Sym;
 
 use crate::arena::Arena;
 use crate::node::{FamilyId, Literal, Node, NodeList, NodeRef};
@@ -41,17 +42,17 @@ impl<'a> Builder<'a> {
     }
 
     /// A reference to a binding by name.
-    pub fn var(&mut self, name: Str, span: Span) -> Maybe<NodeRef> {
+    pub fn var(&mut self, name: Sym, span: Span) -> Maybe<NodeRef> {
         self.arena.push(Node::Var(name), span)
     }
 
     /// Bind `name` to `value` in scope for `body`.
-    pub fn let_(&mut self, rec: Bool, name: Str, value: NodeRef, body: NodeRef, span: Span) -> Maybe<NodeRef> {
+    pub fn let_(&mut self, rec: Bool, name: Sym, value: NodeRef, body: NodeRef, span: Span) -> Maybe<NodeRef> {
         self.arena.push(Node::Let { rec, name, value, body }, span)
     }
 
     /// Abstraction over `param`.
-    pub fn lambda(&mut self, param: Str, body: NodeRef, span: Span) -> Maybe<NodeRef> {
+    pub fn lambda(&mut self, param: Sym, body: NodeRef, span: Span) -> Maybe<NodeRef> {
         self.arena.push(Node::Lambda { param, body }, span)
     }
 

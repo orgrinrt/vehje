@@ -179,7 +179,7 @@ mod tests {
         let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
 
         // let x = () in x
-        let x = str_const!("x");
+        let x = str_const!("x").as_sym();
         let unit = expect(b.lit(Literal::Unit, Span::default()));
         let var = expect(b.var(x, Span::default()));
         let root = expect(b.let_(Bool::FALSE, x, unit, var, Span::default()));

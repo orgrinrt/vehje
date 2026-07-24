@@ -18,6 +18,7 @@ use arvo::strategy::Hot;
 use arvo::{Bool, Int, Maybe, USize};
 
 use hilavitkutin_str::{ArenaInterner, StringInterner};
+use hilavitkutin_sym::Interner;
 use vehje_ir::{Arena, FamilyId, Literal, Node, NodeList, NodeRef};
 
 use crate::Tier;
@@ -141,20 +142,27 @@ pub fn encode<A: ArenaInterner, E: ResidualEncoder>(
                     }
                 }
             }
+            // FIXME: a binder Sym of the string domain (kind 0b000, a widened
+            // source name) resolves to its text here, as before the flip. A
+            // MINTED binder (BinderDomain, kind 0b001) has no backing string,
+            // so `Interner::resolve` returns Isnt and the `?` fails. No minting
+            // exists yet (the Anf/MacroExpand catamorphism is Round B); when it
+            // lands, the wire format must encode a minted binder by its Sym
+            // bits, not by resolved text. Applies to Var, Let.name, Lambda.param.
             Node::Var(s) => {
                 encoder.begin_node(index, NodeTag::Var)?;
-                encoder.text(interner.resolve(s)?)?;
+                encoder.text(Interner::resolve(interner, s)?)?;
             }
             Node::Let { rec, name, value, body } => {
                 encoder.begin_node(index, NodeTag::Let)?;
                 encoder.flag(rec)?;
-                encoder.text(interner.resolve(name)?)?;
+                encoder.text(Interner::resolve(interner, name)?)?;
                 encoder.child(value)?;
                 encoder.child(body)?;
             }
             Node::Lambda { param, body } => {
                 encoder.begin_node(index, NodeTag::Lambda)?;
-                encoder.text(interner.resolve(param)?)?;
+                encoder.text(Interner::resolve(interner, param)?)?;
                 encoder.child(body)?;
             }
             Node::Apply { callee, args } => {

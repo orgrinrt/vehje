@@ -527,7 +527,7 @@ mod tests {
         // two Var("x")s that (in a real program) could resolve to different
         // binders. CSE must NOT merge them, or it captures. Only variable-free
         // subtrees are shared, so a Var is never keyed.
-        let x = str_const!("x");
+        let x = str_const!("x").as_sym();
         let cond = at(b.lit(Literal::Unit, Span::default()));
         let v1 = at(b.var(x, Span::default()));
         let v2 = at(b.var(x, Span::default()));

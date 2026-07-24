@@ -16,7 +16,7 @@
 
 use arvo::{Maybe, Outcome, USize};
 
-use hilavitkutin_str::Str;
+use hilavitkutin_sym::Sym;
 use vehje_ir::{Arena, FamilyId, Node, NodeList, NodeRef, Span};
 
 /// The family-extension resolve hook.
@@ -50,7 +50,7 @@ impl FamilyResolve for CoreFamilies {}
 /// stack.
 pub struct Scope<'p> {
     /// The name this frame binds.
-    pub name: Str,
+    pub name: Sym,
     /// The node that introduced the binding.
     pub binder: NodeRef,
     /// The enclosing scope, or `Isnt` at the root.
@@ -59,17 +59,17 @@ pub struct Scope<'p> {
 
 impl<'p> Scope<'p> {
     /// A root frame with no parent.
-    pub fn root(name: Str, binder: NodeRef) -> Self {
+    pub fn root(name: Sym, binder: NodeRef) -> Self {
         Self { name, binder, parent: Maybe::Isnt }
     }
 
     /// A child frame chained to `parent`.
-    pub fn child(name: Str, binder: NodeRef, parent: &'p Scope<'p>) -> Self {
+    pub fn child(name: Sym, binder: NodeRef, parent: &'p Scope<'p>) -> Self {
         Self { name, binder, parent: Maybe::Is(parent) }
     }
 
     /// Resolve `name` by walking the chain from this frame outward.
-    pub fn resolve(&self, name: Str) -> Maybe<NodeRef> {
+    pub fn resolve(&self, name: Sym) -> Maybe<NodeRef> {
         if self.name == name {
             return Maybe::Is(self.binder);
         }
@@ -88,7 +88,7 @@ impl<'p> Scope<'p> {
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum ResolveError {
     /// A `Var` names no binding in scope.
-    Unresolved { name: Str, span: Span },
+    Unresolved { name: Sym, span: Span },
 }
 
 /// The Core resolve pass over a program's IR.
@@ -197,7 +197,7 @@ fn walk<H: FamilyResolve>(
 }
 
 /// A scope frame binding `name` at `binder`, chained to `parent`.
-fn frame_for<'p>(name: Str, binder: NodeRef, parent: Maybe<&'p Scope<'p>>) -> Scope<'p> {
+fn frame_for<'p>(name: Sym, binder: NodeRef, parent: Maybe<&'p Scope<'p>>) -> Scope<'p> {
     match parent {
         Maybe::Is(p) => Scope::child(name, binder, p),
         Maybe::Isnt => Scope::root(name, binder),
@@ -352,7 +352,7 @@ mod tests {
         let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
 
         // let x = () in x
-        let x = str_const!("x");
+        let x = str_const!("x").as_sym();
         let unit = expect(b.lit(Literal::Unit, Span::default()));
         let var = expect(b.var(x, Span::default()));
         let root = expect(b.let_(Bool::FALSE, x, unit, var, Span::default()));
@@ -369,7 +369,7 @@ mod tests {
         let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
 
         // a bare, unbound reference to y
-        let y = str_const!("y");
+        let y = str_const!("y").as_sym();
         let root = expect(b.var(y, Span::default()));
 
         let arena = b.into_arena();
@@ -388,7 +388,7 @@ mod tests {
 
         // let rec f = f in f: the bound value references the binding itself,
         // which resolves only because `rec` puts the binder in scope for it.
-        let f = str_const!("f");
+        let f = str_const!("f").as_sym();
         let value = expect(b.var(f, Span::default()));
         let body = expect(b.var(f, Span::default()));
         let root = expect(b.let_(Bool::TRUE, f, value, body, Span::default()));
@@ -407,7 +407,7 @@ mod tests {
         // let f = f in f (non-recursive): the value's `f` is unbound, so the
         // rec flag is load-bearing: without it this same shape resolves, with
         // it (above) it does not.
-        let f = str_const!("f");
+        let f = str_const!("f").as_sym();
         let value = expect(b.var(f, Span::default()));
         let body = expect(b.var(f, Span::default()));
         let root = expect(b.let_(Bool::FALSE, f, value, body, Span::default()));
@@ -436,7 +436,7 @@ mod tests {
         // let x = () in Raw(family, [x]): the Var inside the family node is a
         // real reference and must resolve, because the pass descends into the
         // Raw payload rather than treating it as a leaf.
-        let x = str_const!("x");
+        let x = str_const!("x").as_sym();
         let unit = expect(b.lit(Literal::Unit, Span::default()));
         let var = expect(b.var(x, Span::default()));
         let payload = expect_list(b.alloc_list(&[var]));
@@ -456,7 +456,7 @@ mod tests {
 
         // Raw(family, [y]) with y unbound: the descent still refuses the inner
         // unbound reference, so a family node is not a hiding place.
-        let y = str_const!("y");
+        let y = str_const!("y").as_sym();
         let var = expect(b.var(y, Span::default()));
         let payload = expect_list(b.alloc_list(&[var]));
         let root = expect(b.raw(vehje_ir::FamilyId::default(), payload, Span::default()));

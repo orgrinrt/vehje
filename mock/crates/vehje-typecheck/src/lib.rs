@@ -367,7 +367,7 @@ mod tests {
 
         // let x = () in x: the body reaches the binder, and the binder rule
         // drops the binder's own slot, so the Let's reach set is empty.
-        let x = str_const!("x");
+        let x = str_const!("x").as_sym();
         let unit = at(b.lit(Literal::Unit, Span::default()));
         let var = at(b.var(x, Span::default()));
         let root = at(b.let_(Bool::FALSE, x, unit, var, Span::default()));

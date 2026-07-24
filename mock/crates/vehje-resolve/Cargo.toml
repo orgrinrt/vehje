@@ -9,6 +9,7 @@ arvo.workspace = true
 arvo-bits.workspace = true
 vehje-ir.workspace = true
 hilavitkutin-str.workspace = true
+hilavitkutin-sym.workspace = true
 notko.workspace = true
 
 [build-dependencies]

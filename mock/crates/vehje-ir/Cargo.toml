@@ -12,6 +12,7 @@ arvo-hash.workspace = true
 notko.workspace = true
 hilavitkutin-api.workspace = true
 hilavitkutin-str.workspace = true
+hilavitkutin-sym.workspace = true
 
 [build-dependencies]
 mockspace.workspace = true

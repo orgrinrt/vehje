@@ -9,6 +9,7 @@ use arvo::strategy::Hot;
 use arvo::{Bool, Identity, Int, USize, Uint};
 
 use hilavitkutin_str::Str;
+use hilavitkutin_sym::Sym;
 
 /// An index into the node arena.
 ///
@@ -84,19 +85,19 @@ pub enum Literal {
 pub enum Node {
     /// A literal value.
     Lit(Literal),
-    /// A reference to a binding, by name pre-resolution.
-    Var(Str),
+    /// A reference to a binding, by its `Sym` binder identity.
+    Var(Sym),
     /// Bind `name` to `value` in scope for `body`. `rec` marks a
     /// recursive binding. Multi-binding `let` desugars to nested `Let`.
     Let {
         rec: Bool,
-        name: Str,
+        name: Sym,
         value: NodeRef,
         body: NodeRef,
     },
     /// Abstraction over a single parameter. Multi-parameter lambdas
     /// desugar to nested `Lambda`.
-    Lambda { param: Str, body: NodeRef },
+    Lambda { param: Sym, body: NodeRef },
     /// Application of `callee` to `args`.
     Apply { callee: NodeRef, args: NodeList },
     /// Field, member, or index access of `base` by `key`.

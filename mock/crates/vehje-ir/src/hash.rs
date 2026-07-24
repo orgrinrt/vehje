@@ -25,6 +25,7 @@ use arvo_hash::ContentHash;
 use crate::arena::Arena;
 use crate::intern::Str;
 use crate::node::{Literal, Node, NodeRef};
+use hilavitkutin_sym::Sym;
 
 /// A content address of an IR subtree.
 ///
@@ -74,7 +75,7 @@ pub fn hash_of(arena: &Arena<'_>, at: NodeRef) -> StructuralHash {
             h = mix(h, lit_tag(lit));
             h = mix(h, lit_value(lit));
         }
-        Node::Var(name) => h = mix(h, str_word(name)),
+        Node::Var(name) => h = mix(h, sym_word(name)),
         Node::Let { value, body, .. } => {
             h = fold_child(h, value);
             h = fold_child(h, body);
@@ -176,6 +177,14 @@ fn str_word(s: Str) -> u64 { // lint:allow(no-bare-numeric) lint:allow(arvo-type
     s.to_bits().to_raw() as u64 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: 32-bit interned handle widened to a hash-domain word; tracked: #207
 }
 
+/// A binder identity as a hash word, for the leaf content of `Var`. Folds the
+/// `Sym`'s 32-bit handle, the identical operation `str_word` performs on a
+/// string handle, so a `Var` built from a source name widened via `as_sym`
+/// hashes the same value it did before the binder flip.
+fn sym_word(s: Sym) -> u64 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: interned binder handle widened to a hash-domain word; tracked: #207
+    s.to_bits().to_raw() as u64 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: 32-bit interned handle widened to a hash-domain word; tracked: #207
+}
+
 /// A family id as a hash word, for the `Raw` discriminant contribution.
 fn family_word(family: crate::node::FamilyId) -> u64 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: family id widened to a 64-bit hash word; tracked: #207
     family.get().to_raw() as u64 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: family id as a hash-domain word; tracked: #207
@@ -235,8 +244,8 @@ mod tests {
     fn distinct_vars_hash_distinct() {
         let (mut n, mut s, mut p) = arena4();
         let mut b = Builder::new(Arena::new(&mut n, &mut s, &mut p));
-        let x = at(b.var(str_const!("x"), Span::default()));
-        let y = at(b.var(str_const!("y"), Span::default()));
+        let x = at(b.var(str_const!("x").as_sym(), Span::default()));
+        let y = at(b.var(str_const!("y").as_sym(), Span::default()));
         let arena = b.into_arena();
         assert_ne!(hash_of(&arena, x), hash_of(&arena, y));
     }

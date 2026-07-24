@@ -15,6 +15,7 @@
 #![deny(unused, unreachable_code, unused_must_use, unused_imports, dead_code)]
 
 pub mod arena;
+pub mod binder;
 pub mod builder;
 pub mod diagnostic;
 pub mod effect;
@@ -27,6 +28,7 @@ pub mod span;
 pub mod target;
 
 pub use arena::Arena;
+pub use binder::BinderDomain;
 pub use builder::Builder;
 pub use diagnostic::{Diagnostic, Phase, Severity};
 pub use effect::Effect;
@@ -37,6 +39,7 @@ pub use grade::{
 pub use hash::{hash_of, StructuralHash};
 pub use intern::{ArenaInterner, Str, StringInterner};
 pub use node::{FamilyId, Literal, Node, NodeList, NodeRef};
+pub use hilavitkutin_sym::Sym;
 pub use span::{ByteOffset, FileId, Span};
 pub use target::TargetSets;
 

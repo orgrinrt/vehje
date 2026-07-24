@@ -8,6 +8,7 @@ license.workspace = true
 arvo.workspace = true
 vehje-ir.workspace = true
 hilavitkutin-str.workspace = true
+hilavitkutin-sym.workspace = true
 
 [dev-dependencies]
 arvo-bits.workspace = true

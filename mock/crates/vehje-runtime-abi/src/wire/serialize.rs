@@ -353,7 +353,7 @@ mod tests {
 
         // let x = () in x: "x" is appended once for the Var (node 1) and
         // once for the Let name (node 2), no dedup, so the blob is "xx"
-        let x = str_const!("x");
+        let x = str_const!("x").as_sym();
         let unit = at(b.lit(Literal::Unit, Span::default())); // node 0
         let var = at(b.var(x, Span::default())); // node 1
         let root = at(b.let_(Bool::FALSE, x, unit, var, Span::default())); // node 2
