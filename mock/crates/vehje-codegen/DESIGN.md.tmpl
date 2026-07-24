@@ -101,13 +101,15 @@ level down.
 - `#![no_std]`, no alloc. Byte output flows through a caller-provided
  sink; no heap-backed buffer is owned here.
 
-## Module layout
+## Module layout (intended; one flat `lib.rs` today)
 
 - `target.rs`. The `Target` trait, `Supports` / `Permits` associated sets.
 - `check.rs`. The inclusion and effect checks, `Checked` gating, the
  two-stage (static discharge and runtime bitmask) proof.
 - `fold.rs`. The one generic fold over Core plus families.
-- `compose.rs`. Compile-time target composition and name resolution.
+- `compose.rs`. Compile-time target composition and name resolution. State:
+ unwritten today; target composition is owed (the distribution-composition
+ item), and one flat `lib.rs` carries the shipped surface for now.
 - `error.rs`. `CodegenError`.
 - `lib.rs`. Re-exports and the top-level emit entry.
 

@@ -30,9 +30,17 @@ grades.
   evaluates a rule delta-driven (only new body tuples fire it each round).
 - `Engine`. The evaluator. `evaluate` runs the rules to a fixpoint over the
   relations in caller storage, using whole-column evaluation where the graph is
-  shallow (the reach fixpoint's measured winner) and semi-naive deltas where the
-  bookkeeping repays itself. It terminates because the relations are
-  finite-height lattices and the rules are monotone.
+  shallow (the reach fixpoint's measured winner) and, in the intended design,
+  semi-naive deltas where the bookkeeping repays itself. It terminates because
+  the relations are finite-height lattices and the rules are monotone. State:
+  whole-column ships; the semi-naive-delta strategy is owed (the crate's own
+  `engine.rs` FIXME names the exact design sentence it falls short of). The
+  engine is built and benched at the algorithm level but has zero consumers in
+  the workspace today; wiring it to lease inference (the check pass `infer` walk
+  is a drop-in candidate) and load verification is owed. Bench provenance: the
+  8M-node, 16M-edge, roughly 50 ms figure was measured on a standalone Zig
+  prototype (`reach.zig`), not on this Rust `Engine`; the algorithm was benched,
+  the shipped crate was not directly benched.
 - `Delta`. The per-round change set a semi-naive step consumes and produces, the
   bookkeeping that makes re-evaluation touch only what changed.
 

@@ -55,7 +55,10 @@ malformed input and the numeric and lease dynamic residuals. This is why the
 check pass can ship the concrete grade computation now while the full logical
 relation remains a proof-document artifact: the shippable core is the grade
 enums, the bitmask joins, and the inclusion checks, and the metatheory certifies
-them without the runtime carrying any of it.
+them without the runtime carrying any of it. State: of the four grade
+coordinates, `effect` and `lease` are computed via the join fold today; `binding`
+and `assurance` are hard-coded constants (`Knowledge::empty()`,
+`Assurance::Unclaimed`), so two axes are computed and two are owed.
 
 ## The proof-document target
 
@@ -70,5 +73,7 @@ the document drafts in parallel with the experiments. The highest-value original
 work is the assurance-indexed gradual logical relation parametric over the
 generated signature: it holds as a proof where assurance is high and degrades to
 its operational shadow, the differential test, where assurance is low, so proof
-and test are one object at two grades. The differential test ships (as the
-runtime-generation differential harness); the full relation is deferred.
+and test are one object at two grades. State: the differential test's contract type ships
+(`DifferentialCheck` in the runtime-generation crate); its harness runner, which
+drives a census corpus through both the reference and the specialised runtime, is
+owed (its own FIXME says so), and the full relation is deferred.

@@ -59,7 +59,9 @@ interface, so nothing downstream changes when it arrives.
 - `MacroExpand`. Macro expansion is a compile-stage-effect operation the compile
   stage handles, one instance of the handler discipline rather than a separate
   mechanism. A macro is a rewrite handled at the compile-stage handler; its
-  effect is discharged here, so the residual carries no unexpanded macro.
+  effect is designed to be discharged here, so the residual carries no
+  unexpanded macro. State: `MacroExpand::apply` is a no-op today; the fold_core
+  catamorphism that lets it create nodes is the owed prerequisite.
   Expansion is IR-to-IR and creates nodes, so like `Anf` it lands with the
   node-creating mutable-arena path (a catamorphism, not a redirecting `Rewrite`,
   which cannot create nodes), iterated to a fixpoint. The expansion runs over
@@ -67,8 +69,13 @@ interface, so nothing downstream changes when it arrives.
   caller-lent arena the default hypothesis, the count a bench-decided fork
   carrying the `NodeRef` branding decision), never allocating itself.
 
-- Recursive macros are supported. Termination is binding-time well-foundedness,
-  in three layers: stage well-foundedness terminates the stage dimension; a
+- Recursive macros are designed to be supported. State: this mechanism is
+  unbuilt today. There is no depth-cap constant, no productivity-condition field
+  on `vehje-signature`'s operation schema, and no cyclicity sketch, and
+  `MacroExpand::apply` is a no-op, so there is nothing to terminate yet. The
+  design, owed as an implementation round: termination is binding-time
+  well-foundedness, in three layers: stage well-foundedness terminates the stage
+  dimension; a
   within-stage per-operation productivity condition, carried as data on
   `vehje-signature`'s operation schema, terminates same-stage recursion; and a
   budget-as-diagnostic (a deterministic named error at arena exhaustion) is

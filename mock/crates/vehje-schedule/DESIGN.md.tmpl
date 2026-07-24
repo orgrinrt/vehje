@@ -14,7 +14,20 @@ family passes turn out to be handler instances of the compile-stage effect
 discipline, this scheduler folds into the orchestrator; it is kept because it
 exists, is small, and deleting it now bets on an unproven unification.
 
-## Scope
+State: the crate is a stub today, and intentionally so. `Pass` is an empty
+marker trait, `PassDag` a unit struct, and `Schedule::build` returns success
+unconditionally; the DAG, the `arvo-bitmask` adjacency, the `arvo-graph`
+topological walk, and the cycle diagnostics described below are the intended
+design, not shipped code. The stubs are not fleshed to match this doc because
+the dissolution question above is live, not remote: the canon's handler
+discipline (macros and family passes are compile-stage-effect operations the
+compile stage handles) is direct evidence that this scheduler may fold into the
+orchestrator, so building a full scheduler now risks building the thing the
+unification deletes. The dissolution question is resolved first (a design call),
+then this crate is either built to the design below or dissolved; it is not
+fleshed out speculatively.
+
+## Scope (the intended design, not shipped)
 
 - `Pass`. A registered compile pass: a name, a declared read set and write
  set over the IR, and its dependencies. The framework's Core stages and a
@@ -42,7 +55,7 @@ exists, is small, and deleting it now bets on an unproven unification.
 - `#![no_std]`, no alloc. The DAG is a compile-time-capacity `BitMatrix`;
  the topological order is a stack `[NodeId; N]` from `arvo-graph`.
 
-## Module layout
+## Module layout (intended; one flat `lib.rs` today)
 
 - `pass.rs`. The `Pass` contract and its read/write/dependency declaration.
 - `dag.rs`. `PassDag` construction and integrity.

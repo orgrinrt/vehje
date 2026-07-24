@@ -38,9 +38,10 @@ model.
 ## The content-addressed manifest
 
 - `Manifest`. The binding between the package and the runtime: a
-  content-addressed byte-image hash of each slice and of the whole package, so
-  the specialised runtime can prove at its own build that it was specialised from
-  exactly this package. The identity boundary is load-bearing here: cross-artifact
+  content-addressed byte-image hash of the whole package (per-slice hashes are
+  the intended design, owed; today the manifest carries the whole-package hash
+  only), so the specialised runtime can prove at its own build that it was
+  specialised from exactly this package. The identity boundary is load-bearing here: cross-artifact
   identity is the byte-image hash, not `vehje-ir`'s structural (word-fold) hash,
   which is interner-local and answers within-stage identity only. Conflating the
   two is unsound; the manifest uses the byte image. This is the cheaper
