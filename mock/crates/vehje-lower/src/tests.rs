@@ -6,6 +6,7 @@ use arvo::{Bool, Identity, Int, USize};
 use hilavitkutin_str::str_const;
 use hilavitkutin_sym::{Domain, Generator, Sym};
 use vehje_ir::{BinderDomain, Builder, Span};
+use crate::anf::ARG_CAP;
 
 fn at(m: Maybe<NodeRef>) -> NodeRef {
     match m {
