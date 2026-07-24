@@ -1,0 +1,50 @@
+623aed2b chore: lock src CL for the doc-honesty round
+7eba39e2 docs: open src CL for the doc-honesty round (no source changes)
+efa845af chore: lock doc CL for the audit-driven state labels
+820da764 docs: label shipped-vs-intended state across the crate docs
+279b7099 docs: open doc CL for the audit-driven state labels
+4cc9a66b design: open doc-honesty round for the second-direction audit corrections
+37b258b6 research: second-direction doc-vs-source audit (gap map + IMPL priority)
+ecb49e3d chore: close the vehje canon consolidation round
+a0cbbfe6 chore: lock src CL for the vehje canon consolidation round
+e7fd7a92 fix: correct the hash.rs header and mark the CFG residual gap
+3f16b85c docs: open src CL for the canon's tractable source corrections
+a868b207 chore: lock doc CL for the vehje canon alignment round
+9275ff00 docs: re-justify the fixpoint engine on its live consumers, park eqsat
+fdfb3a86 docs: align crate docs with the canon and clear the WithEffect gate
+0c73091f docs: open doc CL to align crate docs with the vehje canon
+1176cbc3 design: consolidate the vehje canon and its ir-to-ir panel trail
+7eb201f5 design: macro expansion and const fold are ir-to-ir passes iterated to fixpoint
+2f04136d docs: audit every remaining FIXME against the design oracle
+0a052f5f chore: close the consumer-facing-API round
+2b1a8039 chore: lock src CL for the consumer-facing API surface
+3eb257b9 feat: re-export the consumer-facing surface from vehje and prove it with an end-to-end consumer demo
+2d79efbc docs: open src CL for the consumer-facing API surface
+128e0e40 chore: lock doc CL for the consumer-facing API surface
+d46d95ea docs: document the vehje consumer-facing re-export surface
+164f39d8 docs: open doc CL for the consumer-facing API surface
+3d2acd9c docs: open consumer-facing-api and end-to-end-demo round topic
+4638df9a docs: regenerate rendered docs for the deepdives and dispatch seam
+78532759 chore: close the family-extension dispatch-seam round
+6b0f1d26 chore: lock src CL for the family-extension dispatch seam
+c49df9ea docs: record alloc_list and the review outcome in the src CL
+efc92988 feat: implement the family-extension dispatch seam (descend into Raw.payload, FamilyResolve/FamilyCheck hooks)
+9d23230a docs: open src CL for the family-extension dispatch seam
+eae8e47b chore: lock doc CL for the family-extension dispatch seam
+f595ee19 docs: document the FamilyResolve/FamilyCheck hooks and Raw payload descent
+efccc3b7 docs: open doc CL for the family-extension dispatch seam
+1e3968c7 docs: open family-extension dispatch-seam round topic
+224a1b4b docs: record the framework completion and deferral boundary
+582e1d71 chore: close the deepdive-completion round
+2208187c chore: lock src CL for the deepdive-completion round
+2f0aac5e docs: open no-op src CL for the doc-only deepdive round
+529d5571 chore: lock doc CL for the deepdive-completion round
+63863ee9 docs: add per-crate deepdives for the nine crates lacking one
+a5cfea6f docs: open doc CL for the deepdive-completion round
+981eae8d docs: open deepdive-completion round topic
+56454085 chore: close implementation-to-match-design round
+429a1f59 chore: lock src CL for implementation-to-match-design
+38df45bf fix: make CSE capture-safe and collision-verified, validate the region table, catalogue the slot-collision floor
+f6c75a2d feat: implement reachability binder rule, bounds-checked GradeTable, value-arena validate, and lower cheap stratum
+fbaa57c3 docs: open src CL for implementation-to-match-design
+e3fa0cb2 chore: lock doc CL for implementation-to-match-design
