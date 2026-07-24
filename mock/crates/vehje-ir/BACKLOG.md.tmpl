@@ -30,6 +30,19 @@ The document consumer's introduction fragment (a Doc family) is an ecosystem
 crate, not a framework crate. It attaches through Raw like any family; nothing
 is owed here beyond the Raw seam that already ships.
 
+## N host-provided allocation spaces
+
+The arena model ships as one caller-lent node arena. The IR-to-IR expansion is
+recursive handler discharge into that arena, and a single arena is the default
+hypothesis. Whether additional host-provided allocation spaces win (independent
+expansion or recursion loops run in parallel where they do not touch each other,
+or a space serves as scratchpad or temporary-value storage) is a bench-decided
+fork: build the candidates under the harness, find where multi-buffer wins, and
+only then expose the count as host configuration, adapting to whatever the host
+provides. The NodeRef arena-branding decision rides the same fork: a single arena
+dissolves cross-space references and needs no branding, while multiple same-shaped
+arenas make branding load-bearing. One fork, decided in one act. No precedent yet.
+
 ## Deepdive owed
 
 A deepdive on the grade side-table layout and the one-bitmask-machinery mirror

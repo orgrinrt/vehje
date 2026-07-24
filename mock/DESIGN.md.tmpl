@@ -52,6 +52,20 @@ consumer. "Certified" scopes to structural well-formedness plus per-instance
 re-checking plus translation validation; semantics are checked by a
 differential harness; termination is not claimed.
 
+Naming the perimeter is part of the discipline. What the two certifications
+cover is stated above; what remains trusted is the Zig compiler, rustc, the C
+ABI marshalling, the byte-image hash used for cross-artifact identity, the
+Rust-to-Zig emitter seam until the lens projection lands, the caller-supplied
+family and effect sets until the program-derived-set derivation lands, and the
+load-time verifier's own decode logic. Each has owed work that shrinks it.
+"Doubly certified, no prover shipped" is true, and this is its perimeter.
+
+Read the assurance verbs precisely throughout the docs: proven is a checked
+theorem, demonstrated is a sketch that produced the expected outcome, measured
+is a bench cell, and intended is design not yet realised. The graded proof
+spine's soundness is intended, the bench numbers are measured, and inclusion is
+shipped in shape.
+
 ## The two contracts
 
 A grammar owes the framework well-formed IR: it lowers its surface syntax into

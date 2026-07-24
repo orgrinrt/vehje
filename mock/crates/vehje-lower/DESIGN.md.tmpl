@@ -60,6 +60,27 @@ interface, so nothing downstream changes when it arrives.
   stage handles, one instance of the handler discipline rather than a separate
   mechanism. A macro is a rewrite handled at the compile-stage handler; its
   effect is discharged here, so the residual carries no unexpanded macro.
+  Expansion is IR-to-IR and creates nodes, so like `Anf` it lands with the
+  node-creating mutable-arena path (a catamorphism, not a redirecting `Rewrite`,
+  which cannot create nodes), iterated to a fixpoint. The expansion runs over
+  host-provided allocation spaces; the framework adapts to N of them (a single
+  caller-lent arena the default hypothesis, the count a bench-decided fork
+  carrying the `NodeRef` branding decision), never allocating itself.
+
+- Recursive macros are supported. Termination is binding-time well-foundedness,
+  in three layers: stage well-foundedness terminates the stage dimension; a
+  within-stage per-operation productivity condition, carried as data on
+  `vehje-signature`'s operation schema, terminates same-stage recursion; and a
+  budget-as-diagnostic (a deterministic named error at arena exhaustion) is
+  distinct from passthrough at the family-expansion seam, so exhaustion never
+  reads as a truncated program. Above that, a host-configurable recursion
+  depth-cap safety backstop (default 255) is always present as the hang-guard,
+  and static cyclicity detection on the typestate layers over it as the primary
+  mechanism where a sketch proves it feasible (a feasible detector never removes
+  the always-on cap). Every refusal here is a first-class diagnostic: the
+  construct, the rule, and the fix, span-linked. The terminator is binding-time
+  well-foundedness, never a fuel cap as semantics (a cap-decided residual is the
+  non-determinism the round killed).
 
 ## Non-scope
 

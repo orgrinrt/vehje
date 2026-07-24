@@ -7,8 +7,9 @@ third-build-locus debt demanded. Its cadence is per-language and dev-time; the
 per-script wire boundary is `vehje-runtime-abi`'s, and the embedding is
 `vehje-runtime-driver`'s. Keeping them separate keeps the language-build
 machinery out of the crate whose identity is a pure wire surface, and gives the
-manifest (the no-trusted-emitter mechanism) and the wire format (the
-untrusted-load surface) their different trust stories separate homes.
+manifest (the emitter-seam trust mechanism, a byte-image manifest today with the
+lens projection owed) and the wire format (the untrusted-load surface) their
+different trust stories separate homes.
 
 The composition rule is the crate's discipline: it does not define any data
 slice. Each slice's format is owned by the stage crate that produces it (the
@@ -37,11 +38,17 @@ model.
 ## The content-addressed manifest
 
 - `Manifest`. The binding between the package and the runtime: a
-  content-addressed hash (over `vehje-ir`'s one structural-hash primitive) of
-  each slice and of the whole package, so the specialised runtime can prove at
-  its own build that it was specialised from exactly this package. This is the
-  cheaper manifest-check interim of the lens-projection handoff; the full lens
-  is the open handoff-staging question and lands here when it lands.
+  content-addressed byte-image hash of each slice and of the whole package, so
+  the specialised runtime can prove at its own build that it was specialised from
+  exactly this package. The identity boundary is load-bearing here: cross-artifact
+  identity is the byte-image hash, not `vehje-ir`'s structural (word-fold) hash,
+  which is interner-local and answers within-stage identity only. Conflating the
+  two is unsound; the manifest uses the byte image. This is the cheaper
+  manifest-check interim of the lens-projection handoff; the full lens is the open
+  handoff-staging question and lands here when it lands. State: today the
+  Rust-to-Zig emitter seam is trusted (the lens projection is unbuilt and the
+  interim is this whole-package byte hash), so the no-trusted-emitter closure is
+  owed, not achieved.
 - `generate`. Compiles a `Signature` (plus the stage slices) into a `Package`
   and its `Manifest`. The entry the dev-time language compiler calls to produce
   the language artifact.

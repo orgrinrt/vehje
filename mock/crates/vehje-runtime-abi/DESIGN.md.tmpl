@@ -33,7 +33,10 @@ stage lands.
   block and argument and result signatures. Control flow lives only at
   terminators; a loop is a back-edge with block-argument-passed loop-carried
   values, and a call saves a return record on a frame stack bounded by the depth
-  cap.
+  cap. State: the block and function tables are the designed residual shape; the
+  lowering that constructs them from `Node` is owed (it is downstream of `Anf`,
+  which names the join points that give a nested branch its successor blocks),
+  so the tables are the target the producer builds toward, not yet populated.
 - `Tier`. Narrowed to name only the internal execution form (interpret the arena
   versus run the bytecode), not a native-versus-managed axis. Native is a
   method-agnostic point on the output spectrum, chosen where a per-region grade

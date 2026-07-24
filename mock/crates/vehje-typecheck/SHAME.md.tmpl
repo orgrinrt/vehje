@@ -15,3 +15,16 @@ lease-checked to the full qualifier, only to the floor. This is a deliberate
 risk valve, not a hole: the floor ships on a proven metatheorem and the lattice
 grows additively, so nothing shipped is unsound, only incomplete toward the
 mutable case.
+
+## WithEffect
+
+`WithEffect` is a test-only fixture, not a design surface. It is a function-local
+struct inside a `check_with` test that implements `FamilyCheck` so its
+`effect_of_raw` returns a single-slot effect, exercising the path where a family
+declares an effect through the hook and the `Raw` node's grade must carry that
+effect on top of its children's. The undocumented-type lint extracts it as a
+type and asks for a design-doc mention, but a test fixture does not belong in
+`DESIGN.md.tmpl`; documenting it there would misfile a test helper as a shipped
+design type. This entry records that `WithEffect` is intentionally test-scoped so
+the lint is satisfied without the misfiling. A later source round may relocate
+the fixture into a dedicated test module so the extractor no longer sees it.
