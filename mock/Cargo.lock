@@ -558,6 +558,8 @@ name = "vehje-lower"
 version = "0.1.0"
 dependencies = [
  "arvo",
+ "arvo-bits",
+ "hilavitkutin-str",
  "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
  "vehje-fixpoint",

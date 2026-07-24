@@ -348,6 +348,15 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "catalogue: slot_of folds the binder index mod 64, so two binders exactly 64 apart share a reach slot (the design's degenerate depth-lease floor); a census-sized mask removes the collision; tracked #30"]
+    fn distant_binders_get_distinct_reach_slots() {
+        // the intended behaviour once the reach mask is census-sized: binders far
+        // apart do not share a slot. Today `slot_of` is index mod 64, so this
+        // asserts the fixed behaviour and stays red until the mask widens.
+        assert_ne!(slot_of(NodeRef::new(USize(0))), slot_of(NodeRef::new(USize(64))));
+    }
+
+    #[test]
     fn refuses_a_dangling_root() {
         let mut nodes = [Node::Lit(Literal::Unit); 4];
         let mut spans = [Span::default(); 4];

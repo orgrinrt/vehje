@@ -83,6 +83,18 @@ impl<'a> Reader<'a> {
             return Outcome::Err(DriverError::CorruptValue);
         }
 
+        // each region-table entry bounds a contiguous node segment the runtime
+        // frees on stack discipline, so its range must lie within the node
+        // count (saturating so a malformed entry cannot overflow the check).
+        let mut r = USize(0);
+        while r.0 < region_count {
+            let region = a.regions[r.0];
+            if region.start.0.saturating_add(region.len.0) > n {
+                return Outcome::Err(DriverError::CorruptValue);
+            }
+            r = USize(r.0 + 1);
+        }
+
         let mut i = USize(0);
         while i.0 < n {
             let node = a.nodes[i.0];
@@ -148,6 +160,19 @@ mod tests {
         let arena = ValueArena::new(&nodes, &pool, &blob, &regions, ValueRef::new(USize(2)));
         let reader = Reader::new(arena);
         assert!(matches!(reader.validate(), Outcome::Ok(())));
+    }
+
+    #[test]
+    fn rejects_an_out_of_range_region() {
+        // one node, but the region table claims a 5-node segment: an out-of-
+        // bounds region the decode must reject.
+        let nodes = [node(ValueTag::Unit, ValueList::EMPTY)];
+        let pool: [ValueRef; 0] = [];
+        let blob: [u8; 0] = []; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: empty test blob; bytes are the value-arena unit; tracked: #207
+        let regions = [Region { start: USize::ZERO, len: USize(5) }];
+        let arena = ValueArena::new(&nodes, &pool, &blob, &regions, ValueRef::new(USize::ZERO));
+        let reader = Reader::new(arena);
+        assert!(matches!(reader.validate(), Outcome::Err(DriverError::CorruptValue)));
     }
 
     #[test]

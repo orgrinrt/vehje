@@ -17,6 +17,9 @@
 //! `#![no_std]`, no alloc.
 
 #![no_std]
+// const_trait_impl: WATCH-allowed (unstable-features.md); required by
+// hilavitkutin-str's `str_const!` for the capture-safety test's variable names.
+#![feature(const_trait_impl)]
 #![deny(unused, unreachable_code, unused_must_use, unused_imports, dead_code)]
 
 use arvo::{Bool, Maybe};
@@ -188,15 +191,16 @@ impl Cse {
     }
 
     /// Share equal subtrees under `root`, recording each duplicate's redirect to
-    /// its first occurrence in `rw`.
+    /// its canonical (lowest-index) occurrence in `rw`.
     ///
     /// `table` is a caller-lent hash-cons table (a linear-scan region of
-    /// hash-to-first-node entries the caller fills with `Maybe::Isnt`). Each
-    /// subtree that hashes equal to an earlier one is redirected to that earlier
-    /// node. The structural hash folds leaf content, so a hash match is a
-    /// structural match at the 64-bit hash's confidence (the standard hash-cons
-    /// discipline; a structural re-verify on match is a belt-and-suspenders
-    /// refinement).
+    /// hash-to-node entries the caller fills with `Maybe::Isnt`). Only
+    /// variable-free subtrees are shared: a subtree containing a `Var` could,
+    /// in another occurrence with the same name, resolve to a different binder,
+    /// so sharing it would capture. On a hash match the two subtrees are
+    /// structurally re-verified (the hash is a fast filter, the compare is the
+    /// soundness guarantee), and the higher-index node is redirected to the
+    /// lower so the redirect chain strictly decreases.
     pub fn apply(
         &self,
         arena: &Arena<'_>,
@@ -208,69 +212,171 @@ impl Cse {
     }
 }
 
-/// Bottom-up CSE walk: share children, then key this node into the table.
+/// Bottom-up CSE walk. Shares children, then keys this node if it is
+/// variable-free. Returns whether the subtree rooted at `at` is variable-free
+/// (contains no `Var` and no opaque `Raw`), the condition for it to be safely
+/// shareable without capture.
 fn cse_share(
     arena: &Arena<'_>,
     at: NodeRef,
     rw: &mut Rewrite<'_>,
     table: &mut [Maybe<(StructuralHash, NodeRef)>],
-) {
-    match arena.get(at) {
-        Node::Lit(_) | Node::Var(_) | Node::Raw { .. } => {}
-        Node::Let { value, body, .. } => {
-            cse_share(arena, value, rw, table);
-            cse_share(arena, body, rw, table);
-        }
-        Node::Lambda { body, .. } => cse_share(arena, body, rw, table),
-        Node::Apply { callee, args } => {
-            cse_share(arena, callee, rw, table);
-            for c in arena.list(args) {
+) -> Bool {
+    // `var_free` stays an inferred boolean (no bare-primitive annotation); the
+    // function returns the stack `Bool`.
+    let var_free = match arena.get(at) {
+        Node::Lit(_) => true,
+        // a Var is a free reference here; a Raw's family payload is opaque, so
+        // neither is treated as shareable (still recurse a Raw's payload for its
+        // own children's sharing).
+        Node::Var(_) => false,
+        Node::Raw { payload, .. } => {
+            for c in arena.list(payload) {
                 cse_share(arena, *c, rw, table);
             }
+            false
         }
-        Node::Project { base, .. } => cse_share(arena, base, rw, table),
+        Node::Let { value, body, .. } => {
+            let a = cse_share(arena, value, rw, table).0;
+            let b = cse_share(arena, body, rw, table).0;
+            a && b
+        }
+        Node::Lambda { body, .. } => cse_share(arena, body, rw, table).0,
+        Node::Apply { callee, args } => {
+            let mut vf = cse_share(arena, callee, rw, table).0;
+            for c in arena.list(args) {
+                vf = cse_share(arena, *c, rw, table).0 && vf;
+            }
+            vf
+        }
+        Node::Project { base, .. } => cse_share(arena, base, rw, table).0,
         Node::If { cond, then_branch, else_branch } => {
-            cse_share(arena, cond, rw, table);
-            cse_share(arena, then_branch, rw, table);
-            cse_share(arena, else_branch, rw, table);
+            let a = cse_share(arena, cond, rw, table).0;
+            let b = cse_share(arena, then_branch, rw, table).0;
+            let c = cse_share(arena, else_branch, rw, table).0;
+            a && b && c
         }
         Node::Match { scrutinee, arms } => {
-            cse_share(arena, scrutinee, rw, table);
+            let mut vf = cse_share(arena, scrutinee, rw, table).0;
             for c in arena.list(arms) {
-                cse_share(arena, *c, rw, table);
+                vf = cse_share(arena, *c, rw, table).0 && vf;
             }
+            vf
         }
         Node::Iter { seq, body } => {
-            cse_share(arena, seq, rw, table);
-            cse_share(arena, body, rw, table);
+            let a = cse_share(arena, seq, rw, table).0;
+            let b = cse_share(arena, body, rw, table).0;
+            a && b
         }
-        Node::Interp { value } => cse_share(arena, value, rw, table),
+        Node::Interp { value } => cse_share(arena, value, rw, table).0,
         Node::Handle { body, clauses } => {
-            cse_share(arena, body, rw, table);
+            let mut vf = cse_share(arena, body, rw, table).0;
             for c in arena.list(clauses) {
-                cse_share(arena, *c, rw, table);
+                vf = cse_share(arena, *c, rw, table).0 && vf;
             }
+            vf
         }
+    };
+    if !var_free {
+        return Bool(false);
     }
-    // key this node: an earlier node with the same hash is its canonical form.
+    // key this variable-free node: a structurally-equal earlier node is its
+    // canonical form; the lowest index stays canonical so the redirect chain
+    // strictly decreases.
     let h = hash_of(arena, at);
     let mut i = 0;
     while i < table.len() {
         match table[i] {
             Maybe::Is((sh, first)) => {
-                if sh == h && first.index().0 != at.index().0 {
-                    rw.redirect(at, first);
-                    return;
+                if sh == h && structurally_equal(arena, at, first).0 {
+                    if at.index().0 < first.index().0 {
+                        rw.redirect(first, at);
+                        table[i] = Maybe::Is((sh, at));
+                    } else if at.index().0 > first.index().0 {
+                        rw.redirect(at, first);
+                    }
+                    return Bool(true);
                 }
             }
             Maybe::Isnt => {
                 table[i] = Maybe::Is((h, at));
-                return;
+                return Bool(true);
             }
         }
         i += 1;
     }
     // table full: no sharing for this node (still correct, just larger).
+    Bool(true)
+}
+
+/// Whether the subtrees rooted at `a` and `b` are structurally identical: the
+/// soundness confirm on a hash match, so a 64-bit hash collision cannot merge
+/// two distinct subtrees. Called only on variable-free subtrees, so a `Var`
+/// never appears; the `Var` arm returns `false` defensively.
+fn structurally_equal(arena: &Arena<'_>, a: NodeRef, b: NodeRef) -> Bool {
+    let eq = match (arena.get(a), arena.get(b)) {
+        (Node::Lit(x), Node::Lit(y)) => x == y,
+        (
+            Node::Let { rec: r1, name: n1, value: v1, body: b1 },
+            Node::Let { rec: r2, name: n2, value: v2, body: b2 },
+        ) => {
+            r1 == r2
+                && n1 == n2
+                && structurally_equal(arena, v1, v2).0
+                && structurally_equal(arena, b1, b2).0
+        }
+        (Node::Lambda { param: p1, body: b1 }, Node::Lambda { param: p2, body: b2 }) => {
+            p1 == p2 && structurally_equal(arena, b1, b2).0
+        }
+        (Node::Apply { callee: c1, args: a1 }, Node::Apply { callee: c2, args: a2 }) => {
+            structurally_equal(arena, c1, c2).0 && lists_equal(arena, a1, a2).0
+        }
+        (Node::Project { base: b1, key: k1 }, Node::Project { base: b2, key: k2 }) => {
+            k1 == k2 && structurally_equal(arena, b1, b2).0
+        }
+        (
+            Node::If { cond: c1, then_branch: t1, else_branch: e1 },
+            Node::If { cond: c2, then_branch: t2, else_branch: e2 },
+        ) => {
+            structurally_equal(arena, c1, c2).0
+                && structurally_equal(arena, t1, t2).0
+                && structurally_equal(arena, e1, e2).0
+        }
+        (Node::Match { scrutinee: s1, arms: a1 }, Node::Match { scrutinee: s2, arms: a2 }) => {
+            structurally_equal(arena, s1, s2).0 && lists_equal(arena, a1, a2).0
+        }
+        (Node::Iter { seq: s1, body: b1 }, Node::Iter { seq: s2, body: b2 }) => {
+            structurally_equal(arena, s1, s2).0 && structurally_equal(arena, b1, b2).0
+        }
+        (Node::Interp { value: v1 }, Node::Interp { value: v2 }) => {
+            structurally_equal(arena, v1, v2).0
+        }
+        (Node::Raw { family: f1, payload: p1 }, Node::Raw { family: f2, payload: p2 }) => {
+            f1 == f2 && lists_equal(arena, p1, p2).0
+        }
+        (Node::Handle { body: b1, clauses: c1 }, Node::Handle { body: b2, clauses: c2 }) => {
+            structurally_equal(arena, b1, b2).0 && lists_equal(arena, c1, c2).0
+        }
+        _ => false,
+    };
+    Bool(eq)
+}
+
+/// Structural equality over two child lists: same length, pairwise equal.
+fn lists_equal(arena: &Arena<'_>, a: vehje_ir::NodeList, b: vehje_ir::NodeList) -> Bool {
+    if a.len.0 != b.len.0 {
+        return Bool(false);
+    }
+    let la = arena.list(a);
+    let lb = arena.list(b);
+    let mut i = 0;
+    while i < la.len() {
+        if !structurally_equal(arena, la[i], lb[i]).0 {
+            return Bool(false);
+        }
+        i += 1;
+    }
+    Bool(true)
 }
 
 /// A-normal form: name every intermediate so effect order is explicit in the
@@ -358,6 +464,7 @@ mod tests {
     use super::*;
     use arvo::strategy::Hot;
     use arvo::{Bool, Identity, Int, USize};
+    use hilavitkutin_str::str_const;
     use vehje_ir::{Builder, Span};
 
     fn at(m: Maybe<NodeRef>) -> NodeRef {
@@ -408,6 +515,32 @@ mod tests {
         let mut rw = Rewrite::new(&mut remap);
         ConstFold.apply(&arena, iff, &mut rw);
         assert_eq!(rw.resolve(iff), bb);
+    }
+
+    #[test]
+    fn cse_does_not_share_variables_avoiding_capture() {
+        let mut nodes = [Node::Lit(Literal::Unit); 8];
+        let mut spans = [Span::default(); 8];
+        let mut pool = [NodeRef::new(USize::ZERO); 8];
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+
+        // two Var("x")s that (in a real program) could resolve to different
+        // binders. CSE must NOT merge them, or it captures. Only variable-free
+        // subtrees are shared, so a Var is never keyed.
+        let x = str_const!("x");
+        let cond = at(b.lit(Literal::Unit, Span::default()));
+        let v1 = at(b.var(x, Span::default()));
+        let v2 = at(b.var(x, Span::default()));
+        let parent = at(b.if_(cond, v1, v2, Span::default()));
+        let arena = b.into_arena();
+
+        let mut remap = [Maybe::Isnt; 8];
+        let mut rw = Rewrite::new(&mut remap);
+        let mut table = [Maybe::Isnt; 8];
+        Cse.apply(&arena, parent, &mut rw, &mut table);
+        // neither Var is redirected to the other: no capture.
+        assert_eq!(rw.resolve(v1), v1);
+        assert_eq!(rw.resolve(v2), v2);
     }
 
     #[test]
