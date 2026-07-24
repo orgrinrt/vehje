@@ -28,17 +28,22 @@ degraded.
 
 ## Scope
 
-- `Target`. The output plug-in contract. Associated `type Supports` (a
- family set) and `type Permits` (an effect set), both type-level sets
- built from the `vehje-ir` family and effect markers over the reused
- `AccessSet` machinery. A total fold method over the Core substrate plus
- the declared families, writing bytes through a caller-provided sink.
+- `Target`. The output plug-in contract. It extends `vehje-ir`'s
+ `TargetSets`, whose associated `type Supports` (a family set) and
+ `type Permits` (an effect set) are the type-level sets built from the
+ `vehje-ir` family and effect markers over the reused `AccessSet`
+ machinery. The sets living on the shared carrier trait is what lets the
+ witness mint derive them from the target rather than take them as free
+ parameters. A total fold method over the Core substrate plus the declared
+ families, writing bytes through a caller-provided sink.
 - `Checked`. The typestate witness that a program has been inclusion- and
  effect-checked against a specific target. It is minted by `vehje-check` (the
- witness belongs with the prover) and re-exported here; `emit` accepts only a
- `Checked`, and a `Checked` is producible only by running the check for that
- target. The obligation to check is enforced at compile time; for a
- statically known program the check discharges at compile time, for a
+ witness belongs with the prover) and re-exported here; `check_for` wraps the
+ sanctioned mint, deriving the inclusion bounds from the target through
+ `TargetSets` and requiring the `Graded` evidence a clean check returns. `emit`
+ accepts only a `Checked`, and a `Checked` is producible only by running the
+ check for that target. The obligation to check is enforced at compile time; for
+ a statically known program the check discharges at compile time, for a
  runtime-parsed program it is a bitmask comparison the typestate makes
  unskippable.
 - The generic fold. One fold over the Core substrate plus a program's

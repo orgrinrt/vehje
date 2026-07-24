@@ -11,3 +11,18 @@ the no_std-first doctrine in `PRINCIPLES.md`. A future round
 explores whether a `core::ffi::CStr`-based argv reader and a
 libc-backed exit wrapper can replace the std entry, at which point
 this gap closes and `#![no_std]` lands. Tracked under follow-up.
+
+## BufSink
+
+`BufSink` is a fixed-buffer byte sink defined inside the crate's
+`#[cfg(test)] mod tests` block, used only by the first-light emit test
+to capture a target's output for assertion. It is not public surface
+and never ships in the crate's compiled artifact, so it does not belong
+in the DESIGN shipping contract. The `undocumented-type` lint flags it
+because the tree-sitter surface extractor scans struct declarations
+without excluding items gated behind `#[cfg(test)]`; documenting a test
+fixture as public API would misrepresent the shipping surface, so the
+honest resolution is this suppression rather than a DESIGN entry. The
+proper fix is upstream in the lint (skip `#[cfg(test)]`-gated items),
+tracked for a mockspace follow-up; until then this entry records why
+the type is intentionally absent from the design docs.

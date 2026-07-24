@@ -23,10 +23,12 @@ paths that share the compile stages:
   `vehje-resolve`, the `vehje-check` graded judgment, `vehje-lower`, and the
   inclusion checks to a `Checked` residual, then hands it to
   `vehje-runtime-driver`. This is the path a bundled program takes.
-- The per-language path. `compile_language` drives a `vehje-signature` through
-  the check and lower stages to `vehje-runtime-gen`, producing the validated-data
-  package and its manifest, the language artifact the Zig runtime is specialised
-  from. This is the path run once per language at build.
+- The per-language path. The language-compilation entry (compile_language,
+  designed but not yet shipped, so named here in prose without backticks) drives
+  a `vehje-signature` through the check and lower stages to `vehje-runtime-gen`,
+  producing the validated-data package and its manifest, the language artifact
+  the Zig runtime is specialised from. This is the path run once per language at
+  build. It backticks once implemented.
 
 The check-and-lower interleave (proof discharge folded into lowering) lives here,
 in the orchestrator, routed through `vehje-ir` grade annotations: `vehje-check`

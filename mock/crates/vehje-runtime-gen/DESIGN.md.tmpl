@@ -30,6 +30,9 @@ model.
 - `Slice`. The typed handle to one stage crate's contribution, so the package
   composes slices without knowing their internal format, and a stage crate's
   format change does not ripple here.
+- `SliceKind`. The kind tag on a `Slice`, naming which validated-data section
+  the slice carries (the family table, the effect masks, the lease-rule schema,
+  and so on), so the package composes and addresses its slices by kind.
 
 ## The content-addressed manifest
 

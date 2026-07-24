@@ -1,9 +1,11 @@
 # vehje-check. Design
 
-The framework's graded check pass. The crate directory renames from
-`vehje-typecheck` to `vehje-check` in the source phase of this round; these
-docs are authored for the new name. It discharges the graded (co)modal
-judgment over the resolved Core IR: it infers the effect, lease, and
+The framework's graded check pass. The crate directory is `vehje-typecheck` and
+plays the `vehje-check` role; the rename of the directory to `vehje-check` is
+deferred to a later round (moving the doc templates during a source phase trips
+the doc-phase gate), so these docs describe the role under the `vehje-check`
+name while the directory keeps its current name. It discharges the graded
+(co)modal judgment over the resolved Core IR: it infers the effect, lease, and
 binding-time grades, checks inclusion against a target's declaration, computes
 assurance, and mints the checked witness. Like resolve it is framework-owned,
 because the shared passes are what make the shared IR real rather than nominal.
@@ -19,9 +21,12 @@ schema come from `vehje-signature`.
 ## The graded judgment
 
 - `check`. The entry: it runs the graded inference over the resolved IR (using
-  the `Resolution` side-table from `vehje-resolve`), checks inclusion against a
-  target, writes the grade annotations into `vehje-ir`'s `GradeTable`, and
-  returns a `Checked` witness or a `CheckError`.
+  the `Resolution` side-table from `vehje-resolve`), writes the grade
+  annotations into `vehje-ir`'s `GradeTable`, and returns a `Graded` witness on a
+  clean fold or a `CheckError`. `Graded` is the evidence-of-check the mint
+  requires, so the witness cannot be minted without a clean check having run;
+  this is the DESIGN's "check mints the witness" contract made unskippable across
+  the check/mint split.
 - Effect inference. The effect axis is a graded monad. The pass infers each
   construct's effect set (the operations it invokes that are not locally
   handled) as a thermometer-encoded bottom-up bitmask join, so the lattice join
@@ -46,9 +51,16 @@ schema come from `vehje-signature`.
   binding-time grade crossed with the property, so the guarantee inventory is a
   computed grade vector, not a hand-curated list.
 - `Checked`. The typestate witness (moved here from the output crate): a program
-  proven inclusion- and effect-checked against a specific target. It is minted
-  only by `check` and consumed by `vehje-codegen`'s `emit`, so the obligation to
-  check is compile-time unskippable.
+  proven inclusion- and effect-checked against a specific target. Its
+  constructor is crate-private, and the one sanctioned mint (`mint_checked`,
+  which `vehje-codegen`'s `check_for` wraps) requires the `Graded` evidence from
+  `check` and derives the target's `Supports`/`Permits` from `T: TargetSets`
+  rather than from free parameters, so a caller can neither skip the check nor
+  claim a support set the target does not declare. It is consumed by
+  `vehje-codegen`'s `emit`, so the obligation to check is compile-time
+  unskippable. Deriving the program's own used family and effect sets from the
+  program (rather than trusting caller-supplied sets) is the remaining inclusion
+  step, carried by the runtime-bitmask path.
 - `CheckError`. Diagnostics carrying the construct and the rule violated (an
   effect outside `Permits`, a lease that cannot be placed, a family outside
   `Supports`).
