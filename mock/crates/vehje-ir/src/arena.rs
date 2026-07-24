@@ -89,7 +89,10 @@ impl<'a> Arena<'a> {
     pub fn list(&self, l: NodeList) -> &[NodeRef] {
         let live = self.pool_len.0;
         let start = l.start.0.min(live);
-        let end = (l.start.0 + l.len.0).min(live).max(start);
+        // saturating: a malformed `NodeList` with a huge start or len is exactly
+        // the case the clamp guards, so the `start + len` must not overflow (and
+        // panic) before it is bounded.
+        let end = l.start.0.saturating_add(l.len.0).min(live).max(start);
         &self.pool[start..end]
     }
 

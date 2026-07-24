@@ -1,11 +1,17 @@
 //! Structural content-addressed hashing of IR subtrees.
 //!
-//! One definition, three consumers: hash-consing in `vehje-lower`, dedup
-//! keying in `vehje-fixpoint`'s incremental layer (over the content-hash
-//! value, not this type), and the manifest in `vehje-runtime-gen`. Defining
-//! it per consumer would fork the identity primitive the incremental
-//! mechanism's proof-preservation argument depends on. Equal subtrees hash
-//! equal, stably across arenas, so a cache hit across artifacts is sound.
+//! One definition, two consumers: hash-consing in `vehje-lower` and the
+//! manifest in `vehje-runtime-gen`. `vehje-fixpoint`'s incremental layer keys
+//! its cross-artifact dedup on a separate byte-image hash (`xxhash3_64` over
+//! the serialized form), not on this word-fold, precisely because the
+//! byte-image is interner-independent.
+//!
+//! Structurally distinct subtrees hash distinct and structurally equal subtrees
+//! hash equal WITHIN ONE INTERNER: the leaf fold mixes a name's interner
+//! handle, which is stable within a single interner but not across interners.
+//! So this hash is sound for within-compilation hash-consing (one interner);
+//! it is NOT interner-stable, and cross-interner or cross-artifact identity is
+//! the byte-image hash's job, not this one.
 //!
 //! The fold mixes each node's discriminant with its children's hashes as
 //! 64-bit hash words. The dev-side compiler may recurse (the Zig-comptime
@@ -157,6 +163,15 @@ fn lit_value(lit: Literal) -> u64 { // lint:allow(no-bare-numeric) lint:allow(ar
 
 /// An interned name as a hash word, for the leaf content of `Var`, `Project`,
 /// and string literals.
+// FIXME: this folds the interner HANDLE, which is stable only within one
+// interner. That is sufficient for within-compilation hash-consing (the only
+// current consumer), but a cross-interner or cross-artifact consumer of
+// `hash_of` would need the interned CONTENT folded instead, which means
+// threading the interner through `hash_of`. Cross-artifact identity today is
+// served by `vehje-fixpoint`'s byte-image `xxhash3_64`, not this fold. Tracked
+// #29. The DESIGN's hash section still says "stable across arenas"; that
+// clause is owed a narrowing in a follow-up doc round (the templates are locked
+// this round).
 fn str_word(s: Str) -> u64 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: interned string handle widened to a hash-domain word; tracked: #207
     s.to_bits().to_raw() as u64 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: 32-bit interned handle widened to a hash-domain word; tracked: #207
 }
