@@ -3,3 +3,7 @@
 1784827728	c7deb4f6	abi_cross_scalar_real_n256	abi_cross_scalar_real_inproc_direct	256	warm	2429625.4	2388856.5	2761592.3
 1784827728	c7deb4f6	abi_cross_scalar_real_n256	abi_cross_scalar_real_inproc_fnptr	256	warm	2423527.1	2418544.4	2466583.3
 1784827728	c7deb4f6	abi_cross_scalar_real_n256	abi_cross_scalar_real_null_entry	256	warm	3501.2	3441.8	3732.5
+1784843730	98f2596c	abi_cross_scalar_real_n256	abi_cross_scalar_real_ffi_batched_scalar	256	warm	2193356.2	2188443.1	2226904.0
+1784843730	98f2596c	abi_cross_scalar_real_n256	abi_cross_scalar_real_inproc_direct	256	warm	2169293.8	2168624.4	2204034.1
+1784843730	98f2596c	abi_cross_scalar_real_n256	abi_cross_scalar_real_inproc_fnptr	256	warm	2195326.7	2194590.0	2523036.9
+1784843730	98f2596c	abi_cross_scalar_real_n256	abi_cross_scalar_real_null_entry	256	warm	3135.4	3127.9	3314.1

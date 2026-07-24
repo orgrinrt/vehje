@@ -5,3 +5,6 @@
 1784833850	9649c19b	abi_native_cross_real_n64	abi_native_cross_real_inproc_native	64	warm	11390.4	11363.3	11663.3
 1784833850	9649c19b	abi_native_cross_real_n64	abi_native_cross_real_native_ffi_w	64	warm	12057.1	12046.7	12332.5
 1784833850	9649c19b	abi_native_cross_real_n64	abi_native_cross_real_null_entry	64	warm	2446.2	2432.9	2485.0
+1784852210	a2d3f1a3	abi_native_cross_real_n64	abi_native_cross_real_inproc_native	64	warm	11720.8	11718.5	12192.5
+1784852210	a2d3f1a3	abi_native_cross_real_n64	abi_native_cross_real_native_ffi_w	64	warm	12145.4	12070.6	12187.0
+1784852210	a2d3f1a3	abi_native_cross_real_n64	abi_native_cross_real_null_entry	64	warm	2540.0	2505.8	2685.2

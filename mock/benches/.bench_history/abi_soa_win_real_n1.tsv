@@ -2,3 +2,6 @@
 1784827951	65c5ac15	abi_soa_win_real_n1	abi_soa_win_real_null_entry	1	warm	5482.1	5389.1	6008.4
 1784827951	65c5ac15	abi_soa_win_real_n1	abi_soa_win_real_scalar_payload	1	warm	2460932.9	2429895.8	2493457.9
 1784827951	65c5ac15	abi_soa_win_real_n1	abi_soa_win_real_soa_payload	1	warm	2374857.5	2374589.1	2548926.7
+1784858116	239389ee	abi_soa_win_real_n1	abi_soa_win_real_null_entry	1	warm	5205.8	5049.8	5215.6
+1784858116	239389ee	abi_soa_win_real_n1	abi_soa_win_real_scalar_payload	1	warm	2177472.9	2171386.2	2312933.8
+1784858116	239389ee	abi_soa_win_real_n1	abi_soa_win_real_soa_payload	1	warm	2180409.2	2172598.5	2229670.9

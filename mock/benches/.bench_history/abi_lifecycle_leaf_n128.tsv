@@ -1,0 +1,5 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784848535	ea9bb237	abi_lifecycle_leaf_n128	abi_lifecycle_leaf_fresh_per_batch	128	warm	1485862.1	1485793.0	1490730.9
+1784848535	ea9bb237	abi_lifecycle_leaf_n128	abi_lifecycle_leaf_fresh_per_column	128	warm	1472872.9	1471980.2	1474406.4
+1784848535	ea9bb237	abi_lifecycle_leaf_n128	abi_lifecycle_leaf_held_handle	128	warm	1458892.5	1458171.1	1490427.9
+1784848535	ea9bb237	abi_lifecycle_leaf_n128	abi_lifecycle_leaf_null_entry	128	warm	2773.3	2764.2	2837.1

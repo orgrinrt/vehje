@@ -1,0 +1,8 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784861580	92953592	abi_zig_entry_real_n64	abi_zig_entry_real_zig_anchor	64	warm	2070956.7	2070877.3	2105524.4
+1784861580	92953592	abi_zig_entry_real_n64	abi_zig_entry_real_zig_dispatch	64	warm	2066662.1	2066574.1	2078558.8
+1784861580	92953592	abi_zig_entry_real_n64	abi_zig_entry_real_zig_null	64	warm	2510.4	2501.7	2592.5
+1784861580	92953592	abi_zig_entry_real_n64	abi_zig_entry_real_zig_per_w_set	64	warm	2065590.8	2065276.0	2076552.7
+1784861580	92953592	abi_zig_entry_real_n64	abi_zig_entry_real_zig_runtime_w	64	warm	2067361.7	2067296.4	2110908.2
+1784861580	92953592	abi_zig_entry_real_n64	abi_zig_entry_real_zig_tail_dispatch	64	warm	3845026.7	3475061.7	3849388.8
+1784861580	92953592	abi_zig_entry_real_n64	abi_zig_entry_real_zig_tail_runtime_w	64	warm	3847212.5	3847184.4	3867244.1

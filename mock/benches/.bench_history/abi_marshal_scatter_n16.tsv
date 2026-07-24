@@ -1,0 +1,5 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784851737	a2d3f1a3	abi_marshal_scatter_n16	abi_marshal_scatter_aos	16	warm	2135479.6	2134500.4	2139851.0
+1784851737	a2d3f1a3	abi_marshal_scatter_n16	abi_marshal_scatter_marshal_null	16	warm	27169.6	27125.0	27345.4
+1784851737	a2d3f1a3	abi_marshal_scatter_n16	abi_marshal_scatter_soa_native	16	warm	2155697.1	2155248.0	2164768.4
+1784851737	a2d3f1a3	abi_marshal_scatter_n16	abi_marshal_scatter_soa_transposed	16	warm	2196739.6	2196563.2	2200191.2

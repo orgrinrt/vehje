@@ -2,3 +2,6 @@
 1784830136	1c38104a	abi_payload_cost_real_n4	abi_payload_cost_real_null_entry	4	warm	2666.7	2633.8	2698.9
 1784830136	1c38104a	abi_payload_cost_real_n4	abi_payload_cost_real_scalar_payload	4	warm	26791.2	26767.1	27241.2
 1784830136	1c38104a	abi_payload_cost_real_n4	abi_payload_cost_real_soa_payload	4	warm	6520.0	6507.3	6642.1
+1784852504	a2d3f1a3	abi_payload_cost_real_n4	abi_payload_cost_real_null_entry	4	warm	2586.7	2580.0	2630.2
+1784852504	a2d3f1a3	abi_payload_cost_real_n4	abi_payload_cost_real_scalar_payload	4	warm	26830.0	26774.6	27223.3
+1784852504	a2d3f1a3	abi_payload_cost_real_n4	abi_payload_cost_real_soa_payload	4	warm	6598.8	6597.3	6626.9

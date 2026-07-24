@@ -1,0 +1,5 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784856268	a2d3f1a3	abi_sink_scatter_n4	abi_sink_scatter_batched_sink	4	warm	2144412.5	2143298.8	2333501.2
+1784856268	a2d3f1a3	abi_sink_scatter_n4	abi_sink_scatter_batched_sink_decode	4	warm	2144976.7	2141943.2	2150528.4
+1784856268	a2d3f1a3	abi_sink_scatter_n4	abi_sink_scatter_null_sink	4	warm	2154229.6	2150286.0	2177953.5
+1784856268	a2d3f1a3	abi_sink_scatter_n4	abi_sink_scatter_per_record_sink	4	warm	2145876.2	2143772.5	2350952.5

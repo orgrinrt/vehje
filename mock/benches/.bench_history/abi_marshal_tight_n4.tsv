@@ -1,0 +1,5 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784851864	a2d3f1a3	abi_marshal_tight_n4	abi_marshal_tight_aos	4	warm	2038011.7	2035754.6	2126288.3
+1784851864	a2d3f1a3	abi_marshal_tight_n4	abi_marshal_tight_marshal_null	4	warm	21082.5	20588.5	21210.2
+1784851864	a2d3f1a3	abi_marshal_tight_n4	abi_marshal_tight_soa_native	4	warm	2019626.2	2019219.4	2032020.6
+1784851864	a2d3f1a3	abi_marshal_tight_n4	abi_marshal_tight_soa_transposed	4	warm	2035835.0	2034334.4	2043123.5

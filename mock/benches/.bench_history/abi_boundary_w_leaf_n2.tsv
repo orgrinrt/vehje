@@ -1,0 +1,10 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784835567	32cc69af	abi_boundary_w_leaf_n2	abi_boundary_w_leaf_null_entry	2	warm	3453.8	3410.9	3587.5
+1784835567	32cc69af	abi_boundary_w_leaf_n2	abi_boundary_w_leaf_scalar_anchor	2	warm	1458050.8	1457507.7	1459607.9
+1784835567	32cc69af	abi_boundary_w_leaf_n2	abi_boundary_w_leaf_scalar_dispatch	2	warm	1459699.2	1459114.2	1466460.2
+1784835567	32cc69af	abi_boundary_w_leaf_n2	abi_boundary_w_leaf_scalar_per_w	2	warm	1455136.2	1454901.6	1455915.2
+1784835567	32cc69af	abi_boundary_w_leaf_n2	abi_boundary_w_leaf_scalar_runtime_w	2	warm	1460567.9	1459565.0	1463565.0
+1784835567	32cc69af	abi_boundary_w_leaf_n2	abi_boundary_w_leaf_soa_dispatch	2	warm	1455431.7	1454763.5	1458062.7
+1784835567	32cc69af	abi_boundary_w_leaf_n2	abi_boundary_w_leaf_soa_per_w	2	warm	1453559.6	1453153.8	1457344.4
+1784835567	32cc69af	abi_boundary_w_leaf_n2	abi_boundary_w_leaf_soa_runtime_w	2	warm	1462955.4	1462078.1	1466887.3
+1784835567	32cc69af	abi_boundary_w_leaf_n2	abi_boundary_w_leaf_zig_runtime_w	2	warm	1445989.2	1444283.4	1447817.9

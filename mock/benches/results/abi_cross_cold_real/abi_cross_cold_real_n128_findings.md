@@ -7,57 +7,63 @@ Baseline: **abi_cross_cold_real_warm_null**
 
 Baseline for all deltas below: **abi_cross_cold_real_warm_null**. (Deltas are paired `variant - baseline` medians; `*` marks a CI that excludes zero.)
 
-### abi_cross_cold_real_warm_scalar is an outlier: 808.7x slower than the field
+### abi_cross_cold_real_cold_scalar is an outlier: 819.6x slower than the field
 
-abi_cross_cold_real_warm_scalar (2.16 ms) is 808.7x the fastest (2.67 us), well off the pack.
+abi_cross_cold_real_cold_scalar (2.18 ms) is 819.6x the fastest (2.66 us), well off the pack.
 
 _Why it matters:_ A >2x outlier is almost never the right choice; if it is intentional (e.g. it buys correctness), say so explicitly.
 
-### Two tiers: {abi_cross_cold_real_cold_null, abi_cross_cold_real_warm_null} vs {abi_cross_cold_real_cold_scalar, abi_cross_cold_real_warm_scalar} (77054% apart)
+### abi_cross_cold_real_cold_null shows alternating (throttle bounce) (autocorr -0.61)
 
-The field splits into a fast tier {abi_cross_cold_real_cold_null, abi_cross_cold_real_warm_null} and a slow tier {abi_cross_cold_real_cold_scalar, abi_cross_cold_real_warm_scalar} with a 77054% jump between them - a qualitative difference, not a gradient.
+abi_cross_cold_real_cold_null's per-pass series has lag-1 autocorrelation -0.61, indicating alternating (throttle bounce). Its timing may not be at steady state.
+
+_Why it matters:_ Autocorrelated samples violate the independence the CIs assume; the interval is optimistic until the drift is warmed out or cooled down.
+
+### Two tiers: {abi_cross_cold_real_cold_null, abi_cross_cold_real_warm_null} vs {abi_cross_cold_real_warm_scalar, abi_cross_cold_real_cold_scalar} (78453% apart)
+
+The field splits into a fast tier {abi_cross_cold_real_cold_null, abi_cross_cold_real_warm_null} and a slow tier {abi_cross_cold_real_warm_scalar, abi_cross_cold_real_cold_scalar} with a 78453% jump between them - a qualitative difference, not a gradient.
 
 _Why it matters:_ A tier split usually reflects a mechanism boundary (branchless vs branch, cached vs not); the tier, not the exact rank, is the finding.
 
-### Wide spread: slowest is 808.7x the fastest
+### Wide spread: slowest is 819.6x the fastest
 
-Fastest abi_cross_cold_real_cold_null (2.67 us) to slowest abi_cross_cold_real_warm_scalar (2.16 ms): 808.7x. The strategy choice matters a lot for this workload.
+Fastest abi_cross_cold_real_cold_null (2.66 us) to slowest abi_cross_cold_real_cold_scalar (2.18 ms): 819.6x. The strategy choice matters a lot for this workload.
 
 _Why it matters:_ A wide field means the strategy is load-bearing here; getting it right (or wrong) has large consequences.
 
 ## Key findings
 
-- **Fastest: abi_cross_cold_real_cold_null** at 2665.0 ns median (-4.4% vs baseline)
+- **Fastest: abi_cross_cold_real_cold_null** at 2658.6 ns median (-3.9% vs baseline)
 - 1 variant significantly faster than baseline
 - 2 variants significantly slower than baseline
-- Spread: 808.74x (fastest 2665.0 ns, slowest 2155304.0 ns)
+- Spread: 819.64x (fastest 2658.6 ns, slowest 2179044.4 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| abi_cross_cold_real_cold_null | 4934ns | 4911ns | 4806ns | 4884ns | 5074ns | -2.37% |
-| abi_cross_cold_real_cold_scalar | 2155894ns | 2154645ns | 2150559ns | 2153584ns | 2162027ns | +42556.34% |
-| abi_cross_cold_real_warm_null | 5054ns | 5095ns | 4815ns | 5069ns | 5151ns | base |
-| abi_cross_cold_real_warm_scalar | 2157947ns | 2158249ns | 2153356ns | 2157322ns | 2161182ns | +42596.97% |
+| abi_cross_cold_real_cold_null | 4895ns | 4918ns | 4821ns | 4898ns | 4930ns | -3.78% |
+| abi_cross_cold_real_cold_scalar | 2183147ns | 2182334ns | 2172891ns | 2179928ns | 2193105ns | +42808.61% |
+| abi_cross_cold_real_warm_null | 5088ns | 5126ns | 4842ns | 5059ns | 5254ns | base |
+| abi_cross_cold_real_warm_scalar | 2181263ns | 2176798ns | 2172835ns | 2176113ns | 2193201ns | +42771.57% |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| abi_cross_cold_real_cold_null | 2668ns | 2624ns | 2715ns | -3.25% | 0.048 |
-| abi_cross_cold_real_cold_scalar | 2152926ns | 2147681ns | 2158855ns | +77967.25% | 0.000 |
-| abi_cross_cold_real_warm_null | 2758ns | 2634ns | 2801ns | base | 0.046 |
-| abi_cross_cold_real_warm_scalar | 2155016ns | 2150546ns | 2158115ns | +78043.05% | 0.000 |
+| abi_cross_cold_real_cold_null | 2658ns | 2608ns | 2685ns | -3.48% | 0.048 |
+| abi_cross_cold_real_cold_scalar | 2179834ns | 2169588ns | 2189665ns | +79066.43% | 0.000 |
+| abi_cross_cold_real_warm_null | 2753ns | 2635ns | 2820ns | base | 0.046 |
+| abi_cross_cold_real_warm_scalar | 2177921ns | 2169692ns | 2189516ns | +78996.93% | 0.000 |
 
 ## Setup vs iteration cost (per call)
 
 | Variant | setup S (ns) | first-touch (ns) | run I (ns) | k* vs base |
 |---|---|---|---|---|
-| abi_cross_cold_real_cold_null | 30960.6 | 2709.0 | 2668.2 | 33 |
-| abi_cross_cold_real_cold_scalar | 61150.1 | 2155717.5 | 2152925.6 | n/a |
-| abi_cross_cold_real_warm_null | 27973.4 | 2761.2 | 2757.8 | n/a |
-| abi_cross_cold_real_warm_scalar | 54185.8 | 2155585.4 | 2155015.9 | n/a |
+| abi_cross_cold_real_cold_null | 31981.1 | 2711.7 | 2657.8 | 35 |
+| abi_cross_cold_real_cold_scalar | 71380.1 | 2178569.2 | 2179834.4 | n/a |
+| abi_cross_cold_real_warm_null | 28657.3 | 2815.0 | 2753.5 | n/a |
+| abi_cross_cold_real_warm_scalar | 65406.7 | 2177136.0 | 2177920.7 | n/a |
 
 Setup S is the one-time build cost (timed on every call by the matrix scaffold, so it cannot hide in untimed prep). Run I is the calibrated per-iteration cost. First-touch is the cold first pass before caches and the predictor warm. k* is the iteration count at which a higher-setup, lower-per-iteration variant repays its setup against the baseline.
 
@@ -68,52 +74,52 @@ Setup S is the one-time build cost (timed on every call by the matrix scaffold, 
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| abi_cross_cold_real_cold_null | 0.048 | 98.5% |
+| abi_cross_cold_real_cold_null | 0.048 | 98.1% |
 | abi_cross_cold_real_cold_scalar | 0.000 | 0.1% |
-| abi_cross_cold_real_warm_null | 0.046 | 94.1% |
+| abi_cross_cold_real_warm_null | 0.046 | 94.2% |
 | abi_cross_cold_real_warm_scalar | 0.000 | 0.1% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| abi_cross_cold_real_cold_null | 4934ns | 4934ns | -2.37% |
-| abi_cross_cold_real_cold_scalar | 2155894ns | 2155894ns | +42556.34% |
-| abi_cross_cold_real_warm_null | 5054ns | 5054ns | base |
-| abi_cross_cold_real_warm_scalar | 2157947ns | 2157947ns | +42596.97% |
+| abi_cross_cold_real_cold_null | 4895ns | 4895ns | -3.78% |
+| abi_cross_cold_real_cold_scalar | 2183147ns | 2183147ns | +42808.61% |
+| abi_cross_cold_real_warm_null | 5088ns | 5088ns | base |
+| abi_cross_cold_real_warm_scalar | 2181263ns | 2181263ns | +42771.57% |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| abi_cross_cold_real_warm_null | 2789ns | base | --- | [2683, 2801] | --- | --- | --- | --- |
-| abi_cross_cold_real_cold_null | 2665ns | -112.9ns (-4.0%) | [-126, -30]ns | [2625, 2715] | YES | 0.0313 | 0.0313 | 0 |
-| abi_cross_cold_real_cold_scalar | 2151775ns | +2148999.6ns (+77054.1%) | [+2145434, +2156070]ns | [2148146, 2158855] | YES | 0.0313 | 0.0313 | 0 |
-| abi_cross_cold_real_warm_scalar | 2155304ns | +2152544.5ns (+77181.2%) | [+2148916, +2155314]ns | [2151628, 2158115] | YES | 0.0313 | 0.0313 | 0 |
+| abi_cross_cold_real_warm_null | 2767ns | base | --- | [2674, 2820] | --- | --- | --- | --- |
+| abi_cross_cold_real_cold_null | 2659ns | -90.4ns (-3.3%) | [-190, -7]ns | [2630, 2685] | YES (adj: no) | 0.2188 | 0.2188 | 0 |
+| abi_cross_cold_real_cold_scalar | 2179044ns | +2176230.9ns (+78646.6%) | [+2168089, +2186923]ns | [2170793, 2189665] | YES | 0.0469 | 0.0313 | 0 |
+| abi_cross_cold_real_warm_scalar | 2173651ns | +2170832.5ns (+78451.5%) | [+2167921, +2186748]ns | [2170595, 2189516] | YES | 0.0469 | 0.0313 | 0 |
 
 ## Per-pass consistency (nonstop e2e, Δ vs baseline)
 
 | Pass | abi_cross_cold_real_warm_null | abi_cross_cold_real_cold_null | abi_cross_cold_real_cold_scalar | abi_cross_cold_real_warm_scalar |
 |---|---|---|---|---|
-| 1 | 2634ns | -0.3% | +81430.7% | +81539.4% |
-| 2 | 2793ns | -1.8% | +77032.9% | +77121.5% |
-| 3 | 2810ns | -4.3% | +76389.5% | +76750.9% |
-| 4 | 2787ns | -4.6% | +77513.2% | +77199.4% |
-| 5 | 2732ns | -3.9% | +78770.4% | +78832.4% |
-| 6 | 2791ns | -4.2% | +76889.1% | +77036.0% |
+| 1 | 2635ns | +1.3% | +82316.3% | +82228.8% |
+| 2 | 2772ns | -4.3% | +79034.6% | +78310.3% |
+| 3 | 2712ns | -1.8% | +80488.5% | +79967.0% |
+| 4 | 2865ns | -9.0% | +76034.5% | +75770.5% |
+| 5 | 2762ns | -2.2% | +78710.9% | +79069.5% |
+| 6 | 2774ns | -4.4% | +78105.9% | +78924.3% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| abi_cross_cold_real_cold_null | -0.168 | ok |
-| abi_cross_cold_real_cold_scalar | -0.264 | moderate- |
-| abi_cross_cold_real_warm_null | -0.122 | ok |
-| abi_cross_cold_real_warm_scalar | -0.134 | ok |
+| abi_cross_cold_real_cold_null | -0.612 | HIGH- (thermal bounce) |
+| abi_cross_cold_real_cold_scalar | 0.016 | ok |
+| abi_cross_cold_real_warm_null | -0.223 | moderate- |
+| abi_cross_cold_real_warm_scalar | 0.418 | moderate+ |
 
 **Consistency summary:**
 
-- **abi_cross_cold_real_cold_null**: won 6/6, lost 0/6
+- **abi_cross_cold_real_cold_null**: won 5/6, lost 1/6
 - **abi_cross_cold_real_cold_scalar**: won 0/6, lost 6/6
 - **abi_cross_cold_real_warm_scalar**: won 0/6, lost 6/6
 
@@ -121,111 +127,111 @@ Setup S is the one-time build cost (timed on every call by the matrix scaffold, 
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| abi_cross_cold_real_cold_null | 123000.7ns | 2668.2ns | 4609.9% | HIGH |
-| abi_cross_cold_real_cold_scalar | 6526889.2ns | 2152925.6ns | 303.2% | HIGH |
-| abi_cross_cold_real_warm_null | 120305.8ns | 2757.8ns | 4362.4% | HIGH |
-| abi_cross_cold_real_warm_scalar | 6523990.9ns | 2155015.9ns | 302.7% | HIGH |
+| abi_cross_cold_real_cold_null | 123671.8ns | 2657.8ns | 4653.2% | HIGH |
+| abi_cross_cold_real_cold_scalar | 6613967.8ns | 2179834.4ns | 303.4% | HIGH |
+| abi_cross_cold_real_warm_null | 120775.3ns | 2753.5ns | 4386.3% | HIGH |
+| abi_cross_cold_real_warm_scalar | 6606377.4ns | 2177920.7ns | 303.3% | HIGH |
 
 ## Distribution (algo ns)
 
 ```
-abi_cross_cold_real_cold_null (n=6, range 2624.2-2714.8 ns)
-   2624.2 |########################################
-   2628.7 |
-   2633.3 |
-   2637.8 |
-   2642.3 |
-   2646.8 |
-   2651.4 |
-   2655.9 |####################
-   2660.4 |
-   2665.0 |
-   2669.5 |####################
-   2674.0 |
-   2678.6 |
-   2683.1 |
-   2687.6 |####################
-   2692.2 |
-   2696.7 |
-   2701.2 |
-   2705.7 |
-   2710.3 |
+abi_cross_cold_real_cold_null (n=6, range 2607.9-2684.8 ns)
+   2607.9 |####################
+   2611.7 |
+   2615.6 |
+   2619.4 |
+   2623.3 |
+   2627.1 |
+   2631.0 |
+   2634.8 |
+   2638.7 |
+   2642.5 |
+   2646.4 |
+   2650.2 |########################################
+   2654.0 |
+   2657.9 |
+   2661.7 |####################
+   2665.6 |####################
+   2669.4 |
+   2673.3 |
+   2677.1 |
+   2681.0 |
   (0 below, 1 above range)
 
-abi_cross_cold_real_cold_scalar (n=6, range 2147680.8-2158855.5 ns)
-  2147680.8 |####################
-  2148239.5 |####################
-  2148798.3 |####################
-  2149357.0 |
-  2149915.7 |
-  2150474.5 |
-  2151033.2 |
-  2151591.9 |
-  2152150.7 |
-  2152709.4 |
-  2153268.1 |
-  2153826.9 |
-  2154385.6 |########################################
-  2154944.3 |
-  2155503.1 |
-  2156061.8 |
-  2156620.5 |
-  2157179.3 |
-  2157738.0 |
-  2158296.7 |
+abi_cross_cold_real_cold_scalar (n=6, range 2169587.9-2189665.4 ns)
+  2169587.9 |########################################
+  2170591.8 |
+  2171595.6 |########################################
+  2172599.5 |
+  2173603.4 |
+  2174607.3 |
+  2175611.1 |
+  2176615.0 |########################################
+  2177618.9 |
+  2178622.8 |
+  2179626.6 |
+  2180630.5 |########################################
+  2181634.4 |
+  2182638.3 |
+  2183642.1 |
+  2184646.0 |########################################
+  2185649.9 |
+  2186653.8 |
+  2187657.6 |
+  2188661.5 |
   (0 below, 1 above range)
 
-abi_cross_cold_real_warm_null (n=6, range 2634.2-2801.4 ns)
-   2634.2 |####################
-   2642.6 |
-   2650.9 |
-   2659.3 |
-   2667.6 |
-   2676.0 |
-   2684.4 |
-   2692.7 |
-   2701.1 |
-   2709.5 |
-   2717.8 |
-   2726.2 |####################
-   2734.5 |
-   2742.9 |
-   2751.3 |
-   2759.6 |
-   2768.0 |
-   2776.4 |
-   2784.7 |########################################
-   2793.1 |####################
+abi_cross_cold_real_warm_null (n=6, range 2635.4-2819.6 ns)
+   2635.4 |########################################
+   2644.6 |
+   2653.8 |
+   2663.0 |
+   2672.2 |
+   2681.4 |
+   2690.7 |
+   2699.9 |
+   2709.1 |########################################
+   2718.3 |
+   2727.5 |
+   2736.7 |
+   2745.9 |
+   2755.1 |########################################
+   2764.3 |########################################
+   2773.6 |########################################
+   2782.8 |
+   2792.0 |
+   2801.2 |
+   2810.4 |
   (0 below, 1 above range)
 
-abi_cross_cold_real_warm_scalar (n=6, range 2150546.2-2158115.2 ns)
-  2150546.2 |########################################
-  2150924.7 |
-  2151303.1 |
-  2151681.6 |
-  2152060.0 |
-  2152438.5 |########################################
-  2152816.9 |
-  2153195.4 |
-  2153573.8 |
-  2153952.2 |
-  2154330.7 |########################################
-  2154709.2 |
-  2155087.6 |
-  2155466.1 |
-  2155844.5 |########################################
-  2156223.0 |
-  2156601.4 |
-  2156979.9 |########################################
-  2157358.3 |
-  2157736.8 |
+abi_cross_cold_real_warm_scalar (n=6, range 2169692.1-2189516.2 ns)
+  2169692.1 |########################################
+  2170683.3 |########################################
+  2171674.5 |
+  2172665.7 |########################################
+  2173656.9 |########################################
+  2174648.1 |
+  2175639.3 |
+  2176630.5 |
+  2177621.7 |
+  2178612.9 |
+  2179604.2 |
+  2180595.4 |
+  2181586.6 |
+  2182577.8 |
+  2183569.0 |
+  2184560.2 |
+  2185551.4 |
+  2186542.6 |########################################
+  2187533.8 |
+  2188525.0 |
   (0 below, 1 above range)
 
 ```
 
 ## Diagnostics
 
-- **abi_cross_cold_real_cold_null**: bridge=4599.2% of algo (FFI overhead may distort results)
-- **abi_cross_cold_real_cold_scalar**: bridge=303.1% of algo (FFI overhead may distort results)
-- **abi_cross_cold_real_warm_null**: bridge=4313.6% of algo (FFI overhead may distort results)
-- **abi_cross_cold_real_warm_scalar**: bridge=302.7% of algo (FFI overhead may distort results)
+- **abi_cross_cold_real_cold_null**: bridge=4651.9% of algo (FFI overhead may distort results)
+- **abi_cross_cold_real_cold_scalar**: bridge=303.5% of algo (FFI overhead may distort results)
+- **abi_cross_cold_real_warm_null**: bridge=4403.4% of algo (FFI overhead may distort results)
+- **abi_cross_cold_real_warm_scalar**: bridge=303.3% of algo (FFI overhead may distort results)

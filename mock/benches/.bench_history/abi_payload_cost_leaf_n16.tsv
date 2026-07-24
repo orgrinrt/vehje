@@ -2,3 +2,6 @@
 1784830257	9d932155	abi_payload_cost_leaf_n16	abi_payload_cost_leaf_null_entry	16	warm	2659.2	2644.0	2666.6
 1784830257	9d932155	abi_payload_cost_leaf_n16	abi_payload_cost_leaf_scalar_payload	16	warm	78039.6	77972.9	79281.4
 1784830257	9d932155	abi_payload_cost_leaf_n16	abi_payload_cost_leaf_soa_payload	16	warm	32258.8	32207.5	32481.0
+1784852267	a2d3f1a3	abi_payload_cost_leaf_n16	abi_payload_cost_leaf_null_entry	16	warm	2494.2	2490.0	2566.6
+1784852267	a2d3f1a3	abi_payload_cost_leaf_n16	abi_payload_cost_leaf_scalar_payload	16	warm	78081.7	78026.7	78457.5
+1784852267	a2d3f1a3	abi_payload_cost_leaf_n16	abi_payload_cost_leaf_soa_payload	16	warm	32642.9	32600.8	33004.6

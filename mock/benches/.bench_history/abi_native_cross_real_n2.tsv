@@ -5,3 +5,6 @@
 1784833842	5c34350b	abi_native_cross_real_n2	abi_native_cross_real_inproc_native	2	warm	12087.1	11926.9	36849.6
 1784833842	5c34350b	abi_native_cross_real_n2	abi_native_cross_real_native_ffi_w	2	warm	17490.4	17214.3	20977.5
 1784833842	5c34350b	abi_native_cross_real_n2	abi_native_cross_real_null_entry	2	warm	3467.9	3466.9	3567.4
+1784852202	a2d3f1a3	abi_native_cross_real_n2	abi_native_cross_real_inproc_native	2	warm	11857.5	11836.2	12123.5
+1784852202	a2d3f1a3	abi_native_cross_real_n2	abi_native_cross_real_native_ffi_w	2	warm	16313.3	16297.5	17835.0
+1784852202	a2d3f1a3	abi_native_cross_real_n2	abi_native_cross_real_null_entry	2	warm	3375.0	3364.6	3513.1

@@ -7,69 +7,74 @@ Baseline: **abi_cross_scalar_real_inproc_direct**
 
 Baseline for all deltas below: **abi_cross_scalar_real_inproc_direct**. (Deltas are paired `variant - baseline` medians; `*` marks a CI that excludes zero.)
 
-### abi_cross_scalar_real_null_entry dominates: 53457% faster than the next best (abi_cross_scalar_real_inproc_direct)
+### abi_cross_scalar_real_null_entry dominates: 53428% faster than the next best (abi_cross_scalar_real_inproc_direct)
 
-abi_cross_scalar_real_null_entry (4.04 us) leads abi_cross_scalar_real_inproc_direct (2.17 ms) by 53457%, a clear separation rather than a photo finish. CV 1.7%.
+abi_cross_scalar_real_null_entry (4.06 us) leads abi_cross_scalar_real_inproc_direct (2.17 ms) by 53428%, a clear separation rather than a photo finish. CV 1.5%.
 
 _Why it matters:_ A dominant, well-separated winner is a safe default pick for this workload shape.
 
 ### abi_cross_scalar_real_null_entry beats baseline by 100% (significant)
 
-abi_cross_scalar_real_null_entry is -2.16 ms (100%) faster than baseline abi_cross_scalar_real_inproc_direct, with a CI that excludes zero.
+abi_cross_scalar_real_null_entry is -2.17 ms (100%) faster than baseline abi_cross_scalar_real_inproc_direct, with a CI that excludes zero.
 
 _Why it matters:_ A large, significant improvement over the current baseline is a concrete reason to switch.
 
-### abi_cross_scalar_real_inproc_fnptr is an outlier: 538.8x slower than the field
+### abi_cross_scalar_real_ffi_batched_scalar is an outlier: 543.4x slower than the field
 
-abi_cross_scalar_real_inproc_fnptr (2.18 ms) is 538.8x the fastest (4.04 us), well off the pack.
+abi_cross_scalar_real_ffi_batched_scalar (2.21 ms) is 543.4x the fastest (4.06 us), well off the pack.
 
 _Why it matters:_ A >2x outlier is almost never the right choice; if it is intentional (e.g. it buys correctness), say so explicitly.
 
-### Two tiers: {abi_cross_scalar_real_null_entry} vs {abi_cross_scalar_real_inproc_direct, abi_cross_scalar_real_ffi_batched_scalar, abi_cross_scalar_real_inproc_fnptr} (53457% apart)
+### abi_cross_scalar_real_null_entry shows alternating (throttle bounce) (autocorr -0.58)
 
-The field splits into a fast tier {abi_cross_scalar_real_null_entry} and a slow tier {abi_cross_scalar_real_inproc_direct, abi_cross_scalar_real_ffi_batched_scalar, abi_cross_scalar_real_inproc_fnptr} with a 53457% jump between them - a qualitative difference, not a gradient.
+abi_cross_scalar_real_null_entry's per-pass series has lag-1 autocorrelation -0.58, indicating alternating (throttle bounce). Its timing may not be at steady state.
+
+_Why it matters:_ Autocorrelated samples violate the independence the CIs assume; the interval is optimistic until the drift is warmed out or cooled down.
+
+### Two tiers: {abi_cross_scalar_real_null_entry} vs {abi_cross_scalar_real_inproc_direct, abi_cross_scalar_real_inproc_fnptr, abi_cross_scalar_real_ffi_batched_scalar} (53428% apart)
+
+The field splits into a fast tier {abi_cross_scalar_real_null_entry} and a slow tier {abi_cross_scalar_real_inproc_direct, abi_cross_scalar_real_inproc_fnptr, abi_cross_scalar_real_ffi_batched_scalar} with a 53428% jump between them - a qualitative difference, not a gradient.
 
 _Why it matters:_ A tier split usually reflects a mechanism boundary (branchless vs branch, cached vs not); the tier, not the exact rank, is the finding.
 
-### Wide spread: slowest is 538.8x the fastest
+### Wide spread: slowest is 543.4x the fastest
 
-Fastest abi_cross_scalar_real_null_entry (4.04 us) to slowest abi_cross_scalar_real_inproc_fnptr (2.18 ms): 538.8x. The strategy choice matters a lot for this workload.
+Fastest abi_cross_scalar_real_null_entry (4.06 us) to slowest abi_cross_scalar_real_ffi_batched_scalar (2.21 ms): 543.4x. The strategy choice matters a lot for this workload.
 
 _Why it matters:_ A wide field means the strategy is load-bearing here; getting it right (or wrong) has large consequences.
 
 ## Key findings
 
-- **Fastest: abi_cross_scalar_real_null_entry** at 4042.5 ns median (-99.8% vs baseline)
+- **Fastest: abi_cross_scalar_real_null_entry** at 4062.7 ns median (-99.8% vs baseline)
 - 1 variant significantly faster than baseline
-- 2 variants significantly slower than baseline
-- Spread: 538.81x (fastest 4042.5 ns, slowest 2178120.4 ns)
+- Spread: 543.39x (fastest 4062.7 ns, slowest 2207642.5 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| abi_cross_scalar_real_ffi_batched_scalar | 2181337ns | 2179602ns | 2172097ns | 2179017ns | 2189438ns | +0.48% |
-| abi_cross_scalar_real_inproc_direct | 2170926ns | 2168226ns | 2165092ns | 2167697ns | 2178685ns | base |
-| abi_cross_scalar_real_inproc_fnptr | 2181476ns | 2181161ns | 2175825ns | 2179630ns | 2187071ns | +0.49% |
-| abi_cross_scalar_real_null_entry | 6427ns | 6429ns | 6265ns | 6400ns | 6548ns | -99.70% |
+| abi_cross_scalar_real_ffi_batched_scalar | 2208013ns | 2211590ns | 2184410ns | 2209722ns | 2217252ns | -1.65% |
+| abi_cross_scalar_real_inproc_direct | 2245080ns | 2178071ns | 2164817ns | 2177344ns | 2386814ns | base |
+| abi_cross_scalar_real_inproc_fnptr | 2203734ns | 2198182ns | 2186657ns | 2196692ns | 2222836ns | -1.84% |
+| abi_cross_scalar_real_null_entry | 6373ns | 6365ns | 6202ns | 6362ns | 6473ns | -99.72% |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| abi_cross_scalar_real_ffi_batched_scalar | 2178063ns | 2169102ns | 2186134ns | +0.48% | 0.000 |
-| abi_cross_scalar_real_inproc_direct | 2167737ns | 2162073ns | 2175344ns | base | 0.000 |
-| abi_cross_scalar_real_inproc_fnptr | 2178420ns | 2172927ns | 2183820ns | +0.49% | 0.000 |
-| abi_cross_scalar_real_null_entry | 4068ns | 4010ns | 4149ns | -99.81% | 0.001 |
+| abi_cross_scalar_real_ffi_batched_scalar | 2204154ns | 2180694ns | 2213330ns | -1.66% | 0.000 |
+| abi_cross_scalar_real_inproc_direct | 2241452ns | 2161373ns | 2382858ns | base | 0.000 |
+| abi_cross_scalar_real_inproc_fnptr | 2200268ns | 2183344ns | 2219397ns | -1.84% | 0.000 |
+| abi_cross_scalar_real_null_entry | 4037ns | 3938ns | 4091ns | -99.82% | 0.001 |
 
 ## Setup vs iteration cost (per call)
 
 | Variant | setup S (ns) | first-touch (ns) | run I (ns) | k* vs base |
 |---|---|---|---|---|
-| abi_cross_scalar_real_ffi_batched_scalar | 65834.7 | 2180031.6 | 2178062.8 | n/a |
-| abi_cross_scalar_real_inproc_direct | 10119.2 | 2170589.3 | 2167737.0 | n/a |
-| abi_cross_scalar_real_inproc_fnptr | 10024.2 | 2179509.1 | 2178420.5 | 0 |
-| abi_cross_scalar_real_null_entry | 28468.2 | 4253.5 | 4068.1 | 0 |
+| abi_cross_scalar_real_ffi_batched_scalar | 79845.5 | 2204087.0 | 2204154.0 | 2 |
+| abi_cross_scalar_real_inproc_direct | 11659.3 | 2205727.4 | 2241451.6 | n/a |
+| abi_cross_scalar_real_inproc_fnptr | 11356.0 | 2205762.0 | 2200268.2 | n/a |
+| abi_cross_scalar_real_null_entry | 28742.2 | 4181.7 | 4037.3 | 0 |
 
 Setup S is the one-time build cost (timed on every call by the matrix scaffold, so it cannot hide in untimed prep). Run I is the calibrated per-iteration cost. First-touch is the cold first pass before caches and the predictor warm. k* is the iteration count at which a higher-setup, lower-per-iteration variant repays its setup against the baseline.
 
@@ -83,161 +88,161 @@ Setup S is the one-time build cost (timed on every call by the matrix scaffold, 
 | abi_cross_scalar_real_ffi_batched_scalar | 0.000 | 0.2% |
 | abi_cross_scalar_real_inproc_direct | 0.000 | 0.2% |
 | abi_cross_scalar_real_inproc_fnptr | 0.000 | 0.2% |
-| abi_cross_scalar_real_null_entry | 0.001 | 99.2% |
+| abi_cross_scalar_real_null_entry | 0.001 | 96.9% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| abi_cross_scalar_real_ffi_batched_scalar | 2181337ns | 2181337ns | +0.48% |
-| abi_cross_scalar_real_inproc_direct | 2170926ns | 2170926ns | base |
-| abi_cross_scalar_real_inproc_fnptr | 2181476ns | 2181476ns | +0.49% |
-| abi_cross_scalar_real_null_entry | 6427ns | 6427ns | -99.70% |
+| abi_cross_scalar_real_ffi_batched_scalar | 2208013ns | 2208013ns | -1.65% |
+| abi_cross_scalar_real_inproc_direct | 2245080ns | 2245080ns | base |
+| abi_cross_scalar_real_inproc_fnptr | 2203734ns | 2203734ns | -1.84% |
+| abi_cross_scalar_real_null_entry | 6373ns | 6373ns | -99.72% |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| abi_cross_scalar_real_inproc_direct | 2165033ns | base | --- | [2162835, 2175344] | --- | --- | --- | --- |
-| abi_cross_scalar_real_ffi_batched_scalar | 2176235ns | +12763.6ns (+0.6%) | [+283, +17930]ns | [2171819, 2186134] | YES (adj: no) | 0.2188 | 0.2188 | 0 |
-| abi_cross_scalar_real_inproc_fnptr | 2178120ns | +9704.2ns (+0.4%) | [+6401, +15945]ns | [2173321, 2183820] | YES | 0.0469 | 0.0313 | 0 |
-| abi_cross_scalar_real_null_entry | 4042ns | -2160984.4ns (-99.8%) | [-2171210, -2158812]ns | [4013, 4149] | YES | 0.0469 | 0.0313 | 0 |
+| abi_cross_scalar_real_inproc_direct | 2174665ns | base | --- | [2166832, 2382858] | --- | --- | --- | --- |
+| abi_cross_scalar_real_ffi_batched_scalar | 2207642ns | no significant difference | [-180409, +37524]ns | [2191490, 2213330] | no | 0.2188 | 0.2188 | 0 |
+| abi_cross_scalar_real_inproc_fnptr | 2194609ns | no significant difference | [-165664, +24131]ns | [2186798, 2219397] | no | 0.2188 | 0.2188 | 0 |
+| abi_cross_scalar_real_null_entry | 4063ns | -2170647.7ns (-99.8%) | [-2378827, -2162768]ns | [3958, 4091] | YES (adj: no) | 0.0938 | 0.0313 | 0 |
 
 ## Per-pass consistency (nonstop e2e, Δ vs baseline)
 
 | Pass | abi_cross_scalar_real_inproc_direct | abi_cross_scalar_real_ffi_batched_scalar | abi_cross_scalar_real_inproc_fnptr | abi_cross_scalar_real_null_entry |
 |---|---|---|---|---|
-| 1 | 2171502ns | +1.0% | +0.3% | -99.8% |
-| 2 | 2164906ns | +0.6% | +0.7% | -99.8% |
-| 3 | 2179186ns | -0.2% | +0.3% | -99.8% |
-| 4 | 2163596ns | +0.6% | +0.8% | -99.8% |
-| 5 | 2162073ns | +0.6% | +0.5% | -99.8% |
-| 6 | 2165160ns | +0.2% | +0.4% | -99.8% |
+| 1 | 2178143ns | +1.4% | +0.8% | -99.8% |
+| 2 | 2174173ns | +1.6% | +1.2% | -99.8% |
+| 3 | 2172290ns | +0.4% | +0.8% | -99.8% |
+| 4 | 2161373ns | +1.9% | +1.0% | -99.8% |
+| 5 | 2175158ns | +1.5% | +0.8% | -99.8% |
+| 6 | 2587573ns | -14.3% | -13.5% | -99.8% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| abi_cross_scalar_real_ffi_batched_scalar | 0.155 | ok |
-| abi_cross_scalar_real_inproc_direct | -0.251 | moderate- |
-| abi_cross_scalar_real_inproc_fnptr | 0.301 | moderate+ |
-| abi_cross_scalar_real_null_entry | -0.415 | moderate- |
+| abi_cross_scalar_real_ffi_batched_scalar | 0.004 | ok |
+| abi_cross_scalar_real_inproc_direct | -0.022 | ok |
+| abi_cross_scalar_real_inproc_fnptr | 0.009 | ok |
+| abi_cross_scalar_real_null_entry | -0.577 | HIGH- (thermal bounce) |
 
 **Consistency summary:**
 
 - **abi_cross_scalar_real_ffi_batched_scalar**: won 1/6, lost 5/6
-- **abi_cross_scalar_real_inproc_fnptr**: won 0/6, lost 6/6
+- **abi_cross_scalar_real_inproc_fnptr**: won 1/6, lost 5/6
 - **abi_cross_scalar_real_null_entry**: won 6/6, lost 0/6
 
 ## Bridge overhead per variant
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| abi_cross_scalar_real_ffi_batched_scalar | 6604029.0ns | 2178062.8ns | 303.2% | HIGH |
-| abi_cross_scalar_real_inproc_direct | 6523009.6ns | 2167737.0ns | 300.9% | HIGH |
-| abi_cross_scalar_real_inproc_fnptr | 6550038.7ns | 2178420.5ns | 300.7% | HIGH |
-| abi_cross_scalar_real_null_entry | 121964.0ns | 4068.1ns | 2998.0% | HIGH |
+| abi_cross_scalar_real_ffi_batched_scalar | 6706695.5ns | 2204154.0ns | 304.3% | HIGH |
+| abi_cross_scalar_real_inproc_direct | 6624178.1ns | 2241451.6ns | 295.5% | HIGH |
+| abi_cross_scalar_real_inproc_fnptr | 6624940.5ns | 2200268.2ns | 301.1% | HIGH |
+| abi_cross_scalar_real_null_entry | 123183.0ns | 4037.3ns | 3051.1% | HIGH |
 
 ## Distribution (algo ns)
 
 ```
-abi_cross_scalar_real_ffi_batched_scalar (n=6, range 2169101.7-2186134.2 ns)
-  2169101.7 |########################################
-  2169953.3 |
-  2170805.0 |
-  2171656.6 |
-  2172508.2 |
-  2173359.8 |
-  2174211.5 |########################################
-  2175063.1 |########################################
-  2175914.7 |########################################
-  2176766.3 |
-  2177618.0 |
-  2178469.6 |########################################
-  2179321.2 |
-  2180172.8 |
-  2181024.5 |
-  2181876.1 |
-  2182727.7 |
-  2183579.3 |
-  2184431.0 |
-  2185282.6 |
+abi_cross_scalar_real_ffi_batched_scalar (n=6, range 2180694.2-2213329.6 ns)
+  2180694.2 |#############
+  2182326.0 |
+  2183957.7 |
+  2185589.5 |
+  2187221.3 |
+  2188853.1 |
+  2190484.8 |
+  2192116.6 |
+  2193748.4 |
+  2195380.1 |
+  2197011.9 |
+  2198643.7 |
+  2200275.4 |
+  2201907.2 |#############
+  2203539.0 |
+  2205170.8 |
+  2206802.5 |########################################
+  2208434.3 |
+  2210066.1 |
+  2211697.8 |
   (0 below, 1 above range)
 
-abi_cross_scalar_real_inproc_direct (n=6, range 2162073.3-2175343.8 ns)
-  2162073.3 |####################
-  2162736.8 |
-  2163400.3 |####################
-  2164063.9 |
-  2164727.4 |########################################
-  2165390.9 |
-  2166054.4 |
-  2166718.0 |
-  2167381.5 |
-  2168045.0 |
-  2168708.5 |
-  2169372.0 |
-  2170035.6 |
-  2170699.1 |
-  2171362.6 |####################
-  2172026.1 |
-  2172689.7 |
-  2173353.2 |
-  2174016.7 |
-  2174680.2 |
+abi_cross_scalar_real_inproc_direct (n=6, range 2161373.3-2382857.9 ns)
+  2161373.3 |##########################
+  2172447.5 |########################################
+  2183521.8 |
+  2194596.0 |
+  2205670.2 |
+  2216744.4 |
+  2227818.7 |
+  2238892.9 |
+  2249967.1 |
+  2261041.4 |
+  2272115.6 |
+  2283189.8 |
+  2294264.1 |
+  2305338.3 |
+  2316412.5 |
+  2327486.8 |
+  2338561.0 |
+  2349635.2 |
+  2360709.4 |
+  2371783.7 |
   (0 below, 1 above range)
 
-abi_cross_scalar_real_inproc_fnptr (n=6, range 2172926.7-2183820.4 ns)
-  2172926.7 |########################################
-  2173471.4 |########################################
-  2174016.1 |
-  2174560.8 |
-  2175105.4 |
-  2175650.1 |
-  2176194.8 |
-  2176739.5 |########################################
-  2177284.2 |
-  2177828.9 |
-  2178373.6 |
-  2178918.2 |########################################
-  2179462.9 |
-  2180007.6 |
-  2180552.3 |
-  2181097.0 |########################################
-  2181641.7 |
-  2182186.3 |
-  2182731.0 |
-  2183275.7 |
+abi_cross_scalar_real_inproc_fnptr (n=6, range 2183343.8-2219396.9 ns)
+  2183343.8 |########################################
+  2185146.5 |
+  2186949.1 |
+  2188751.8 |########################################
+  2190554.4 |
+  2192357.1 |########################################
+  2194159.7 |
+  2195962.4 |########################################
+  2197765.0 |
+  2199567.7 |########################################
+  2201370.3 |
+  2203173.0 |
+  2204975.7 |
+  2206778.3 |
+  2208581.0 |
+  2210383.6 |
+  2212186.3 |
+  2213988.9 |
+  2215791.6 |
+  2217594.2 |
   (0 below, 1 above range)
 
-abi_cross_scalar_real_null_entry (n=6, range 4010.4-4149.1 ns)
-   4010.4 |########################################
-   4017.3 |
-   4024.3 |####################
-   4031.2 |
-   4038.2 |
+abi_cross_scalar_real_null_entry (n=6, range 3938.3-4090.9 ns)
+   3938.3 |####################
+   3945.9 |
+   3953.6 |
+   3961.2 |
+   3968.8 |
+   3976.4 |####################
+   3984.1 |
+   3991.7 |
+   3999.3 |
+   4006.9 |
+   4014.6 |
+   4022.2 |
+   4029.8 |
+   4037.5 |####################
    4045.1 |
-   4052.0 |####################
-   4059.0 |
-   4065.9 |
-   4072.8 |
-   4079.8 |####################
-   4086.7 |
-   4093.6 |
-   4100.6 |
-   4107.5 |
-   4114.5 |
-   4121.4 |
-   4128.3 |
-   4135.3 |
-   4142.2 |
+   4052.7 |
+   4060.3 |
+   4068.0 |
+   4075.6 |
+   4083.2 |########################################
   (0 below, 1 above range)
 
 ```
 
 ## Diagnostics
 
-- **abi_cross_scalar_real_ffi_batched_scalar**: bridge=303.4% of algo (FFI overhead may distort results)
-- **abi_cross_scalar_real_inproc_direct**: bridge=300.6% of algo (FFI overhead may distort results)
-- **abi_cross_scalar_real_inproc_fnptr**: bridge=300.6% of algo (FFI overhead may distort results)
-- **abi_cross_scalar_real_null_entry**: bridge=3011.9% of algo (FFI overhead may distort results)
+- **abi_cross_scalar_real_ffi_batched_scalar**: bridge=304.0% of algo (FFI overhead may distort results)
+- **abi_cross_scalar_real_inproc_direct**: bridge=300.5% of algo (FFI overhead may distort results)
+- **abi_cross_scalar_real_inproc_fnptr**: bridge=300.5% of algo (FFI overhead may distort results)
+- **abi_cross_scalar_real_null_entry**: bridge=3004.9% of algo (FFI overhead may distort results)

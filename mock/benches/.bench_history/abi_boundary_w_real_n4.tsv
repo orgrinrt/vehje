@@ -1,0 +1,10 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784837522	32cc69af	abi_boundary_w_real_n4	abi_boundary_w_real_null_entry	4	warm	4013.3	3986.7	4176.5
+1784837522	32cc69af	abi_boundary_w_real_n4	abi_boundary_w_real_scalar_anchor	4	warm	2135014.6	2134921.9	2145834.8
+1784837522	32cc69af	abi_boundary_w_real_n4	abi_boundary_w_real_scalar_dispatch	4	warm	2131300.8	2131205.6	2133806.8
+1784837522	32cc69af	abi_boundary_w_real_n4	abi_boundary_w_real_scalar_per_w	4	warm	2131335.8	2130504.3	2134983.0
+1784837522	32cc69af	abi_boundary_w_real_n4	abi_boundary_w_real_scalar_runtime_w	4	warm	2135354.6	2134606.2	2145278.5
+1784837522	32cc69af	abi_boundary_w_real_n4	abi_boundary_w_real_soa_dispatch	4	warm	2138901.2	2136940.4	2145424.6
+1784837522	32cc69af	abi_boundary_w_real_n4	abi_boundary_w_real_soa_per_w	4	warm	2131073.3	2130703.3	2134238.5
+1784837522	32cc69af	abi_boundary_w_real_n4	abi_boundary_w_real_soa_runtime_w	4	warm	2143152.9	2140632.7	2149763.3
+1784837522	32cc69af	abi_boundary_w_real_n4	abi_boundary_w_real_zig_runtime_w	4	warm	2072863.8	2071986.9	2075830.6

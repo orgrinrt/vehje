@@ -9,63 +9,69 @@ Baseline for all deltas below: **abi_soa_win_real_scalar_payload**. (Deltas are 
 
 ### Baseline (abi_soa_win_real_scalar_payload) is the SLOWEST variant; every rival beats it
 
-The declared/defaulted baseline abi_soa_win_real_scalar_payload has the worst median (2.19 ms). Every delta is therefore measured against the worst performer, which flatters all rivals and compresses the differences that matter among them (e.g. fastest abi_soa_win_real_null_entry at 2.50 us).
+The declared/defaulted baseline abi_soa_win_real_scalar_payload has the worst median (2.15 ms). Every delta is therefore measured against the worst performer, which flatters all rivals and compresses the differences that matter among them (e.g. fastest abi_soa_win_real_null_entry at 2.50 us).
 
 _Why it matters:_ A baseline picked by accident (often the first variant to run / sort) silently skews every comparison. Re-baseline via `[bench.<name>.normalise]` on a representative variant.
 
-### abi_soa_win_real_null_entry dominates: 36019% faster than the next best (abi_soa_win_real_soa_payload)
+### abi_soa_win_real_null_entry dominates: 35327% faster than the next best (abi_soa_win_real_soa_payload)
 
-abi_soa_win_real_null_entry (2.50 us) leads abi_soa_win_real_soa_payload (902.76 us) by 36019%, a clear separation rather than a photo finish. CV 1.5%.
+abi_soa_win_real_null_entry (2.50 us) leads abi_soa_win_real_soa_payload (884.20 us) by 35327%, a clear separation rather than a photo finish. CV 1.4%.
 
 _Why it matters:_ A dominant, well-separated winner is a safe default pick for this workload shape.
 
 ### abi_soa_win_real_null_entry beats baseline by 100% (significant)
 
-abi_soa_win_real_null_entry is -2.19 ms (100%) faster than baseline abi_soa_win_real_scalar_payload, with a CI that excludes zero.
+abi_soa_win_real_null_entry is -2.15 ms (100%) faster than baseline abi_soa_win_real_scalar_payload, with a CI that excludes zero.
 
 _Why it matters:_ A large, significant improvement over the current baseline is a concrete reason to switch.
 
-### abi_soa_win_real_scalar_payload is an outlier: 877.2x slower than the field
+### abi_soa_win_real_scalar_payload is an outlier: 860.8x slower than the field
 
-abi_soa_win_real_scalar_payload (2.19 ms) is 877.2x the fastest (2.50 us), well off the pack.
+abi_soa_win_real_scalar_payload (2.15 ms) is 860.8x the fastest (2.50 us), well off the pack.
 
 _Why it matters:_ A >2x outlier is almost never the right choice; if it is intentional (e.g. it buys correctness), say so explicitly.
 
-### Wide spread: slowest is 877.2x the fastest
+### abi_soa_win_real_null_entry shows alternating (throttle bounce) (autocorr -0.71)
 
-Fastest abi_soa_win_real_null_entry (2.50 us) to slowest abi_soa_win_real_scalar_payload (2.19 ms): 877.2x. The strategy choice matters a lot for this workload.
+abi_soa_win_real_null_entry's per-pass series has lag-1 autocorrelation -0.71, indicating alternating (throttle bounce). Its timing may not be at steady state.
+
+_Why it matters:_ Autocorrelated samples violate the independence the CIs assume; the interval is optimistic until the drift is warmed out or cooled down.
+
+### Wide spread: slowest is 860.8x the fastest
+
+Fastest abi_soa_win_real_null_entry (2.50 us) to slowest abi_soa_win_real_scalar_payload (2.15 ms): 860.8x. The strategy choice matters a lot for this workload.
 
 _Why it matters:_ A wide field means the strategy is load-bearing here; getting it right (or wrong) has large consequences.
 
 ## Key findings
 
-- **Fastest: abi_soa_win_real_null_entry** at 2499.4 ns median (-99.9% vs baseline)
+- **Fastest: abi_soa_win_real_null_entry** at 2495.8 ns median (-99.9% vs baseline)
 - 2 variants significantly faster than baseline
-- Spread: 877.23x (fastest 2499.4 ns, slowest 2192536.2 ns)
+- Spread: 860.84x (fastest 2495.8 ns, slowest 2148534.1 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| abi_soa_win_real_null_entry | 4741ns | 4720ns | 4631ns | 4712ns | 4840ns | -99.79% |
-| abi_soa_win_real_scalar_payload | 2216650ns | 2195807ns | 2178148ns | 2193152ns | 2271148ns | base |
-| abi_soa_win_real_soa_payload | 909611ns | 905528ns | 896371ns | 904726ns | 923559ns | -58.96% |
+| abi_soa_win_real_null_entry | 4776ns | 4721ns | 4686ns | 4718ns | 4907ns | -99.79% |
+| abi_soa_win_real_scalar_payload | 2246653ns | 2151146ns | 2143977ns | 2149019ns | 2444441ns | base |
+| abi_soa_win_real_soa_payload | 886714ns | 886568ns | 885797ns | 886321ns | 887762ns | -60.53% |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| abi_soa_win_real_null_entry | 2510ns | 2463ns | 2558ns | -99.89% | 0.006 |
-| abi_soa_win_real_scalar_payload | 2213205ns | 2175156ns | 2267245ns | base | 0.000 |
-| abi_soa_win_real_soa_payload | 906715ns | 893501ns | 920456ns | -59.03% | 0.000 |
+| abi_soa_win_real_null_entry | 2511ns | 2478ns | 2560ns | -99.89% | 0.006 |
+| abi_soa_win_real_scalar_payload | 2243723ns | 2141433ns | 2440843ns | base | 0.000 |
+| abi_soa_win_real_soa_payload | 884331ns | 883373ns | 885403ns | -60.59% | 0.000 |
 
 ## Setup vs iteration cost (per call)
 
 | Variant | setup S (ns) | first-touch (ns) | run I (ns) | k* vs base |
 |---|---|---|---|---|
-| abi_soa_win_real_null_entry | 27941.6 | 2603.4 | 2509.6 | n/a |
-| abi_soa_win_real_scalar_payload | 67342.7 | 2213121.4 | 2213205.1 | n/a |
-| abi_soa_win_real_soa_payload | 48521.9 | 904913.7 | 906715.5 | n/a |
+| abi_soa_win_real_null_entry | 27652.2 | 2609.0 | 2511.1 | n/a |
+| abi_soa_win_real_scalar_payload | 51377.0 | 2214325.9 | 2243722.6 | n/a |
+| abi_soa_win_real_soa_payload | 32392.8 | 883533.0 | 884331.1 | n/a |
 
 Setup S is the one-time build cost (timed on every call by the matrix scaffold, so it cannot hide in untimed prep). Run I is the calibrated per-iteration cost. First-touch is the cold first pass before caches and the predictor warm. k* is the iteration count at which a higher-setup, lower-per-iteration variant repays its setup against the baseline.
 
@@ -76,7 +82,7 @@ Setup S is the one-time build cost (timed on every call by the matrix scaffold, 
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| abi_soa_win_real_null_entry | 0.006 | 98.6% |
+| abi_soa_win_real_null_entry | 0.006 | 99.3% |
 | abi_soa_win_real_scalar_payload | 0.000 | 0.1% |
 | abi_soa_win_real_soa_payload | 0.000 | 0.3% |
 
@@ -84,36 +90,36 @@ Setup S is the one-time build cost (timed on every call by the matrix scaffold, 
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| abi_soa_win_real_null_entry | 4741ns | 4741ns | -99.79% |
-| abi_soa_win_real_scalar_payload | 2216650ns | 2216650ns | base |
-| abi_soa_win_real_soa_payload | 909611ns | 909611ns | -58.96% |
+| abi_soa_win_real_null_entry | 4776ns | 4776ns | -99.79% |
+| abi_soa_win_real_scalar_payload | 2246653ns | 2246653ns | base |
+| abi_soa_win_real_soa_payload | 886714ns | 886714ns | -60.53% |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| abi_soa_win_real_scalar_payload | 2192536ns | base | --- | [2179834, 2267245] | --- | --- | --- | --- |
-| abi_soa_win_real_null_entry | 2499ns | -2190002.0ns (-99.9%) | [-2264753, -2177331]ns | [2471, 2558] | YES | 0.0313 | 0.0313 | 0 |
-| abi_soa_win_real_soa_payload | 902761ns | -1291734.2ns (-58.9%) | [-1350390, -1277345]ns | [896929, 920456] | YES | 0.0313 | 0.0313 | 0 |
+| abi_soa_win_real_scalar_payload | 2148534ns | base | --- | [2141791, 2440843] | --- | --- | --- | --- |
+| abi_soa_win_real_null_entry | 2496ns | -2146046.5ns (-99.9%) | [-2438326, -2139262]ns | [2478, 2560] | YES | 0.0313 | 0.0313 | 0 |
+| abi_soa_win_real_soa_payload | 884203ns | -1264269.8ns (-58.8%) | [-1556876, -1257029]ns | [883387, 885403] | YES | 0.0313 | 0.0313 | 0 |
 
 ## Per-pass consistency (nonstop e2e, Δ vs baseline)
 
 | Pass | abi_soa_win_real_scalar_payload | abi_soa_win_real_null_entry | abi_soa_win_real_soa_payload |
 |---|---|---|---|
-| 1 | 2226163ns | -99.9% | -58.1% |
-| 2 | 2188326ns | -99.9% | -58.5% |
-| 3 | 2175156ns | -99.9% | -58.6% |
-| 4 | 2196747ns | -99.9% | -58.8% |
-| 5 | 2308326ns | -99.9% | -61.0% |
-| 6 | 2184512ns | -99.9% | -59.1% |
+| 1 | 2141433ns | -99.9% | -58.6% |
+| 2 | 2144270ns | -99.9% | -58.8% |
+| 3 | 2142148ns | -99.9% | -58.8% |
+| 4 | 2152798ns | -99.9% | -58.9% |
+| 5 | 2679450ns | -99.9% | -67.0% |
+| 6 | 2202236ns | -99.9% | -59.9% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| abi_soa_win_real_null_entry | -0.007 | ok |
-| abi_soa_win_real_scalar_payload | -0.246 | moderate- |
-| abi_soa_win_real_soa_payload | 0.147 | ok |
+| abi_soa_win_real_null_entry | -0.705 | HIGH- (thermal bounce) |
+| abi_soa_win_real_scalar_payload | -0.122 | ok |
+| abi_soa_win_real_soa_payload | -0.152 | ok |
 
 **Consistency summary:**
 
@@ -124,86 +130,86 @@ Setup S is the one-time build cost (timed on every call by the matrix scaffold, 
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| abi_soa_win_real_null_entry | 117992.6ns | 2509.6ns | 4701.6% | HIGH |
-| abi_soa_win_real_scalar_payload | 6721493.8ns | 2213205.1ns | 303.7% | HIGH |
-| abi_soa_win_real_soa_payload | 2764607.5ns | 906715.5ns | 304.9% | HIGH |
+| abi_soa_win_real_null_entry | 117910.5ns | 2511.1ns | 4695.5% | HIGH |
+| abi_soa_win_real_scalar_payload | 6734416.9ns | 2243722.6ns | 300.1% | HIGH |
+| abi_soa_win_real_soa_payload | 2684149.6ns | 884331.1ns | 303.5% | HIGH |
 
 ## Distribution (algo ns)
 
 ```
-abi_soa_win_real_null_entry (n=6, range 2463.3-2558.1 ns)
-   2463.3 |########################################
-   2468.0 |
-   2472.8 |
+abi_soa_win_real_null_entry (n=6, range 2477.5-2559.8 ns)
    2477.5 |########################################
-   2482.3 |
-   2487.0 |
-   2491.8 |########################################
-   2496.5 |
-   2501.2 |########################################
-   2506.0 |
-   2510.7 |
-   2515.5 |
-   2520.2 |
-   2525.0 |
-   2529.7 |
-   2534.4 |
-   2539.2 |########################################
-   2543.9 |
-   2548.7 |
-   2553.4 |
+   2481.6 |
+   2485.7 |
+   2489.8 |
+   2494.0 |########################################
+   2498.1 |
+   2502.2 |
+   2506.3 |
+   2510.4 |
+   2514.5 |
+   2518.7 |
+   2522.8 |
+   2526.9 |
+   2531.0 |
+   2535.1 |
+   2539.2 |
+   2543.3 |
+   2547.5 |
+   2551.6 |
+   2555.7 |####################
   (0 below, 1 above range)
 
-abi_soa_win_real_scalar_payload (n=6, range 2175155.8-2267244.8 ns)
-  2175155.8 |####################
-  2179760.2 |
-  2184364.7 |########################################
-  2188969.1 |
-  2193573.6 |####################
-  2198178.0 |
-  2202782.5 |
-  2207386.9 |
-  2211991.4 |
-  2216595.8 |
-  2221200.3 |
-  2225804.7 |####################
-  2230409.2 |
-  2235013.6 |
-  2239618.1 |
-  2244222.5 |
-  2248827.0 |
-  2253431.4 |
-  2258035.9 |
-  2262640.3 |
+abi_soa_win_real_scalar_payload (n=6, range 2141433.3-2440843.1 ns)
+  2141433.3 |########################################
+  2156403.8 |
+  2171374.3 |
+  2186344.8 |
+  2201315.3 |##########
+  2216285.8 |
+  2231256.2 |
+  2246226.7 |
+  2261197.2 |
+  2276167.7 |
+  2291138.2 |
+  2306108.7 |
+  2321079.2 |
+  2336049.7 |
+  2351020.2 |
+  2365990.6 |
+  2380961.1 |
+  2395931.6 |
+  2410902.1 |
+  2425872.6 |
   (0 below, 1 above range)
 
-abi_soa_win_real_soa_payload (n=6, range 893500.8-920456.1 ns)
-  893500.8 |####################
-  894848.6 |
-  896196.3 |
-  897544.1 |
-  898891.9 |
-  900239.6 |########################################
-  901587.4 |
-  902935.1 |
-  904282.9 |####################
-  905630.7 |
-  906978.4 |
-  908326.2 |####################
-  909674.0 |
-  911021.7 |
-  912369.5 |
-  913717.2 |
-  915065.0 |
-  916412.8 |
-  917760.5 |
-  919108.3 |
+abi_soa_win_real_soa_payload (n=6, range 883372.9-885403.3 ns)
+  883372.9 |########################################
+  883474.4 |
+  883575.9 |
+  883677.5 |
+  883779.0 |####################
+  883880.5 |
+  883982.0 |
+  884083.6 |
+  884185.1 |
+  884286.6 |
+  884388.1 |
+  884489.6 |####################
+  884591.2 |####################
+  884692.7 |
+  884794.2 |
+  884895.7 |
+  884997.3 |
+  885098.8 |
+  885200.3 |
+  885301.8 |
   (0 below, 1 above range)
 
 ```
 
 ## Diagnostics
 
-- **abi_soa_win_real_null_entry**: bridge=4723.0% of algo (FFI overhead may distort results)
+- **abi_soa_win_real_null_entry**: bridge=4746.6% of algo (FFI overhead may distort results)
 - **abi_soa_win_real_scalar_payload**: bridge=302.7% of algo (FFI overhead may distort results)
-- **abi_soa_win_real_soa_payload**: bridge=305.1% of algo (FFI overhead may distort results)
+- **abi_soa_win_real_soa_payload**: bridge=303.7% of algo (FFI overhead may distort results)

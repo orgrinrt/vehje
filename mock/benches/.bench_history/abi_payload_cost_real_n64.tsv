@@ -2,3 +2,6 @@
 1784830144	1c38104a	abi_payload_cost_real_n64	abi_payload_cost_real_null_entry	64	warm	2536.2	2529.1	2575.0
 1784830144	1c38104a	abi_payload_cost_real_n64	abi_payload_cost_real_scalar_payload	64	warm	481892.5	481873.1	491323.3
 1784830144	1c38104a	abi_payload_cost_real_n64	abi_payload_cost_real_soa_payload	64	warm	208776.2	208688.7	209611.2
+1784852512	a2d3f1a3	abi_payload_cost_real_n64	abi_payload_cost_real_null_entry	64	warm	2614.2	2546.2	2645.6
+1784852512	a2d3f1a3	abi_payload_cost_real_n64	abi_payload_cost_real_scalar_payload	64	warm	479327.5	478908.3	480540.7
+1784852512	a2d3f1a3	abi_payload_cost_real_n64	abi_payload_cost_real_soa_payload	64	warm	204776.2	204617.2	206724.5

@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784854347	a2d3f1a3	abi_residency_wideselect_n2	abi_residency_wideselect_fresh_alloc	2	warm	2065740.4	2063329.1	2067296.5
+1784854347	a2d3f1a3	abi_residency_wideselect_n2	abi_residency_wideselect_null_entry	2	warm	3530.0	3495.2	3601.5
+1784854347	a2d3f1a3	abi_residency_wideselect_n2	abi_residency_wideselect_reused_buffer	2	warm	2058817.9	2058113.9	2068425.6

@@ -1,0 +1,5 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784841159	32cc69af	abi_cross_cold_madd_n8	abi_cross_cold_madd_cold_null	8	warm	3509.6	3488.8	3991.2
+1784841159	32cc69af	abi_cross_cold_madd_n8	abi_cross_cold_madd_cold_scalar	8	warm	2764320.8	2762102.3	2776396.2
+1784841159	32cc69af	abi_cross_cold_madd_n8	abi_cross_cold_madd_warm_null	8	warm	3095.0	3083.8	3124.2
+1784841159	32cc69af	abi_cross_cold_madd_n8	abi_cross_cold_madd_warm_scalar	8	warm	2788115.0	2782594.4	2833204.6

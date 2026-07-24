@@ -1,0 +1,5 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784857476	c6e8dfb1	abi_sink_wideselect_n32	abi_sink_wideselect_batched_sink	32	warm	2068052.9	2065216.9	2068604.8
+1784857476	c6e8dfb1	abi_sink_wideselect_n32	abi_sink_wideselect_batched_sink_decode	32	warm	2073684.6	2073425.0	2102458.5
+1784857476	c6e8dfb1	abi_sink_wideselect_n32	abi_sink_wideselect_null_sink	32	warm	2067360.4	2066539.5	2069702.9
+1784857476	c6e8dfb1	abi_sink_wideselect_n32	abi_sink_wideselect_per_record_sink	32	warm	2072051.7	2071690.6	2115576.2

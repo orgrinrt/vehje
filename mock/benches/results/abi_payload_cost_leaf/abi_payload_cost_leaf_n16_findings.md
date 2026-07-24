@@ -9,111 +9,111 @@ Baseline for all deltas below: **abi_payload_cost_leaf_scalar_payload**. (Deltas
 
 ### Baseline (abi_payload_cost_leaf_scalar_payload) is the SLOWEST variant; every rival beats it
 
-The declared/defaulted baseline abi_payload_cost_leaf_scalar_payload has the worst median (77.97 us). Every delta is therefore measured against the worst performer, which flatters all rivals and compresses the differences that matter among them (e.g. fastest abi_payload_cost_leaf_null_entry at 2.64 us).
+The declared/defaulted baseline abi_payload_cost_leaf_scalar_payload has the worst median (78.03 us). Every delta is therefore measured against the worst performer, which flatters all rivals and compresses the differences that matter among them (e.g. fastest abi_payload_cost_leaf_null_entry at 2.49 us).
 
 _Why it matters:_ A baseline picked by accident (often the first variant to run / sort) silently skews every comparison. Re-baseline via `[bench.<name>.normalise]` on a representative variant.
 
-### abi_payload_cost_leaf_null_entry dominates: 1118% faster than the next best (abi_payload_cost_leaf_soa_payload)
+### abi_payload_cost_leaf_null_entry dominates: 1209% faster than the next best (abi_payload_cost_leaf_soa_payload)
 
-abi_payload_cost_leaf_null_entry (2.64 us) leads abi_payload_cost_leaf_soa_payload (32.21 us) by 1118%, a clear separation rather than a photo finish. CV 3.1%.
+abi_payload_cost_leaf_null_entry (2.49 us) leads abi_payload_cost_leaf_soa_payload (32.60 us) by 1209%, a clear separation rather than a photo finish. CV 2.5%.
 
 _Why it matters:_ A dominant, well-separated winner is a safe default pick for this workload shape.
 
 ### abi_payload_cost_leaf_null_entry beats baseline by 97% (significant)
 
-abi_payload_cost_leaf_null_entry is -75.32 us (97%) faster than baseline abi_payload_cost_leaf_scalar_payload, with a CI that excludes zero.
+abi_payload_cost_leaf_null_entry is -75.54 us (97%) faster than baseline abi_payload_cost_leaf_scalar_payload, with a CI that excludes zero.
 
 _Why it matters:_ A large, significant improvement over the current baseline is a concrete reason to switch.
 
-### abi_payload_cost_leaf_scalar_payload is an outlier: 29.5x slower than the field
+### abi_payload_cost_leaf_scalar_payload is an outlier: 31.3x slower than the field
 
-abi_payload_cost_leaf_scalar_payload (77.97 us) is 29.5x the fastest (2.64 us), well off the pack.
+abi_payload_cost_leaf_scalar_payload (78.03 us) is 31.3x the fastest (2.49 us), well off the pack.
 
 _Why it matters:_ A >2x outlier is almost never the right choice; if it is intentional (e.g. it buys correctness), say so explicitly.
 
-### Wide spread: slowest is 29.5x the fastest
+### Wide spread: slowest is 31.3x the fastest
 
-Fastest abi_payload_cost_leaf_null_entry (2.64 us) to slowest abi_payload_cost_leaf_scalar_payload (77.97 us): 29.5x. The strategy choice matters a lot for this workload.
+Fastest abi_payload_cost_leaf_null_entry (2.49 us) to slowest abi_payload_cost_leaf_scalar_payload (78.03 us): 31.3x. The strategy choice matters a lot for this workload.
 
 _Why it matters:_ A wide field means the strategy is load-bearing here; getting it right (or wrong) has large consequences.
 
 ## Key findings
 
-- **Fastest: abi_payload_cost_leaf_null_entry** at 2644.0 ns median (-96.6% vs baseline)
+- **Fastest: abi_payload_cost_leaf_null_entry** at 2490.0 ns median (-96.8% vs baseline)
 - 2 variants significantly faster than baseline
-- Spread: 29.49x (fastest 2644.0 ns, slowest 77972.9 ns)
+- Spread: 31.34x (fastest 2490.0 ns, slowest 78026.7 ns)
 
 ## End-to-end (all cooldowns combined)
 
 | Variant | mean | median | best 20% | mid 60% | worst 20% | Δ mean |
 |---|---|---|---|---|---|---|
-| abi_payload_cost_leaf_null_entry | 4911ns | 4998ns | 4642ns | 4902ns | 5059ns | -93.91% |
-| abi_payload_cost_leaf_scalar_payload | 80594ns | 80218ns | 79793ns | 80175ns | 81624ns | base |
-| abi_payload_cost_leaf_soa_payload | 34480ns | 34459ns | 34154ns | 34380ns | 34792ns | -57.22% |
+| abi_payload_cost_leaf_null_entry | 4733ns | 4691ns | 4619ns | 4674ns | 4879ns | -94.09% |
+| abi_payload_cost_leaf_scalar_payload | 80112ns | 80222ns | 79160ns | 80056ns | 80673ns | base |
+| abi_payload_cost_leaf_soa_payload | 34907ns | 34876ns | 34288ns | 34846ns | 35309ns | -56.43% |
 
 ## Function-under-test only (all cooldowns combined)
 
 | Variant | mean | best 20% | worst 20% | Δ mean | throughput (Gops/s) |
 |---|---|---|---|---|---|
-| abi_payload_cost_leaf_null_entry | 2599ns | 2469ns | 2667ns | -96.68% | 0.006 |
-| abi_payload_cost_leaf_scalar_payload | 78284ns | 77478ns | 79281ns | base | 0.000 |
-| abi_payload_cost_leaf_soa_payload | 32205ns | 31919ns | 32481ns | -58.86% | 0.000 |
+| abi_payload_cost_leaf_null_entry | 2501ns | 2440ns | 2567ns | -96.79% | 0.006 |
+| abi_payload_cost_leaf_scalar_payload | 77901ns | 76949ns | 78458ns | base | 0.000 |
+| abi_payload_cost_leaf_soa_payload | 32631ns | 32044ns | 33005ns | -58.11% | 0.000 |
 
 ## Setup vs iteration cost (per call)
 
 | Variant | setup S (ns) | first-touch (ns) | run I (ns) | k* vs base |
 |---|---|---|---|---|
-| abi_payload_cost_leaf_null_entry | 21504.1 | 2767.8 | 2599.2 | n/a |
-| abi_payload_cost_leaf_scalar_payload | 22021.5 | 78380.6 | 78283.6 | n/a |
-| abi_payload_cost_leaf_soa_payload | 20994.4 | 32304.4 | 32204.9 | n/a |
+| abi_payload_cost_leaf_null_entry | 20170.6 | 2697.9 | 2500.7 | n/a |
+| abi_payload_cost_leaf_scalar_payload | 20539.5 | 78143.9 | 77900.8 | n/a |
+| abi_payload_cost_leaf_soa_payload | 20812.0 | 32616.5 | 32631.3 | 0 |
 
 Setup S is the one-time build cost (timed on every call by the matrix scaffold, so it cannot hide in untimed prep). Run I is the calibrated per-iteration cost. First-touch is the cold first pass before caches and the predictor warm. k* is the iteration count at which a higher-setup, lower-per-iteration variant repays its setup against the baseline.
 
 ## Performance model
 
-- Peak throughput: **0.006 Gops/s** (abi_payload_cost_leaf_null_entry; best 20% batches)
+- Peak throughput: **0.007 Gops/s** (abi_payload_cost_leaf_null_entry; best 20% batches)
 - Ops per call: 16
 
 | Variant | Gops/s (median) | % of peak |
 |---|---|---|
-| abi_payload_cost_leaf_null_entry | 0.006 | 93.4% |
-| abi_payload_cost_leaf_scalar_payload | 0.000 | 3.2% |
-| abi_payload_cost_leaf_soa_payload | 0.000 | 7.7% |
+| abi_payload_cost_leaf_null_entry | 0.006 | 98.0% |
+| abi_payload_cost_leaf_scalar_payload | 0.000 | 3.1% |
+| abi_payload_cost_leaf_soa_payload | 0.000 | 7.5% |
 
 ## Per-cooldown breakdown (e2e mean)
 
 | Variant | 0ms | avg | Δ avg |
 |---|---|---|---|
-| abi_payload_cost_leaf_null_entry | 4911ns | 4911ns | -93.91% |
-| abi_payload_cost_leaf_scalar_payload | 80594ns | 80594ns | base |
-| abi_payload_cost_leaf_soa_payload | 34480ns | 34480ns | -57.22% |
+| abi_payload_cost_leaf_null_entry | 4733ns | 4733ns | -94.09% |
+| abi_payload_cost_leaf_scalar_payload | 80112ns | 80112ns | base |
+| abi_payload_cost_leaf_soa_payload | 34907ns | 34907ns | -56.43% |
 
 ## Statistical comparison (algo, 95% bootstrap CI)
 
 | Variant | median | Δ median | Δ CI | 95% CI | sig? | adj. p | sign p | ties |
 |---|---|---|---|---|---|---|---|---|
-| abi_payload_cost_leaf_scalar_payload | 77973ns | base | --- | [77596, 79281] | --- | --- | --- | --- |
-| abi_payload_cost_leaf_null_entry | 2644ns | -75324.1ns (-96.6%) | [-76697, -75032]ns | [2487, 2667] | YES | 0.0313 | 0.0313 | 0 |
-| abi_payload_cost_leaf_soa_payload | 32208ns | -45832.4ns (-58.8%) | [-47055, -45348]ns | [31926, 32481] | YES | 0.0313 | 0.0313 | 0 |
+| abi_payload_cost_leaf_scalar_payload | 78027ns | base | --- | [77218, 78458] | --- | --- | --- | --- |
+| abi_payload_cost_leaf_null_entry | 2490ns | -75541.2ns (-96.8%) | [-75931, -74728]ns | [2445, 2567] | YES | 0.0313 | 0.0313 | 0 |
+| abi_payload_cost_leaf_soa_payload | 32601ns | -45354.8ns (-58.1%) | [-45829, -44625]ns | [32289, 33005] | YES | 0.0313 | 0.0313 | 0 |
 
 ## Per-pass consistency (nonstop e2e, Δ vs baseline)
 
 | Pass | abi_payload_cost_leaf_scalar_payload | abi_payload_cost_leaf_null_entry | abi_payload_cost_leaf_soa_payload |
 |---|---|---|---|
-| 1 | 79055ns | -96.8% | -59.1% |
-| 2 | 79508ns | -96.6% | -59.6% |
-| 3 | 78040ns | -96.6% | -59.1% |
-| 4 | 77715ns | -96.8% | -58.5% |
-| 5 | 77478ns | -96.6% | -58.8% |
-| 6 | 77906ns | -96.6% | -58.1% |
+| 1 | 78082ns | -96.9% | -58.3% |
+| 2 | 78737ns | -96.8% | -57.6% |
+| 3 | 77487ns | -96.8% | -58.0% |
+| 4 | 76949ns | -96.8% | -57.6% |
+| 5 | 77972ns | -96.9% | -58.1% |
+| 6 | 78178ns | -96.6% | -59.0% |
 
 **Autocorrelation (lag-1) per-pass series:**
 
 | Variant | r₁ | note |
 |---|---|---|
-| abi_payload_cost_leaf_null_entry | -0.423 | moderate- |
-| abi_payload_cost_leaf_scalar_payload | 0.473 | moderate+ |
-| abi_payload_cost_leaf_soa_payload | -0.401 | moderate- |
+| abi_payload_cost_leaf_null_entry | -0.334 | moderate- |
+| abi_payload_cost_leaf_scalar_payload | 0.080 | ok |
+| abi_payload_cost_leaf_soa_payload | -0.149 | ok |
 
 **Consistency summary:**
 
@@ -124,86 +124,86 @@ Setup S is the one-time build cost (timed on every call by the matrix scaffold, 
 
 | Variant | mean bridge | algo mean | bridge % | flag |
 |---|---|---|---|---|
-| abi_payload_cost_leaf_null_entry | 108084.9ns | 2599.2ns | 4158.4% | HIGH |
-| abi_payload_cost_leaf_scalar_payload | 333693.7ns | 78283.6ns | 426.3% | HIGH |
-| abi_payload_cost_leaf_soa_payload | 182607.9ns | 32204.9ns | 567.0% | HIGH |
+| abi_payload_cost_leaf_null_entry | 105531.1ns | 2500.7ns | 4220.1% | HIGH |
+| abi_payload_cost_leaf_scalar_payload | 332215.8ns | 77900.8ns | 426.5% | HIGH |
+| abi_payload_cost_leaf_soa_payload | 184284.3ns | 32631.3ns | 564.7% | HIGH |
 
 ## Distribution (algo ns)
 
 ```
-abi_payload_cost_leaf_null_entry (n=6, range 2469.2-2666.6 ns)
-   2469.2 |####################
-   2479.1 |
-   2488.9 |
-   2498.8 |####################
-   2508.7 |
-   2518.6 |
-   2528.4 |
-   2538.3 |
-   2548.2 |
-   2558.1 |
-   2567.9 |
-   2577.8 |
-   2587.7 |
-   2597.5 |
-   2607.4 |
-   2617.3 |
-   2627.2 |####################
-   2637.0 |
-   2646.9 |
-   2656.8 |########################################
+abi_payload_cost_leaf_null_entry (n=6, range 2440.4-2566.6 ns)
+   2440.4 |########################################
+   2446.7 |########################################
+   2453.0 |
+   2459.3 |
+   2465.7 |
+   2472.0 |
+   2478.3 |
+   2484.6 |########################################
+   2490.9 |########################################
+   2497.2 |
+   2503.5 |########################################
+   2509.8 |
+   2516.1 |
+   2522.5 |
+   2528.8 |
+   2535.1 |
+   2541.4 |
+   2547.7 |
+   2554.0 |
+   2560.3 |
   (0 below, 1 above range)
 
-abi_payload_cost_leaf_scalar_payload (n=6, range 77477.5-79281.4 ns)
-  77477.5 |########################################
-  77567.7 |
-  77657.9 |########################################
-  77748.1 |
-  77838.3 |########################################
-  77928.5 |
-  78018.7 |########################################
-  78108.9 |
-  78199.1 |
-  78289.3 |
-  78379.5 |
-  78469.7 |
-  78559.9 |
-  78650.1 |
-  78740.3 |
-  78830.5 |
-  78920.7 |
-  79010.9 |########################################
-  79101.1 |
-  79191.3 |
+abi_payload_cost_leaf_scalar_payload (n=6, range 76949.2-78457.5 ns)
+  76949.2 |########################################
+  77024.6 |
+  77100.0 |
+  77175.4 |
+  77250.9 |
+  77326.3 |
+  77401.7 |
+  77477.1 |########################################
+  77552.5 |
+  77627.9 |
+  77703.4 |
+  77778.8 |
+  77854.2 |
+  77929.6 |########################################
+  78005.0 |
+  78080.4 |########################################
+  78155.8 |########################################
+  78231.3 |
+  78306.7 |
+  78382.1 |
   (0 below, 1 above range)
 
-abi_payload_cost_leaf_soa_payload (n=6, range 31918.7-32481.0 ns)
-  31918.7 |########################################
-  31946.8 |
-  31974.9 |
-  32003.0 |
-  32031.2 |
-  32059.3 |
-  32087.4 |
-  32115.5 |
-  32143.6 |####################
-  32171.7 |
-  32199.8 |
-  32228.0 |
-  32256.1 |####################
-  32284.2 |####################
-  32312.3 |
-  32340.4 |
-  32368.5 |
-  32396.7 |
-  32424.8 |
-  32452.9 |
+abi_payload_cost_leaf_soa_payload (n=6, range 32043.7-33004.6 ns)
+  32043.7 |####################
+  32091.7 |
+  32139.8 |
+  32187.8 |
+  32235.9 |
+  32283.9 |
+  32332.0 |
+  32380.0 |
+  32428.0 |
+  32476.1 |
+  32524.1 |########################################
+  32572.2 |
+  32620.2 |########################################
+  32668.3 |
+  32716.3 |
+  32764.3 |
+  32812.4 |
+  32860.4 |
+  32908.5 |
+  32956.5 |
   (0 below, 1 above range)
 
 ```
 
 ## Diagnostics
 
-- **abi_payload_cost_leaf_null_entry**: bridge=4105.0% of algo (FFI overhead may distort results)
-- **abi_payload_cost_leaf_scalar_payload**: bridge=427.5% of algo (FFI overhead may distort results)
-- **abi_payload_cost_leaf_soa_payload**: bridge=566.2% of algo (FFI overhead may distort results)
+- **abi_payload_cost_leaf_null_entry**: bridge=4232.8% of algo (FFI overhead may distort results)
+- **abi_payload_cost_leaf_scalar_payload**: bridge=426.0% of algo (FFI overhead may distort results)
+- **abi_payload_cost_leaf_soa_payload**: bridge=562.8% of algo (FFI overhead may distort results)

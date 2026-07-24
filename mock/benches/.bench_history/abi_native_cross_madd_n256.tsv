@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784852198	a2d3f1a3	abi_native_cross_madd_n256	abi_native_cross_madd_inproc_native	256	warm	11604.2	11490.0	11956.5
+1784852198	a2d3f1a3	abi_native_cross_madd_n256	abi_native_cross_madd_native_ffi_w	256	warm	11633.3	11449.1	12043.5
+1784852198	a2d3f1a3	abi_native_cross_madd_n256	abi_native_cross_madd_null_entry	256	warm	3133.3	3125.6	3192.9

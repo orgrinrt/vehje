@@ -2,3 +2,6 @@
 1784830262	9d932155	abi_payload_cost_leaf_n64	abi_payload_cost_leaf_null_entry	64	warm	2627.9	2574.6	2712.5
 1784830262	9d932155	abi_payload_cost_leaf_n64	abi_payload_cost_leaf_scalar_payload	64	warm	314134.2	313904.4	318313.8
 1784830262	9d932155	abi_payload_cost_leaf_n64	abi_payload_cost_leaf_soa_payload	64	warm	197052.9	196908.8	197622.5
+1784852271	a2d3f1a3	abi_payload_cost_leaf_n64	abi_payload_cost_leaf_null_entry	64	warm	2583.3	2548.6	2652.7
+1784852271	a2d3f1a3	abi_payload_cost_leaf_n64	abi_payload_cost_leaf_scalar_payload	64	warm	312870.8	312847.0	313947.5
+1784852271	a2d3f1a3	abi_payload_cost_leaf_n64	abi_payload_cost_leaf_soa_payload	64	warm	195253.8	195157.1	196170.6

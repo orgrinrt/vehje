@@ -2,3 +2,6 @@
 1784830278	9d932155	abi_payload_cost_leaf_n256	abi_payload_cost_leaf_null_entry	256	warm	2547.5	2506.8	2591.9
 1784830278	9d932155	abi_payload_cost_leaf_n256	abi_payload_cost_leaf_scalar_payload	256	warm	1456685.8	1455295.8	1461835.9
 1784830278	9d932155	abi_payload_cost_leaf_n256	abi_payload_cost_leaf_soa_payload	256	warm	821556.7	821369.8	821927.5
+1784852288	a2d3f1a3	abi_payload_cost_leaf_n256	abi_payload_cost_leaf_null_entry	256	warm	2469.6	2461.1	2596.9
+1784852288	a2d3f1a3	abi_payload_cost_leaf_n256	abi_payload_cost_leaf_scalar_payload	256	warm	1455104.2	1453667.3	1486407.7
+1784852288	a2d3f1a3	abi_payload_cost_leaf_n256	abi_payload_cost_leaf_soa_payload	256	warm	820606.2	818704.6	826856.2

@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784852630	a2d3f1a3	abi_payload_cost_scatter_n64	abi_payload_cost_scatter_null_entry	64	warm	2548.3	2546.9	2624.6
+1784852630	a2d3f1a3	abi_payload_cost_scatter_n64	abi_payload_cost_scatter_scalar_payload	64	warm	487882.9	487162.1	489540.8
+1784852630	a2d3f1a3	abi_payload_cost_scatter_n64	abi_payload_cost_scatter_soa_payload	64	warm	206722.1	206253.8	210647.3

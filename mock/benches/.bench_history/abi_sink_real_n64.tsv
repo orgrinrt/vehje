@@ -1,0 +1,5 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784855973	a2d3f1a3	abi_sink_real_n64	abi_sink_real_batched_sink	64	warm	2128147.9	2127431.0	2136743.8
+1784855973	a2d3f1a3	abi_sink_real_n64	abi_sink_real_batched_sink_decode	64	warm	2130611.2	2129872.9	2140013.8
+1784855973	a2d3f1a3	abi_sink_real_n64	abi_sink_real_null_sink	64	warm	2126007.1	2125542.1	2132961.9
+1784855973	a2d3f1a3	abi_sink_real_n64	abi_sink_real_per_record_sink	64	warm	2135610.8	2135311.2	2149238.1

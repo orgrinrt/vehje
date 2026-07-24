@@ -1,0 +1,6 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784847444	e225eb89	abi_entry_form_tight_n8	abi_entry_form_tight_dispatch_table	8	warm	2051575.4	2036775.6	2105331.5
+1784847444	e225eb89	abi_entry_form_tight_n8	abi_entry_form_tight_null_entry	8	warm	3062.9	3015.9	3097.7
+1784847444	e225eb89	abi_entry_form_tight_n8	abi_entry_form_tight_per_w_set	8	warm	2025112.9	2023227.7	2173347.9
+1784847444	e225eb89	abi_entry_form_tight_n8	abi_entry_form_tight_runtime_w	8	warm	2025446.7	2021733.1	2374328.3
+1784847444	e225eb89	abi_entry_form_tight_n8	abi_entry_form_tight_scalar_anchor	8	warm	2037902.9	2037605.0	2218226.5

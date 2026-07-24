@@ -1,0 +1,10 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784839986	32cc69af	abi_boundary_w_wideselect_n1	abi_boundary_w_wideselect_null_entry	1	warm	4877.5	4866.6	4971.0
+1784839986	32cc69af	abi_boundary_w_wideselect_n1	abi_boundary_w_wideselect_scalar_anchor	1	warm	2085636.2	2081913.1	2091472.5
+1784839986	32cc69af	abi_boundary_w_wideselect_n1	abi_boundary_w_wideselect_scalar_dispatch	1	warm	2090344.6	2089842.1	2100283.1
+1784839986	32cc69af	abi_boundary_w_wideselect_n1	abi_boundary_w_wideselect_scalar_per_w	1	warm	2092068.8	2087059.2	2093586.9
+1784839986	32cc69af	abi_boundary_w_wideselect_n1	abi_boundary_w_wideselect_scalar_runtime_w	1	warm	2095788.3	2095269.6	2098097.9
+1784839986	32cc69af	abi_boundary_w_wideselect_n1	abi_boundary_w_wideselect_soa_dispatch	1	warm	2100618.8	2097485.8	2115130.7
+1784839986	32cc69af	abi_boundary_w_wideselect_n1	abi_boundary_w_wideselect_soa_per_w	1	warm	2090622.1	2089949.0	2100291.2
+1784839986	32cc69af	abi_boundary_w_wideselect_n1	abi_boundary_w_wideselect_soa_runtime_w	1	warm	2109120.4	2108327.1	2116211.2
+1784839986	32cc69af	abi_boundary_w_wideselect_n1	abi_boundary_w_wideselect_zig_runtime_w	1	warm	2015200.0	2013063.1	2019767.5

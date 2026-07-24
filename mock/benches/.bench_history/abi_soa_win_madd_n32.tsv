@@ -1,0 +1,4 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784858005	b30df927	abi_soa_win_madd_n32	abi_soa_win_madd_null_entry	32	warm	2277.9	2273.1	2322.9
+1784858005	b30df927	abi_soa_win_madd_n32	abi_soa_win_madd_scalar_payload	32	warm	2718845.0	2717504.1	2726139.6
+1784858005	b30df927	abi_soa_win_madd_n32	abi_soa_win_madd_soa_payload	32	warm	1089215.4	1088554.6	1090977.5

@@ -1,0 +1,5 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784843062	fc65599d	abi_cross_scalar_madd_n16	abi_cross_scalar_madd_ffi_batched_scalar	16	warm	2811914.6	2809245.4	2866947.7
+1784843062	fc65599d	abi_cross_scalar_madd_n16	abi_cross_scalar_madd_inproc_direct	16	warm	2783882.5	2775453.1	2802399.1
+1784843062	fc65599d	abi_cross_scalar_madd_n16	abi_cross_scalar_madd_inproc_fnptr	16	warm	2807175.4	2802479.1	3004120.0
+1784843062	fc65599d	abi_cross_scalar_madd_n16	abi_cross_scalar_madd_null_entry	16	warm	2568.8	2557.3	2725.4

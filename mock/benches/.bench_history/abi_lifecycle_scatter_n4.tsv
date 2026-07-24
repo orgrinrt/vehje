@@ -1,0 +1,5 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784849734	a2d3f1a3	abi_lifecycle_scatter_n4	abi_lifecycle_scatter_fresh_per_batch	4	warm	2924204.6	2919148.4	2934315.0
+1784849734	a2d3f1a3	abi_lifecycle_scatter_n4	abi_lifecycle_scatter_fresh_per_column	4	warm	2155888.3	2154673.8	2186782.2
+1784849734	a2d3f1a3	abi_lifecycle_scatter_n4	abi_lifecycle_scatter_held_handle	4	warm	2139918.8	2138348.1	2495878.8
+1784849734	a2d3f1a3	abi_lifecycle_scatter_n4	abi_lifecycle_scatter_null_entry	4	warm	4192.1	4189.6	4257.3

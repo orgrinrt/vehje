@@ -1,0 +1,6 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784845078	e225eb89	abi_entry_form_leaf_n2	abi_entry_form_leaf_dispatch_table	2	warm	1923995.4	1828639.1	2256345.4
+1784845078	e225eb89	abi_entry_form_leaf_n2	abi_entry_form_leaf_null_entry	2	warm	4510.0	4105.0	5205.6
+1784845078	e225eb89	abi_entry_form_leaf_n2	abi_entry_form_leaf_per_w_set	2	warm	1848657.1	1724103.6	2177875.2
+1784845078	e225eb89	abi_entry_form_leaf_n2	abi_entry_form_leaf_runtime_w	2	warm	1877586.2	1794329.5	2855148.3
+1784845078	e225eb89	abi_entry_form_leaf_n2	abi_entry_form_leaf_scalar_anchor	2	warm	2058958.3	1853804.8	2646251.8
