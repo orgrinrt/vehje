@@ -17,7 +17,30 @@
 use arvo::{Maybe, Outcome, USize};
 
 use hilavitkutin_str::Str;
-use vehje_ir::{Arena, Node, NodeRef, Span};
+use vehje_ir::{Arena, FamilyId, Node, NodeList, NodeRef, Span};
+
+/// The family-extension resolve hook.
+///
+/// A consumer implements this to add family-specific resolution at a `Raw`
+/// node (a family binding form). The base walk already descends into the `Raw`
+/// payload and resolves its Core children, so the default is a no-op; a
+/// consumer overrides `resolve_raw` to observe or extend the family node. The
+/// hook is keyed on the `FamilyId` the `Raw` node carries.
+// FIXME: the deeper case, a family node that binds a variable non-lexically
+// (the hook participating in the scope chain), is the documented extension
+// point; today the hook observes the family node and the base walk resolves the
+// payload's Core children.
+pub trait FamilyResolve {
+    /// Called at each `Raw` node with its family and payload. Defaults to a
+    /// no-op; the base walk resolves the payload's Core children regardless.
+    fn resolve_raw(&self, _family: FamilyId, _payload: NodeList) {}
+}
+
+/// The Core-only family hook: no family-specific resolution, the default the
+/// `resolve` and `resolve_into` entries use.
+pub struct CoreFamilies;
+
+impl FamilyResolve for CoreFamilies {}
 
 /// A borrowed scope frame: a single binding, chained to its parent.
 ///
@@ -75,18 +98,30 @@ pub enum ResolveError {
 /// chain; the compound forms recurse into their children. An unresolved
 /// `Var` is refused with its name.
 ///
-/// Generic over the family set through the family-extension hooks. The
-/// hooks (a family's own binding forms) and a produced resolution
-/// side-table are the next additions.
-// FIXME: dispatch Raw nodes to the family-extension resolve hooks, and
-// produce a resolution side-table (Var handle to binder handle) for the
-// check and emit passes. M0 walks and validates against the scope chain.
+/// Resolves against the Core scope chain, with no family-specific handling
+/// (the `CoreFamilies` hook). A payload-bearing family consumer uses
+/// [`resolve_with`] to pass its own [`FamilyResolve`] hook.
 pub fn resolve(arena: &Arena<'_>, root: NodeRef) -> Outcome<(), ResolveError> {
-    walk(arena, root, Maybe::Isnt)
+    resolve_with(arena, root, &CoreFamilies)
+}
+
+/// Resolve a program, dispatching each `Raw` node to `hook` for family-specific
+/// resolution. The base walk resolves the payload's Core children regardless.
+pub fn resolve_with<H: FamilyResolve>(
+    arena: &Arena<'_>,
+    root: NodeRef,
+    hook: &H,
+) -> Outcome<(), ResolveError> {
+    walk(arena, root, Maybe::Isnt, hook)
 }
 
 /// Recurse over one node, resolving `Var`s against `scope`.
-fn walk(arena: &Arena<'_>, at: NodeRef, scope: Maybe<&Scope<'_>>) -> Outcome<(), ResolveError> {
+fn walk<H: FamilyResolve>(
+    arena: &Arena<'_>,
+    at: NodeRef,
+    scope: Maybe<&Scope<'_>>,
+    hook: &H,
+) -> Outcome<(), ResolveError> {
     match arena.get(at) {
         Node::Lit(_) => Outcome::Ok(()),
         Node::Var(name) => match scope {
@@ -101,30 +136,30 @@ fn walk(arena: &Arena<'_>, at: NodeRef, scope: Maybe<&Scope<'_>>) -> Outcome<(),
             // a recursive binding is in scope for its own value, so `let rec f =
             // ... f ...` can reference itself; a non-recursive `let` is not.
             let value_scope = if rec.0 { Maybe::Is(&frame) } else { scope };
-            walk(arena, value, value_scope)?;
-            walk(arena, body, Maybe::Is(&frame))
+            walk(arena, value, value_scope, hook)?;
+            walk(arena, body, Maybe::Is(&frame), hook)
         }
         Node::Lambda { param, body } => {
             let frame = frame_for(param, at, scope);
-            walk(arena, body, Maybe::Is(&frame))
+            walk(arena, body, Maybe::Is(&frame), hook)
         }
         Node::Apply { callee, args } => {
-            walk(arena, callee, scope)?;
+            walk(arena, callee, scope, hook)?;
             for child in arena.list(args) {
-                walk(arena, *child, scope)?;
+                walk(arena, *child, scope, hook)?;
             }
             Outcome::Ok(())
         }
-        Node::Project { base, .. } => walk(arena, base, scope),
+        Node::Project { base, .. } => walk(arena, base, scope, hook),
         Node::If { cond, then_branch, else_branch } => {
-            walk(arena, cond, scope)?;
-            walk(arena, then_branch, scope)?;
-            walk(arena, else_branch, scope)
+            walk(arena, cond, scope, hook)?;
+            walk(arena, then_branch, scope, hook)?;
+            walk(arena, else_branch, scope, hook)
         }
         Node::Match { scrutinee, arms } => {
-            walk(arena, scrutinee, scope)?;
+            walk(arena, scrutinee, scope, hook)?;
             for child in arena.list(arms) {
-                walk(arena, *child, scope)?;
+                walk(arena, *child, scope, hook)?;
             }
             Outcome::Ok(())
         }
@@ -133,21 +168,28 @@ fn walk(arena: &Arena<'_>, at: NodeRef, scope: Maybe<&Scope<'_>>) -> Outcome<(),
             // it introduces no scope frame here. If a future IR gives `Iter` a
             // named loop variable, resolve pushes its frame around `body`, the
             // way `Let` and `Lambda` do.
-            walk(arena, seq, scope)?;
-            walk(arena, body, scope)
+            walk(arena, seq, scope, hook)?;
+            walk(arena, body, scope, hook)
         }
-        Node::Interp { value } => walk(arena, value, scope),
-        // FIXME: dispatch Raw to the family-extension resolve hook; M0
-        // treats a family node as opaque (no Core-level names inside).
-        Node::Raw { .. } => Outcome::Ok(()),
+        Node::Interp { value } => walk(arena, value, scope, hook),
+        Node::Raw { family, payload } => {
+            // descend into the family node's payload, resolving its Core child
+            // handles against the current scope, then dispatch to the family
+            // hook for any family-specific resolution.
+            for child in arena.list(payload) {
+                walk(arena, *child, scope, hook)?;
+            }
+            hook.resolve_raw(family, payload);
+            Outcome::Ok(())
+        }
         Node::Handle { body, clauses } => {
             // FIXME: a handler clause binds the operation and the resumption;
             // once the clause representation lands, push those binders before
             // walking the clause body. M-level walks the body and the clause
             // bodies without the operation/resumption binders.
-            walk(arena, body, scope)?;
+            walk(arena, body, scope, hook)?;
             for child in arena.list(clauses) {
-                walk(arena, *child, scope)?;
+                walk(arena, *child, scope, hook)?;
             }
             Outcome::Ok(())
         }
@@ -198,15 +240,27 @@ pub fn resolve_into(
     root: NodeRef,
     resolution: &mut Resolution<'_>,
 ) -> Outcome<(), ResolveError> {
-    walk_record(arena, root, Maybe::Isnt, resolution)
+    resolve_into_with(arena, root, resolution, &CoreFamilies)
+}
+
+/// Like [`resolve_into`], dispatching each `Raw` node to `hook` for
+/// family-specific resolution while recording the side-table.
+pub fn resolve_into_with<H: FamilyResolve>(
+    arena: &Arena<'_>,
+    root: NodeRef,
+    resolution: &mut Resolution<'_>,
+    hook: &H,
+) -> Outcome<(), ResolveError> {
+    walk_record(arena, root, Maybe::Isnt, resolution, hook)
 }
 
 /// Recurse over one node, resolving and recording `Var` bindings.
-fn walk_record(
+fn walk_record<H: FamilyResolve>(
     arena: &Arena<'_>,
     at: NodeRef,
     scope: Maybe<&Scope<'_>>,
     res: &mut Resolution<'_>,
+    hook: &H,
 ) -> Outcome<(), ResolveError> {
     match arena.get(at) {
         Node::Lit(_) => Outcome::Ok(()),
@@ -224,43 +278,51 @@ fn walk_record(
             let frame = frame_for(name, at, scope);
             // recursive binding is in scope for its own value; see `walk`.
             let value_scope = if rec.0 { Maybe::Is(&frame) } else { scope };
-            walk_record(arena, value, value_scope, res)?;
-            walk_record(arena, body, Maybe::Is(&frame), res)
+            walk_record(arena, value, value_scope, res, hook)?;
+            walk_record(arena, body, Maybe::Is(&frame), res, hook)
         }
         Node::Lambda { param, body } => {
             let frame = frame_for(param, at, scope);
-            walk_record(arena, body, Maybe::Is(&frame), res)
+            walk_record(arena, body, Maybe::Is(&frame), res, hook)
         }
         Node::Apply { callee, args } => {
-            walk_record(arena, callee, scope, res)?;
+            walk_record(arena, callee, scope, res, hook)?;
             for child in arena.list(args) {
-                walk_record(arena, *child, scope, res)?;
+                walk_record(arena, *child, scope, res, hook)?;
             }
             Outcome::Ok(())
         }
-        Node::Project { base, .. } => walk_record(arena, base, scope, res),
+        Node::Project { base, .. } => walk_record(arena, base, scope, res, hook),
         Node::If { cond, then_branch, else_branch } => {
-            walk_record(arena, cond, scope, res)?;
-            walk_record(arena, then_branch, scope, res)?;
-            walk_record(arena, else_branch, scope, res)
+            walk_record(arena, cond, scope, res, hook)?;
+            walk_record(arena, then_branch, scope, res, hook)?;
+            walk_record(arena, else_branch, scope, res, hook)
         }
         Node::Match { scrutinee, arms } => {
-            walk_record(arena, scrutinee, scope, res)?;
+            walk_record(arena, scrutinee, scope, res, hook)?;
             for child in arena.list(arms) {
-                walk_record(arena, *child, scope, res)?;
+                walk_record(arena, *child, scope, res, hook)?;
             }
             Outcome::Ok(())
         }
         Node::Iter { seq, body } => {
-            walk_record(arena, seq, scope, res)?;
-            walk_record(arena, body, scope, res)
+            walk_record(arena, seq, scope, res, hook)?;
+            walk_record(arena, body, scope, res, hook)
         }
-        Node::Interp { value } => walk_record(arena, value, scope, res),
-        Node::Raw { .. } => Outcome::Ok(()),
+        Node::Interp { value } => walk_record(arena, value, scope, res, hook),
+        Node::Raw { family, payload } => {
+            // descend into the family node's payload, recording its Core child
+            // resolutions, then dispatch to the family hook.
+            for child in arena.list(payload) {
+                walk_record(arena, *child, scope, res, hook)?;
+            }
+            hook.resolve_raw(family, payload);
+            Outcome::Ok(())
+        }
         Node::Handle { body, clauses } => {
-            walk_record(arena, body, scope, res)?;
+            walk_record(arena, body, scope, res, hook)?;
             for child in arena.list(clauses) {
-                walk_record(arena, *child, scope, res)?;
+                walk_record(arena, *child, scope, res, hook)?;
             }
             Outcome::Ok(())
         }
@@ -349,6 +411,55 @@ mod tests {
         let value = expect(b.var(f, Span::default()));
         let body = expect(b.var(f, Span::default()));
         let root = expect(b.let_(Bool::FALSE, f, value, body, Span::default()));
+
+        let arena = b.into_arena();
+        assert!(matches!(
+            resolve(&arena, root),
+            Outcome::Err(ResolveError::Unresolved { .. })
+        ));
+    }
+
+    fn expect_list(m: Maybe<vehje_ir::NodeList>) -> vehje_ir::NodeList {
+        match m {
+            Maybe::Is(l) => l,
+            Maybe::Isnt => panic!("pool full"),
+        }
+    }
+
+    #[test]
+    fn resolves_a_var_inside_a_raw_family_node() {
+        let mut nodes = [Node::Lit(Literal::Unit); 8];
+        let mut spans = [Span::default(); 8];
+        let mut pool = [NodeRef::new(USize::ZERO); 8];
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+
+        // let x = () in Raw(family, [x]): the Var inside the family node is a
+        // real reference and must resolve, because the pass descends into the
+        // Raw payload rather than treating it as a leaf.
+        let x = str_const!("x");
+        let unit = expect(b.lit(Literal::Unit, Span::default()));
+        let var = expect(b.var(x, Span::default()));
+        let payload = expect_list(b.alloc_list(&[var]));
+        let raw = expect(b.raw(vehje_ir::FamilyId::default(), payload, Span::default()));
+        let root = expect(b.let_(Bool::FALSE, x, unit, raw, Span::default()));
+
+        let arena = b.into_arena();
+        assert!(matches!(resolve(&arena, root), Outcome::Ok(())));
+    }
+
+    #[test]
+    fn refuses_an_unbound_var_inside_a_raw_family_node() {
+        let mut nodes = [Node::Lit(Literal::Unit); 8];
+        let mut spans = [Span::default(); 8];
+        let mut pool = [NodeRef::new(USize::ZERO); 8];
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+
+        // Raw(family, [y]) with y unbound: the descent still refuses the inner
+        // unbound reference, so a family node is not a hiding place.
+        let y = str_const!("y");
+        let var = expect(b.var(y, Span::default()));
+        let payload = expect_list(b.alloc_list(&[var]));
+        let root = expect(b.raw(vehje_ir::FamilyId::default(), payload, Span::default()));
 
         let arena = b.into_arena();
         assert!(matches!(

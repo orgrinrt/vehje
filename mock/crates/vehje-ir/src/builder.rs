@@ -87,6 +87,12 @@ impl<'a> Builder<'a> {
         self.arena.push(Node::Interp { value }, span)
     }
 
+    /// Allocate a child list from a slice of node handles, for a `Raw` payload
+    /// or a `Handle` clause list. `Isnt` if the child pool cannot fit them.
+    pub fn alloc_list(&mut self, refs: &[NodeRef]) -> Maybe<NodeList> {
+        self.arena.alloc_list(refs)
+    }
+
     /// A family's own construct, attached through the escape hatch.
     pub fn raw(&mut self, family: FamilyId, payload: NodeList, span: Span) -> Maybe<NodeRef> {
         self.arena.push(Node::Raw { family, payload }, span)

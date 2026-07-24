@@ -79,13 +79,23 @@ where
 /// kind) and never re-implements the walk. Family nodes reach `visit`
 /// through `Raw`; a family's own sub-structure is walked by the family's
 /// fold extension.
-// FIXME: thread the family-fold extension for Raw sub-structure once a
-// family defines its payload. M0 visits Raw as a leaf.
+// A `Raw` node's payload (its family operation's Core child handles) is folded
+// like any variadic form's children, so `visit` sees them. A family payload
+// encoding beyond the child-handle traversal (a family-interpreted opaque blob)
+// waits on the first consumer that defines one.
 pub fn fold_core<F: FnMut(&Node)>(arena: &Arena<'_>, at: NodeRef, visit: &mut F) {
     let node = arena.get(at);
     visit(&node);
     match node {
-        Node::Lit(_) | Node::Var(_) | Node::Raw { .. } => {}
+        Node::Lit(_) | Node::Var(_) => {}
+        Node::Raw { payload, .. } => {
+            // descend into the family node's payload so a target's `visit` sees
+            // the family operation's Core children (a `Var`, a nested form); the
+            // `visit` closure is the family fold hook.
+            for child in arena.list(payload) {
+                fold_core(arena, *child, visit);
+            }
+        }
         Node::Let { value, body, .. } => {
             fold_core(arena, value, visit);
             fold_core(arena, body, visit);
@@ -137,4 +147,47 @@ pub enum CodegenError {
     UnsupportedFamily { span: Span },
     /// An effect outside the target's permitted set.
     ForbiddenEffect { span: Span },
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use arvo::{Identity, USize};
+    use notko::Maybe;
+    use vehje_ir::{Builder, FamilyId, Literal};
+
+    #[test]
+    fn fold_core_descends_into_raw_payload() {
+        let mut nodes = [Node::Lit(Literal::Unit); 8];
+        let mut spans = [Span::default(); 8];
+        let mut pool = [NodeRef::new(USize::ZERO); 8];
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+
+        // Raw(family, [(), ()]): the two Lit children must be visited, so a
+        // target's `visit` sees a family node's Core sub-structure.
+        let a = match b.lit(Literal::Unit, Span::default()) {
+            Maybe::Is(r) => r,
+            Maybe::Isnt => panic!("arena full"),
+        };
+        let c = match b.lit(Literal::Unit, Span::default()) {
+            Maybe::Is(r) => r,
+            Maybe::Isnt => panic!("arena full"),
+        };
+        let payload = match b.alloc_list(&[a, c]) {
+            Maybe::Is(l) => l,
+            Maybe::Isnt => panic!("pool full"),
+        };
+        let raw = match b.raw(FamilyId::default(), payload, Span::default()) {
+            Maybe::Is(r) => r,
+            Maybe::Isnt => panic!("arena full"),
+        };
+        let arena = b.into_arena();
+
+        let mut count = USize(0);
+        fold_core(&arena, raw, &mut |_node| {
+            count = USize(count.0 + 1);
+        });
+        // the Raw node plus its two payload children: three visits.
+        assert_eq!(count, USize(3));
+    }
 }

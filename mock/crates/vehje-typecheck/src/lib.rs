@@ -22,10 +22,29 @@ use arvo::Outcome;
 
 use arvo::USize;
 use vehje_ir::{
-    Arena, Assurance, ContainsAll, EffectMask, Grade, GradeTable, Knowledge, Lease, Node, NodeRef,
-    ReachMask, TargetSets,
+    Arena, Assurance, ContainsAll, EffectMask, FamilyId, Grade, GradeTable, Knowledge, Lease, Node,
+    NodeRef, ReachMask, TargetSets,
 };
-use vehje_resolve::Resolution;
+use vehje_resolve::{CoreFamilies, Resolution};
+
+/// The family-extension check hook.
+///
+/// A consumer implements this to declare a family operation's own effect. The
+/// check pass descends into a `Raw` node's payload, joins its children's grades,
+/// and joins the effect this hook returns for the family. The default is the
+/// empty effect (a pure family operation), so the Core-only path is unchanged.
+pub trait FamilyCheck {
+    /// The effect a `Raw` node of family `family` contributes. Defaults to the
+    /// empty effect.
+    fn effect_of_raw(&self, _family: FamilyId) -> EffectMask {
+        EffectMask::empty()
+    }
+}
+
+// `CoreFamilies` (the shared Core-only defaults marker from `vehje-resolve`) is
+// the no-family-effect hook `check` uses, so one marker names the Core-only case
+// across both the resolve and check family seams.
+impl FamilyCheck for CoreFamilies {}
 
 /// The reach-mask slot a binder or its variable occupies: the binder node's
 /// arena index folded into the 64-slot mask. Two binders more than 64 apart
@@ -162,16 +181,31 @@ where
 /// witness (`check_for`, and `vehje-codegen`'s wrapper over it). A caller runs
 /// `check` to obtain the `Graded`, then `check_for` to obtain the emit-gating
 /// `Checked`, so the witness cannot be minted without a clean check.
-// FIXME: dispatch Raw and Handle to the family-check and handler-discharge
-// hooks, and route the reach and effect inference through vehje-fixpoint as
-// relational queries; M-level runs the inference as a direct bottom-up fold.
+/// The Core-only entry, using the `CoreFamilies` hook (no family effects). A
+/// payload-bearing family consumer uses [`check_with`].
+// FIXME: dispatch Handle to the handler-discharge hook, and route the reach and
+// effect inference through vehje-fixpoint as relational queries; M-level runs
+// the inference as a direct bottom-up fold. Raw is now dispatched to the
+// family-check hook and its payload descended.
 pub fn check<'a>(
     arena: &'a Arena<'a>,
     root: NodeRef,
     res: &Resolution<'_>,
     grades: &mut GradeTable<'_>,
 ) -> Outcome<Graded<'a>, CheckError> {
-    match infer(arena, root, res, grades) {
+    check_with(arena, root, res, grades, &CoreFamilies)
+}
+
+/// Like [`check`], dispatching each `Raw` node to `hook` for its family effect
+/// while grading the payload's Core children.
+pub fn check_with<'a, H: FamilyCheck>(
+    arena: &'a Arena<'a>,
+    root: NodeRef,
+    res: &Resolution<'_>,
+    grades: &mut GradeTable<'_>,
+    hook: &H,
+) -> Outcome<Graded<'a>, CheckError> {
+    match infer(arena, root, res, grades, hook) {
         Outcome::Ok(_) => Outcome::Ok(Graded::new(arena, root)),
         Outcome::Err(e) => Outcome::Err(e),
     }
@@ -180,11 +214,12 @@ pub fn check<'a>(
 /// Bottom-up graded inference over one node, recording its grade and returning
 /// it. Integrity-checks child handles as it descends, and computes the reach
 /// set through the binder rule using the resolution side-table.
-fn infer(
+fn infer<H: FamilyCheck>(
     arena: &Arena<'_>,
     at: NodeRef,
     res: &Resolution<'_>,
     grades: &mut GradeTable<'_>,
+    hook: &H,
 ) -> Outcome<Grade, CheckError> {
     if at.index().0 >= arena.len().0 {
         return Outcome::Err(CheckError::DanglingRef { at });
@@ -196,7 +231,7 @@ fn infer(
     let mut effect = EffectMask::empty();
     let mut reach = ReachMask::empty();
     let mut child = |c: NodeRef, grades: &mut GradeTable<'_>| -> Outcome<(), CheckError> {
-        match infer(arena, c, res, grades) {
+        match infer(arena, c, res, grades, hook) {
             Outcome::Ok(g) => {
                 effect = effect.join(g.effect);
                 reach = reach.join(g.lease.0);
@@ -250,9 +285,13 @@ fn infer(
             child(body, grades)?;
         }
         Node::Interp { value } => child(value, grades)?,
-        Node::Raw { .. } => {
-            // FIXME: dispatch to the family-check hook and fold in the family
-            // operation's own declared effect from the signature.
+        Node::Raw { family, payload } => {
+            // descend into the family node's payload, joining each child's grade,
+            // then join the family operation's own declared effect from the hook.
+            for c in arena.list(payload) {
+                child(*c, grades)?;
+            }
+            effect = effect.join(hook.effect_of_raw(family));
         }
         Node::Handle { body, clauses } => {
             child(body, grades)?;
@@ -376,5 +415,44 @@ mod tests {
             check(&arena, dangling, &res, &mut grades),
             Outcome::Err(CheckError::DanglingRef { .. })
         ));
+    }
+
+    #[test]
+    fn family_check_hook_effect_reaches_the_raw_grade() {
+        let mut nodes = [Node::Lit(Literal::Unit); 8];
+        let mut spans = [Span::default(); 8];
+        let mut pool = [NodeRef::new(USize::ZERO); 8];
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+
+        // Raw(family, [()]): the family declares an effect through the hook, and
+        // the Raw node's grade must carry it on top of the children's.
+        let unit = at(b.lit(Literal::Unit, Span::default()));
+        let payload = match b.alloc_list(&[unit]) {
+            Maybe::Is(l) => l,
+            Maybe::Isnt => panic!("pool full"),
+        };
+        let raw = at(b.raw(FamilyId::default(), payload, Span::default()));
+        let arena = b.into_arena();
+
+        struct WithEffect;
+        impl FamilyCheck for WithEffect {
+            fn effect_of_raw(&self, _family: FamilyId) -> EffectMask {
+                let mut e = EffectMask::empty();
+                e.insert(USize(0));
+                e
+            }
+        }
+
+        let mut binders = [Maybe::Isnt; 8];
+        let mut res = Resolution::new(&mut binders);
+        assert!(matches!(resolve_into(&arena, raw, &mut res), Outcome::Ok(())));
+        let mut grade_region = [Grade::default(); 8];
+        let mut grades = GradeTable::new(&mut grade_region);
+        assert!(matches!(
+            check_with(&arena, raw, &res, &mut grades, &WithEffect),
+            Outcome::Ok(_)
+        ));
+        // the family's declared effect (slot 0) reaches the Raw node's grade.
+        assert!(grade_of(&grades, raw).effect.contains(USize(0)).0);
     }
 }
