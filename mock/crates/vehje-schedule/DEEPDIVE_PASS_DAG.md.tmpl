@@ -1,0 +1,98 @@
+# vehje-schedule: the compile-side pass DAG
+
+Every consumer that plugs into the framework brings its own family: node kinds, effect classification, and a
+set of semantic checks and certified IR-to-IR macro passes that only make sense for that family. Those passes
+have to run in some order, some of them before a Core stage, some after, some interleaved. `vehje-schedule`
+is the crate that computes that order. It is small on purpose: it owns exactly one problem, ordering a set of
+registered passes by their declared dependencies, and it solves that problem once per compile, not once per
+pass.
+
+The crate sits entirely on the compile side. It has no runtime counterpart and no runtime dependency: it is
+`#![no_std]`, no alloc, and its only external dependency beyond `vehje-ir` is `arvo-graph` for the topological
+walk and `arvo-bitmask` for the adjacency storage. The schedule it produces is consumed once, at the start of
+a compile, and then discarded. This document covers what the DAG actually orders, why its remit is narrower
+than the name might suggest, and where the crate stops and hilavitkutin's runtime scheduling begins.
+
+## What gets scheduled
+
+A `Pass` is a registered compile pass: something that reads and writes the IR, with declared dependencies on
+other passes. The framework's own Core stages (resolve, check) register as passes, and a consumer's family
+passes register alongside them at the same point. What the DAG orders is the union of both: the Core stages
+plus whatever family-specific checks and macro passes a consumer contributes, all placed into one dependency
+graph and walked once.
+
+`PassDag` is that graph. It is built from registration plus each pass's declared dependency edges, and the
+adjacency is backed by an `arvo-bitmask` `BitMatrix` over a compile-time capacity, the same primitive
+`arvo-graph`'s other DAG algorithms use elsewhere in the stack. There is no dynamic allocation involved in
+building or holding the graph: the capacity is fixed at compile time and the matrix is a stack value.
+
+`Schedule` is the result of walking that graph: a topological order over the registered passes. The walk
+itself is `arvo-graph::topo_sort`, Kahn's algorithm over the `BitMatrix` adjacency. It runs once. There is no
+incremental re-walk, no re-ordering mid-compile, no dynamic re-scheduling as passes run; the whole point of a
+single-shot topological sort is that the order is decided before any pass executes and then followed exactly.
+
+A cycle in the declared dependencies is not a separate error path bolted on afterward; it falls directly out
+of what `topo_sort` already returns. The algorithm reports how many nodes it managed to place in the order
+(`valid_count`) alongside the order itself. On an acyclic graph every node gets placed, so `valid_count`
+equals the node count `N`. On a cyclic graph, the nodes caught in the cycle never reach an in-degree of zero,
+so they never get placed, and `valid_count` comes back strictly less than `N`. `vehje-schedule` treats that
+gap as the cycle signal: `valid_count < N` is `ScheduleError::Cycle`, and the crate's job is then to name the
+passes the walk failed to place, so the diagnostic points at the actual passes in the cycle rather than just
+reporting "a cycle exists somewhere."
+
+The other diagnostic the crate reports is a missing dependency: a pass that names a dependency on a pass ID
+that was never registered. This is checked at DAG construction, before any walk runs, because a dangling edge
+is a different failure than a cycle and deserves a different message.
+
+## Why the remit is narrower than it looks
+
+An earlier shape of the compiler treated resolve and check as two stages in a pipeline that needed explicit
+sequencing, with `vehje-schedule` as the thing that ordered them as peers alongside whatever else registered.
+That shape does not hold anymore. The compile-and-verify side of the framework is one object now, not a
+pipeline of independently-scheduled stages: resolution and checking are folded into a single engine frame,
+and there is no longer a genuine ordering question between them for this crate to answer.
+
+What is left, and what the crate now exists for, is the one part of that old job that is still a real
+scheduling problem: ordering a consumer's family passes against the Core stages. That is the actual extension
+mechanism. A consumer's family-specific check might need to run after resolve has produced its side-table but
+before check discharges the effect proof; a certified macro pass might need to run before the family's own
+checks so the checks see already-expanded IR. Those orderings are declared, not assumed, and `vehje-schedule`
+is what turns the declarations into one linear order the compiler follows.
+
+This narrowing is a deliberate, provisional shape rather than a permanent architectural line. If it turns out
+that family passes are best understood as handler instances of the compile-stage effect discipline the engine
+already runs, the ordering problem this crate solves folds into that discipline and the crate goes away. It
+is kept for now because it exists, it is small, and removing it ahead of that unification would be betting on
+a piece of design that has not been proven yet. A crate that earns its keep by doing one narrow job well is
+cheaper to delete later than a wrong abstraction is to unwind.
+
+## Why the runtime does not use this crate
+
+The compile side does single-shot DAG walks: build the graph once from static registration, sort it once,
+follow the order once, discard it. That shape fits a fixed, known-in-advance set of passes running once per
+compile. It does not fit the runtime at all. The runtime executes a residual against a live environment,
+frame after frame, with execution units that are dispatched, retried, and re-entered continuously rather than
+walked once and thrown away. That is hilavitkutin's job: a morsel-driven scheduler built for exactly that
+shape of repeated, windowed, cache-local dispatch over columnar data.
+
+Reusing `vehje-schedule` for the runtime would mean pretending the runtime's execution units are a static,
+one-shot DAG when they are not. The two problems, compile-time pass ordering and runtime frame execution,
+are different enough in shape that sharing one scheduler between them would force one side to bend into the
+other's assumptions. `vehje-schedule` stays a compile-side, single-shot pass scheduler; the runtime side owns
+its own scheduling story through hilavitkutin, and the two never cross.
+
+## What is not built yet
+
+The `Pass` trait as it stands names a pass and its dependencies by identity; it does not yet carry the
+per-pass read and write sets over the IR that would let the scheduler reason about data access rather than
+just declared ordering. Those read/write sets are meant to be an `arvo-bitmask` access mask, the same
+primitive family the DAG's own adjacency already uses, and they are what would eventually let the scheduler
+prove an ordering is safe from the access pattern rather than trust the dependency declaration alone.
+
+Correspondingly, `PassDag`'s adjacency construction and `Schedule`'s actual call into `arvo-graph::topo_sort`
+are not wired yet. The types exist, the intended construction is documented at each site, and the surface is
+stable enough for a consumer to register against, but the DAG is not yet built from real dependency edges and
+the topological walk is not yet invoked. Both land together with the first consumer family pass, because
+that is the point at which there is a real dependency graph to build and a real order to prove. Building the
+wiring ahead of a consumer to exercise it would mean guessing at a shape nothing has tested yet; the narrowed
+remit described above is itself the product of one such guess turning out wrong once already.

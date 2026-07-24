@@ -1,0 +1,137 @@
+# Deepdive: the output spectrum, from interpretation to transpilation
+
+`vehje-codegen` turns a checked program into output. The question a first reading of that sentence
+raises is what "output" means: does the crate interpret a program down to a value, or does it
+transpile a program into another language's source text. The answer is that both are the same
+operation aimed at different targets, and a target is a point on a spectrum rather than a member of
+two disjoint categories. An interpretation target reduces everything to a value. A transpilation
+target reduces nothing and re-expresses the program in another surface. Every real target, native
+code, a game-configuration emitter, a document writer, sits somewhere between the two, and where it
+sits is a staging choice made by the target's own implementation, not a fork in the framework's
+contract.
+
+This framing is not aesthetic. It decides what the framework has to build once and what a target
+author has to build per target. If interpretation and transpilation were different operations, the
+crate would need two contracts, two traversal engines, and two sets of proof obligations, and every
+target would have to declare up front which side of the fork it lived on. Because they are one
+operation, the crate needs one fold, one target contract, and one proof obligation, and a target's
+position on the spectrum is an internal implementation detail the framework does not need to know
+about.
+
+A survey of how other systems solve the same problem settled the encoding this crate uses. Two
+shapes recur across the literature: final encoding, where a term is generic over its interpreter and
+adding a backend is free while adding a node kind breaks every backend, and initial encoding, where a
+term is a concrete tree and adding a backend is free while adding a node kind edits every backend. No
+production Rust compiler, not rustc, not rust-analyzer, not cranelift, ships final encoding as its
+term representation, because Rust's lack of higher-kinded types and its forced per-instantiation
+monomorphization strip away the ergonomics that make final encoding attractive in languages with
+typeclass dictionaries. The mainstream resolution, and the one this crate follows, is a concrete
+arena-held tree walked by ordinary generic functions: parse once into `vehje-ir`'s Core substrate, then
+let a target close over that fixed representation rather than parameterizing the representation over
+the target.
+
+## Inclusion, not coverage
+
+A closed-universe writer has to handle every constructor whether or not it can render it, and the
+established resolution (seen in Pandoc's raw-content writers, which fall through to a warning on a
+format they do not recognize) is a silent-drop contract: the writer degrades gracefully and the caller
+finds out, if at all, from a log line. `vehje-codegen` takes the opposite contract. A target declares,
+as a type-level set, exactly which families it supports and exactly which effects it permits, and a
+program using anything outside those declared sets is refused outright, with the offending construct
+named in the error. This is inclusion rather than coverage: a target is honest about a smaller
+declared surface, and the framework enforces that honesty rather than hoping every target remembers to
+guard every arm of a match. `Target` extends `vehje-ir`'s `TargetSets`, whose `Supports` and `Permits`
+associated types are the type-level family and effect sets, built over the same `AccessSet` machinery
+`hilavitkutin-api` already provides. Emission is bounded on the program's families being contained in
+`Supports` and its effects contained in `Permits`, checked through `ContainsAll`.
+
+## The Checked witness
+
+The inclusion proof is not advisory. `emit` accepts only a `Checked<'_, T>`, and the only way to
+produce one is to run the check for that target. The witness is minted in `vehje-check` because the
+proof belongs with the prover, and `vehje-codegen` re-exports it because `emit` is where it is
+consumed. `check_for` wraps the sanctioned mint: its `where` bounds, `T::Supports: ContainsAll<Families>`
+and `T::Permits: ContainsAll<Effects>`, are the inclusion proof itself, derived from the target through
+`TargetSets` rather than taken as free parameters a caller could fabricate. For a statically known
+program the whole check discharges at compile time and costs nothing at runtime. For a program parsed
+at runtime, the same proof runs as a bitmask comparison over family and effect ids, and the typestate
+still makes the check unskippable: there is no code path that reaches `emit` without a `Checked`
+value in hand, because nothing else in the crate can construct one. The obligation to check is
+therefore not a convention a target author has to remember. It is a type the compiler refuses to let
+you route around.
+
+The one generic fold, `fold_core`, is the shared traversal every target folds over: a pre-order walk
+over the Core substrate's twelve forms, invoking a target-supplied visit on each node before
+recursing into its children. A family's own sub-structure attaches at `Raw`, reached through the same
+fold rather than through a second traversal. A target never reimplements the walk; it supplies the
+per-node emit logic and inherits the walk order, the same shape Racket's `render%` gives its mixins
+and Pandoc's `Walkable` gives its writers, adapted to a monomorphised, no-alloc setting with no
+trait-object dispatch anywhere in the framework layer.
+
+## Proof-directed strategy selection
+
+A target's emit logic still has to choose, per construct, how expensive a representation to produce:
+interpret a value directly, lower to bytecode, or generate native code. The framework calls this
+choice proof-directed strategy selection, and until an evidence-gathering effort measured it, the
+choice rested on intuition borrowed from adjacent literature. The measurements, run through the bench
+harness with every candidate compiled as its own isolated variant and cross-validated byte-exact
+against an oracle, corrected that intuition on three points that now ground how a target's stencil
+emitter and dispatch loop are built.
+
+**The native ceiling is 1.0x to 1.5x over a good interpreter for scalar code, not a 10x keystone.**
+Fairly measured, with the interpreter's data-dependent index kept non-vectorisable and the native
+arithmetic kept opaque so the compiler cannot auto-vectorise the comparison to nothing, copy-and-patch
+native buys roughly 1.0x to 1.2x across three representative regimes, and the wider composition study
+puts the ceiling at up to about 1.5x. The interpreter's dispatch overhead is already small enough that
+an out-of-order core hides most of it, so native code earns only a modest multiplier on scalar work.
+The one regime where native wins by an order of magnitude needs auto-vectorisation, which a
+copy-and-patch stencil cannot produce: a compiled path if-converts and vectorises where the stencil
+emits a real, mispredicting branch, so the scalar stencil actually loses ground to a fully compiled
+path as problem size grows. The honest reading is that the interpreter floor sits near native for
+scalar code, and the transformative order-of-magnitude win belongs to a vectorising JIT aimed at the
+rare consumer whose workload is genuinely compute-bound, not to the native tier in general.
+
+**Plain switch dispatch wins for vehje's lean vocabulary.** The runtime design had imported tail-call
+threading from the dynamic-language literature on the strength of reported wins over hand-written
+assembly interpreters. The measurement does not carry over: across every tested case a plain switch is
+fastest, with tail-call threading measured at roughly 1.7x slower. The reason is specific to vehje's
+op vocabulary. Core is a flat, statically checked IR with roughly twenty-five primitives, small enough
+that the switch's dispatch branch is well predicted and the extra machinery threading requires costs
+more than it saves. Threading wins in the source literature only once an interpreter's op count runs
+into the hundreds, which is not vehje's shape. A target's straight-line dispatch loop is therefore a
+plain switch by default; tail-call threading is a measured-and-rejected alternative for this
+vocabulary, kept off the critical path.
+
+**The branch strategy is tier-dependent, and a target's stencil emitter must apply the tier-specific
+map rather than a fixed shape.** Under interpretation, evaluating every arm of a branch unconditionally
+is the worst strategy across the board, and the interpreter never does it. Under native code generation
+the ranking can invert: for a cheap-arm, many-way, statistically unpredictable branch, a branchless
+evaluate-all strategy wins by about 26% over a jump-table baseline, because it avoids the misprediction
+the dispatch strategies pay for. For heavier arms or narrower branches, the one-arm dispatch strategies
+tie or win outright, and evaluate-all loses. A stencil emitter that hardcodes one branch shape at scale
+is not measuring a tier's ceiling honestly; it is measuring a strategy bug. The correct design grades
+each region and selects the evaluator per grade, which is the actual content of proof-directed
+strategy selection: the strategy is chosen by evidence about the region, not fixed once for the whole
+program.
+
+## Copy-and-patch as an opt-in accelerator
+
+Given the ceiling above, copy-and-patch native code generation is positioned in the framework as an
+opt-in accelerator a target may reach for, not as a dependency any target needs to function or as the
+keystone that makes the framework fast. Its stencil emitter is the concrete site where the
+tier-dependent branch map lives: the emitter selects branchless evaluate-all where the grade says a
+cheap-arm, many-way branch dominates the region, and falls back to a single-arm dispatch elsewhere,
+rather than emitting one shape everywhere and losing ground at scale. The mechanism itself, allocating
+executable pages, writing a stencil, patching an immediate operand, toggling write-and-execute
+protection, and invalidating the instruction cache, has been demonstrated feasible; what remains is the
+stencil-extraction toolchain that turns a hand-written kernel into a patchable template, tracked as
+deferred work rather than a blocker on the target contract this crate ships.
+
+## Non-scope
+
+`vehje-codegen` produces a `Checked` residual; it does not decide how that residual crosses to a
+runtime, and it does not ship any concrete target. Every target, native code, a game-configuration
+emitter, a document writer, lives in its own consumer repository with its own `Target` implementation
+and its own choice of where on the interpretation-to-transpilation spectrum it sits. The framework's
+obligation ends at the fold, the inclusion proof, and the compile-time composition that resolves a
+target name to a monomorphised emit with no `dyn` dispatch anywhere in the call path.

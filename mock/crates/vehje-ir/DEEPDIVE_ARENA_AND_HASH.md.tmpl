@@ -1,0 +1,160 @@
+# vehje-ir. Arena and Structural Hash Deep Dive
+
+`vehje-ir` holds a program as a flat array of fixed-width nodes plus two
+supporting side structures, all of them caller-provided memory. There is no
+heap anywhere in this crate: the arena, the child-index pool, and the span
+and grade tables are slices the driver allocates once and hands in, and
+every construction operation is a bump append against a cursor. This
+document covers how the twelve Core forms fit into one `Copy` slot each,
+how the arena's child-index pool plays the same role as
+`cranelift-entity`'s `EntityList`/`ListPool` pair, and how the structural
+hash folds a subtree's content into one word without touching the heap or
+crossing interner boundaries.
+
+The arena's shape is not a stylistic choice. `vehje-ir` is the crate every
+other framework crate depends on, so its per-node cost sets a floor under
+everything built on top of it: the resolve walk, the check pass, the
+lowering pipeline, and the interpreter's own node reads all pay whatever
+the arena's layout costs. The record-layout question below, whether an
+operand lives inline in the node or behind a pool index, and how many
+operands fit inline before spilling, was measured rather than guessed, and
+the measurement changed the design's answer more than once. That history is
+part of what this document records, including a case where an earlier
+result did not survive a later, more rigorous re-run.
+
+## The no-alloc arena model
+
+An `Arena<'a>` wraps three caller-provided regions and two bump cursors.
+The node arena (`&mut [Node]`) holds one `Node` per slot, addressed by
+`NodeRef`, a platform-width index newtype. The span side-table
+(`&mut [Span]`) is parallel to the node arena, sized and indexed exactly
+like it, so a diagnostic holding a `NodeRef` recovers its source location
+through `arena.span(at)` without the node itself carrying a span inline.
+The child-index pool (`&mut [NodeRef]`) is the third region, where every
+form with variable-arity children (`Apply`'s arguments, `Match`'s arms,
+`Handle`'s clauses, `Raw`'s payload) stores its child handles. A `NodeList`
+is a `{ start, len }` pair into that pool, four bytes of index rather than
+a per-node collection. This is the direct, hand-built equivalent of
+`cranelift-entity`'s `EntityList<T>` paired with a `ListPool<T>`: instead of
+every variadic node owning its own growable collection, which would mean
+one allocation per node with children, every node needing a child list
+holds a small handle into one shared pool, and the whole program's
+variable-arity edges share that single backing region. The `GradeTable`
+side-table `vehje-check` fills follows the same parallel-region discipline
+as the span table: sized like the node arena, keyed by `NodeRef`, with
+bounds-checked `get`/`set` so an undersized table surfaces as a diagnostic
+rather than a crash.
+
+Construction only ever appends. `Arena::push` writes a node and its span at
+the current cursor and advances it, returning `Maybe::Isnt` if the region
+is full rather than growing it; `Arena::alloc_list` copies a slice of refs
+into the pool at the current pool cursor and returns the `NodeList`
+handle, refusing rather than growing when the pool is exhausted. There is
+no deallocation path inside the crate: the arena's lifetime is the
+caller's, and it goes away in one release when the caller's region does.
+Reads are plain indexed slice access; `list` clamps its returned range to
+the live portion of the pool, so a malformed `NodeList` yields a truncated
+or empty slice instead of reading past what has actually been written. The
+`arena` module is kept free of vehje-specific policy on purpose, so it can
+be lifted upstream into `hilavitkutin` (which owns the memory and storage
+layer for the rest of the framework) once its shape has proven itself.
+
+## The twelve Core forms as a fixed-width slot
+
+`Node` is an enum over the twelve Core forms: `Lit`, `Var`, `Let`,
+`Lambda`, `Apply`, `Project`, `If`, `Match`, `Iter`, `Interp`, `Raw`, and
+`Handle`. Every variant is `Copy`, and the enum as a whole is one arena
+slot: no variant owns heap memory, no variant carries a lifetime, and the
+whole thing is sized once at compile time regardless of which form a given
+node holds. A form's fixed-arity operands (`Let`'s `value` and `body`,
+`Apply`'s `callee`, `Project`'s `base`) are inline `NodeRef` fields; its
+variable-arity children go through a `NodeList` into the pool rather than
+inflating the enum's size to accommodate the largest possible child count.
+Names are `Str`, the interned handle from `hilavitkutin-str`, never a raw
+string. `Raw` is the one typed escape hatch: a `FamilyId` plus a `NodeList`
+payload, and it is how a consumer family's own node kinds attach to the
+Core arena without the Core enum knowing they exist.
+
+`Match` and `Handle` each carry a deferred payload on purpose rather than
+by oversight. `Match`'s arms are a plain `NodeList` today; the pattern
+representation pairing each arm with a scrutinee pattern lands with the
+first consumer that actually matches. `Handle`'s clauses are similarly a
+`NodeList` placeholder until the bounded multi-shot continuation encoding
+is in place, at which point each clause needs an operation id, a
+handler-body handle, and a resumption binder rather than a bare child ref.
+Both mirror each other: the eventual shape is known in outline, but
+committing to its exact encoding before a real consumer exercises it would
+be guessing.
+
+## The inline-operand question, and what the bench actually settled
+
+The record-layout question that matters most for per-node cost is not
+whether operands exist inline (they do) but how many operands a form can
+hold inline before the rest spill into the child-index pool. Two format
+questions sit under this crate's design, the exact node record width and
+the exact inline-operand cutoff, and only one of them is settled.
+
+Settled: pool indirection is the expensive path. A node whose operand is
+reached through a pool index measured at 10.7 nanoseconds per node,
+against 4.4 nanoseconds per node when the same operand lives inline in the
+record, roughly two and a half times the cost, holding across the
+call-fraction sweep the bench ran. The design's answer to "inline or
+indexed" is therefore inline, without qualification: the child-index pool
+exists for genuinely variable-arity children, not as a general indirection
+mechanism for operands a form always has a fixed number of.
+
+Not settled: the exact record width and inline-operand count. An earlier
+measurement found a 24-byte record carrying three inline operands beating
+a 16-byte record with two operands across every call fraction tested
+(3.82 to 4.28 nanoseconds against 4.43 to 5.65 nanoseconds), attributed to
+the wider record avoiding a pool spill on the hot binary-operation path,
+with a corpus study backing three operands as the natural cutoff. That
+result did not survive a later, more rigorous re-measurement through a
+stricter per-variant isolation harness: on a sequential arena stream, the
+wider record's density penalty and the narrower record's occasional spill
+cost washed out against each other, and record width came back a null
+result at scale. Because the later measurement is both newer and more
+rigorous, it holds over the earlier one, so the exact inline-operand count
+is an open measure-then-lock decision rather than a shipped 24-byte
+commitment. The crate commits today to inline operands as a principle; a
+specific width is locked once a corpus drawn from real consumers, rather
+than a proxy corpus, exists to lock it against.
+
+## Structural hashing: one definition, sound within one interner
+
+`hash_of` computes a `StructuralHash` over an IR subtree by a post-order
+fold: a node's hash mixes its own discriminant with the hashes of its
+children, using an FNV-1a-style mix over 64-bit words. The fold also mixes
+each node's leaf content: a `Var`'s interned name, a `Lit`'s tag and scalar
+value, a `Project`'s key, a `Raw`'s family id. Folding leaf content is what
+keeps structurally distinct subtrees from hashing to the same value;
+without it, `Var(x)` and `Var(y)`, or `Int(1)` and `Int(2)`, would collide
+on their shared discriminant alone. With leaf content folded in,
+structurally equal subtrees hash equal and structurally distinct ones hash
+distinct, the property hash-consing needs.
+
+The one thing this hash is not is stable across interners. The leaf fold
+for a `Var` or a string literal mixes the interned handle, a small integer
+identifying a position in one particular interner's table, not the
+string's actual bytes. That handle is stable for the lifetime of a single
+compilation's interner, so two `Var` nodes naming the same identifier
+within one compile hash identically, and the fold is sound for within
+compilation hash-consing, its only current consumer. It is not sound
+across two different interners or two different compiled artifacts,
+because the same identifier can land at different handle values in two
+separate interner instances, and the fold would then treat identical
+source text as structurally distinct. Cross-artifact or cross-interner
+identity is answered by a different mechanism: a byte-image hash computed
+over the serialized wire form, interner-independent because it hashes the
+actual bytes rather than a handle into a table. The two hashes solve
+different problems and are not interchangeable.
+
+`StructuralHash` is defined once in this crate rather than once per
+consumer because three downstream mechanisms need the identical identity:
+hash-consing during lowering, dedup keying in the incremental compilation
+layer (which reads the underlying hash value directly rather than this
+type, so that layer stays independent of `vehje-ir`), and the manifest a
+later runtime-generation stage produces. Defining the fold separately in
+each consumer would let identity drift out from under the
+proof-preservation argument the incremental layer's soundness depends on;
+one definition, read by three consumers, is what keeps that argument true.
