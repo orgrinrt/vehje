@@ -20,6 +20,8 @@ notko.workspace = true
 [dev-dependencies]
 arvo.workspace = true
 arvo-bits.workspace = true
+notko.workspace = true
+hilavitkutin-api.workspace = true
 
 [build-dependencies]
 mockspace.workspace = true

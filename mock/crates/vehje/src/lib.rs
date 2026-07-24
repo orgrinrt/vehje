@@ -14,14 +14,29 @@
 #![feature(const_trait_impl)]
 #![deny(unused, unreachable_code, unused_must_use, unused_imports, dead_code)]
 
-use hilavitkutin_api::sink::ByteEmitter;
 use notko::Outcome;
-use vehje_codegen::fold_core;
-use vehje_ir::{Arena, Cons, Core, Diagnostic, Empty, Node, NodeRef, Phase, TargetSets};
-use vehje_resolve::{resolve, ResolveError};
 
-/// The `Target` output contract, re-exported from `vehje-codegen`.
-pub use vehje_codegen::{Checked, CodegenError, Target};
+/// The consumer-facing surface, re-exported so a grammar plus a family plus a
+/// target is built against `vehje` alone. Grouped by role (see the DESIGN).
+///
+/// The byte sink a target emits through.
+pub use hilavitkutin_api::sink::ByteEmitter;
+/// The output surface: the target contract, the mint, the shared fold, and the
+/// witness.
+pub use vehje_codegen::{check_for, fold_core, Checked, CodegenError, Target};
+/// IR building, the family machinery, the set constructors and inclusion
+/// witnesses, and the grade vocabulary.
+pub use vehje_ir::{
+    AccessSet, Arena, Builder, Cons, Contains, ContainsAll, Core, Diagnostic, EffectMask, Empty,
+    Family, FamilyId, Grade, GradeTable, Literal, Node, NodeList, NodeRef, Phase, Span, TargetSets,
+};
+/// The resolve pass, its side-table, and its family hook.
+pub use vehje_resolve::{
+    resolve, resolve_into, resolve_into_with, resolve_with, CoreFamilies, FamilyResolve, Resolution,
+    ResolveError,
+};
+/// The graded check pass, its evidence token, and its family hook.
+pub use vehje_typecheck::{check, check_with, CheckError, FamilyCheck, Graded};
 
 /// The input-side plug-in: a consumer's front-end produces well-formed
 /// Core-plus-family IR.
