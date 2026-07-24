@@ -45,10 +45,19 @@ interface, so nothing downstream changes when it arrives.
   a load-time artifact from bloating.
 - `Anf`. The output normal form is A-normal form: every intermediate is named
   and evaluation order equals binding order, so effect order is explicit in the
-  residual and no separate sequencing form is needed. Hoisting intermediates
-  into fresh `Let` bindings creates new nodes, so `Anf` lands with the
-  mutable-arena rewrite path (the redirecting `Rewrite` cannot create nodes); it
-  is the deferred piece of the cheap subset.
+  residual and no separate sequencing form is needed. `Anf::apply` is the
+  node-creating catamorphism: it reads the folded and shared input through the
+  `Rewrite` view and appends fresh nodes, flattening a term to flat A-normal
+  form (no let-bound value is itself a let). Each hoisted intermediate is a
+  fresh `Let` whose binder is minted by `Generator<BinderDomain>` (kind `0b001`),
+  never equal to a source name's `0b000`, so a hoisted binding can never capture
+  a source variable. The fold builds inner-to-outer against the append-only
+  arena with no closures and no alloc, remembering hoist-bindings in a fixed-cap
+  stack scratch (the pool-resident incremental-list primitive that removes the
+  arity cap is the follow-up). `Anf::apply` takes a `&mut Builder` and a
+  `&mut Generator<BinderDomain>` and returns the ANF root, `Isnt` on arena-full
+  or generator-exhaustion; `Lower::lower` threads both and returns that root as
+  the program root.
 - `RuleTable`. The fixed rule set the cheap subset applies, and the crate's
   validated-data slice: the same table `vehje-runtime-gen` packages for the
   runtime's load-time lowering of arriving scripts, so the Rust crate is the
