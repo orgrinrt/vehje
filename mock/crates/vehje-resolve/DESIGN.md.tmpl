@@ -23,7 +23,17 @@ real, not nominal, when the passes are shared. `#![no_std]`, no alloc.
  passes so they do not re-resolve.
 - Family-extension hooks: a family's own binding forms extend the walk
  without the Core pass knowing them, composing with the family set the way
- the typestate axes do.
+ the typestate axes do. The walk descends into a `Raw` node's payload,
+ resolving its child handles exactly as an `Apply`'s arguments (a `Var` inside
+ a family node is a real reference and is resolved), rather than treating `Raw`
+ as a leaf.
+- `FamilyResolve`. The family-extension hook trait a consumer implements to add
+ family-specific resolution (a family binding form) at a `Raw` node. Its method
+ defaults to a no-op, because the base walk already descends into and resolves
+ the payload's Core children. `resolve` and `resolve_into` are the Core-only
+ entries (they use the default hook); `resolve_with` and `resolve_into_with`
+ take a consumer hook. `CoreFamilies` is the no-op default the Core-only entries
+ use.
 - `ResolveError`. Resolve diagnostics (unresolved name, duplicate binding).
 
 ## Non-scope

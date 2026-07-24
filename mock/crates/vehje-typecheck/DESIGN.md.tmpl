@@ -76,7 +76,15 @@ Rust crate is the definition; the Zig analyzer is the specialised execution.
 A family's own checks (a language's coherence rules, a document family's block
 nesting rules) extend the walk through the family-extension hooks; the Core pass
 runs the shared graded inference and dispatches to the family checks for family
-nodes.
+nodes. The base pass descends into a `Raw` node's payload, joining its
+children's grades exactly as it joins an `Apply`'s, rather than treating `Raw`
+as a leaf.
+
+- `FamilyCheck`. The family-extension hook trait a consumer implements to
+  declare a family operation's own effect. Its `effect_of_raw` method defaults
+  to the empty effect; the check pass joins the returned effect into the `Raw`
+  node's grade on top of the children's. `check` is the Core-only entry (default
+  hook); `check_with` takes a consumer hook.
 
 ## Non-scope
 
