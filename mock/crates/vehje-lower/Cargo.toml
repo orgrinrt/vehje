@@ -5,6 +5,7 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
+hilavitkutin-sym.workspace = true
 arvo.workspace = true
 notko.workspace = true
 vehje-ir.workspace = true

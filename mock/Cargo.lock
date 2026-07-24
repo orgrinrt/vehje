@@ -573,6 +573,7 @@ dependencies = [
  "arvo",
  "arvo-bits",
  "hilavitkutin-str",
+ "hilavitkutin-sym",
  "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
  "vehje-fixpoint",
