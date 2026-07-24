@@ -1,0 +1,50 @@
+6b0f1d26 chore: lock src CL for the family-extension dispatch seam
+c49df9ea docs: record alloc_list and the review outcome in the src CL
+efc92988 feat: implement the family-extension dispatch seam (descend into Raw.payload, FamilyResolve/FamilyCheck hooks)
+9d23230a docs: open src CL for the family-extension dispatch seam
+eae8e47b chore: lock doc CL for the family-extension dispatch seam
+f595ee19 docs: document the FamilyResolve/FamilyCheck hooks and Raw payload descent
+efccc3b7 docs: open doc CL for the family-extension dispatch seam
+1e3968c7 docs: open family-extension dispatch-seam round topic
+224a1b4b docs: record the framework completion and deferral boundary
+582e1d71 chore: close the deepdive-completion round
+2208187c chore: lock src CL for the deepdive-completion round
+2f0aac5e docs: open no-op src CL for the doc-only deepdive round
+529d5571 chore: lock doc CL for the deepdive-completion round
+63863ee9 docs: add per-crate deepdives for the nine crates lacking one
+a5cfea6f docs: open doc CL for the deepdive-completion round
+981eae8d docs: open deepdive-completion round topic
+56454085 chore: close implementation-to-match-design round
+429a1f59 chore: lock src CL for implementation-to-match-design
+38df45bf fix: make CSE capture-safe and collision-verified, validate the region table, catalogue the slot-collision floor
+f6c75a2d feat: implement reachability binder rule, bounds-checked GradeTable, value-arena validate, and lower cheap stratum
+fbaa57c3 docs: open src CL for implementation-to-match-design
+e3fa0cb2 chore: lock doc CL for implementation-to-match-design
+de5698ac docs: document Rewrite side-table, bounds-checked GradeTable, real validate; narrow hash and discriminant claims
+f763b857 docs: open doc CL for implementation-to-match-design round
+bc234222 docs: open implementation-to-match-design round (bench-complete findings + consolidation topics)
+d3b2038e bench: commit abi batched-execute full-run history (confirms batched-column-entry decision)
+92953592 chore: close runtime-abi soundness-fix round
+09fb9557 chore: lock src CL for runtime-abi soundness fixes
+1aad7122 fix: give value-arena wire records repr(C) layout and bounds-safe accessors
+fab55bf2 docs: open src CL for runtime-abi soundness fixes
+efc6aa0f chore: lock doc CL for runtime-abi soundness fixes
+154c21d1 docs: document repr(C) wire layout, try_get accessor, and open wire-spec items; refresh stale SHAME
+9d8cc432 docs: open doc CL for runtime-abi soundness fixes
+c3fcb6c3 docs: open runtime-abi soundness-fix round topic
+daba1a75 chore: close readiness-review soundness-fix round
+7f7c83ab chore: lock src CL for readiness-review soundness fixes
+0d41523f docs: record review outcome in src CL
+87e360d5 fix: harden arena list clamp against overflow and scope the hash interner-stability claim
+239389ee fix: seal the Checked witness and restore structural-hash and let-rec soundness
+b30df927 docs: open src CL for readiness-review soundness fixes
+c6e8dfb1 chore: lock doc CL for readiness-review soundness fixes
+198dc080 docs: apply readiness-review doc edits (sealed-mint contract, hash soundness, let-rec, doc/source fixes)
+5340556a docs: open doc CL for readiness-review soundness fixes
+7abfdfd2 docs: open readiness-review soundness-fix round topic
+a2d3f1a3 chore: close design round 202607240130 (converged design + implementation)
+677cebda chore: lock src changelist for the converged-design implementation
+d93c2de9 fix: seal the Checked witness and address impl-review findings
+ea9bb237 docs: regenerate rendered docs and agent rules for the twelve-crate taxonomy
+a56691ca docs: reconcile src changelist with the deferred rename and M-level scope
+85fed91d feat: implement the converged twelve-crate design ecosystem
