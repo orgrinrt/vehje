@@ -235,6 +235,34 @@ J. op's fresh 07-24 convictions: N-buffer host-lent resource adaptivity; diagnos
   benches. Epistemic humility as a standing principle, not just "benches decide."
 - Group XVI uncertains-with-negative-precedent -> CONFIRM.
 
+## Batch 8 (post-expert-audit calls) - answered 2026-07-24 (vacation directive)
+
+After the two fresh expert audits op ordered (Lattner infra-lens + the Torvalds systems double-take), the "count our chickens take 2" review surfaced a consolidated set of open decisions. op answered them in two AskUserQuestion rounds. Recorded verbatim-intent for the canon.
+
+### PE1 vehje-schedule -> DISSOLVE (verified no use)
+op: "it is more of a runtime concern, not really something vehje needs rust side, so yeah, I guess it's redundant? We can add it back later if we need it for something. Unless we already have a use for it, just not implemented?" Verified: no `vehje_schedule::` use anywhere in source, the canon never mentions the crate, only `vehje-runtime-driver/Cargo.toml` declares an unused dep. So there is no designed-or-implemented use. DECISION: dissolve the crate. Delete `vehje-schedule`, hardcode the 4-pass compile sequence (resolve/check/lower/emit) in `vehje::run`, drop the unused dep. Pass scheduling, if ever needed, is a RUNTIME concern (Zig/engine side), re-addable later. This is an IMPL round after the canon.
+
+### PE2 CR1 sequencing -> RUN THE MULTI-SHOT REPRESENTATION BENCH-FORK NOW
+op chose "run the bench-fork now" over one-shot-first. So: build the XVII4 candidates (segmented capture-and-reinstate over a host-lent budget vs compile-time CPS/defunctionalisation of the handled body) under `mock/benches/` now, measure capture/resume cost + ABI shape, and settle the continuation representation. The multi-shot novelty claim stays on schedule; canon carries CR1 with the representation as an actively-being-benched fork (not a deferred one). The scope note (re-execution proven; reinstatement-without-heap + multi-shot-under-effects were the open halves) still frames it until the bench lands.
+
+### PE3 compile-side no-alloc -> AXIOM + MANDATE MITIGATIONS
+Keep no-alloc on BOTH sides as a stack-wide axiom (per the no-heap thesis and vehje soul 2.9); no dev-side allocator dispensation. The canon names the costs and MANDATES the fixes: `must_use` / size-refusing constructors for grade regions so the illegal state (a region smaller than the arena) cannot be built; defunctionalised (non-recursive) compile passes. This directly fixes the two source bugs Torvalds found (the discarded `GradeTable::set` failure at `typecheck:314`; recursion-on-IR-depth in `infer`/`structurally_equal`). Both land as catalogued red tests then fixes in the IMPL rounds.
+
+### PE4 spirit-over-letter precedence -> NARROW THE CLAUSE
+Spirit-over-letter governs reading STALE INTERMEDIATE artifacts only (its original purpose: a stale early line does not override the evolved intent). The canon's LETTER governs and is amendable solely by a superseding round; the drift test (canon Section 10) is the letter. This removes the 20-year relitigation hazard Torvalds named and aligns with the workspace's `canonical-design-outranks-intermediate-rounds` rule. The canon preamble is reworded accordingly.
+
+### PE5 first consumer / sequencing -> NOT "FASTEST", "MOST IDEAL AND OPTIMAL"
+op rejected the framing: "we aren't about 'fastest', we are about 'most ideal and optimal'." So the experts' consumer-first recommendation (build mockspace-docs early to drive/decide the §11 wiring, because it is the fastest resolver) is declined as a speed optimisation. The §11 wiring is done the ideal, design-first, maximal-shape way (the reject-re-tiering ethos: do not take the locally-cheaper consumer-driven shortcut). mockspace-docs enters as the first consumer when vehje is genuinely ready, per the standing goal. Bench-decided forks still resolve by bench (PE2), not by rushing a consumer to drive them.
+
+### PE6 centre-of-gravity distillation -> HYBRID OF ALL THREE CANDIDATES
+op: "a hybrid of all of these, they are all good actually." The canon's central one-line distillation fuses all three offered directions (discharge/prove/erase/ship-data; the surviving one-sentence soul; language-definition-becomes-certified-data) into one coherent, de-pretentious semantic statement. My call on the exact wording (per the standing delegation), synthesising the three. The I6 metacompiler paragraph is iterated + de-pretentiousified to match and to address the full identity, not just the type system.
+
+### Agent's own calls (low-stakes, recorded not asked)
+- Banner the two `canonical_candidate_` docs as superseded-by-`202607241545` (one line each); they remain readable panel artifacts but a reader is pointed at the canon so the pre-correction defects are not re-inherited.
+- Extend the assurance verb ladder with the measured-artifact distinction: "measured (prototype)" vs "measured (shipped crate)", so a standalone-Zig-prototype number never certifies a shipped-crate claim unqualified (the 8M/50ms fixpoint figure is prototype-measured).
+- Adopt "every canon-grade claim carries a catalogued red test or bench cell at authoring" as the standing discipline (applying `catalogue-edge-cases-as-tests` harder); catalogue the two new bugs and the second-direction audit's 23 rows as red tests during the IMPL rounds (the workspace had exactly one catalogued red test against 23 rows).
+- Record as owed design work (roadmap, not blocking the canon): the embedder-author API is the least-designed surface and needs author-clearable scaffolding before the census can broaden past first-party; diagnostics-first-class (N1) needs its own host-lent budget discipline on the no-alloc substrate; the runtime C ABI is the one interface that outlives every mechanism, so its versioning + refusal-of-a-newer-residual compatibility policy is design work owed before the first external consumer, not after.
+
 ## STATUS: ratification COMPLETE. Every inventory group (I-XVII) ratified with op's nuances.
 Net new / augmented beyond the candidates, to bake into the canon:
 - Recursive macros SUPPORTED; termination = binding-time well-foundedness (stage) + static cyclicity detection

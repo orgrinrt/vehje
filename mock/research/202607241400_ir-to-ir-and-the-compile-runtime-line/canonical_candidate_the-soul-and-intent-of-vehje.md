@@ -1,5 +1,7 @@
 # The soul, spirit, and identity of vehje, enumerated
 
+> **SUPERSEDED by the canon at `mock/research/canon/the-soul-of-vehje-positive-catalogue.md`.** This is a panel candidate, kept as an audit-trail artifact. It predates op's post-audit ratifications (batch 8) and the two fresh expert audits (Lattner, Torvalds); read it for detail the canon compresses, but the canon governs, and this document carries pre-correction shapes (the §8 shadows framing, some pinned bench numbers, CR1 stated flatter than its scope) that the canon fixes.
+
 **Date:** 2026-07-24
 **Author:** worker fork, soul-and-intent directive
 **Method:** read the latter, intent-bearing topics of canonical round `202607240130` in full (identity recenter

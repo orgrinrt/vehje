@@ -1,5 +1,7 @@
 # The soul, and its inverse: what still holds, and what was well-intended but died
 
+> **SUPERSEDED by the canon at `mock/research/canon/the-inverse-of-vehje-negative-catalogue.md`.** This is a panel candidate, kept as an audit-trail artifact. It predates op's post-audit ratifications (batch 8) and the two fresh expert audits; read it for detail the canon compresses, but the canon governs.
+
 Worker-fork deliverable (negative take). Companion to the positive enumeration fork and to
 `worker-fork_idealistic-synthesis-...`. My charge has two halves: enumerate the living spirit and
 intent of vehje in words, and then map, thoroughly and with provenance, the inverse: what we
