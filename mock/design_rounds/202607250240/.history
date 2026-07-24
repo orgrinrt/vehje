@@ -1,0 +1,50 @@
+5398ea3b chore: lock src changelist for the vehje-lower ANF split
+35bf4197 refactor: move the ANF catamorphism to a sibling anf module
+13241d47 docs: src changelist for the vehje-lower ANF split
+40ebd6c1 chore: lock doc changelist for vehje-lower ANF split
+55d4b0be chore: open round to split the vehje-lower ANF module
+405b9eb5 chore: close design round 202607250218
+8d7267fa chore: lock src changelist for the ANF catamorphism
+10fe8f89 feat: implement the node-creating ANF catamorphism
+54819f45 docs: src changelist for the ANF catamorphism
+48e28146 chore: lock doc changelist for the ANF catamorphism
+cc9bc0bc docs: vehje-lower Anf is the node-creating catamorphism
+2c299a7f docs: doc changelist for the ANF catamorphism
+fbdf5e14 chore: open round for the node-creating ANF catamorphism
+095a4b5b chore: close design round 202607250208
+333e7f58 chore: lock src changelist for vehje-lower split
+47ea643f refactor: move vehje-lower tests to a sibling file
+83f0f791 docs: src changelist for vehje-lower split
+791b9171 chore: lock doc changelist for vehje-lower split
+e6ec7e49 chore: open round to split vehje-lower file
+3bb064d4 chore: close design round 202607242351
+f2bf0ba1 chore: lock src changelist for sym binder flip
+a8a91d27 feat: flip Core binders to Sym, add BinderDomain
+1344c114 docs: src changelist for Sym binder flip
+3dd264d0 chore: lock doc changelist for Sym binder flip
+8771187c docs: vehje-ir binder identity is Sym, add BinderDomain
+9a08bf2d docs: doc changelist for Sym binder flip
+9b967a98 docs: open round to flip Core binders to Sym
+3d8b5035 canon: write the vehje soul positive + negative catalogues
+dbe6291c research: two fresh expert audits (Lattner, Torvalds) + post-audit count-chickens
+c3b839ad research: node-creating ANF catamorphism + gensym design (v1, Str-based)
+5bad2fd9 chore: close the doc-honesty round
+e95d513d chore: lock src CL for the doc-honesty round
+7d0e87ef docs: open src CL for the doc-honesty round (no source changes)
+a8a9df77 chore: lock doc CL for the audit-driven state labels
+efcd7665 docs: label shipped-vs-intended state across the crate docs
+3780df41 docs: open doc CL for the audit-driven state labels
+fb5fe58b design: open doc-honesty round for the second-direction audit corrections
+15ec13a1 research: second-direction doc-vs-source audit (gap map + IMPL priority)
+10c19f59 chore: close the vehje canon consolidation round
+f317c6f6 chore: lock src CL for the vehje canon consolidation round
+060b9187 fix: correct the hash.rs header and mark the CFG residual gap
+5054eb21 docs: open src CL for the canon's tractable source corrections
+4ecb3bff chore: lock doc CL for the vehje canon alignment round
+1e26a566 docs: re-justify the fixpoint engine on its live consumers, park eqsat
+9a71dae6 docs: align crate docs with the canon and clear the WithEffect gate
+bb291292 docs: open doc CL to align crate docs with the vehje canon
+2da304d6 design: consolidate the vehje canon and its ir-to-ir panel trail
+7152381e design: macro expansion and const fold are ir-to-ir passes iterated to fixpoint
+5a9636b9 docs: audit every remaining FIXME against the design oracle
+fa800c8d chore: close the consumer-facing-API round
