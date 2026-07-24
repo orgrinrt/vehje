@@ -19,7 +19,7 @@ use arvo::Outcome;
 
 use vehje_ir::{
     Arena, Assurance, ContainsAll, EffectMask, Grade, GradeTable, Knowledge, Lease, Node, NodeRef,
-    ReachMask,
+    ReachMask, TargetSets,
 };
 
 /// A check diagnostic.
@@ -74,29 +74,65 @@ impl<'a, T> Checked<'a, T> {
     }
 }
 
+/// Evidence that `check`'s graded fold ran clean over an arena and root.
+///
+/// A zero-cost witness the mint requires, so a `Checked` cannot be minted
+/// without a clean check having run. It binds the exact arena and root that
+/// were checked, and the mint builds the `Checked` from them, so the witness a
+/// target consumes is over the program the check validated. The constructor is
+/// crate-private, so only `check` produces a `Graded`.
+// FIXME: `Graded` proves integrity (no dangling child handle) today; the
+// program-derived family and effect sets it will also carry (so inclusion no
+// longer trusts caller-supplied `Families`/`Effects`) land with the
+// runtime-bitmask path (tracked #29).
+pub struct Graded<'a> {
+    pub(crate) arena: &'a Arena<'a>,
+    pub(crate) root: NodeRef,
+}
+
+impl<'a> Graded<'a> {
+    /// Bind the checked arena and root. Crate-private, so only `check` mints it.
+    pub(crate) fn new(arena: &'a Arena<'a>, root: NodeRef) -> Self {
+        Self { arena, root }
+    }
+
+    /// The checked program's arena.
+    pub fn arena(&self) -> &'a Arena<'a> {
+        self.arena
+    }
+
+    /// The checked program's root.
+    pub fn root(&self) -> NodeRef {
+        self.root
+    }
+}
+
 /// Mint a `Checked` witness for target `T`, gated on the inclusion proof.
 ///
-/// The `where` bounds are the static half of the two-stage proof: the target's
-/// `Supports` set contains every family the program uses, and its `Permits` set
-/// contains every effect. A mismatch is a compile error naming the missing
-/// family or effect. This is the only sanctioned mint path (`Checked::new` is
-/// crate-private), so `vehje-codegen`'s target-typed `check_for` and the future
-/// runtime-bitmask path both route through it. The type parameters are the
-/// target's declared sets and the program's used sets; they are supplied by the
-/// caller (`vehje-codegen` derives them from the `Target`).
-// FIXME: the program's `Families` and `Effects` are caller-supplied type
-// parameters here; the full soundness (deriving them from the program rather
-// than trusting the caller) lands with the runtime-bitmask inclusion path.
-pub fn mint_checked<'a, T, Supports, Permits, Families, Effects>(
-    arena: &'a Arena<'a>,
-    root: NodeRef,
-    _inclusion: PhantomData<(Supports, Permits, Families, Effects)>,
+/// The target's declared sets come from `T: TargetSets`, not from free
+/// parameters, so a caller cannot decouple the checked sets from the target and
+/// claim a support or permit set the target does not declare. The `where` bounds
+/// are the static half of the two-stage proof: the target's `Supports` set
+/// contains every family the program is claimed to use, and its `Permits` set
+/// every effect. A mismatch is a compile error naming the missing family or
+/// effect. The `Graded` evidence, minted only by `check`, is required, so the
+/// witness cannot be produced without a clean check having run. This is the only
+/// sanctioned mint path (`Checked::new` is crate-private), so `vehje-codegen`'s
+/// `check_for` and the future runtime-bitmask path both route through it.
+// FIXME: `Families`/`Effects` are still caller-supplied (the program's *claimed*
+// used sets); deriving them from the program itself, so a caller cannot claim
+// `Empty` and dodge the check, is the remaining inclusion half, carried by the
+// runtime-bitmask path on the `Graded` witness (tracked #29).
+pub fn mint_checked<'a, T, Families, Effects>(
+    graded: Graded<'a>,
+    _inclusion: PhantomData<(Families, Effects)>,
 ) -> Checked<'a, T>
 where
-    Supports: ContainsAll<Families>,
-    Permits: ContainsAll<Effects>,
+    T: TargetSets,
+    T::Supports: ContainsAll<Families>,
+    T::Permits: ContainsAll<Effects>,
 {
-    Checked::new(arena, root)
+    Checked::new(graded.arena, graded.root)
 }
 
 /// The graded check pass over a program's IR.
@@ -108,20 +144,21 @@ where
 /// is integrity plus the graded inference plus the family dispatch.
 ///
 /// The graded judgment splits in two: `check` computes and records the grades
-/// (this pass), and the target-typed inclusion proof mints the [`Checked`]
-/// witness (`check_for`, and `vehje-codegen`'s target-typed wrapper over it).
-/// So `check` returns an integrity-and-grade outcome, not a witness; a caller
-/// runs `check` then `check_for` to obtain the emit-gating `Checked`.
+/// and, on a clean fold, returns a [`Graded`] evidence token (this pass); the
+/// target-typed inclusion proof then consumes that token to mint the [`Checked`]
+/// witness (`check_for`, and `vehje-codegen`'s wrapper over it). A caller runs
+/// `check` to obtain the `Graded`, then `check_for` to obtain the emit-gating
+/// `Checked`, so the witness cannot be minted without a clean check.
 // FIXME: dispatch Raw and Handle to the family-check and handler-discharge
 // hooks, and route the reach and effect inference through vehje-fixpoint as
 // relational queries; M-level runs the inference as a direct bottom-up fold.
-pub fn check(
-    arena: &Arena<'_>,
+pub fn check<'a>(
+    arena: &'a Arena<'a>,
     root: NodeRef,
     grades: &mut GradeTable<'_>,
-) -> Outcome<(), CheckError> {
+) -> Outcome<Graded<'a>, CheckError> {
     match infer(arena, root, grades) {
-        Outcome::Ok(_) => Outcome::Ok(()),
+        Outcome::Ok(_) => Outcome::Ok(Graded::new(arena, root)),
         Outcome::Err(e) => Outcome::Err(e),
     }
 }
@@ -240,8 +277,28 @@ mod tests {
 
         let mut grade_region = [Grade::default(); 8];
         let mut grades = GradeTable::new(&mut grade_region);
-        assert!(matches!(check(&arena, root, &mut grades), Outcome::Ok(())));
+        assert!(matches!(check(&arena, root, &mut grades), Outcome::Ok(_)));
         // the whole program is pure and reaches nothing at this stage.
         assert_eq!(grades.get(root.index()).effect, EffectMask::empty());
+    }
+
+    #[test]
+    fn refuses_a_dangling_root() {
+        let mut nodes = [Node::Lit(Literal::Unit); 4];
+        let mut spans = [Span::default(); 4];
+        let mut pool = [NodeRef::new(USize::ZERO); 4];
+        let b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+        let arena = b.into_arena();
+
+        // a root past the end of the (empty) arena: check must refuse it rather
+        // than mint a Graded over a corrupt IR, so a dangling reference cannot
+        // reach emit. This is the integrity half of the evidence-of-check gate.
+        let dangling = NodeRef::new(USize(3));
+        let mut grade_region = [Grade::default(); 4];
+        let mut grades = GradeTable::new(&mut grade_region);
+        assert!(matches!(
+            check(&arena, dangling, &mut grades),
+            Outcome::Err(CheckError::DanglingRef { .. })
+        ));
     }
 }

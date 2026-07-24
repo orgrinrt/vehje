@@ -17,7 +17,7 @@
 use hilavitkutin_api::sink::ByteEmitter;
 use notko::Outcome;
 use vehje_codegen::fold_core;
-use vehje_ir::{Arena, Cons, Core, Diagnostic, Empty, Node, NodeRef, Phase};
+use vehje_ir::{Arena, Cons, Core, Diagnostic, Empty, Node, NodeRef, Phase, TargetSets};
 use vehje_resolve::{resolve, ResolveError};
 
 /// The `Target` output contract, re-exported from `vehje-codegen`.
@@ -82,10 +82,12 @@ pub fn run<T: Target>(_target: &T, arena: &Arena<'_>, root: NodeRef) -> Outcome<
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct DebugTarget;
 
-impl Target for DebugTarget {
+impl TargetSets for DebugTarget {
     type Supports = Cons<Core, Empty>;
     type Permits = Empty;
+}
 
+impl Target for DebugTarget {
     fn emit<S: ByteEmitter>(
         &self,
         checked: &Checked<'_, Self>,
@@ -122,7 +124,8 @@ mod tests {
     use hilavitkutin_api::capability::{BulkPush, Push};
     use hilavitkutin_str::str_const;
     use vehje_codegen::check_for;
-    use vehje_ir::{Builder, Literal, Span};
+    use vehje_ir::{Builder, Grade, GradeTable, Literal, Span};
+    use vehje_typecheck::check;
 
     /// A byte sink that collects into a fixed buffer, for the test.
     struct BufSink {
@@ -166,9 +169,17 @@ mod tests {
         let root = expect(b.let_(Bool::FALSE, x, unit, var, Span::default()));
         let arena = b.into_arena();
 
-        // the program uses only the Core family and no effects, so it is
-        // included in DebugTarget's (Core) support and () permit sets.
-        let checked = check_for::<DebugTarget, Cons<Core, Empty>, Empty>(&arena, root);
+        // run the graded check to obtain the evidence the mint requires, then
+        // mint the witness. the program uses only the Core family and no
+        // effects, so it is included in DebugTarget's (Core) support and ()
+        // permit sets.
+        let mut grade_region = [Grade::default(); 8];
+        let mut grades = GradeTable::new(&mut grade_region);
+        let graded = match check(&arena, root, &mut grades) {
+            Outcome::Ok(g) => g,
+            Outcome::Err(_) => panic!("check failed"),
+        };
+        let checked = check_for::<DebugTarget, Cons<Core, Empty>, Empty>(graded);
 
         // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) reason: byte-stream buffer init; byte contract; tracked: #207
         let mut sink = BufSink { buf: [0; 128], len: USize::ZERO };

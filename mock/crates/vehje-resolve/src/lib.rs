@@ -96,9 +96,12 @@ fn walk(arena: &Arena<'_>, at: NodeRef, scope: Maybe<&Scope<'_>>) -> Outcome<(),
             },
             Maybe::Isnt => Outcome::Err(ResolveError::Unresolved { name, span: arena.span(at) }),
         },
-        Node::Let { name, value, body, .. } => {
-            walk(arena, value, scope)?;
+        Node::Let { rec, name, value, body } => {
             let frame = frame_for(name, at, scope);
+            // a recursive binding is in scope for its own value, so `let rec f =
+            // ... f ...` can reference itself; a non-recursive `let` is not.
+            let value_scope = if rec.0 { Maybe::Is(&frame) } else { scope };
+            walk(arena, value, value_scope)?;
             walk(arena, body, Maybe::Is(&frame))
         }
         Node::Lambda { param, body } => {
@@ -217,9 +220,11 @@ fn walk_record(
             },
             Maybe::Isnt => Outcome::Err(ResolveError::Unresolved { name, span: arena.span(at) }),
         },
-        Node::Let { name, value, body, .. } => {
-            walk_record(arena, value, scope, res)?;
+        Node::Let { rec, name, value, body } => {
             let frame = frame_for(name, at, scope);
+            // recursive binding is in scope for its own value; see `walk`.
+            let value_scope = if rec.0 { Maybe::Is(&frame) } else { scope };
+            walk_record(arena, value, value_scope, res)?;
             walk_record(arena, body, Maybe::Is(&frame), res)
         }
         Node::Lambda { param, body } => {
@@ -304,6 +309,46 @@ mod tests {
         // a bare, unbound reference to y
         let y = str_const!("y");
         let root = expect(b.var(y, Span::default()));
+
+        let arena = b.into_arena();
+        assert!(matches!(
+            resolve(&arena, root),
+            Outcome::Err(ResolveError::Unresolved { .. })
+        ));
+    }
+
+    #[test]
+    fn resolves_a_recursive_let() {
+        let mut nodes = [Node::Lit(Literal::Unit); 8];
+        let mut spans = [Span::default(); 8];
+        let mut pool = [NodeRef::new(USize::ZERO); 8];
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+
+        // let rec f = f in f: the bound value references the binding itself,
+        // which resolves only because `rec` puts the binder in scope for it.
+        let f = str_const!("f");
+        let value = expect(b.var(f, Span::default()));
+        let body = expect(b.var(f, Span::default()));
+        let root = expect(b.let_(Bool::TRUE, f, value, body, Span::default()));
+
+        let arena = b.into_arena();
+        assert!(matches!(resolve(&arena, root), Outcome::Ok(())));
+    }
+
+    #[test]
+    fn non_recursive_let_does_not_bind_its_value() {
+        let mut nodes = [Node::Lit(Literal::Unit); 8];
+        let mut spans = [Span::default(); 8];
+        let mut pool = [NodeRef::new(USize::ZERO); 8];
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+
+        // let f = f in f (non-recursive): the value's `f` is unbound, so the
+        // rec flag is load-bearing: without it this same shape resolves, with
+        // it (above) it does not.
+        let f = str_const!("f");
+        let value = expect(b.var(f, Span::default()));
+        let body = expect(b.var(f, Span::default()));
+        let root = expect(b.let_(Bool::FALSE, f, value, body, Span::default()));
 
         let arena = b.into_arena();
         assert!(matches!(

@@ -81,8 +81,16 @@ impl<'a> Arena<'a> {
     }
 
     /// The child refs a `NodeList` addresses.
+    ///
+    /// Clamped to the filled pool region (`pool_len`), so a malformed
+    /// `NodeList` whose range runs past what has been allocated yields a
+    /// truncated (or empty) slice rather than reading stale or out-of-bounds
+    /// pool memory.
     pub fn list(&self, l: NodeList) -> &[NodeRef] {
-        &self.pool[l.start.0..l.start.0 + l.len.0]
+        let live = self.pool_len.0;
+        let start = l.start.0.min(live);
+        let end = (l.start.0 + l.len.0).min(live).max(start);
+        &self.pool[start..end]
     }
 
     /// The number of nodes appended so far.

@@ -14,11 +14,16 @@
 
 use hilavitkutin_api::sink::ByteEmitter;
 use notko::Outcome;
-use vehje_ir::{AccessSet, Arena, ContainsAll, Node, NodeRef, Span};
+use vehje_ir::{Arena, ContainsAll, Node, NodeRef, Span, TargetSets};
 
 /// The checked-program witness, minted by `vehje-check` (the proof witness
 /// belongs with the prover) and re-exported here because `emit` consumes it.
 pub use vehje_typecheck::Checked;
+
+/// The evidence-of-check token, minted by `vehje-check`'s `check` and consumed
+/// by `check_for` to mint a `Checked`. Re-exported here so a caller can name it
+/// between the two calls.
+pub use vehje_typecheck::Graded;
 
 /// The output plug-in contract.
 ///
@@ -26,12 +31,7 @@ pub use vehje_typecheck::Checked;
 /// permits, both type-level sets over the `AccessSet` machinery, and
 /// emits a checked residual. A target is total over the families it
 /// declares.
-pub trait Target: core::fmt::Debug {
-    /// The families this target handles.
-    type Supports: AccessSet;
-    /// The effects this target permits.
-    type Permits: AccessSet;
-
+pub trait Target: TargetSets + core::fmt::Debug {
     /// Emit a residual this target has been proven to accept, writing
     /// through a caller-provided byte sink.
     ///
@@ -58,23 +58,17 @@ pub trait Target: core::fmt::Debug {
 /// two-stage proof; the runtime half (a bitmask over a parsed program's
 /// family ids) produces the same `Checked` witness through a checked
 /// path.
-pub fn check_for<'a, T, Families, Effects>(
-    arena: &'a Arena<'a>,
-    root: NodeRef,
-) -> Checked<'a, T>
+pub fn check_for<'a, T, Families, Effects>(graded: Graded<'a>) -> Checked<'a, T>
 where
     T: Target,
     T::Supports: ContainsAll<Families>,
     T::Permits: ContainsAll<Effects>,
 {
     // route through the sanctioned mint in vehje-typecheck (the witness crate);
-    // `Checked` cannot be constructed here directly. The `where` bounds are the
-    // inclusion witness the mint requires.
-    vehje_typecheck::mint_checked::<T, T::Supports, T::Permits, Families, Effects>(
-        arena,
-        root,
-        core::marker::PhantomData,
-    )
+    // `Checked` cannot be constructed here directly. The `Graded` evidence proves
+    // a clean check ran, and the `where` bounds (derived from the target through
+    // `TargetSets`) are the inclusion witness the mint requires.
+    vehje_typecheck::mint_checked::<T, Families, Effects>(graded, core::marker::PhantomData)
 }
 
 /// The one generic fold over the Core substrate: a pre-order walk that

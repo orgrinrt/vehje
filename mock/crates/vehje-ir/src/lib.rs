@@ -9,6 +9,9 @@
 //! `#![no_std]`, no alloc.
 
 #![no_std]
+// const_trait_impl: WATCH-allowed (unstable-features.md); required by
+// hilavitkutin-str's `str_const!` for the interned-name construction in tests.
+#![feature(const_trait_impl)]
 #![deny(unused, unreachable_code, unused_must_use, unused_imports, dead_code)]
 
 pub mod arena;
@@ -21,6 +24,7 @@ pub mod hash;
 pub mod intern;
 pub mod node;
 pub mod span;
+pub mod target;
 
 pub use arena::Arena;
 pub use builder::Builder;
@@ -34,6 +38,7 @@ pub use hash::{hash_of, StructuralHash};
 pub use intern::{ArenaInterner, Str, StringInterner};
 pub use node::{FamilyId, Literal, Node, NodeList, NodeRef};
 pub use span::{ByteOffset, FileId, Span};
+pub use target::TargetSets;
 
 /// The type-level set machinery, reused for the family and effect axes.
 ///
