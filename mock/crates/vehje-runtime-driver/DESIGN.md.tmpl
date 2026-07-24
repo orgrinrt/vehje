@@ -15,9 +15,12 @@ artifact. `#![no_std]` on the core paths, `std` behind the embedding feature.
 - `Reader`. The safe value-arena reader. The runtime output is a
   `vehje-runtime-abi` value-arena; the driver is the in-process consumer, so
   `Reader` is the safe, bounds-checked view over that arena, and it carries the
-  validation pass that a produced value must pass before the host reads it (the
-  typed structural decode, which the in-process path may skip and the untrusted
-  path must run).
+  validation pass that a produced value must pass before the host reads it.
+  `Reader::validate` runs the real typed structural decode: every node's child
+  and blob spans are bounds-checked against the arena, and the children-first
+  emission order makes acyclicity a single monotone index check (a child index
+  must be strictly below its parent), so the untrusted path is validated linearly
+  before any read. The in-process trusted path may skip it.
 - `DriverError`. Dispatch diagnostics (the runtime rejected the residual, the
   residual could not be serialized).
 - The embedding of the Zig runtime artifact: a separate build artifact the

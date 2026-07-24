@@ -25,18 +25,30 @@ interface, so nothing downstream changes when it arrives.
 
 ## The cheap subset (ships now)
 
+- `Rewrite`. The caller-lent remap side-table (`NodeRef` to `NodeRef`) the
+  redirecting rewrites populate, so a rewrite shares or folds by recording a
+  redirect rather than mutating the arena. `Rewrite::resolve` follows the remap
+  to a node's current representative, and the lowered root is the root resolved.
+  No allocation: the region is caller-provided, like `Resolution` and
+  `GradeTable`.
 - `ConstFold`. A bounded single bottom-up pass that folds an operation whose
-  operands are all statically known to a literal, using the binding-time grade
-  to decide "statically known".
+  operands are all statically known to a literal. The Core-level fold that needs
+  no family operation is an `If` whose condition is a literal boolean, folded to
+  its taken branch (recorded as a redirect in the `Rewrite`); folding a primitive
+  operation over literal operands waits on the family payload encoding, so the
+  `If`/condition fold is the Core fold today.
 - `Cse`. Common-subexpression elimination by hash-consing over `vehje-ir`'s one
-  `StructuralHash`: a subtree that hashes equal to an earlier one is replaced by
-  a reference to it, so repeated structure is shared rather than recomputed. Its
-  benefit is node-count reduction, not per-op time (an optimising backend
-  already removes the recompute), which is exactly what keeps a load-time
-  artifact from bloating.
+  `StructuralHash`: a subtree that hashes equal to an earlier one is redirected
+  (in the `Rewrite`) to that earlier one, so repeated structure is shared rather
+  than recomputed. Its benefit is node-count reduction, not per-op time (an
+  optimising backend already removes the recompute), which is exactly what keeps
+  a load-time artifact from bloating.
 - `Anf`. The output normal form is A-normal form: every intermediate is named
   and evaluation order equals binding order, so effect order is explicit in the
-  residual and no separate sequencing form is needed.
+  residual and no separate sequencing form is needed. Hoisting intermediates
+  into fresh `Let` bindings creates new nodes, so `Anf` lands with the
+  mutable-arena rewrite path (the redirecting `Rewrite` cannot create nodes); it
+  is the deferred piece of the cheap subset.
 - `RuleTable`. The fixed rule set the cheap subset applies, and the crate's
   validated-data slice: the same table `vehje-runtime-gen` packages for the
   runtime's load-time lowering of arriving scripts, so the Rust crate is the
