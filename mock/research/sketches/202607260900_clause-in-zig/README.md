@@ -1,0 +1,88 @@
+# Sketch: Clause runs in the runtime, with no Rust and no host
+
+**Date:** 2026-07-26
+**Outcome: WORKS.**
+**Toolchain:** Zig 0.16.0, aarch64-apple-darwin.
+**Tasks:** #44, #52
+
+## Hypothesis
+
+The canon puts every per-script analysis in the runtime artifact and states that
+the Rust side never sees an end-user script:
+
+> "a dev-time Rust language compiler (emits validated data and structural
+> proofs, **never sees an end-user script**, never ships)"
+> (`mock/research/canon/the-soul-of-vehje-positive-catalogue.md:45`)
+
+> "**Rust never runs per-script analyses, the runtime does, for all scripts**"
+> (`mock/research/canon/the-inverse-of-vehje-negative-catalogue.md:38`, killing
+> the dual-locus framing)
+
+So a Clause program's whole path, from source text to a value, belongs inside the
+Zig runtime. And per the lead designer's standing call 2, the host configures the
+runtime and lends it allocations, and does not supply arithmetic. This sketch
+tests both together: can source reach a value with neither Rust nor a host
+anywhere in the path.
+
+## Result
+
+Yes. `zig test eval.zig`, six tests, all passing:
+
+```
+let x = 2; let y = 3; if x < y { x * 10 } else { y * 10 }   ==> 20
+let x = 5; let y = 3; if x < y { x * 10 } else { y * 10 }   ==> 30
+if 1 < 2 { let k = 4; k * 3 } else { 0 }                    ==> 12
+let x = 2; let x = 9; x                                     ==> 9
+1 + 2 * 3                                                   ==> 7
+x + 1                                                       ==> refused, Unbound
+```
+
+The path is: source, lexer, precedence-climbing parser, Core IR written straight
+into a lent wire buffer in the layout the runtime already decodes, then
+evaluation. No intermediate AST, so there is no second tree to keep in step with
+the IR. Every buffer is caller-lent and nothing allocates.
+
+Arithmetic is a family operation, since the Core has no `+`, and its meaning
+arrives as a program over the closed primitive vocabulary proved admissible in
+`mock/research/sketches/202607260800_four-way-projection/`. `applyOp` dispatches
+`inline for` over the operation table, so each arm is specialised at comptime and
+the operation's walk disappears. `1 + 2 * 3` is computed by the runtime, not
+handed to anyone.
+
+## What this establishes, stated narrowly
+
+The locus is demonstrated, not argued: a language front end runs where the canon
+puts it, and the arithmetic that was previously a host callback in a test file is
+now computed inside the runtime by data the language definition supplies.
+
+## What it does not establish, stated plainly
+
+**This is a slice of the grammar, and the bar is the whole grammar.** It has
+integers, names, `let`, `if`/`else`, and four operators. It does not have
+functions, closures, generics, traits, associated types, patterns, macros,
+strings, records, or any of the surface the normative grammar
+(`mock/research/original-docs/CLAUSE_EBNF.md`) requires. Nothing is done until
+the full intended language is expressible.
+
+It also has no resolve pass and no type checker, so it is not yet statically
+analysable in the sense the goal requires. Names bind by a backward scan at
+evaluation time, which is the wrong shape for a language whose identity is that
+the type system is the verification layer. The parser emits IR directly, which is
+right for a subset and will need revisiting when a checker sits between them.
+
+The evaluator here is a subset evaluator in the sketch, not a change to
+`mock/runtime-zig/src/runtime.zig`, which still routes every family operation to
+a host. That change is the source changelist of round
+`202607260500_topic.the-languageauthor-specialisation-stage.md`, and this sketch
+exists to prove the shape before that changelist implements it.
+
+Booleans are represented as `0` and `1` in an `i64` rather than as the Core's
+`Bool`, because the comparison operation returns what its program computes and
+there is no checker yet to demand better. That is a subset artifact and it is not
+the intended representation.
+
+## Reproducing
+
+```
+zig test eval.zig
+```

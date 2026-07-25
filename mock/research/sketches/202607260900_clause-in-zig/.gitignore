@@ -1,0 +1,5 @@
+# sketch build outputs
+*.a
+*.o
+zig-out/
+.zig-cache/
