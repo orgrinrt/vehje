@@ -13,8 +13,10 @@ Also ratified, and governing:
 
 - `mock/research/202607260100_op-standing-design-calls.md`, ten standing calls in
   the designer's own words, including the 2026-07-26 artifact-split calls.
-- `mock/design_rounds/202607241615/op-ratification-answers.md`, the ratification
-  record.
+- `mock/research/202607241400_ir-to-ir-and-the-compile-runtime-line/op-ratification-answers.md`,
+  the ratification record. (Corrected 2026-07-26: an earlier version of this brief
+  cited it under `mock/design_rounds/202607241615/`, where it does not exist. Two
+  dispatches went out with the dead path.)
 
 ## A trap that has already corrupted one expert panel
 
