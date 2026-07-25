@@ -1,0 +1,9 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784971690	f64757aa	dedup_reuse_shared_n16384	dru_s_both	16384	warm	2453698.7	2448085.4	2484528.0
+1784971690	f64757aa	dedup_reuse_shared_n16384	dru_s_dedup	16384	warm	3923490.8	3915001.5	3931579.4
+1784971690	f64757aa	dedup_reuse_shared_n16384	dru_s_plain	16384	warm	702713.8	684994.4	855798.3
+1784971690	f64757aa	dedup_reuse_shared_n16384	dru_s_reuse	16384	warm	427136.7	426806.7	461123.3
+1784971724	f64757aa	dedup_reuse_shared_n16384	dru_s_both	16384	warm	2489502.1	2478868.5	2567977.7
+1784971724	f64757aa	dedup_reuse_shared_n16384	dru_s_dedup	16384	warm	3970712.1	3966674.4	5171962.3
+1784971724	f64757aa	dedup_reuse_shared_n16384	dru_s_plain	16384	warm	686227.1	685545.4	905284.4
+1784971724	f64757aa	dedup_reuse_shared_n16384	dru_s_reuse	16384	warm	438692.9	438571.2	495082.7

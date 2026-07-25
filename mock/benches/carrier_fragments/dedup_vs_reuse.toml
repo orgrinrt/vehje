@@ -1,0 +1,46 @@
+# >>> dedup_vs_reuse (generated)
+[bench.dedup_reuse_unique]
+title = "Dedup vs reuse composition, 20% shared: the templating norm"
+workload = "realistic"
+master_seed = 0x5eed_d3d0_0725_0001
+[bench.dedup_reuse_unique.normalise]
+baseline = "dru_u_plain"
+mode = "subtract"
+[[bench.dedup_reuse_unique.sizes]]
+n = 64
+variants = ["variants/dru_u_plain/target/release/dru_u_plain", "variants/dru_u_reuse/target/release/dru_u_reuse", "variants/dru_u_dedup/target/release/dru_u_dedup", "variants/dru_u_both/target/release/dru_u_both"]
+[[bench.dedup_reuse_unique.sizes]]
+n = 256
+variants = ["variants/dru_u_plain/target/release/dru_u_plain", "variants/dru_u_reuse/target/release/dru_u_reuse", "variants/dru_u_dedup/target/release/dru_u_dedup", "variants/dru_u_both/target/release/dru_u_both"]
+[[bench.dedup_reuse_unique.sizes]]
+n = 1024
+variants = ["variants/dru_u_plain/target/release/dru_u_plain", "variants/dru_u_reuse/target/release/dru_u_reuse", "variants/dru_u_dedup/target/release/dru_u_dedup", "variants/dru_u_both/target/release/dru_u_both"]
+[[bench.dedup_reuse_unique.sizes]]
+n = 4096
+variants = ["variants/dru_u_plain/target/release/dru_u_plain", "variants/dru_u_reuse/target/release/dru_u_reuse", "variants/dru_u_dedup/target/release/dru_u_dedup", "variants/dru_u_both/target/release/dru_u_both"]
+[[bench.dedup_reuse_unique.sizes]]
+n = 16384
+variants = ["variants/dru_u_plain/target/release/dru_u_plain", "variants/dru_u_reuse/target/release/dru_u_reuse", "variants/dru_u_dedup/target/release/dru_u_dedup", "variants/dru_u_both/target/release/dru_u_both"]
+
+[bench.dedup_reuse_shared]
+title = "Dedup vs reuse composition, 60% shared: reuse's adversarial regime"
+workload = "realistic"
+master_seed = 0x5eed_d3d0_0725_0002
+[bench.dedup_reuse_shared.normalise]
+baseline = "dru_s_plain"
+mode = "subtract"
+[[bench.dedup_reuse_shared.sizes]]
+n = 64
+variants = ["variants/dru_s_plain/target/release/dru_s_plain", "variants/dru_s_reuse/target/release/dru_s_reuse", "variants/dru_s_dedup/target/release/dru_s_dedup", "variants/dru_s_both/target/release/dru_s_both"]
+[[bench.dedup_reuse_shared.sizes]]
+n = 256
+variants = ["variants/dru_s_plain/target/release/dru_s_plain", "variants/dru_s_reuse/target/release/dru_s_reuse", "variants/dru_s_dedup/target/release/dru_s_dedup", "variants/dru_s_both/target/release/dru_s_both"]
+[[bench.dedup_reuse_shared.sizes]]
+n = 1024
+variants = ["variants/dru_s_plain/target/release/dru_s_plain", "variants/dru_s_reuse/target/release/dru_s_reuse", "variants/dru_s_dedup/target/release/dru_s_dedup", "variants/dru_s_both/target/release/dru_s_both"]
+[[bench.dedup_reuse_shared.sizes]]
+n = 4096
+variants = ["variants/dru_s_plain/target/release/dru_s_plain", "variants/dru_s_reuse/target/release/dru_s_reuse", "variants/dru_s_dedup/target/release/dru_s_dedup", "variants/dru_s_both/target/release/dru_s_both"]
+[[bench.dedup_reuse_shared.sizes]]
+n = 16384
+variants = ["variants/dru_s_plain/target/release/dru_s_plain", "variants/dru_s_reuse/target/release/dru_s_reuse", "variants/dru_s_dedup/target/release/dru_s_dedup", "variants/dru_s_both/target/release/dru_s_both"]
