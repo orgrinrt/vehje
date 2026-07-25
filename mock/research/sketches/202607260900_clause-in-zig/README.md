@@ -153,6 +153,34 @@ rather than by interning a mangled string. A mangled name would have to live
 somewhere, and the obvious somewhere is a stack buffer the interner outlives.
 Hygiene here is structural rather than a naming convention.
 
+### Associated types
+
+```
+trait Conv { type Out; fn conv(Self) -> Out }
+impl Conv for Int { type Out = Str; fn conv(x) { "from int" } }
+impl Conv for Str { type Out = Int; fn conv(s) { 42 } }
+
+conv("a string")                                 ==> 42
+conv(7)                                          ==> "from int"
+fn bump(v) { conv(v) + 1 }  bump("x")            ==> 43
+
+conv(7) + 1                                      refused, Mismatch
+impl Conv for Int { type Out = Str; fn conv(x) { 99 } }
+                                                 refused, Mismatch
+```
+
+The method's result type depends on which impl applies, which is what makes it
+an associated type rather than another parameter. Mechanically it is a second
+quantified variable alongside `Self`, left unbound during inference and unified
+at discharge with whatever the chosen impl declared. Deferring it is what lets
+the result type follow the impl: during inference nothing yet knows which impl
+that is.
+
+The two refusals are the ones only an associated type can catch. `conv(7)` is a
+`Str` by `Int`'s impl, so adding one to it is a type error rather than a
+plausible expression. And an impl whose body disagrees with its own declared
+`Out` is refused, so the declaration is a commitment rather than an annotation.
+
 ### The one real limitation, stated precisely
 
 A function whose body raises an obligation stays **monomorphic** in the type that
@@ -171,10 +199,10 @@ silently mis-dispatched.
 **This is a slice of the grammar, and the bar is the whole grammar.** It has
 integers, strings, names, `let`, `fn` with recursion and closures and currying,
 `if`/`else`, four operators, records with field access, sequences with a
-three-operation prelude, single-method traits with impls, coherence, and
-inferred bounds. It does not have associated types, multi-method traits,
-supertraits, patterns, `match`, macros, loops, modules, `use`, attributes, a
-separate resolve pass, or monomorphisation, nor the rest of the surface the
+three-operation prelude, single-method traits with impls, coherence, inferred
+bounds, and associated types. It does not have multi-method traits, supertraits,
+patterns, `match`, macros, loops, modules, `use`, attributes, a separate resolve
+pass, or monomorphisation, nor the rest of the surface the
 normative grammar (`mock/research/original-docs/CLAUSE_EBNF.md`) requires.
 Nothing is done until the full intended language is expressible.
 

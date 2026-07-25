@@ -57,7 +57,7 @@ pub const Field = struct { key: []const u8, ty: u32 };
 /// An obligation: the type at `tvar` must implement `trait_idx`, and the node
 /// that demanded it is `node`, so the discharge can be recorded where dispatch
 /// will look for it.
-pub const Constraint = struct { ty: u32, trait_idx: u32, node: u32 };
+pub const Constraint = struct { ty: u32, assoc: u32, trait_idx: u32, node: u32 };
 
 /// A binding's type, plus how many leading variables are quantified. A scheme
 /// with `quantified == 0` is a plain monotype; anything higher is a generic.
@@ -215,14 +215,18 @@ pub const Ctx = struct {
     /// Instantiate, and also hand back the fresh variable standing for the
     /// scheme's first quantified variable. For a trait method that is `Self`,
     /// which is the type an obligation is about.
-    fn instantiateSelf(self: *Ctx, s: Scheme) Error!struct { ty: u32, first_var: u32 } {
-        if (s.quantified == 0) return .{ .ty = s.ty, .first_var = s.ty };
+    fn instantiateSelf(self: *Ctx, s: Scheme) Error!struct { ty: u32, first_var: u32, second_var: u32 } {
+        if (s.quantified == 0) return .{ .ty = s.ty, .first_var = s.ty, .second_var = s.ty };
         var map_buf: [32]u32 = undefined;
         if (s.quantified > map_buf.len) return Error.TooManyVars;
         var i: u32 = 0;
         while (i < s.quantified) : (i += 1) map_buf[i] = try self.fresh();
         const ty = try self.copy(s.ty, s.first, s.quantified, map_buf[0..s.quantified]);
-        return .{ .ty = ty, .first_var = map_buf[0] };
+        return .{
+            .ty = ty,
+            .first_var = map_buf[0],
+            .second_var = if (s.quantified > 1) map_buf[1] else map_buf[0],
+        };
     }
 
     fn copy(self: *Ctx, t: u32, first: u32, count: u32, map: []const u32) Error!u32 {
@@ -276,45 +280,59 @@ fn tyNameOf(ctx: *const Ctx, t: u32) ?cl.TyName {
 fn methodScheme(ctx: *Ctx, t: cl.TraitDecl) Error!struct { ty: u32, first: u32 } {
     const first = ctx.nvars;
     const self_ty = try ctx.fresh();
+    // The associated type is a second quantified variable, always allocated so
+    // the instantiation map's shape does not depend on whether the trait
+    // declared one. It stays unbound until discharge learns which impl applies.
+    const assoc_ty = try ctx.fresh();
     const pick = struct {
-        fn f(c: *Ctx, n: cl.TyName, sv: u32) Error!u32 {
+        fn f(c: *Ctx, n: cl.TyName, sv: u32, av: u32) Error!u32 {
             return switch (n) {
                 .self_ty => sv,
+                .assoc_ty => av,
                 .int => c.alloc(.int),
                 .boolean => c.alloc(.boolean),
                 .str => c.alloc(.str),
             };
         }
     }.f;
-    var ty = try pick(ctx, t.ret, self_ty);
+    var ty = try pick(ctx, t.ret, self_ty, assoc_ty);
     var i: u8 = t.nparams;
     while (i > 0) {
         i -= 1;
-        const p = try pick(ctx, t.params[i], self_ty);
+        const p = try pick(ctx, t.params[i], self_ty, assoc_ty);
         ty = try ctx.alloc(.{ .func = .{ .p = p, .r = ty } });
     }
     return .{ .ty = ty, .first = first };
 }
 
+/// A concrete type index for a name in the trait vocabulary.
+fn concrete(ctx: *Ctx, n: cl.TyName) Error!u32 {
+    return switch (n) {
+        .int => ctx.alloc(.int),
+        .boolean => ctx.alloc(.boolean),
+        .str => ctx.alloc(.str),
+        .self_ty, .assoc_ty => Error.Unsupported,
+    };
+}
+
 /// A trait method's declared type with `Self` replaced by a concrete type,
 /// which is what an impl for that type must have.
-fn declaredType(ctx: *Ctx, t: cl.TraitDecl, for_ty: cl.TyName) Error!u32 {
+fn declaredType(ctx: *Ctx, t: cl.TraitDecl, for_ty: cl.TyName, assoc: cl.TyName) Error!u32 {
     const pick = struct {
-        fn f(c: *Ctx, n: cl.TyName, sv: cl.TyName) Error!u32 {
-            const eff = if (n == .self_ty) sv else n;
-            return switch (eff) {
-                .int => c.alloc(.int),
-                .boolean => c.alloc(.boolean),
-                .str => c.alloc(.str),
-                .self_ty => Error.Unsupported,
+        fn f(c: *Ctx, n: cl.TyName, sv: cl.TyName, av: cl.TyName) Error!u32 {
+            const eff = switch (n) {
+                .self_ty => sv,
+                .assoc_ty => av,
+                else => n,
             };
+            return concrete(c, eff);
         }
     }.f;
-    var ty = try pick(ctx, t.ret, for_ty);
+    var ty = try pick(ctx, t.ret, for_ty, assoc);
     var i: u8 = t.nparams;
     while (i > 0) {
         i -= 1;
-        const p = try pick(ctx, t.params[i], for_ty);
+        const p = try pick(ctx, t.params[i], for_ty, assoc);
         ty = try ctx.alloc(.{ .func = .{ .p = p, .r = ty } });
     }
     return ty;
@@ -386,7 +404,12 @@ fn infer(img: *const Image, idx: u32, ctx: *Ctx, cur: u32) Error!u32 {
                 // type it was used at, recorded against this node so dispatch
                 // can be written back here.
                 if (ctx.npend == ctx.pending.len) return Error.TooManyConstraints;
-                ctx.pending[ctx.npend] = .{ .ty = inst.first_var, .trait_idx = ti, .node = idx };
+                ctx.pending[ctx.npend] = .{
+                    .ty = inst.first_var,
+                    .assoc = inst.second_var,
+                    .trait_idx = ti,
+                    .node = idx,
+                };
                 ctx.npend += 1;
                 break;
             }
@@ -420,7 +443,7 @@ fn infer(img: *const Image, idx: u32, ctx: *Ctx, cur: u32) Error!u32 {
                 const ii = name - cl.IMPL_SYM_BASE;
                 if (ii < ctx.impls.len) {
                     const im = ctx.impls[ii];
-                    const want = try declaredType(ctx, ctx.traits[im.trait_idx], im.for_ty);
+                    const want = try declaredType(ctx, ctx.traits[im.trait_idx], im.for_ty, im.assoc);
                     try ctx.unify(vt, want);
                 }
             }
@@ -601,6 +624,12 @@ fn discharge(ctx: *Ctx) Error!void {
         while (j < ctx.impls.len) : (j += 1) {
             if (ctx.impls[j].trait_idx == c.trait_idx and ctx.impls[j].for_ty == tn) {
                 ctx.resolved[c.node] = ctx.impls[j].method_sym;
+                // The associated type is whatever this impl said it is. Unifying
+                // here rather than during inference is what lets a method's
+                // result type depend on which impl is chosen.
+                if (ctx.traits[c.trait_idx].assoc_name.len > 0) {
+                    try ctx.unify(c.assoc, try concrete(ctx, ctx.impls[j].assoc));
+                }
                 found = true;
                 break;
             }

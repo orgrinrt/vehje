@@ -792,3 +792,51 @@ test "an impl of an undeclared trait is refused" {
         \\1
     ));
 }
+
+test "an associated type is chosen by the impl, and the method's result follows" {
+    // Int's Out is Str and Str's Out is Int, so conv's result type depends on
+    // which impl applies rather than on the call's syntax.
+    const decls =
+        \\trait Conv { type Out; fn conv(Self) -> Out }
+        \\impl Conv for Int { type Out = Str; fn conv(x) { "from int" } }
+        \\impl Conv for Str { type Out = Int; fn conv(s) { 42 } }
+    ;
+    var buf: [4096]u8 = undefined;
+    var out: [64]u8 = undefined;
+    @memcpy(buf[0..decls.len], decls);
+
+    const t1 = "\nconv(\"a string\")";
+    @memcpy(buf[decls.len..][0..t1.len], t1);
+    try std.testing.expectEqual(@as(i64, 42), try run(buf[0 .. decls.len + t1.len]));
+
+    const t2 = "\nconv(7)";
+    @memcpy(buf[decls.len..][0..t2.len], t2);
+    try std.testing.expectEqualStrings("from int", try runStr(buf[0 .. decls.len + t2.len], &out));
+}
+
+test "using an associated result at the wrong type is refused" {
+    // conv(7) is a Str by Int's impl, so adding one to it is a type error that
+    // only the associated type's resolution can catch.
+    try std.testing.expectError(chk.Error.Mismatch, run(
+        \\trait Conv { type Out; fn conv(Self) -> Out }
+        \\impl Conv for Int { type Out = Str; fn conv(x) { "from int" } }
+        \\conv(7) + 1
+    ));
+}
+
+test "an impl whose body disagrees with its own associated type is refused" {
+    try std.testing.expectError(chk.Error.Mismatch, run(
+        \\trait Conv { type Out; fn conv(Self) -> Out }
+        \\impl Conv for Int { type Out = Str; fn conv(x) { 99 } }
+        \\1
+    ));
+}
+
+test "the associated type flows into an ordinary function" {
+    try std.testing.expectEqual(@as(i64, 43), try run(
+        \\trait Conv { type Out; fn conv(Self) -> Out }
+        \\impl Conv for Str { type Out = Int; fn conv(s) { 42 } }
+        \\fn bump(v) { conv(v) + 1 }
+        \\bump("x")
+    ));
+}

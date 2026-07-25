@@ -61,7 +61,7 @@ pub const OP_PUSH: u32 = 8;
 
 /// A type as written in a trait method's signature. `Self` is the implementing
 /// type; the rest are the concrete types this subset has.
-pub const TyName = enum { self_ty, int, boolean, str };
+pub const TyName = enum { self_ty, assoc_ty, int, boolean, str };
 
 /// A trait: one method, its parameter types, and its result type. One method per
 /// trait keeps the constraint machinery honest without a method table, and the
@@ -75,11 +75,15 @@ pub const TraitDecl = struct {
     params: [4]TyName,
     nparams: u8,
     ret: TyName,
+    /// The associated type's name, empty when the trait declares none. An
+    /// associated type is a second thing an impl chooses, alongside the method
+    /// body, and the signature may mention it wherever it mentions Self.
+    assoc_name: []const u8 = "",
 };
 
 /// An implementation: which trait, for which type, and the binder its method
 /// body was bound under. Coherence is one impl per trait-and-type pair.
-pub const ImplDecl = struct { trait_idx: u32, for_ty: TyName, method_sym: u32 };
+pub const ImplDecl = struct { trait_idx: u32, for_ty: TyName, method_sym: u32, assoc: TyName = .int };
 
 /// Impl-method binders start here. Source names are interner indices counting
 /// from zero, so the two ranges cannot meet.
@@ -103,7 +107,7 @@ pub const Error = error{
 
 // ---------------------------------------------------------------- lexer
 
-const Kind = enum { int, str_lit, ident, dot, colon, lbracket, rbracket, arrow, kw_trait, kw_impl, kw_for, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
+const Kind = enum { int, str_lit, ident, dot, colon, lbracket, rbracket, arrow, kw_trait, kw_impl, kw_for, kw_type, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
 
 const Token = struct { kind: Kind, start: usize, end: usize, value: i64 };
 
@@ -156,6 +160,8 @@ const Lexer = struct {
                 .kw_impl
             else if (std.mem.eql(u8, text, "for"))
                 .kw_for
+            else if (std.mem.eql(u8, text, "type"))
+                .kw_type
             else if (std.mem.eql(u8, text, "if"))
                 .kw_if
             else if (std.mem.eql(u8, text, "else"))
@@ -416,9 +422,16 @@ pub const Parser = struct {
     }
 
     fn tyName(self: *Parser) Error!TyName {
+        return self.tyNameIn("");
+    }
+
+    /// `assoc` names the associated type in scope, if any, so a signature can
+    /// mention it by the name the trait gave it.
+    fn tyNameIn(self: *Parser, assoc: []const u8) Error!TyName {
         if (self.tok.kind != .ident) return Error.UnexpectedToken;
         const t = self.lx.src[self.tok.start..self.tok.end];
         try self.bump();
+        if (assoc.len > 0 and std.mem.eql(u8, t, assoc)) return .assoc_ty;
         if (std.mem.eql(u8, t, "Self")) return .self_ty;
         if (std.mem.eql(u8, t, "Int")) return .int;
         if (std.mem.eql(u8, t, "Bool")) return .boolean;
@@ -467,6 +480,14 @@ pub const Parser = struct {
             const tname = self.lx.src[self.tok.start..self.tok.end];
             try self.bump();
             try self.expect(.lbrace);
+            var assoc_name: []const u8 = "";
+            if (self.tok.kind == .kw_type) {
+                try self.bump();
+                if (self.tok.kind != .ident) return Error.UnexpectedToken;
+                assoc_name = self.lx.src[self.tok.start..self.tok.end];
+                try self.bump();
+                try self.expect(.semi);
+            }
             try self.expect(.kw_fn);
             if (self.tok.kind != .ident) return Error.UnexpectedToken;
             const mname = self.lx.src[self.tok.start..self.tok.end];
@@ -476,13 +497,13 @@ pub const Parser = struct {
             var np: u8 = 0;
             while (self.tok.kind != .rparen) {
                 if (np == ps.len) return Error.TooManyParams;
-                ps[np] = try self.tyName();
+                ps[np] = try self.tyNameIn(assoc_name);
                 np += 1;
                 if (self.tok.kind == .comma) try self.bump();
             }
             try self.expect(.rparen);
             try self.expect(.arrow);
-            const ret = try self.tyName();
+            const ret = try self.tyNameIn(assoc_name);
             try self.expect(.rbrace);
             if (self.ntraits == self.traits.len) return Error.TooManyTraits;
             self.traits[self.ntraits] = .{
@@ -492,6 +513,7 @@ pub const Parser = struct {
                 .params = ps,
                 .nparams = np,
                 .ret = ret,
+                .assoc_name = assoc_name,
             };
             self.ntraits += 1;
             return self.program();
@@ -512,6 +534,15 @@ pub const Parser = struct {
                 if (self.impls[j].trait_idx == ti and self.impls[j].for_ty == for_ty) return Error.DuplicateImpl;
             }
             try self.expect(.lbrace);
+            var assoc: TyName = .int;
+            if (self.tok.kind == .kw_type) {
+                try self.bump();
+                if (self.tok.kind != .ident) return Error.UnexpectedToken;
+                try self.bump();
+                try self.expect(.assign);
+                assoc = try self.tyName();
+                try self.expect(.semi);
+            }
             try self.expect(.kw_fn);
             if (self.tok.kind != .ident) return Error.UnexpectedToken;
             try self.bump();
@@ -539,7 +570,7 @@ pub const Parser = struct {
             }
             if (self.nimpls == self.impls.len) return Error.TooManyTraits;
             const sym = self.implSym(self.nimpls);
-            self.impls[self.nimpls] = .{ .trait_idx = ti, .for_ty = for_ty, .method_sym = sym };
+            self.impls[self.nimpls] = .{ .trait_idx = ti, .for_ty = for_ty, .method_sym = sym, .assoc = assoc };
             self.nimpls += 1;
             const rest = try self.program();
             return self.b.letRec(sym, f, rest);
