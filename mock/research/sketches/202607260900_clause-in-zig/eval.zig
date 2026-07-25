@@ -981,7 +981,9 @@ test "match arms must agree on a result type" {
 
 test "a pattern of the wrong shape is refused" {
     try std.testing.expectError(chk.Error.Mismatch, run("match 1 { \"a\" => 1, _ => 2 }"));
-    try std.testing.expectError(chk.Error.Mismatch, run("match 1 { { a: x } => x, _ => 2 }"));
+    // A refutable record pattern, so the arm after it is reachable and the
+    // only fault left is the type error this test is about.
+    try std.testing.expectError(chk.Error.Mismatch, run("match 1 { { a: 0 } => 1, _ => 2 }"));
 }
 
 test "a match without an irrefutable last arm is refused" {
@@ -1512,4 +1514,18 @@ test "unit is a value and a nullary function takes one" {
 test "unit does not unify with anything else" {
     try std.testing.expectError(chk.Error.Mismatch, run("fn six() { 6 } six() + ()"));
     try std.testing.expectError(chk.Error.Mismatch, run("if 1 < 2 { () } else { 1 }"));
+}
+
+test "an arm after an irrefutable one is refused as unreachable" {
+    try std.testing.expectError(cl.Error.UnreachableArm, run("match 1 { _ => 1, 2 => 3 }"));
+    try std.testing.expectError(cl.Error.UnreachableArm, run("match 1 { n => n, _ => 0 }"));
+    try std.testing.expectError(cl.Error.UnreachableArm, run(
+        \\let r = { a: 1 };
+        \\match r { { a: x } => x, _ => 0 }
+    ));
+}
+
+test "a guarded arm does not make what follows unreachable" {
+    // The guard may fail, so a later arm is genuinely reachable.
+    try std.testing.expectEqual(@as(i64, 0), try run("match 1 { n if 5 < n => 1, _ => 0 }"));
 }

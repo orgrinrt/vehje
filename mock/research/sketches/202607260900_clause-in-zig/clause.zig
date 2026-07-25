@@ -167,6 +167,7 @@ pub const Error = error{
     NotMutable,
     MissingMethod,
     BindingInAlternative,
+    UnreachableArm,
     NotConstant,
     UnknownMacro,
     WrongMacroArity,
@@ -1644,6 +1645,12 @@ pub const Parser = struct {
                 var last_irrefutable = false;
                 while (self.tok.kind != .rbrace) {
                     if (na + 3 > arms.len) return Error.TooManyParams;
+                    // An arm after one that already matches everything can never
+                    // run. Catching it is the reachability half of
+                    // exhaustiveness, and it is the half this pattern language
+                    // can decide exactly: coverage by a union of ranges is the
+                    // half it cannot.
+                    if (last_irrefutable) return Error.UnreachableArm;
                     const pat = try self.pattern();
                     var guard: u32 = NO_GUARD;
                     if (self.tok.kind == .kw_if) {
