@@ -22,6 +22,7 @@ pub const Error = error{
     Unbound,
     Unsupported,
     Mismatch,
+    NoSuchField,
     Occurs,
     OutOfTypes,
     TooManyVars,
@@ -38,7 +39,14 @@ pub const Ty = union(enum) {
     str,
     tvar: u32,
     func: struct { p: u32, r: u32 },
+    /// A record type is a span of the field table. Fields are kept in the order
+    /// the literal wrote them, and two record types match only if their fields
+    /// match pairwise; reordering is not yet a subtyping question this answers.
+    record: struct { first: u32, count: u32 },
 };
+
+/// One field of a record type: its name, and the type at that name.
+pub const Field = struct { key: []const u8, ty: u32 };
 
 /// A binding's type, plus how many leading variables are quantified. A scheme
 /// with `quantified == 0` is a plain monotype; anything higher is a generic.
@@ -54,6 +62,8 @@ pub const Ctx = struct {
     nvars: u32 = 0,
     env: []TyBinding,
     nenv: u32 = 0,
+    fields: []Field,
+    nf: u32 = 0,
 
     fn alloc(self: *Ctx, t: Ty) Error!u32 {
         if (self.n >= self.types.len) return Error.OutOfTypes;
@@ -91,6 +101,13 @@ pub const Ctx = struct {
         return switch (self.types[r]) {
             .tvar => |w| w == v,
             .func => |f| self.occurs(v, f.p) or self.occurs(v, f.r),
+            .record => |rec| blk: {
+                var i: u32 = 0;
+                while (i < rec.count) : (i += 1) {
+                    if (self.occurs(v, self.fields[rec.first + i].ty)) break :blk true;
+                }
+                break :blk false;
+            },
             else => false,
         };
     }
@@ -121,11 +138,24 @@ pub const Ctx = struct {
         return switch (self.types[ra]) {
             .int => if (self.types[rb] == .int) {} else Error.Mismatch,
             .boolean => if (self.types[rb] == .boolean) {} else Error.Mismatch,
-            .str => if (self.types[rb] == .str) {} else Error.Mismatch,
+        .str => if (self.types[rb] == .str) {} else Error.Mismatch,
             .func => |fa| switch (self.types[rb]) {
                 .func => |fb| {
                     try self.unify(fa.p, fb.p);
                     try self.unify(fa.r, fb.r);
+                },
+                else => Error.Mismatch,
+            },
+            .record => |ra2| switch (self.types[rb]) {
+                .record => |rb2| {
+                    if (ra2.count != rb2.count) return Error.Mismatch;
+                    var i: u32 = 0;
+                    while (i < ra2.count) : (i += 1) {
+                        const fa2 = self.fields[ra2.first + i];
+                        const fb2 = self.fields[rb2.first + i];
+                        if (!std.mem.eql(u8, fa2.key, fb2.key)) return Error.Mismatch;
+                        try self.unify(fa2.ty, fb2.ty);
+                    }
                 },
                 else => Error.Mismatch,
             },
@@ -171,6 +201,26 @@ pub const Ctx = struct {
                 const rr = try self.copy(f.r, first, count, map);
                 break :blk try self.alloc(.{ .func = .{ .p = p, .r = rr } });
             },
+            .record => |rec| blk: {
+                // Copy every field type BEFORE reserving the span. Recursing
+                // into a nested record appends to this same array, so writing
+                // the parent's entries as we go interleaves the child's into
+                // the parent's span and the field lookup then misses.
+                var tmp: [16]u32 = undefined;
+                if (rec.count > tmp.len) return Error.OutOfTypes;
+                var i: u32 = 0;
+                while (i < rec.count) : (i += 1) {
+                    tmp[i] = try self.copy(self.fields[rec.first + i].ty, first, count, map);
+                }
+                if (@as(usize, self.nf) + rec.count > self.fields.len) return Error.OutOfTypes;
+                const at = self.nf;
+                i = 0;
+                while (i < rec.count) : (i += 1) {
+                    self.fields[self.nf] = .{ .key = self.fields[rec.first + i].key, .ty = tmp[i] };
+                    self.nf += 1;
+                }
+                break :blk try self.alloc(.{ .record = .{ .first = at, .count = rec.count } });
+            },
         };
     }
 };
@@ -206,6 +256,12 @@ const Image = struct {
     fn word(self: *const Image, idx: u32, slot: usize) Error!u32 {
         if (idx >= self.node_count) return Error.Corrupt;
         return rd(self.bytes, cl.HEADER_WORDS * cl.WORD + (@as(usize, idx) * cl.NODE_WORDS + slot) * cl.WORD);
+    }
+
+    fn blob(self: *const Image, off: u32, len: u32) Error![]const u8 {
+        const base = self.pool_base + @as(usize, self.pool_count) * cl.WORD;
+        if (base + @as(usize, off) + @as(usize, len) > self.bytes.len) return Error.Corrupt;
+        return self.bytes[base + off .. base + off + len];
     }
 
     fn pooled(self: *const Image, at: u32) Error!u32 {
@@ -270,6 +326,22 @@ fn infer(img: *const Image, idx: u32, ctx: *Ctx, cur: u32) Error!u32 {
             }
             return ft;
         },
+        cl.TAG_PROJECT => {
+            const bt = ctx.resolve(try infer(img, try img.word(idx, 1), ctx, cur));
+            const key = try img.blob(try img.word(idx, 2), try img.word(idx, 3));
+            const rec = switch (ctx.types[bt]) {
+                .record => |r| r,
+                // A projection off an unresolved variable would need row
+                // polymorphism to type; refusing is honest until that exists.
+                else => return Error.Mismatch,
+            };
+            var i: u32 = 0;
+            while (i < rec.count) : (i += 1) {
+                const f = ctx.fields[rec.first + i];
+                if (std.mem.eql(u8, f.key, key)) return f.ty;
+            }
+            return Error.NoSuchField;
+        },
         cl.TAG_IF => {
             const ct = try infer(img, try img.word(idx, 1), ctx, cur);
             const b = try ctx.alloc(.boolean);
@@ -287,6 +359,30 @@ fn infer(img: *const Image, idx: u32, ctx: *Ctx, cur: u32) Error!u32 {
             // from the image rather than inferred, because it names which
             // operation this is rather than being an operand of it.
             const lo = try img.word(op_node, 2);
+            if (lo == cl.OP_MAKE_REC) {
+                // Same ordering constraint as `copy`: infer every field first,
+                // because inferring a nested record literal appends to the very
+                // array this record's span is about to name.
+                var keys: [16][]const u8 = undefined;
+                var tys: [16]u32 = undefined;
+                var nfields: u32 = 0;
+                var k: u32 = 1;
+                while (k + 1 < len) : (k += 2) {
+                    if (nfields == keys.len) return Error.OutOfTypes;
+                    const kn = try img.pooled(start + k);
+                    keys[nfields] = try img.blob(try img.word(kn, 2), try img.word(kn, 3));
+                    tys[nfields] = try infer(img, try img.pooled(start + k + 1), ctx, cur);
+                    nfields += 1;
+                }
+                if (@as(usize, ctx.nf) + nfields > ctx.fields.len) return Error.OutOfTypes;
+                const at = ctx.nf;
+                var j: u32 = 0;
+                while (j < nfields) : (j += 1) {
+                    ctx.fields[ctx.nf] = .{ .key = keys[j], .ty = tys[j] };
+                    ctx.nf += 1;
+                }
+                return ctx.alloc(.{ .record = .{ .first = at, .count = nfields } });
+            }
             const sig = try opType(ctx, lo);
             var k: u32 = 1;
             while (k < len) : (k += 1) {
@@ -308,7 +404,7 @@ pub fn check(image: []const u8, ctx: *Ctx) Error!u32 {
 
 // ---------------------------------------------------------------- tests
 
-const Shape = enum { int, boolean, str, func };
+const Shape = enum { int, boolean, str, func, record };
 
 fn typeOf(src: []const u8) !Shape {
     var node_buf: [512 * cl.NODE_WORDS]u32 = undefined;
@@ -319,6 +415,7 @@ fn typeOf(src: []const u8) !Shape {
     var types: [1024]Ty = undefined;
     var subst: [256]u32 = undefined;
     var env: [256]TyBinding = undefined;
+    var fields: [256]Field = undefined;
 
     var b = cl.Builder{ .nodes = &node_buf, .pool = &pool_buf, .blob = &blob_buf };
     var names = cl.Names{ .buf = &name_buf };
@@ -326,13 +423,14 @@ fn typeOf(src: []const u8) !Shape {
     const root = try p.program();
     const len = try cl.writeImage(&b, root, &image);
 
-    var ctx = Ctx{ .types = &types, .subst = &subst, .env = &env };
+    var ctx = Ctx{ .types = &types, .subst = &subst, .env = &env, .fields = &fields };
     const t = try check(image[0..len], &ctx);
     return switch (ctx.types[t]) {
         .int => .int,
         .boolean => .boolean,
         .str => .str,
         .func => .func,
+        .record => .record,
         .tvar => .func,
     };
 }
@@ -397,4 +495,16 @@ test "recursion type-checks and stays monomorphic in its own body" {
 
 test "an unbound name is refused before evaluation" {
     try std.testing.expectError(Error.Unbound, typeOf("x + 1"));
+}
+
+test "a record literal has a record type and its fields keep their own types" {
+    try std.testing.expectEqual(Shape.record, try typeOf("{ a: 1, b: \"x\" }"));
+    try std.testing.expectEqual(Shape.int, try typeOf("let r = { a: 1, b: \"x\" }; r.a"));
+    try std.testing.expectEqual(Shape.str, try typeOf("let r = { a: 1, b: \"x\" }; r.b"));
+}
+
+test "records with different shapes do not unify" {
+    try std.testing.expectError(Error.Mismatch, typeOf("if 1 < 2 { { a: 1 } } else { { a: \"x\" } }"));
+    try std.testing.expectError(Error.Mismatch, typeOf("if 1 < 2 { { a: 1 } } else { { b: 1 } }"));
+    try std.testing.expectError(Error.Mismatch, typeOf("if 1 < 2 { { a: 1 } } else { { a: 1, b: 2 } }"));
 }

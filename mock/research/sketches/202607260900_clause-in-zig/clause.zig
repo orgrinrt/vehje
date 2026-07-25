@@ -22,6 +22,7 @@ pub const TAG_VAR: u32 = 1;
 pub const TAG_LET: u32 = 2;
 pub const TAG_LAMBDA: u32 = 3;
 pub const TAG_APPLY: u32 = 4;
+pub const TAG_PROJECT: u32 = 5;
 pub const TAG_IF: u32 = 6;
 pub const TAG_RAW: u32 = 10;
 
@@ -39,6 +40,12 @@ pub const OP_ADD: u32 = 0;
 pub const OP_SUB: u32 = 1;
 pub const OP_MUL: u32 = 2;
 pub const OP_LT: u32 = 3;
+/// Record construction. Unlike the scalar operations above, its arity is not
+/// fixed: it takes alternating key and value operands and yields a compound.
+/// That shape is the coverage finding recorded in the round topic, and this is
+/// the candidate that answers it by growing the vocabulary rather than by adding
+/// a second kind of table entry.
+pub const OP_MAKE_REC: u32 = 4;
 
 pub const Error = error{
     UnexpectedByte,
@@ -54,7 +61,7 @@ pub const Error = error{
 
 // ---------------------------------------------------------------- lexer
 
-const Kind = enum { int, str_lit, ident, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
+const Kind = enum { int, str_lit, ident, dot, colon, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
 
 const Token = struct { kind: Kind, start: usize, end: usize, value: i64 };
 
@@ -113,6 +120,8 @@ const Lexer = struct {
             '=' => .assign,
             ';' => .semi,
             ',' => .comma,
+            '.' => .dot,
+            ':' => .colon,
             '(' => .lparen,
             ')' => .rparen,
             '{' => .lbrace,
@@ -228,6 +237,40 @@ pub const Builder = struct {
         return idx;
     }
 
+    /// A record: a family operation over alternating key and value operands.
+    /// Construction is a family concern because content-as-values makes it the
+    /// signature's introduction projection; the Core is the eliminator algebra.
+    pub fn record(self: *Builder, kv: []const u32) Error!u32 {
+        const code = try self.lit(@intCast(OP_MAKE_REC));
+        if (@as(usize, self.p) + 1 + kv.len > self.pool.len) return Error.OutOfPool;
+        const start = self.p;
+        self.pool[self.p] = code;
+        self.p += 1;
+        for (kv) |x| {
+            self.pool[self.p] = x;
+            self.p += 1;
+        }
+        const idx = try self.alloc(TAG_RAW);
+        self.slot(idx, 1).* = ARITH;
+        self.slot(idx, 2).* = start;
+        self.slot(idx, 3).* = @intCast(1 + kv.len);
+        return idx;
+    }
+
+    /// Reading a field back out is elimination, so it is a Core form and not a
+    /// family operation. The key is a blob span, the same shape a string uses.
+    pub fn project(self: *Builder, base: u32, key: []const u8) Error!u32 {
+        if (@as(usize, self.bl) + key.len > self.blob.len) return Error.OutOfBlob;
+        const off = self.bl;
+        @memcpy(self.blob[off .. off + key.len], key);
+        self.bl += @intCast(key.len);
+        const idx = try self.alloc(TAG_PROJECT);
+        self.slot(idx, 1).* = base;
+        self.slot(idx, 2).* = off;
+        self.slot(idx, 3).* = @intCast(key.len);
+        return idx;
+    }
+
     /// A family operation: the opcode rides as the first operand, so the family
     /// surface is one id rather than one per operator.
     pub fn arith(self: *Builder, op: u32, lhs: u32, rhs: u32) Error!u32 {
@@ -272,6 +315,10 @@ pub const Parser = struct {
     tok: Token,
     b: *Builder,
     names: *Names,
+    /// `{` is ambiguous: it opens a block after an `if` condition and a record
+    /// literal in ordinary expression position. Cleared while parsing a
+    /// condition, which is the same resolution Rust uses.
+    allow_record: bool = true,
 
     pub fn init(src: []const u8, b: *Builder, names: *Names) Error!Parser {
         var lx = Lexer{ .src = src };
@@ -381,7 +428,15 @@ pub const Parser = struct {
     /// being a separate feature.
     fn postfix(self: *Parser) Error!u32 {
         var e = try self.primary();
-        while (self.tok.kind == .lparen) {
+        while (self.tok.kind == .lparen or self.tok.kind == .dot) {
+            if (self.tok.kind == .dot) {
+                try self.bump();
+                if (self.tok.kind != .ident) return Error.UnexpectedToken;
+                const field = self.lx.src[self.tok.start..self.tok.end];
+                try self.bump();
+                e = try self.b.project(e, field);
+                continue;
+            }
             try self.bump();
             var args: [8]u32 = undefined;
             var na: usize = 0;
@@ -421,13 +476,38 @@ pub const Parser = struct {
             },
             .lparen => {
                 try self.bump();
+                const saved = self.allow_record;
+                self.allow_record = true;
                 const e = try self.expression();
+                self.allow_record = saved;
                 try self.expect(.rparen);
                 return e;
             },
+            .lbrace => {
+                if (!self.allow_record) return Error.UnexpectedToken;
+                try self.bump();
+                var kv: [16]u32 = undefined;
+                var nk: usize = 0;
+                while (self.tok.kind != .rbrace) {
+                    if (self.tok.kind != .ident) return Error.UnexpectedToken;
+                    if (nk + 2 > kv.len) return Error.TooManyParams;
+                    const key = self.lx.src[self.tok.start..self.tok.end];
+                    try self.bump();
+                    try self.expect(.colon);
+                    kv[nk] = try self.b.str(key);
+                    kv[nk + 1] = try self.expression();
+                    nk += 2;
+                    if (self.tok.kind == .comma) try self.bump();
+                }
+                try self.expect(.rbrace);
+                return self.b.record(kv[0..nk]);
+            },
             .kw_if => {
                 try self.bump();
+                const saved = self.allow_record;
+                self.allow_record = false;
                 const c = try self.expression();
+                self.allow_record = saved;
                 try self.expect(.lbrace);
                 const t = try self.program();
                 try self.expect(.rbrace);

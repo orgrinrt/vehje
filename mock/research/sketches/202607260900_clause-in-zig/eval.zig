@@ -92,6 +92,10 @@ pub const Error = error{
     TooManyOperands,
     NotCallable,
     NotAnInt,
+    NotARecord,
+    NoSuchField,
+    RecArenaFull,
+    BadRecordKey,
 };
 
 /// A closure names the environment it was written in, which is why the
@@ -99,8 +103,13 @@ pub const Error = error{
 /// outlive the scope that produced it and must still read what it captured.
 const Closure = struct { param: u32, body: u32, env: u32 };
 
+/// One field of a record: its name and its value. The record itself is a span
+/// of these, which keeps a record value two words wide.
+const RecEntry = struct { key: []const u8, val: Value };
+
 const Value = union(enum) {
     int: i64,
+    record: struct { start: u32, len: u32 },
     /// A zero-copy slice of the image's blob. The wire already carries the
     /// bytes, so producing a string value costs nothing.
     str: []const u8,
@@ -123,6 +132,10 @@ const Binding = struct { sym: u32, val: Value, parent: u32 };
 pub const Env = struct {
     slots: []Binding,
     n: u32 = 0,
+    /// Record fields live in their own caller-lent arena. Nothing is freed
+    /// within a run, matching the binding arena above.
+    recs: []RecEntry,
+    nrec: u32 = 0,
 
     fn push(self: *Env, sym: u32, val: Value, parent: u32) Error!u32 {
         if (self.n >= self.slots.len) return Error.EnvFull;
@@ -243,6 +256,20 @@ fn evalNode(img: *const Image, idx: u32, env: *Env, cur: u32) Error!Value {
             }
             return f;
         },
+        cl.TAG_PROJECT => {
+            const base = try evalNode(img, try img.word(idx, 1), env, cur);
+            const key = try img.blob(try img.word(idx, 2), try img.word(idx, 3));
+            const r = switch (base) {
+                .record => |r| r,
+                else => return Error.NotARecord,
+            };
+            var k: u32 = 0;
+            while (k < r.len) : (k += 1) {
+                const e = env.recs[r.start + k];
+                if (std.mem.eql(u8, e.key, key)) return e.val;
+            }
+            return Error.NoSuchField;
+        },
         cl.TAG_IF => {
             const c = try (try evalNode(img, try img.word(idx, 1), env, cur)).asInt();
             return evalNode(img, try img.word(idx, if (c != 0) 2 else 3), env, cur);
@@ -251,10 +278,28 @@ fn evalNode(img: *const Image, idx: u32, env: *Env, cur: u32) Error!Value {
             if ((try img.word(idx, 1)) != cl.ARITH) return Error.Unsupported;
             const start = try img.word(idx, 2);
             const len = try img.word(idx, 3);
-            if (len < 1 or len > 4) return Error.TooManyOperands;
             // Operand 0 carries the opcode; the rest are the arguments, evaluated
             // left to right because operand order is observable.
             const op: u32 = @intCast(try (try evalNode(img, try img.pooled(start), env, cur)).asInt());
+            // The vocabulary has two shapes in it, and this is where that shows:
+            // a constructor takes a variable number of operands and yields a
+            // compound, so it cannot go through the fixed-arity scalar path.
+            if (op == cl.OP_MAKE_REC) {
+                const first = env.nrec;
+                var k: u32 = 1;
+                while (k + 1 < len) : (k += 2) {
+                    const key = switch (try evalNode(img, try img.pooled(start + k), env, cur)) {
+                        .str => |t| t,
+                        else => return Error.BadRecordKey,
+                    };
+                    const val = try evalNode(img, try img.pooled(start + k + 1), env, cur);
+                    if (env.nrec >= env.recs.len) return Error.RecArenaFull;
+                    env.recs[env.nrec] = .{ .key = key, .val = val };
+                    env.nrec += 1;
+                }
+                return Value{ .record = .{ .start = first, .len = env.nrec - first } };
+            }
+            if (len < 1 or len > 4) return Error.TooManyOperands;
             var args: [3]i64 = undefined;
             var k: u32 = 1;
             while (k < len) : (k += 1) {
@@ -274,6 +319,7 @@ pub fn run(src: []const u8) !i64 {
     var blob_buf: [2048]u8 = undefined;
     var image: [16384]u8 = undefined;
     var slots: [512]Binding = undefined;
+    var recs: [256]RecEntry = undefined;
 
     var b = cl.Builder{ .nodes = &node_buf, .pool = &pool_buf, .blob = &blob_buf };
     var names = cl.Names{ .buf = &name_buf };
@@ -289,11 +335,12 @@ pub fn run(src: []const u8) !i64 {
     var types: [1024]chk.Ty = undefined;
     var subst: [256]u32 = undefined;
     var tenv: [256]chk.TyBinding = undefined;
-    var ctx = chk.Ctx{ .types = &types, .subst = &subst, .env = &tenv };
+    var tfields: [256]chk.Field = undefined;
+    var ctx = chk.Ctx{ .types = &types, .subst = &subst, .env = &tenv, .fields = &tfields };
     _ = try chk.check(image[0..len], &ctx);
 
     const img = try Image.parse(image[0..len]);
-    var env = Env{ .slots = &slots };
+    var env = Env{ .slots = &slots, .recs = &recs };
     return (try evalNode(&img, img.root, &env, ENV_NIL)).asInt();
 }
 
@@ -307,6 +354,7 @@ pub fn runStr(src: []const u8, out: []u8) ![]const u8 {
     var blob_buf: [2048]u8 = undefined;
     var image: [16384]u8 = undefined;
     var slots: [512]Binding = undefined;
+    var recs: [256]RecEntry = undefined;
 
     var b = cl.Builder{ .nodes = &node_buf, .pool = &pool_buf, .blob = &blob_buf };
     var names = cl.Names{ .buf = &name_buf };
@@ -317,11 +365,12 @@ pub fn runStr(src: []const u8, out: []u8) ![]const u8 {
     var types: [1024]chk.Ty = undefined;
     var subst: [256]u32 = undefined;
     var tenv: [256]chk.TyBinding = undefined;
-    var ctx = chk.Ctx{ .types = &types, .subst = &subst, .env = &tenv };
+    var tfields: [256]chk.Field = undefined;
+    var ctx = chk.Ctx{ .types = &types, .subst = &subst, .env = &tenv, .fields = &tfields };
     _ = try chk.check(image[0..len], &ctx);
 
     const img = try Image.parse(image[0..len]);
-    var env = Env{ .slots = &slots };
+    var env = Env{ .slots = &slots, .recs = &recs };
     return switch (try evalNode(&img, img.root, &env, ENV_NIL)) {
         .str => |t| blk: {
             @memcpy(out[0..t.len], t);
@@ -417,4 +466,32 @@ test "a string is refused where a number belongs, before evaluation" {
     try std.testing.expectError(chk.Error.Mismatch, run("\"a\" + 1"));
     try std.testing.expectError(chk.Error.Mismatch, runStr("if \"a\" { \"x\" } else { \"y\" }", &out));
     try std.testing.expectError(chk.Error.Mismatch, runStr("if 1 < 2 { \"a\" } else { 1 }", &out));
+}
+
+test "a record is built and a field is read back" {
+    try std.testing.expectEqual(@as(i64, 7), try run("let r = { a: 7, b: 9 }; r.a"));
+    try std.testing.expectEqual(@as(i64, 9), try run("let r = { a: 7, b: 9 }; r.b"));
+    try std.testing.expectEqual(@as(i64, 16), try run("let r = { a: 7, b: 9 }; r.a + r.b"));
+}
+
+test "a record field can be any value, including another record" {
+    var out: [64]u8 = undefined;
+    try std.testing.expectEqualStrings("ok", try runStr("let r = { name: \"ok\", n: 1 }; r.name", &out));
+    try std.testing.expectEqual(@as(i64, 3), try run("let r = { inner: { deep: 3 } }; r.inner.deep"));
+}
+
+test "a record flows through a function and is projected after" {
+    try std.testing.expectEqual(@as(i64, 5), try run("fn id(v) { v } id({ k: 5 }).k"));
+}
+
+test "a missing field is refused before evaluation" {
+    try std.testing.expectError(chk.Error.NoSuchField, run("let r = { a: 1 }; r.b"));
+}
+
+test "projecting a non-record is refused before evaluation" {
+    try std.testing.expectError(chk.Error.Mismatch, run("let n = 1; n.a"));
+}
+
+test "a record literal is refused in an if-condition, where a block belongs" {
+    try std.testing.expectError(cl.Error.UnexpectedToken, run("if { a: 1 } { 1 } else { 2 }"));
 }
