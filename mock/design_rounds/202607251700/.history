@@ -1,0 +1,50 @@
+4bc8f6f8 chore: lock src changelist for compound values
+7ab607f3 refactor: split the host boundary out of the runtime root
+7623a160 test: split the artifact-backed driver tests into their own module
+77a48696 feat: a handler can return a record, and the host reads it back
+2c10a7db test: split the runtime suite into core, family, and shared support
+1604be2b feat: compound values cross the host boundary as value images
+295d6da7 feat: the runtime value arena and the value-image tree writer and reader
+2e6a518b docs: src changelist for compound values
+d9595f80 chore: lock doc changelist for compound values
+8056a1f4 docs: align doc changelist with the landed edits
+ecd5d3f1 docs: compound values cross as value images in both directions
+07e85709 docs: doc changelist for compound values
+2db8fd73 docs: open round for compound values across the host boundary
+2ba2275e research: record the string verdict against the mandate
+1d1dbe52 bench: interning constructed strings loses in every regime
+54fa1215 research: record the composition result against the mandate
+4c89af33 bench: dedup and reuse are mutually exclusive per value, and reuse wins
+f64757aa research: read the optimisation mandate against the bench corpus
+752bb63e research: census the whole grammar against the Core
+e4af8009 chore: close the strings as values round
+e4853fc0 chore: lock src changelist for strings as values
+cda30e8d feat: strings are values the runtime evaluates and hands over
+fedcef47 docs: src changelist for strings as values
+6fbee6df chore: lock doc changelist for strings as values
+ee3cf214 docs: strings join the evaluated set and the handle holds scratch
+f3d07610 docs: open round for strings as values
+8a4c9faa research: pattern representation is undecided and compounds are the real constraint
+0a5e3fc9 research: the first-party language shape and what it needs
+df9cd338 chore: close the family dispatch round
+5f2b1ee4 chore: lock src changelist for family dispatch
+ce1ecc49 feat: a family operation reaches its host handler
+199fec95 docs: src changelist for family dispatch
+fa744b85 chore: lock doc changelist for family dispatch
+9562b37c docs: the runtime dispatches a family operation to its host
+57e73393 docs: open round for family operation dispatch
+3d7ec19c chore: close the driver embedding round
+955b46b0 chore: lock src changelist for the driver embedding
+9d866795 feat: the driver runs a program and reads its value back
+0f9ece07 docs: src changelist for the driver embedding
+77fb7c64 chore: lock doc changelist for the driver embedding
+8255c571 docs: the driver embeds via the stack loader and the value returns
+e37d5ef2 docs: open round for the host driving the runtime
+884830b8 feat: a produced value crosses back through the sink
+fb0d5de9 chore: close the value image round
+fdc95c70 chore: lock src changelist for the value image
+0334f02d feat: pin the value image layout with a writer and reader
+323c979e docs: src changelist for the value image writer and reader
+5c99f643 chore: lock doc changelist for the value crossing contract
+a196d797 docs: pin the value image layout and correct the runtime design
+d8f16172 docs: doc changelist for the value crossing contract
