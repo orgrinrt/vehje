@@ -13,9 +13,14 @@
 #![no_std]
 #![deny(unused, unreachable_code, unused_must_use, unused_imports, dead_code)]
 
+pub mod runtime;
+
 use arvo::USize;
 use notko::Outcome;
 use vehje_runtime_abi::{Residual, ValueArena};
+
+/// The embedded runtime and its entry points.
+pub use runtime::{Runtime, RuntimeEntries};
 
 /// A driver diagnostic.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -26,6 +31,12 @@ pub enum DriverError {
     SerializeFailed,
     /// A produced value failed the structural decode (a corrupt value-arena).
     CorruptValue,
+    /// The runtime artifact could not be loaded.
+    LoadFailed,
+    /// The artifact did not export an entry the driver requires.
+    SymbolMissing,
+    /// The runtime reported that execution failed.
+    ExecuteFailed,
 }
 
 /// Hand a checked residual to the runtime and read back its outcome.

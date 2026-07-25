@@ -39,6 +39,7 @@ hilavitkutin = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", branch 
 hilavitkutin-build = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", branch = "dev" }
 hilavitkutin-str = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", branch = "dev" }
 hilavitkutin-sym = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", branch = "dev" }
+hilavitkutin-linking = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", branch = "dev" }
 
 notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
 

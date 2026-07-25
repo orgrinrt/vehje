@@ -10,16 +10,18 @@ vehje-ir.workspace = true
 vehje-runtime-abi.workspace = true
 vehje-schedule.workspace = true
 hilavitkutin-api.workspace = true
+hilavitkutin-linking = { workspace = true, optional = true }
 notko.workspace = true
-# libloading = "0.8"  # BACKLOG: dlopen integration for dynamic Zig runtime loading
 
 [build-dependencies]
 mockspace.workspace = true
 
 [features]
 default = ["std"]
-# `std` is the baseline feature: the driver opens the Zig runtime
-# dylib via `std::fs` and (future) `libloading`. `no_std` mode is
-# reserved for the embedded-target future where dylib dispatch is
-# replaced with statically linked extension slots.
+# The embedding does not need `std`: loading goes through
+# `hilavitkutin-linking`, which is `no_std` and holds no allocator.
+# The feature remains for host-side conveniences that may want it.
 std = []
+# Load the runtime artifact at run time instead of linking it. Off by
+# default: the shipping compiler links statically and carries no loader.
+dynamic = ["dep:hilavitkutin-linking"]
