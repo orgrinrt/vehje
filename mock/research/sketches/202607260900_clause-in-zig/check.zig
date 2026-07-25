@@ -35,6 +35,7 @@ pub const NONE: u32 = 0xFFFF_FFFF;
 pub const Ty = union(enum) {
     int,
     boolean,
+    str,
     tvar: u32,
     func: struct { p: u32, r: u32 },
 };
@@ -120,6 +121,7 @@ pub const Ctx = struct {
         return switch (self.types[ra]) {
             .int => if (self.types[rb] == .int) {} else Error.Mismatch,
             .boolean => if (self.types[rb] == .boolean) {} else Error.Mismatch,
+            .str => if (self.types[rb] == .str) {} else Error.Mismatch,
             .func => |fa| switch (self.types[rb]) {
                 .func => |fb| {
                     try self.unify(fa.p, fb.p);
@@ -163,7 +165,7 @@ pub const Ctx = struct {
         const r = self.resolve(t);
         return switch (self.types[r]) {
             .tvar => |v| if (v >= first and v < first + count) map[v - first] else r,
-            .int, .boolean => r,
+            .int, .boolean, .str => r,
             .func => |f| blk: {
                 const p = try self.copy(f.p, first, count, map);
                 const rr = try self.copy(f.r, first, count, map);
@@ -218,7 +220,11 @@ fn rd(bytes: []const u8, at: usize) u32 {
 
 fn infer(img: *const Image, idx: u32, ctx: *Ctx, cur: u32) Error!u32 {
     switch (try img.word(idx, 0)) {
-        cl.TAG_LIT => return ctx.alloc(.int),
+        cl.TAG_LIT => return switch (try img.word(idx, 1)) {
+            cl.LIT_INT => ctx.alloc(.int),
+            cl.LIT_STR => ctx.alloc(.str),
+            else => Error.Unsupported,
+        },
         cl.TAG_VAR => return ctx.instantiate(try ctx.lookup(try img.word(idx, 1), cur)),
         cl.TAG_LET => {
             const rec = (try img.word(idx, 1)) != 0;
@@ -302,18 +308,19 @@ pub fn check(image: []const u8, ctx: *Ctx) Error!u32 {
 
 // ---------------------------------------------------------------- tests
 
-const Shape = enum { int, boolean, func };
+const Shape = enum { int, boolean, str, func };
 
 fn typeOf(src: []const u8) !Shape {
     var node_buf: [512 * cl.NODE_WORDS]u32 = undefined;
     var pool_buf: [256]u32 = undefined;
     var name_buf: [64][]const u8 = undefined;
+    var blob_buf: [2048]u8 = undefined;
     var image: [16384]u8 = undefined;
     var types: [1024]Ty = undefined;
     var subst: [256]u32 = undefined;
     var env: [256]TyBinding = undefined;
 
-    var b = cl.Builder{ .nodes = &node_buf, .pool = &pool_buf };
+    var b = cl.Builder{ .nodes = &node_buf, .pool = &pool_buf, .blob = &blob_buf };
     var names = cl.Names{ .buf = &name_buf };
     var p = try cl.Parser.init(src, &b, &names);
     const root = try p.program();
@@ -324,9 +331,22 @@ fn typeOf(src: []const u8) !Shape {
     return switch (ctx.types[t]) {
         .int => .int,
         .boolean => .boolean,
+        .str => .str,
         .func => .func,
         .tvar => .func,
     };
+}
+
+test "a string literal has a string type" {
+    try std.testing.expectEqual(Shape.str, try typeOf("\"hi\""));
+    try std.testing.expectEqual(Shape.str, try typeOf("let s = \"hi\"; s"));
+    try std.testing.expectEqual(Shape.str, try typeOf("if 1 < 2 { \"a\" } else { \"b\" }"));
+}
+
+test "a string is not an int" {
+    try std.testing.expectError(Error.Mismatch, typeOf("\"a\" + 1"));
+    try std.testing.expectError(Error.Mismatch, typeOf("if \"a\" { 1 } else { 2 }"));
+    try std.testing.expectError(Error.Mismatch, typeOf("if 1 < 2 { \"a\" } else { 1 }"));
 }
 
 test "arithmetic is int and comparison is bool, from the operation signatures" {

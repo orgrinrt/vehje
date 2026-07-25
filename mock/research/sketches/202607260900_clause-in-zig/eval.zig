@@ -101,6 +101,9 @@ const Closure = struct { param: u32, body: u32, env: u32 };
 
 const Value = union(enum) {
     int: i64,
+    /// A zero-copy slice of the image's blob. The wire already carries the
+    /// bytes, so producing a string value costs nothing.
+    str: []const u8,
     closure: Closure,
 
     fn asInt(self: Value) Error!i64 {
@@ -143,6 +146,8 @@ const Image = struct {
     node_count: u32,
     pool_base: usize,
     pool_count: u32,
+    blob_base: usize,
+    blob_len: u32,
     root: u32,
 
     fn parse(bytes: []const u8) Error!Image {
@@ -150,10 +155,28 @@ const Image = struct {
         if (rd(bytes, 0) != cl.MAGIC) return Error.Corrupt;
         const node_count = rd(bytes, 3 * cl.WORD);
         const pool_count = rd(bytes, 4 * cl.WORD);
+        const blob_len = rd(bytes, 5 * cl.WORD);
         const root = rd(bytes, 6 * cl.WORD);
         const pool_base = cl.HEADER_WORDS * cl.WORD + @as(usize, node_count) * cl.NODE_WORDS * cl.WORD;
-        if (pool_base + @as(usize, pool_count) * cl.WORD > bytes.len) return Error.Corrupt;
-        return .{ .bytes = bytes, .node_count = node_count, .pool_base = pool_base, .pool_count = pool_count, .root = root };
+        const blob_base = pool_base + @as(usize, pool_count) * cl.WORD;
+        if (blob_base + @as(usize, blob_len) > bytes.len) return Error.Corrupt;
+        return .{
+            .bytes = bytes,
+            .node_count = node_count,
+            .pool_base = pool_base,
+            .pool_count = pool_count,
+            .blob_base = blob_base,
+            .blob_len = blob_len,
+            .root = root,
+        };
+    }
+
+    /// Bounds-checked because the image is untrusted even when this process
+    /// produced it. A decoder that trusts its input is the wrong shape to grow
+    /// into one that reads an image off disk.
+    fn blob(self: *const Image, off: u32, len: u32) Error![]const u8 {
+        if (@as(usize, off) + @as(usize, len) > self.blob_len) return Error.Corrupt;
+        return self.bytes[self.blob_base + off .. self.blob_base + off + len];
     }
 
     fn word(self: *const Image, idx: u32, slot: usize) Error!u32 {
@@ -173,11 +196,14 @@ fn rd(bytes: []const u8, at: usize) u32 {
 
 fn evalNode(img: *const Image, idx: u32, env: *Env, cur: u32) Error!Value {
     switch (try img.word(idx, 0)) {
-        cl.TAG_LIT => {
-            if ((try img.word(idx, 1)) != cl.LIT_INT) return Error.Unsupported;
-            const lo = try img.word(idx, 2);
-            const hi = try img.word(idx, 3);
-            return Value{ .int = @bitCast((@as(u64, hi) << 32) | @as(u64, lo)) };
+        cl.TAG_LIT => switch (try img.word(idx, 1)) {
+            cl.LIT_INT => {
+                const lo = try img.word(idx, 2);
+                const hi = try img.word(idx, 3);
+                return Value{ .int = @bitCast((@as(u64, hi) << 32) | @as(u64, lo)) };
+            },
+            cl.LIT_STR => return Value{ .str = try img.blob(try img.word(idx, 2), try img.word(idx, 3)) },
+            else => return Error.Unsupported,
         },
         cl.TAG_VAR => return env.lookup(try img.word(idx, 1), cur),
         cl.TAG_LET => {
@@ -245,10 +271,11 @@ pub fn run(src: []const u8) !i64 {
     var node_buf: [512 * cl.NODE_WORDS]u32 = undefined;
     var pool_buf: [256]u32 = undefined;
     var name_buf: [64][]const u8 = undefined;
+    var blob_buf: [2048]u8 = undefined;
     var image: [16384]u8 = undefined;
     var slots: [512]Binding = undefined;
 
-    var b = cl.Builder{ .nodes = &node_buf, .pool = &pool_buf };
+    var b = cl.Builder{ .nodes = &node_buf, .pool = &pool_buf, .blob = &blob_buf };
     var names = cl.Names{ .buf = &name_buf };
     var p = try cl.Parser.init(src, &b, &names);
     const root = try p.program();
@@ -268,6 +295,40 @@ pub fn run(src: []const u8) !i64 {
     const img = try Image.parse(image[0..len]);
     var env = Env{ .slots = &slots };
     return (try evalNode(&img, img.root, &env, ENV_NIL)).asInt();
+}
+
+/// Source text to a string value. Separate from `run` because a string value
+/// borrows the image, which lives in this frame, so the bytes are copied into
+/// the caller's buffer rather than returned as a dangling slice.
+pub fn runStr(src: []const u8, out: []u8) ![]const u8 {
+    var node_buf: [512 * cl.NODE_WORDS]u32 = undefined;
+    var pool_buf: [256]u32 = undefined;
+    var name_buf: [64][]const u8 = undefined;
+    var blob_buf: [2048]u8 = undefined;
+    var image: [16384]u8 = undefined;
+    var slots: [512]Binding = undefined;
+
+    var b = cl.Builder{ .nodes = &node_buf, .pool = &pool_buf, .blob = &blob_buf };
+    var names = cl.Names{ .buf = &name_buf };
+    var p = try cl.Parser.init(src, &b, &names);
+    const root = try p.program();
+    const len = try cl.writeImage(&b, root, &image);
+
+    var types: [1024]chk.Ty = undefined;
+    var subst: [256]u32 = undefined;
+    var tenv: [256]chk.TyBinding = undefined;
+    var ctx = chk.Ctx{ .types = &types, .subst = &subst, .env = &tenv };
+    _ = try chk.check(image[0..len], &ctx);
+
+    const img = try Image.parse(image[0..len]);
+    var env = Env{ .slots = &slots };
+    return switch (try evalNode(&img, img.root, &env, ENV_NIL)) {
+        .str => |t| blk: {
+            @memcpy(out[0..t.len], t);
+            break :blk out[0..t.len];
+        },
+        else => Error.NotAnInt,
+    };
 }
 
 test "a clause program computes, with no host and no rust" {
@@ -337,4 +398,23 @@ test "an ill-typed program is refused before it can evaluate" {
     // conditional would pick a branch. The gate is what stops it.
     try std.testing.expectError(chk.Error.Mismatch, run("if 1 { 1 } else { 2 }"));
     try std.testing.expectError(chk.Error.Mismatch, run("1 + (2 < 3)"));
+}
+
+test "a string is a value, carried in the image blob" {
+    var out: [64]u8 = undefined;
+    try std.testing.expectEqualStrings("hello", try runStr("\"hello\"", &out));
+    try std.testing.expectEqualStrings("bound", try runStr("let s = \"bound\"; s", &out));
+    try std.testing.expectEqualStrings("yes", try runStr("if 1 < 2 { \"yes\" } else { \"no\" }", &out));
+}
+
+test "a string flows through a function like any other value" {
+    var out: [64]u8 = undefined;
+    try std.testing.expectEqualStrings("x", try runStr("fn id(v) { v } id(\"x\")", &out));
+}
+
+test "a string is refused where a number belongs, before evaluation" {
+    var out: [64]u8 = undefined;
+    try std.testing.expectError(chk.Error.Mismatch, run("\"a\" + 1"));
+    try std.testing.expectError(chk.Error.Mismatch, runStr("if \"a\" { \"x\" } else { \"y\" }", &out));
+    try std.testing.expectError(chk.Error.Mismatch, runStr("if 1 < 2 { \"a\" } else { 1 }", &out));
 }

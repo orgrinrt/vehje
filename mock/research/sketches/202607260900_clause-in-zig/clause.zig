@@ -26,6 +26,7 @@ pub const TAG_IF: u32 = 6;
 pub const TAG_RAW: u32 = 10;
 
 pub const LIT_INT: u32 = 2;
+pub const LIT_STR: u32 = 3;
 
 /// The arithmetic family's id. A consumer language declares its own families;
 /// the framework declares none.
@@ -44,6 +45,8 @@ pub const Error = error{
     UnexpectedToken,
     OutOfNodes,
     OutOfPool,
+    OutOfBlob,
+    Unterminated,
     TooManyNames,
     TooManyParams,
     Unsupported,
@@ -51,7 +54,7 @@ pub const Error = error{
 
 // ---------------------------------------------------------------- lexer
 
-const Kind = enum { int, ident, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
+const Kind = enum { int, str_lit, ident, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
 
 const Token = struct { kind: Kind, start: usize, end: usize, value: i64 };
 
@@ -94,6 +97,13 @@ const Lexer = struct {
                 .ident;
             return .{ .kind = kind, .start = start, .end = self.i, .value = 0 };
         }
+        if (c == '"') {
+            self.i += 1;
+            while (self.i < self.src.len and self.src[self.i] != '"') self.i += 1;
+            if (self.i >= self.src.len) return Error.Unterminated;
+            self.i += 1;
+            return .{ .kind = .str_lit, .start = start, .end = self.i, .value = 0 };
+        }
         self.i += 1;
         const kind: Kind = switch (c) {
             '+' => .plus,
@@ -120,8 +130,12 @@ const Lexer = struct {
 pub const Builder = struct {
     nodes: []u32,
     pool: []u32,
+    /// String bytes live in a blob section, named by offset and length, which is
+    /// the layout the runtime already decodes.
+    blob: []u8,
     n: u32 = 0,
     p: u32 = 0,
+    bl: u32 = 0,
 
     fn slot(self: *Builder, idx: u32, k: usize) *u32 {
         return &self.nodes[@as(usize, idx) * NODE_WORDS + k];
@@ -143,6 +157,20 @@ pub const Builder = struct {
         self.slot(idx, 1).* = LIT_INT;
         self.slot(idx, 2).* = @truncate(bits);
         self.slot(idx, 3).* = @truncate(bits >> 32);
+        return idx;
+    }
+
+    /// A string literal is a span of the blob, so producing one copies the
+    /// bytes once and every later reference is two words.
+    pub fn str(self: *Builder, text: []const u8) Error!u32 {
+        if (@as(usize, self.bl) + text.len > self.blob.len) return Error.OutOfBlob;
+        const off = self.bl;
+        @memcpy(self.blob[off .. off + text.len], text);
+        self.bl += @intCast(text.len);
+        const idx = try self.alloc(TAG_LIT);
+        self.slot(idx, 1).* = LIT_STR;
+        self.slot(idx, 2).* = off;
+        self.slot(idx, 3).* = @intCast(text.len);
         return idx;
     }
 
@@ -380,6 +408,12 @@ pub const Parser = struct {
                 try self.bump();
                 return self.b.lit(v);
             },
+            .str_lit => {
+                // Trim the quotes; escapes are not in this subset.
+                const text = self.lx.src[self.tok.start + 1 .. self.tok.end - 1];
+                try self.bump();
+                return self.b.str(text);
+            },
             .ident => {
                 const sym = try self.names.intern(self.lx.src[self.tok.start..self.tok.end]);
                 try self.bump();
@@ -411,7 +445,7 @@ pub const Parser = struct {
 /// Assemble the wire image the runtime decodes: header, nodes, pool, and the
 /// empty blob and clause sections this subset does not use yet.
 pub fn writeImage(b: *const Builder, root: u32, out: []u8) Error!usize {
-    const need = HEADER_WORDS * WORD + @as(usize, b.n) * NODE_WORDS * WORD + @as(usize, b.p) * WORD;
+    const need = HEADER_WORDS * WORD + @as(usize, b.n) * NODE_WORDS * WORD + @as(usize, b.p) * WORD + @as(usize, b.bl);
     if (out.len < need) return Error.OutOfNodes;
     var w: usize = 0;
     const put = struct {
@@ -424,7 +458,7 @@ pub fn writeImage(b: *const Builder, root: u32, out: []u8) Error!usize {
     put(out, 2 * WORD, 0); // tier: arena
     put(out, 3 * WORD, b.n);
     put(out, 4 * WORD, b.p);
-    put(out, 5 * WORD, 0); // blob_len
+    put(out, 5 * WORD, b.bl);
     put(out, 6 * WORD, root);
     put(out, 7 * WORD, 0); // clause_count
     w = HEADER_WORDS * WORD;
@@ -437,6 +471,10 @@ pub fn writeImage(b: *const Builder, root: u32, out: []u8) Error!usize {
     while (i < b.p) : (i += 1) {
         put(out, w, b.pool[i]);
         w += WORD;
+    }
+    if (b.bl > 0) {
+        @memcpy(out[w .. w + b.bl], b.blob[0..b.bl]);
+        w += b.bl;
     }
     return w;
 }
