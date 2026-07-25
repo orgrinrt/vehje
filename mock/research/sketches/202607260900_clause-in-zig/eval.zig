@@ -23,6 +23,7 @@ const ADD: u8 = 0x10;
 const LT: u8 = 0x11;
 const MUL: u8 = 0x12;
 const SUB: u8 = 0x13;
+const DIV: u8 = 0x14;
 
 /// The operation table: what the language definition emits as data, indexed by
 /// opcode. The framework declares none of this; the consumer language does.
@@ -31,11 +32,17 @@ const OPS = [_][]const u8{
     &[_]u8{ PUSH_ARG, 0, PUSH_ARG, 1, SUB }, // OP_SUB
     &[_]u8{ PUSH_ARG, 0, PUSH_ARG, 1, MUL }, // OP_MUL
     &[_]u8{ PUSH_ARG, 0, PUSH_ARG, 1, LT }, // OP_LT
+    &[_]u8{}, // 4: OP_MAKE_REC, a constructor rather than a scalar program
+    &[_]u8{}, // 5: OP_MAKE_SEQ
+    &[_]u8{}, // 6: OP_LEN
+    &[_]u8{}, // 7: OP_AT
+    &[_]u8{}, // 8: OP_PUSH
+    &[_]u8{ PUSH_ARG, 0, PUSH_ARG, 1, DIV }, // OP_DIV
 };
 
 /// One operation's program, specialised. `prog` is comptime, so the walk and the
 /// dispatch vanish and only the arithmetic survives.
-fn runOp(comptime prog: []const u8, args: []const i64) i64 {
+fn runOp(comptime prog: []const u8, args: []const i64) Error!i64 {
     var stack: [8]i64 = undefined;
     comptime var sp: usize = 0;
     comptime var pc: usize = 0;
@@ -68,6 +75,15 @@ fn runOp(comptime prog: []const u8, args: []const i64) i64 {
                 comptime sp -= 1;
                 comptime pc += 1;
             },
+            DIV => {
+                // Division is the one scalar primitive with a runtime refusal:
+                // a zero divisor is not a type error, so the checker cannot
+                // catch it and the evaluator must.
+                if (stack[sp - 1] == 0) return error.DivideByZero;
+                stack[sp - 2] = @divTrunc(stack[sp - 2], stack[sp - 1]);
+                comptime sp -= 1;
+                comptime pc += 1;
+            },
             else => @compileError("unknown primitive"),
         }
     }
@@ -78,7 +94,7 @@ fn runOp(comptime prog: []const u8, args: []const i64) i64 {
 /// an unknown opcode is a refusal rather than a fallthrough.
 fn applyOp(op: u32, args: []const i64) Error!i64 {
     inline for (OPS, 0..) |prog, i| {
-        if (op == @as(u32, i)) return runOp(prog, args);
+        if (prog.len > 0 and op == @as(u32, i)) return runOp(prog, args);
     }
     return Error.UnknownOperation;
 }
@@ -99,6 +115,7 @@ pub const Error = error{
     NotASequence,
     OutOfRange,
     ValArenaFull,
+    DivideByZero,
 };
 
 /// A closure names the environment it was written in, which is why the
@@ -493,6 +510,7 @@ pub fn run(src: []const u8) !i64 {
     var names = cl.Names{ .buf = &name_buf };
     var p = try cl.Parser.init(src, &b, &names, &traits, &impls);
     const root = try p.program();
+    try p.monomorphise();
     const len = try cl.writeImage(&b, root, &image);
 
     // Prove, then evaluate. The canon's centre of gravity is prove-then-erase,
@@ -560,6 +578,7 @@ pub fn runStr(src: []const u8, out: []u8) ![]const u8 {
     var names = cl.Names{ .buf = &name_buf };
     var p = try cl.Parser.init(src, &b, &names, &traits, &impls);
     const root = try p.program();
+    try p.monomorphise();
     const len = try cl.writeImage(&b, root, &image);
 
     var types: [32768]chk.Ty = undefined;
@@ -1528,4 +1547,64 @@ test "an arm after an irrefutable one is refused as unreachable" {
 test "a guarded arm does not make what follows unreachable" {
     // The guard may fail, so a later arm is genuinely reachable.
     try std.testing.expectEqual(@as(i64, 0), try run("match 1 { n if 5 < n => 1, _ => 0 }"));
+}
+
+test "a bounded function is usable at several types" {
+    // The limitation this lifts: before specialisation, twice was usable at one
+    // type per program, because one body meant one dispatch slot.
+    try std.testing.expectEqual(@as(i64, 24), try run(
+        \\trait Dbl { fn dbl(Self) -> Self }
+        \\impl Dbl for Int { fn dbl(x) { x * 2 } }
+        \\impl Dbl for Str { fn dbl(s) { s } }
+        \\fn twice(v) { dbl(dbl(v)) }
+        \\twice(6)
+    ));
+    var out: [64]u8 = undefined;
+    try std.testing.expectEqualStrings("kept", try runStr(
+        \\trait Dbl { fn dbl(Self) -> Self }
+        \\impl Dbl for Int { fn dbl(x) { x * 2 } }
+        \\impl Dbl for Str { fn dbl(s) { s } }
+        \\fn twice(v) { dbl(dbl(v)) }
+        \\twice("kept")
+    , &out));
+}
+
+test "both specialisations coexist in one program" {
+    // The headline case. Two uses at two types, each dispatching to its own
+    // impl, in a single program.
+    try std.testing.expectEqual(@as(i64, 30), try run(
+        \\trait Sized { fn size(Self) -> Int }
+        \\impl Sized for Int { fn size(x) { x } }
+        \\impl Sized for Str { fn size(s) { 5 } }
+        \\fn twice_size(v) { size(v) + size(v) }
+        \\twice_size(10) + twice_size("hello")
+    ));
+}
+
+test "a bounded function still refuses a type with no impl" {
+    try std.testing.expectError(chk.Error.NoImpl, run(
+        \\trait Dbl { fn dbl(Self) -> Self }
+        \\impl Dbl for Int { fn dbl(x) { x * 2 } }
+        \\fn twice(v) { dbl(dbl(v)) }
+        \\twice("no impl for me")
+    ));
+}
+
+test "specialisation composes with ordinary generics" {
+    try std.testing.expectEqual(@as(i64, 14), try run(
+        \\trait Dbl { fn dbl(Self) -> Self }
+        \\impl Dbl for Int { fn dbl(x) { x * 2 } }
+        \\fn id(x) { x }
+        \\fn twice(v) { dbl(dbl(v)) }
+        \\id(twice(id(3))) + 2
+    ));
+}
+
+test "division, with a runtime refusal the checker cannot make" {
+    try std.testing.expectEqual(@as(i64, 4), try run("12 / 3"));
+    try std.testing.expectEqual(@as(i64, 3), try run("10 / 3"));
+    try std.testing.expectEqual(@as(i64, 7), try run("1 + 12 / 2"));
+    // Not a type error, so it is the evaluator's to refuse rather than the
+    // checker's to prove absent.
+    try std.testing.expectError(Error.DivideByZero, run("1 / 0"));
 }

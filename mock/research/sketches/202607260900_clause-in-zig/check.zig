@@ -348,7 +348,7 @@ fn declaredType(ctx: *Ctx, m: cl.MethodDecl, for_ty: cl.TyName, assoc: cl.TyName
 fn opType(ctx: *Ctx, op: u32) Error!struct { arg: u32, res: u32 } {
     const int = try ctx.alloc(.int);
     return switch (op) {
-        cl.OP_ADD, cl.OP_SUB, cl.OP_MUL => .{ .arg = int, .res = int },
+        cl.OP_ADD, cl.OP_SUB, cl.OP_MUL, cl.OP_DIV => .{ .arg = int, .res = int },
         cl.OP_LT => .{ .arg = int, .res = try ctx.alloc(.boolean) },
         else => Error.Unsupported,
     };
@@ -781,6 +781,7 @@ fn typeOf(src: []const u8) !Shape {
     var names = cl.Names{ .buf = &name_buf };
     var p = try cl.Parser.init(src, &b, &names, &traits, &impls);
     const root = try p.program();
+    try p.monomorphise();
     const len = try cl.writeImage(&b, root, &image);
 
     @memset(resolved[0..b.n], NONE);

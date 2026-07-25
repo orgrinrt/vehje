@@ -61,6 +61,7 @@ pub const OP_ADD: u32 = 0;
 pub const OP_SUB: u32 = 1;
 pub const OP_MUL: u32 = 2;
 pub const OP_LT: u32 = 3;
+pub const OP_DIV: u32 = 9;
 /// Record construction. Unlike the scalar operations above, its arity is not
 /// fixed: it takes alternating key and value operands and yields a compound.
 /// That shape is the coverage finding recorded in the round topic, and this is
@@ -149,6 +150,10 @@ pub const MacroDecl = struct {
     ret: TyName,
 };
 
+/// A binding whose body raises trait obligations: its binder, its value
+/// subtree, and whether it refers to itself.
+pub const Bounded = struct { sym: u32, value: u32, recursive: bool };
+
 pub const Error = error{
     UnexpectedByte,
     UnexpectedToken,
@@ -175,7 +180,7 @@ pub const Error = error{
 
 // ---------------------------------------------------------------- lexer
 
-const Kind = enum { int, str_lit, ident, dot, colon, lbracket, rbracket, arrow, kw_trait, kw_impl, kw_for, kw_type, kw_match, kw_while, kw_mut, kw_mod, kw_use, kw_in, kw_macro, kw_pub, bang, pound, colon_colon, kw_if_guard, dotdot, dotdot_eq, pipe, fat_arrow, underscore, plus_assign, minus_assign, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
+const Kind = enum { int, str_lit, ident, dot, colon, lbracket, rbracket, arrow, kw_trait, kw_impl, kw_for, kw_type, kw_match, kw_while, kw_mut, kw_mod, kw_use, kw_in, kw_macro, kw_pub, bang, pound, colon_colon, kw_if_guard, dotdot, dotdot_eq, pipe, fat_arrow, underscore, plus_assign, minus_assign, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, slash, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
 
 const Token = struct { kind: Kind, start: usize, end: usize, value: i64 };
 
@@ -296,6 +301,7 @@ const Lexer = struct {
             '+' => .plus,
             '-' => .minus,
             '*' => .star,
+            '/' => .slash,
             '<' => .lt,
             '=' => .assign,
             ';' => .semi,
@@ -609,6 +615,16 @@ pub const Parser = struct {
     names: *Names,
     macros: [16]MacroDecl = undefined,
     nmacros: u32 = 0,
+    /// Bindings whose body references a trait method, so their obligations are
+    /// what the monomorphic restriction bites on. Recorded here because the
+    /// parser is the one pass that knows both the trait method names and where
+    /// each binding's value subtree begins.
+    bounded: [32]Bounded = undefined,
+    nbounded: u32 = 0,
+    /// Set while parsing a binding's value, so a trait-method reference can be
+    /// attributed to the binding that contains it.
+    cur_binding: u32 = 0xFFFF_FFFF,
+    cur_uses_trait: bool = false,
     traits: []TraitDecl,
     ntraits: u32 = 0,
     impls: []ImplDecl,
@@ -1045,10 +1061,11 @@ pub const Parser = struct {
 
     fn multiplicative(self: *Parser) Error!u32 {
         var lhs = try self.postfix();
-        while (self.tok.kind == .star) {
+        while (self.tok.kind == .star or self.tok.kind == .slash) {
+            const op: u32 = if (self.tok.kind == .star) OP_MUL else OP_DIV;
             try self.bump();
             const rhs = try self.postfix();
-            lhs = try self.b.arith(OP_MUL, lhs, rhs);
+            lhs = try self.b.arith(op, lhs, rhs);
         }
         return lhs;
     }
@@ -1059,6 +1076,17 @@ pub const Parser = struct {
     /// Parse `fn name(params) { body }` and return the name and the curried
     /// lambda. Shared by top-level declarations and module bodies so the two
     /// cannot drift apart.
+    fn isTraitMethod(self: *const Parser, sym: u32) bool {
+        var i: u32 = 0;
+        while (i < self.ntraits) : (i += 1) {
+            var m: u8 = 0;
+            while (m < self.traits[i].nmethods) : (m += 1) {
+                if (self.traits[i].methods[m].sym == sym) return true;
+            }
+        }
+        return false;
+    }
+
     fn fnDecl(self: *Parser) Error!struct { name: u32, value: u32 } {
         try self.expect(.kw_fn);
         if (self.tok.kind != .ident) return Error.UnexpectedToken;
@@ -1077,7 +1105,14 @@ pub const Parser = struct {
         }
         try self.expect(.rparen);
         try self.expect(.lbrace);
+        const saved_binding = self.cur_binding;
+        const saved_uses = self.cur_uses_trait;
+        self.cur_binding = name;
+        self.cur_uses_trait = false;
         const body = try self.program();
+        const uses_trait = self.cur_uses_trait;
+        self.cur_binding = saved_binding;
+        self.cur_uses_trait = saved_uses;
         try self.expect(.rbrace);
         var f = body;
         if (np == 0) {
@@ -1090,7 +1125,201 @@ pub const Parser = struct {
             k -= 1;
             f = try self.b.lambda(params[k], f);
         }
+        if (uses_trait and self.nbounded < self.bounded.len) {
+            self.bounded[self.nbounded] = .{
+                .sym = name,
+                .value = f,
+                .recursive = self.selfReferences(f, name),
+            };
+            self.nbounded += 1;
+        }
         return .{ .name = name, .value = f };
+    }
+
+    /// Copy a subtree, appending fresh nodes. Children are remapped, so the
+    /// copy shares nothing with the original and its nodes get their own
+    /// dispatch slots, which is the whole reason to copy at all.
+    fn cloneSubtree(self: *Parser, node: u32) Error!u32 {
+        const src = @as(usize, node) * NODE_WORDS;
+        const tag = self.b.nodes[src];
+        switch (tag) {
+            TAG_LIT, TAG_VAR, PAT_WILD, PAT_BIND, PAT_LIT_INT, PAT_LIT_STR, PAT_RANGE => {
+                const idx = try self.b.alloc(tag);
+                var k: usize = 1;
+                while (k < NODE_WORDS) : (k += 1) {
+                    self.b.nodes[@as(usize, idx) * NODE_WORDS + k] = self.b.nodes[src + k];
+                }
+                return idx;
+            },
+            TAG_LET => {
+                const v = try self.cloneSubtree(self.b.nodes[src + 3]);
+                const bo = try self.cloneSubtree(self.b.nodes[src + 4]);
+                const idx = try self.b.alloc(TAG_LET);
+                self.b.nodes[@as(usize, idx) * NODE_WORDS + 1] = self.b.nodes[src + 1];
+                self.b.nodes[@as(usize, idx) * NODE_WORDS + 2] = self.b.nodes[src + 2];
+                self.b.nodes[@as(usize, idx) * NODE_WORDS + 3] = v;
+                self.b.nodes[@as(usize, idx) * NODE_WORDS + 4] = bo;
+                return idx;
+            },
+            TAG_LAMBDA => {
+                const bo = try self.cloneSubtree(self.b.nodes[src + 2]);
+                const idx = try self.b.alloc(TAG_LAMBDA);
+                self.b.nodes[@as(usize, idx) * NODE_WORDS + 1] = self.b.nodes[src + 1];
+                self.b.nodes[@as(usize, idx) * NODE_WORDS + 2] = bo;
+                return idx;
+            },
+            TAG_IF => {
+                const c = try self.cloneSubtree(self.b.nodes[src + 1]);
+                const t = try self.cloneSubtree(self.b.nodes[src + 2]);
+                const e = try self.cloneSubtree(self.b.nodes[src + 3]);
+                return self.b.cond(c, t, e);
+            },
+            TAG_PROJECT => {
+                const base = try self.cloneSubtree(self.b.nodes[src + 1]);
+                const idx = try self.b.alloc(TAG_PROJECT);
+                self.b.nodes[@as(usize, idx) * NODE_WORDS + 1] = base;
+                self.b.nodes[@as(usize, idx) * NODE_WORDS + 2] = self.b.nodes[src + 2];
+                self.b.nodes[@as(usize, idx) * NODE_WORDS + 3] = self.b.nodes[src + 3];
+                return idx;
+            },
+            PAT_OR => {
+                const a = try self.cloneSubtree(self.b.nodes[src + 1]);
+                const bb = try self.cloneSubtree(self.b.nodes[src + 2]);
+                return self.b.patOr(a, bb);
+            },
+            TAG_APPLY, TAG_RAW, TAG_MATCH, PAT_REC => {
+                const start = self.b.nodes[src + 2];
+                const n = self.b.nodes[src + 3];
+                const pat_start = self.b.nodes[src + 1];
+                const pat_n = self.b.nodes[src + 2];
+                const count = switch (tag) {
+                    TAG_MATCH => n * 3,
+                    PAT_REC => pat_n,
+                    else => n,
+                };
+                const from = if (tag == PAT_REC) pat_start else start;
+                var buf: [64]u32 = undefined;
+                if (count > buf.len) return Error.TooManyParams;
+                var k: u32 = 0;
+                while (k < count) : (k += 1) {
+                    const child = self.b.pool[from + k];
+                    buf[k] = if (child == NO_GUARD) NO_GUARD else try self.cloneSubtree(child);
+                }
+                if (@as(usize, self.b.p) + count > self.b.pool.len) return Error.OutOfPool;
+                const new_start = self.b.p;
+                k = 0;
+                while (k < count) : (k += 1) {
+                    self.b.pool[self.b.p] = buf[k];
+                    self.b.p += 1;
+                }
+                const idx = try self.b.alloc(tag);
+                const d = @as(usize, idx) * NODE_WORDS;
+                if (tag == PAT_REC) {
+                    self.b.nodes[d + 1] = new_start;
+                    self.b.nodes[d + 2] = count;
+                } else {
+                    if (tag != TAG_RAW) {
+                        self.b.nodes[d + 1] = try self.cloneSubtree(self.b.nodes[src + 1]);
+                    } else {
+                        self.b.nodes[d + 1] = self.b.nodes[src + 1];
+                    }
+                    self.b.nodes[d + 2] = new_start;
+                    self.b.nodes[d + 3] = n;
+                }
+                return idx;
+            },
+            else => return Error.Unsupported,
+        }
+    }
+
+    /// Specialise: replace each reference to a non-recursive bounded binding
+    /// with a copy of its value, so the copy's nodes carry their own dispatch
+    /// slots and its obligation resolves at that use's type.
+    ///
+    /// This is monomorphisation by inlining, which works precisely because the
+    /// binding is not recursive: a recursive one would need a binder for the
+    /// copy to name itself, and that is the worklist shape rather than this one.
+    pub fn monomorphise(self: *Parser) Error!void {
+        var round: u32 = 0;
+        while (round < 8) : (round += 1) {
+            var changed = false;
+            var i: u32 = 0;
+            const upto = self.b.n;
+            while (i < upto) : (i += 1) {
+                const base = @as(usize, i) * NODE_WORDS;
+                if (self.b.nodes[base] != TAG_VAR) continue;
+                const sym = self.b.nodes[base + 1];
+                var j: u32 = 0;
+                while (j < self.nbounded) : (j += 1) {
+                    const bd = self.bounded[j];
+                    if (bd.sym != sym or bd.recursive) continue;
+                    const copy = try self.cloneSubtree(bd.value);
+                    // Overwrite the reference with the copy's root, so the
+                    // reference becomes the value. No binder is introduced, so
+                    // no scope question arises.
+                    const cs = @as(usize, copy) * NODE_WORDS;
+                    var k: usize = 0;
+                    while (k < NODE_WORDS) : (k += 1) {
+                        self.b.nodes[base + k] = self.b.nodes[cs + k];
+                    }
+                    changed = true;
+                    break;
+                }
+            }
+            if (!changed) break;
+        }
+        // Every use was replaced by a copy, so the original binding is dead.
+        // It must go: its body still raises an obligation, and with no use left
+        // to fix the type, that obligation is unresolvable. Leaving it would
+        // turn a specialised program into an ambiguity error.
+        var j: u32 = 0;
+        while (j < self.nbounded) : (j += 1) {
+            if (self.bounded[j].recursive) continue;
+            var i: u32 = 0;
+            while (i < self.b.n) : (i += 1) {
+                const base = @as(usize, i) * NODE_WORDS;
+                if (self.b.nodes[base] != TAG_LET) continue;
+                if (self.b.nodes[base + 2] != self.bounded[j].sym) continue;
+                const body = self.b.nodes[base + 4];
+                const bs = @as(usize, body) * NODE_WORDS;
+                var k: usize = 0;
+                while (k < NODE_WORDS) : (k += 1) {
+                    self.b.nodes[base + k] = self.b.nodes[bs + k];
+                }
+            }
+        }
+    }
+
+    /// Whether a subtree contains a reference to `sym`. Used to tell a
+    /// recursive bounded function from a plain one, because the two need
+    /// different treatment and only one of them is handled yet.
+    fn selfReferences(self: *const Parser, node: u32, sym: u32) bool {
+        const base = @as(usize, node) * NODE_WORDS;
+        switch (self.b.nodes[base]) {
+            TAG_VAR => return self.b.nodes[base + 1] == sym,
+            TAG_LET => return self.selfReferences(self.b.nodes[base + 3], sym) or
+                self.selfReferences(self.b.nodes[base + 4], sym),
+            TAG_LAMBDA => return self.selfReferences(self.b.nodes[base + 2], sym),
+            TAG_IF => return self.selfReferences(self.b.nodes[base + 1], sym) or
+                self.selfReferences(self.b.nodes[base + 2], sym) or
+                self.selfReferences(self.b.nodes[base + 3], sym),
+            TAG_PROJECT => return self.selfReferences(self.b.nodes[base + 1], sym),
+            TAG_APPLY, TAG_RAW, TAG_MATCH => {
+                if (self.b.nodes[base] == TAG_APPLY and self.selfReferences(self.b.nodes[base + 1], sym)) return true;
+                if (self.b.nodes[base] == TAG_MATCH and self.selfReferences(self.b.nodes[base + 1], sym)) return true;
+                const start = self.b.nodes[base + 2];
+                const n = self.b.nodes[base + 3];
+                const count = if (self.b.nodes[base] == TAG_MATCH) n * 3 else n;
+                var k: u32 = 0;
+                while (k < count) : (k += 1) {
+                    const child = self.b.pool[start + k];
+                    if (child == NO_GUARD) continue;
+                    if (self.selfReferences(child, sym)) return true;
+                }
+                return false;
+            },
+            else => return false,
+        }
     }
 
     /// A module body: items, then a record of them. A module IS a record, so a
@@ -1193,6 +1422,7 @@ pub const Parser = struct {
                     OP_ADD => a + bb,
                     OP_SUB => a - bb,
                     OP_MUL => a * bb,
+                    OP_DIV => if (bb == 0) return Error.NotConstant else @divTrunc(a, bb),
                     OP_LT => if (a < bb) 1 else 0,
                     else => Error.NotConstant,
                 };
@@ -1583,6 +1813,7 @@ pub const Parser = struct {
             .ident => {
                 const sym = try self.names.intern(self.lx.src[self.tok.start..self.tok.end]);
                 try self.bump();
+                if (self.isTraitMethod(sym)) self.cur_uses_trait = true;
                 return self.b.variable(sym);
             },
             .lparen => {
