@@ -98,6 +98,26 @@ State: shipped.
   not one that happens to shadow it at the call site.
 - `Apply`, applying one argument at a time, because multi-parameter lambdas
   desugar to nested `Lambda`.
+- `Project`, reading a field of a record. The base is the node's first child
+  word and the key a blob span in the two words after it, which is the shape a
+  string literal already uses. The lookup walks the record's children, which
+  alternate a key string with its value, and compares the key bytes.
+
+The `Project` lookup is the dynamic one, and that is the floor rather than a
+placeholder. Field access has a measured strategy fork: a compile-resolved fixed
+offset costs 0.54 ns where the record's shape is statically known, a monomorphic
+inline cache 0.61 ns where it is not, a hashed lookup 1.27 ns, and a linear scan
+1.57 ns. Every one of the fast three needs something the runtime does not have,
+namely the record's shape at the access site, which is a compile-side fact the
+emitter does not yet produce. So the scan is what the accelerations will fall
+back to once they exist, and it has to be correct whatever the compile side
+later learns.
+
+One hazard the measurement found is worth carrying here so it is not
+rediscovered: at a polymorphic access site the inline cache is the WORST of the
+four, because its shape guard misses almost every access and pays a failed guard
+plus a refill on top of the fallback. An implementation must detect polymorphism
+and disable the cache rather than thrash.
 
 A string value is a byte slice wherever its bytes live. A literal's point into
 the residual image and a handler's result points into the session scratch. Both
@@ -110,8 +130,11 @@ is.
 State: shipped. Every failure is a named error, never a wrong answer: an
 unbound variable, an application whose callee is not a closure, a form or
 literal kind this tier does not evaluate, an exhausted environment arena, an
-exhausted value arena, a returned value image the decoder rejects, and a corrupt
-index or record reaching past the image.
+exhausted value arena, a returned value image the decoder rejects, a projection
+from something that is not a record, a projection of a field the record does not
+have, and a corrupt index or record reaching past the image. The two projection
+failures stay distinct because they are different mistakes for whoever has to fix
+one.
 
 ## The C ABI surface
 
@@ -219,15 +242,15 @@ with a host that produced a value.
   reads. The runtime side is designed for it; the emit-time verdict is not built,
   and its derivation from the lease masks the check pass already computes is
   intended rather than demonstrated.
-- The remaining Core forms (`Project`, `Match`, `Iter`, `Interp`, `Handle`).
-  `Project` becomes implementable once records exist, and its strategy is already
-  settled by measurement: resolve to a fixed offset where the shape is static
-  (0.54 ns), use a monomorphic inline cache otherwise (0.61 ns), and fall back to
-  a hashed lookup (1.27 ns) rather than a scan (1.57 ns) at a polymorphic site.
-  `Match`'s arms carry no pattern representation yet, which is an undecided Core
-  design rather than an unbuilt one. `Handle` is what non-local control flow
-  (`return`, `break`, `continue`, and the loop forms) lowers to, and it needs
-  only the non-resuming discharge for that.
+- The remaining Core forms (`Match`, `Iter`, `Interp`, `Handle`). `Match`'s arms
+  carry no pattern representation yet, which is an undecided Core design rather
+  than an unbuilt one. `Handle` is what non-local control flow (`return`,
+  `break`, `continue`, and the loop forms) lowers to, and it needs only the
+  non-resuming discharge for that.
+- Record-shape resolution, owed by the compile side. The fast field-access
+  strategies all need the record's shape named at the access site: a fixed offset
+  needs it statically, an inline cache needs a shape id to guard on. Until the
+  emitter produces one, the runtime's dynamic lookup is the whole story.
 - The `Bytecode` tier over the CFG-of-blocks form.
 - Diagnostics mapped to the ABI diagnostic shape.
 
