@@ -119,6 +119,59 @@ individually sufficient.
 
 Calls 4, 5, and 6 govern how the work gets done rather than what gets built.
 
+## Calls 8, 9, 10: the artifact split (2026-07-26)
+
+Three further statements, in op's own words, given while charting the path.
+
+**Call 8. The identity, restated.** "Remember the soul and identity of vehje: N
+in, M out, all lower to IR in middle and work between each other if defined in
+the rust artifact."
+
+The middle IR is the convergence point. N input languages lower to it; M output
+targets come from it. Interoperation *between* the input languages is defined in
+the Rust artifact, not negotiated at runtime.
+
+**Call 9. A generic shared runtime core is licensed.** "We've allowed a general
+shared runtime core in the designs already, so a very generic, not-specified
+shared runtime is fine, as long as it does not expect any kind of language, and
+will work with anything."
+
+The core may be hand-written and shipped rather than generated per language. Its
+legitimacy condition is language-agnosticism, and that condition is testable: the
+core must not expect any particular language and must work with anything.
+
+**Call 10. Rust extracts the specialisations.** "The rust should extract the
+specialisations."
+
+This names the Rust artifact's job. Rust does not run per-script passes and does
+not emit runtime source. It compiles a language definition into the
+specialisations, and the generic core consumes them.
+
+### What calls 9 and 10 resolve
+
+They settle an apparent conflict between call 2 (the runtime is computationally
+self-sufficient; the host must not supply arithmetic) and the framework's
+family-freedom requirement.
+
+`mock/runtime-zig/src/runtime.zig:410-435` currently dispatches every family
+operation to a host callback, and its in-source comment defends this as "what
+keeps the framework family-free". Under calls 9 and 10 that defence is wrong.
+Family-freedom is a property of the core's *source*; it is not a reason to route
+computation through the host at run time. The correct shape is that Rust extracts
+the family operations as specialisation data and the core consumes them at
+comptime, leaving the host callback for genuinely foreign effects rather than for
+`+`.
+
+The current code fails call 2 provably: `runtime.zig:414` returns `NoHost`, so a
+program that adds two integers cannot run without a host supplying the addition.
+
+The consumption point does not exist yet. `grep -c comptime
+mock/runtime-zig/src/runtime.zig` returns 0, while
+`mock/crates/vehje-runtime-gen/src/lib.rs` already describes its output as "the
+data the runtime's comptime specialisation reads: data, not runtime source". The
+Rust side documents a contract the Zig side has no machinery to receive. That is
+task #52.
+
 ## See also
 
 `canon/the-soul-of-vehje-positive-catalogue.md` and
