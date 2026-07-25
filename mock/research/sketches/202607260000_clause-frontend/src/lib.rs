@@ -14,6 +14,7 @@
 
 pub mod ast;
 pub mod lex;
+pub mod lower;
 pub mod parse;
 pub mod token;
 

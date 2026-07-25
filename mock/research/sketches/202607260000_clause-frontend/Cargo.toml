@@ -12,3 +12,7 @@ path = "src/lib.rs"
 [dependencies]
 arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
 notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
+vehje-ir = { path = "../../../crates/vehje-ir" }
+vehje-runtime-abi = { path = "../../../crates/vehje-runtime-abi" }
+hilavitkutin-str = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", branch = "dev" }
+hilavitkutin-sym = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", branch = "dev" }
