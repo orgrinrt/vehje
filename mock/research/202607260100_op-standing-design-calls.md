@@ -277,10 +277,25 @@ and some want to do it in flight dynamically; we shouldn't try or attempt to
 control the loading, nor the definition of modules or libraries. That's all
 language specific."
 
-What the framework owes is the typestate and cons-list abstractions that prove
-module composition sound. What a module *is*, and how it loads, belongs to each
-language definition. The stdlib is not a special case; it is a module like any
-other, and its shape is Clause's call, made when Clause's definition is written.
+What the framework owes is the typestate and cons-list abstractions **such that no
+invalid module composition is representable**. op corrected an earlier wording of
+this line that said the abstractions "prove module composition sound", and the
+correction is not stylistic: "It does not prove module composition sound, it
+proves that no invalid module composition can ever be represented, by design.
+There's a very big difference. The former has to be on the runtime or see the
+program. The latter can happen entirely disjoint, without knowing any specific
+programs or modules or anything like that."
+
+Proving a composition sound is per-instance verification: it needs the instance,
+so it puts the prover on the program side, which is forbidden for Rust. Making an
+invalid composition unrepresentable is a property of the abstractions, established
+once, with no program in sight. This is call 12's principle applied to modules,
+and the distinction is the whole reason Rust can do this work without ever seeing
+a script.
+
+What a module *is*, and how it loads, belongs to each language definition. The
+stdlib is not a special case; it is a module like any other, and its shape is
+Clause's call, made when Clause's definition is written.
 
 **Call 21. Loop encoding is an implementation detail, not an op call.** op: "This
 sounds like an impl detail that shouldn't be brought to me. Rather, seen what
