@@ -100,6 +100,9 @@ State: shipped.
   not one that happens to shadow it at the call site.
 - `Apply`, applying one argument at a time, because multi-parameter lambdas
   desugar to nested `Lambda`.
+- `Perform` and `Handle`, state intended. `Handle` installs its clauses for the
+  duration of its body; `Perform` evaluates its operands left to right and
+  unwinds to the innermost enclosing clause whose operation matches exactly.
 - `Project`, reading a field of a record. The base is the node's first child
   word and the key a blob span in the two words after it, which is the shape a
   string literal already uses. The lookup walks the record's children, which
@@ -127,6 +130,44 @@ outlive the evaluation, and neither is distinguishable to the code that reads
 them: the value is the bytes, and where they came from is not part of what it
 is.
 
+## The unwind carrier
+
+State: intended. `eval` returns a carrier rather than a bare value, and the
+carrier PROPAGATES rather than jumping. That is a correctness constraint rather
+than a preference: if a later round adds a `finally` or a resource-release
+clause, the unwind must run code at each frame it passes, which a propagated
+carrier can do and a direct jump to the handler cannot. Whether the carrier is a
+value-or-unwind union or a sentinel plus an out-parameter is a hot-path question
+on every evaluation step, so it is benched rather than asserted; the propagation
+property is what is not negotiable either way.
+
+An exit costs no allocation and integer compares bounded by handler nesting
+depth, and copies nothing. A string is a slice into the residual blob or the
+session scratch, a compound is an index into the lent value arena, and the
+environment arena never pops, so every binding a captured value names is still
+live after the unwind. The never-pop discipline that reads as a cost elsewhere is
+exactly what makes the unwind free.
+
+## The loop bound: this tier does not yet run unbounded iteration
+
+State: shipped, as a limitation. The loop encodings need no Core form, and they
+are correct denotationally and unusable operationally, for two reasons worth
+stating rather than discovering.
+
+The environment arena bumps and never pops, by design, against a lent region of
+1024 slots. A loop body binding `k` values burns at least `k + 1` slots per
+iteration, so a `while` terminates with an exhausted-arena refusal after roughly
+`1024 / (k + 1)` iterations. Separately, a closure body is evaluated by native
+recursion that is not in tail position, so a self-recursive loop grows the native
+stack per iteration.
+
+Both fixes are owed and neither is in scope here: a trampoline, where a body in
+tail position becomes a continue of an outer loop with the node index and
+environment updated; and reclaiming an iteration's bindings, which requires
+proving nothing captured them, which is the escape the check's reach mask already
+computes. So early exit is usable the day this lands, and unbounded iteration is
+not.
+
 ## The refusal set
 
 State: shipped. Every failure is a named error, never a wrong answer: an
@@ -134,7 +175,9 @@ unbound variable, an application whose callee is not a closure, a form or
 literal kind this tier does not evaluate, an exhausted environment arena, an
 exhausted value arena, a returned value image the decoder rejects, a projection
 from something that is not a record, a projection of a field the record does not
-have, and a corrupt index or record reaching past the image. The two projection
+have, a performed operation no enclosing clause handles, a clause whose body
+references its resumption before the bounded-multi-shot work lands, and a corrupt
+index or record reaching past the image. The two projection
 failures stay distinct because they are different mistakes for whoever has to fix
 one.
 

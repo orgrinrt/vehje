@@ -48,6 +48,19 @@ stage lands.
   provenance-complete engine boundary. Landed in the wire format now so the
   reconstruction query has them.
 
+### The clause section
+
+State: intended. A handler clause is four words in its own section, after the
+string blob: the operation identity, the resumption binder, the operand arity,
+and the body's node index. The header gains a clause count word, which is a
+version bump that costs nothing while no consumer holds an image.
+
+A `Sym` already serialises as its 32 bits including its three-bit domain tag, so
+a freshly minted operation identity round-trips unchanged and its disjointness
+from source names survives the wire. The seven-word node record is untouched:
+`Handle` keeps its body in one payload word and its clause span in the two after
+it, and `Perform` takes wire tag 12, using four of its seven words.
+
 ## The value-arena (the value module)
 
 The produced value crosses back as a value-arena: fixed-width value-node records,
