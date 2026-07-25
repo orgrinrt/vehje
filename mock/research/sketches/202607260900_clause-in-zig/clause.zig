@@ -139,6 +139,10 @@ pub const LOOP_SYM_BASE: u32 = 0x5000_0000;
 /// `i` cannot capture or be captured by one.
 pub const SYN_SYM_BASE: u32 = 0x6000_0000;
 
+/// Specialisation binders. A recursive bounded function's copy needs a name to
+/// call itself by, and that name must be distinct per specialisation.
+pub const SPEC_SYM_BASE: u32 = 0x7000_0000;
+
 /// A macro: a function evaluated at a compile stage rather than at run time.
 /// The census's reading, made operational: the operation is discharged by
 /// whichever stage provides its handler, and for a macro that stage is this one.
@@ -625,6 +629,12 @@ pub const Parser = struct {
     /// attributed to the binding that contains it.
     cur_binding: u32 = 0xFFFF_FFFF,
     cur_uses_trait: bool = false,
+    /// While cloning, a self-reference is rewritten to the copy's own binder, so
+    /// a recursive function's copy recurses into itself rather than back into
+    /// the original.
+    rename_from: u32 = 0xFFFF_FFFF,
+    rename_to: u32 = 0,
+    nspecs: u32 = 0,
     traits: []TraitDecl,
     ntraits: u32 = 0,
     impls: []ImplDecl,
@@ -1149,6 +1159,9 @@ pub const Parser = struct {
                 while (k < NODE_WORDS) : (k += 1) {
                     self.b.nodes[@as(usize, idx) * NODE_WORDS + k] = self.b.nodes[src + k];
                 }
+                if (tag == TAG_VAR and self.b.nodes[src + 1] == self.rename_from) {
+                    self.b.nodes[@as(usize, idx) * NODE_WORDS + 1] = self.rename_to;
+                }
                 return idx;
             },
             TAG_LET => {
@@ -1232,6 +1245,100 @@ pub const Parser = struct {
         }
     }
 
+    /// Mark every node reachable from `node`, so a scan can tell a use site
+    /// outside a binding's value from a self-reference inside it.
+    fn markSubtree(self: *const Parser, node: u32, marks: []bool) void {
+        if (node >= marks.len or marks[node]) return;
+        marks[node] = true;
+        const base = @as(usize, node) * NODE_WORDS;
+        const tag = self.b.nodes[base];
+        switch (tag) {
+            TAG_LET => {
+                self.markSubtree(self.b.nodes[base + 3], marks);
+                self.markSubtree(self.b.nodes[base + 4], marks);
+            },
+            TAG_LAMBDA => self.markSubtree(self.b.nodes[base + 2], marks),
+            TAG_IF => {
+                self.markSubtree(self.b.nodes[base + 1], marks);
+                self.markSubtree(self.b.nodes[base + 2], marks);
+                self.markSubtree(self.b.nodes[base + 3], marks);
+            },
+            TAG_PROJECT => self.markSubtree(self.b.nodes[base + 1], marks),
+            PAT_OR => {
+                self.markSubtree(self.b.nodes[base + 1], marks);
+                self.markSubtree(self.b.nodes[base + 2], marks);
+            },
+            TAG_APPLY, TAG_RAW, TAG_MATCH, PAT_REC => {
+                if (tag == TAG_APPLY or tag == TAG_MATCH) self.markSubtree(self.b.nodes[base + 1], marks);
+                const start = if (tag == PAT_REC) self.b.nodes[base + 1] else self.b.nodes[base + 2];
+                const n = if (tag == PAT_REC) self.b.nodes[base + 2] else self.b.nodes[base + 3];
+                const count = if (tag == TAG_MATCH) n * 3 else n;
+                var k: u32 = 0;
+                while (k < count) : (k += 1) {
+                    const child = self.b.pool[start + k];
+                    if (child != NO_GUARD) self.markSubtree(child, marks);
+                }
+            },
+            else => {},
+        }
+    }
+
+    /// Specialise a recursive bounded binding: one copy per use site, each
+    /// bound under its own name so its self-call stays inside that copy, and
+    /// the original replaced by the chain of copies.
+    fn specialiseRecursive(self: *Parser, bd: Bounded, marks: []bool) Error!void {
+        @memset(marks, false);
+        self.markSubtree(bd.value, marks);
+
+        var uses: [16]u32 = undefined;
+        var nuses: usize = 0;
+        var i: u32 = 0;
+        while (i < self.b.n) : (i += 1) {
+            if (i < marks.len and marks[i]) continue;
+            const base = @as(usize, i) * NODE_WORDS;
+            if (self.b.nodes[base] != TAG_VAR) continue;
+            if (self.b.nodes[base + 1] != bd.sym) continue;
+            if (nuses == uses.len) return Error.TooManyParams;
+            uses[nuses] = i;
+            nuses += 1;
+        }
+        if (nuses == 0) return;
+
+        var specs: [16]u32 = undefined;
+        var clones: [16]u32 = undefined;
+        var u: usize = 0;
+        while (u < nuses) : (u += 1) {
+            const spec = SPEC_SYM_BASE + self.nspecs;
+            self.nspecs += 1;
+            self.rename_from = bd.sym;
+            self.rename_to = spec;
+            clones[u] = try self.cloneSubtree(bd.value);
+            self.rename_from = 0xFFFF_FFFF;
+            specs[u] = spec;
+            self.b.nodes[@as(usize, uses[u]) * NODE_WORDS + 1] = spec;
+        }
+
+        // Replace the original binding with the chain of specialisations, so
+        // each copy is in scope exactly where the original was and the original
+        // itself is gone rather than left raising an obligation nothing fixes.
+        i = 0;
+        while (i < self.b.n) : (i += 1) {
+            const base = @as(usize, i) * NODE_WORDS;
+            if (self.b.nodes[base] != TAG_LET) continue;
+            if (self.b.nodes[base + 2] != bd.sym) continue;
+            var cur = self.b.nodes[base + 4];
+            var k = nuses;
+            while (k > 0) {
+                k -= 1;
+                cur = try self.b.letRec(specs[k], clones[k], cur);
+            }
+            const cs = @as(usize, cur) * NODE_WORDS;
+            var w: usize = 0;
+            while (w < NODE_WORDS) : (w += 1) self.b.nodes[base + w] = self.b.nodes[cs + w];
+            return;
+        }
+    }
+
     /// Specialise: replace each reference to a non-recursive bounded binding
     /// with a copy of its value, so the copy's nodes carry their own dispatch
     /// slots and its obligation resolves at that use's type.
@@ -1268,6 +1375,15 @@ pub const Parser = struct {
             }
             if (!changed) break;
         }
+        // Recursive bounded bindings cannot be inlined, because a copy needs a
+        // name to call itself by. They get one binding per use site instead.
+        var marks_buf: [8192]bool = undefined;
+        var r: u32 = 0;
+        while (r < self.nbounded) : (r += 1) {
+            if (!self.bounded[r].recursive) continue;
+            try self.specialiseRecursive(self.bounded[r], marks_buf[0..@min(self.b.n, marks_buf.len)]);
+        }
+
         // Every use was replaced by a copy, so the original binding is dead.
         // It must go: its body still raises an obligation, and with no use left
         // to fix the type, that obligation is unresolvable. Leaving it would

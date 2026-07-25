@@ -220,18 +220,44 @@ The two refusals are the ones only an associated type can catch. `conv(7)` is a
 plausible expression. And an impl whose body disagrees with its own declared
 `Out` is refused, so the declaration is a commitment rather than an annotation.
 
-### The one real limitation, stated precisely
+### Specialisation, which is what lifts the bound
 
-A function whose body raises an obligation stays **monomorphic** in the type that
-obligation is about. `twice` above works, but it is usable at one type per
-program rather than at every type implementing `Doubler`.
+```
+trait Sized { fn size(Self) -> Int }
+impl Sized for Int { fn size(x) { x } }
+impl Sized for Str { fn size(s) { 5 } }
 
-The reason is exact: generalising it would let two uses pick different impls,
-and the single resolution slot per node cannot hold both. Recording several
-would be specialisation, which is the pass this deliberately does not have. So
-the restriction is where the missing pass shows, and lifting it is what
-monomorphisation buys. Two uses at different types are refused rather than
-silently mis-dispatched.
+fn twice_size(v) { size(v) + size(v) }
+twice_size(10) + twice_size("hello")             ==> 30
+
+fn sum_sizes(v, n) { if n < 1 { 0 } else { size(v) + sum_sizes(v, n - 1) } }
+sum_sizes(2, 3) + sum_sizes("abc", 3)            ==> 21
+
+dbl_n("no impl for me", 2)                       refused, NoImpl
+```
+
+Dispatch is a per-node table, which is what keeps types erased, but one body
+means one slot however many times it is used. Two uses at two types therefore
+need two bodies, and producing them is monomorphisation.
+
+**Non-recursive bounded functions are inlined.** Each reference becomes a copy of
+the value, so the copy's nodes carry their own dispatch slots and its obligation
+resolves at that use's type. No binder is introduced, so no scope question
+arises.
+
+**Recursive ones get one binding per use site**, because a copy that calls itself
+needs a name to call. Each copy is bound under its own specialisation binder with
+its self-references rewritten to it, so recursion stays inside the copy rather
+than escaping back to the original.
+
+Both leave the original binding dead, and dead is not good enough: its body still
+raises an obligation, and with no use left to fix the type that obligation is
+unresolvable. The original has to be removed, not merely bypassed. That was the
+one thing the pass forced that the design memo had not anticipated.
+
+Types still erase throughout. Nothing type-shaped exists at run time, which is
+why this is monomorphisation rather than dictionary passing; the design memo at
+`mock/research/202607261000_monomorphisation-shapes.md` prices that fork.
 
 ## Patterns and match
 
@@ -429,6 +455,9 @@ discharging it at that stage.
 
 A macro declares its result type, which is what makes it a typed function at a
 stage rather than a token rewriter.
+
+Division is the one scalar primitive with a runtime refusal, since a zero divisor
+is not a type error and the checker cannot prove it absent.
 
 **A macro given a runtime value is refused rather than deferred**, because there
 is no later stage for it to fall back to. That refusal is the binding-time

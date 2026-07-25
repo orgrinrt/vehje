@@ -1608,3 +1608,33 @@ test "division, with a runtime refusal the checker cannot make" {
     // checker's to prove absent.
     try std.testing.expectError(Error.DivideByZero, run("1 / 0"));
 }
+
+test "a recursive bounded function specialises per use site" {
+    // fold_dbl recurses AND calls a trait method, so it cannot be inlined: the
+    // copy needs a name to call itself by. It gets one binding per use site.
+    try std.testing.expectEqual(@as(i64, 32), try run(
+        \\trait Dbl { fn dbl(Self) -> Self }
+        \\impl Dbl for Int { fn dbl(x) { x * 2 } }
+        \\fn dbl_n(v, n) { if n < 1 { v } else { dbl_n(dbl(v), n - 1) } }
+        \\dbl_n(2, 4)
+    ));
+}
+
+test "a recursive bounded function is usable at two types in one program" {
+    try std.testing.expectEqual(@as(i64, 21), try run(
+        \\trait Sized { fn size(Self) -> Int }
+        \\impl Sized for Int { fn size(x) { x } }
+        \\impl Sized for Str { fn size(s) { 5 } }
+        \\fn sum_sizes(v, n) { if n < 1 { 0 } else { size(v) + sum_sizes(v, n - 1) } }
+        \\sum_sizes(2, 3) + sum_sizes("abc", 3)
+    ));
+}
+
+test "a recursive bounded function still refuses a type with no impl" {
+    try std.testing.expectError(chk.Error.NoImpl, run(
+        \\trait Dbl { fn dbl(Self) -> Self }
+        \\impl Dbl for Int { fn dbl(x) { x * 2 } }
+        \\fn dbl_n(v, n) { if n < 1 { v } else { dbl_n(dbl(v), n - 1) } }
+        \\dbl_n("no impl", 2)
+    ));
+}
