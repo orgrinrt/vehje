@@ -30,10 +30,16 @@ pub type ExecuteFn = extern "C" fn(*mut c_void, *const u8, usize, *const Sink, *
 /// One operand crossing to a family handler: a kind tag, a payload word, and a
 /// bytes pointer.
 ///
-/// For a scalar the pointer is null and the payload is the value; for a string
-/// the pointer is the bytes and the payload is their length. One record serves
-/// both, so the common case is unchanged in size. The tag values are the value
-/// image's tags, so one vocabulary describes a value wherever it appears.
+/// The record serves three shapes without changing its own. For a scalar the
+/// pointer is null and the payload is the value. For a string the pointer is the
+/// bytes and the payload is their length. For a compound, meaning a record or a
+/// sequence, the pointer is a value image and the payload is that image's byte
+/// length, which is the string convention generalised rather than a new one. So
+/// the common case is unchanged in size, and the driver carries a compound
+/// exactly as it carries a string: it moves the bytes and reads none of them.
+///
+/// The tag values are the value image's tags, so one vocabulary describes a
+/// value wherever it appears.
 #[repr(C)]
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct Operand {
