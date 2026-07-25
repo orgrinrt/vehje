@@ -43,6 +43,9 @@ pub const Ty = union(enum) {
     /// the literal wrote them, and two record types match only if their fields
     /// match pairwise; reordering is not yet a subtyping question this answers.
     record: struct { first: u32, count: u32 },
+    /// A sequence is homogeneous: one element type, named by arena index. A
+    /// heterogeneous list would need a sum type, which this subset has not got.
+    seq: u32,
 };
 
 /// One field of a record type: its name, and the type at that name.
@@ -101,6 +104,7 @@ pub const Ctx = struct {
         return switch (self.types[r]) {
             .tvar => |w| w == v,
             .func => |f| self.occurs(v, f.p) or self.occurs(v, f.r),
+            .seq => |e| self.occurs(v, e),
             .record => |rec| blk: {
                 var i: u32 = 0;
                 while (i < rec.count) : (i += 1) {
@@ -144,6 +148,10 @@ pub const Ctx = struct {
                     try self.unify(fa.p, fb.p);
                     try self.unify(fa.r, fb.r);
                 },
+                else => Error.Mismatch,
+            },
+            .seq => |ea| switch (self.types[rb]) {
+                .seq => |eb| try self.unify(ea, eb),
                 else => Error.Mismatch,
             },
             .record => |ra2| switch (self.types[rb]) {
@@ -196,6 +204,7 @@ pub const Ctx = struct {
         return switch (self.types[r]) {
             .tvar => |v| if (v >= first and v < first + count) map[v - first] else r,
             .int, .boolean, .str => r,
+            .seq => |e| try self.alloc(.{ .seq = try self.copy(e, first, count, map) }),
             .func => |f| blk: {
                 const p = try self.copy(f.p, first, count, map);
                 const rr = try self.copy(f.r, first, count, map);
@@ -383,6 +392,34 @@ fn infer(img: *const Image, idx: u32, ctx: *Ctx, cur: u32) Error!u32 {
                 }
                 return ctx.alloc(.{ .record = .{ .first = at, .count = nfields } });
             }
+            if (lo == cl.OP_MAKE_SEQ) {
+                // Every element unifies with one element type, which is what
+                // makes the sequence homogeneous rather than merely uniform.
+                const et = try ctx.fresh();
+                var k: u32 = 1;
+                while (k < len) : (k += 1) {
+                    const it = try infer(img, try img.pooled(start + k), ctx, cur);
+                    try ctx.unify(it, et);
+                }
+                return ctx.alloc(.{ .seq = et });
+            }
+            if (lo == cl.OP_LEN) {
+                const st = try infer(img, try img.pooled(start + 1), ctx, cur);
+                const et = try ctx.fresh();
+                const want = try ctx.alloc(.{ .seq = et });
+                try ctx.unify(st, want);
+                return ctx.alloc(.int);
+            }
+            if (lo == cl.OP_AT) {
+                const st = try infer(img, try img.pooled(start + 1), ctx, cur);
+                const it = try infer(img, try img.pooled(start + 2), ctx, cur);
+                const int = try ctx.alloc(.int);
+                try ctx.unify(it, int);
+                const et = try ctx.fresh();
+                const want = try ctx.alloc(.{ .seq = et });
+                try ctx.unify(st, want);
+                return et;
+            }
             const sig = try opType(ctx, lo);
             var k: u32 = 1;
             while (k < len) : (k += 1) {
@@ -404,7 +441,7 @@ pub fn check(image: []const u8, ctx: *Ctx) Error!u32 {
 
 // ---------------------------------------------------------------- tests
 
-const Shape = enum { int, boolean, str, func, record };
+const Shape = enum { int, boolean, str, func, record, seq };
 
 fn typeOf(src: []const u8) !Shape {
     var node_buf: [512 * cl.NODE_WORDS]u32 = undefined;
@@ -431,6 +468,7 @@ fn typeOf(src: []const u8) !Shape {
         .str => .str,
         .func => .func,
         .record => .record,
+        .seq => .seq,
         .tvar => .func,
     };
 }

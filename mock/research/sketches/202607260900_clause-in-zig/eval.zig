@@ -96,6 +96,9 @@ pub const Error = error{
     NoSuchField,
     RecArenaFull,
     BadRecordKey,
+    NotASequence,
+    OutOfRange,
+    ValArenaFull,
 };
 
 /// A closure names the environment it was written in, which is why the
@@ -110,6 +113,7 @@ const RecEntry = struct { key: []const u8, val: Value };
 const Value = union(enum) {
     int: i64,
     record: struct { start: u32, len: u32 },
+    seq: struct { start: u32, len: u32 },
     /// A zero-copy slice of the image's blob. The wire already carries the
     /// bytes, so producing a string value costs nothing.
     str: []const u8,
@@ -136,6 +140,10 @@ pub const Env = struct {
     /// within a run, matching the binding arena above.
     recs: []RecEntry,
     nrec: u32 = 0,
+    /// Sequence elements, in their own caller-lent arena for the same reason
+    /// record fields have one.
+    vals: []Value,
+    nval: u32 = 0,
 
     fn push(self: *Env, sym: u32, val: Value, parent: u32) Error!u32 {
         if (self.n >= self.slots.len) return Error.EnvFull;
@@ -299,6 +307,34 @@ fn evalNode(img: *const Image, idx: u32, env: *Env, cur: u32) Error!Value {
                 }
                 return Value{ .record = .{ .start = first, .len = env.nrec - first } };
             }
+            if (op == cl.OP_MAKE_SEQ) {
+                const first = env.nval;
+                var k: u32 = 1;
+                while (k < len) : (k += 1) {
+                    const v = try evalNode(img, try img.pooled(start + k), env, cur);
+                    if (env.nval >= env.vals.len) return Error.ValArenaFull;
+                    env.vals[env.nval] = v;
+                    env.nval += 1;
+                }
+                return Value{ .seq = .{ .start = first, .len = env.nval - first } };
+            }
+            if (op == cl.OP_LEN) {
+                const s0 = try evalNode(img, try img.pooled(start + 1), env, cur);
+                return switch (s0) {
+                    .seq => |q| Value{ .int = @intCast(q.len) },
+                    else => Error.NotASequence,
+                };
+            }
+            if (op == cl.OP_AT) {
+                const s0 = try evalNode(img, try img.pooled(start + 1), env, cur);
+                const i = try (try evalNode(img, try img.pooled(start + 2), env, cur)).asInt();
+                const q = switch (s0) {
+                    .seq => |q| q,
+                    else => return Error.NotASequence,
+                };
+                if (i < 0 or @as(u32, @intCast(i)) >= q.len) return Error.OutOfRange;
+                return env.vals[q.start + @as(u32, @intCast(i))];
+            }
             if (len < 1 or len > 4) return Error.TooManyOperands;
             var args: [3]i64 = undefined;
             var k: u32 = 1;
@@ -320,6 +356,7 @@ pub fn run(src: []const u8) !i64 {
     var image: [16384]u8 = undefined;
     var slots: [512]Binding = undefined;
     var recs: [256]RecEntry = undefined;
+    var vals: [256]Value = undefined;
 
     var b = cl.Builder{ .nodes = &node_buf, .pool = &pool_buf, .blob = &blob_buf };
     var names = cl.Names{ .buf = &name_buf };
@@ -340,7 +377,7 @@ pub fn run(src: []const u8) !i64 {
     _ = try chk.check(image[0..len], &ctx);
 
     const img = try Image.parse(image[0..len]);
-    var env = Env{ .slots = &slots, .recs = &recs };
+    var env = Env{ .slots = &slots, .recs = &recs, .vals = &vals };
     return (try evalNode(&img, img.root, &env, ENV_NIL)).asInt();
 }
 
@@ -355,6 +392,7 @@ pub fn runStr(src: []const u8, out: []u8) ![]const u8 {
     var image: [16384]u8 = undefined;
     var slots: [512]Binding = undefined;
     var recs: [256]RecEntry = undefined;
+    var vals: [256]Value = undefined;
 
     var b = cl.Builder{ .nodes = &node_buf, .pool = &pool_buf, .blob = &blob_buf };
     var names = cl.Names{ .buf = &name_buf };
@@ -370,7 +408,7 @@ pub fn runStr(src: []const u8, out: []u8) ![]const u8 {
     _ = try chk.check(image[0..len], &ctx);
 
     const img = try Image.parse(image[0..len]);
-    var env = Env{ .slots = &slots, .recs = &recs };
+    var env = Env{ .slots = &slots, .recs = &recs, .vals = &vals };
     return switch (try evalNode(&img, img.root, &env, ENV_NIL)) {
         .str => |t| blk: {
             @memcpy(out[0..t.len], t);
@@ -494,4 +532,42 @@ test "projecting a non-record is refused before evaluation" {
 
 test "a record literal is refused in an if-condition, where a block belongs" {
     try std.testing.expectError(cl.Error.UnexpectedToken, run("if { a: 1 } { 1 } else { 2 }"));
+}
+
+test "a sequence is built and eliminated" {
+    try std.testing.expectEqual(@as(i64, 3), try run("len([1, 2, 3])"));
+    try std.testing.expectEqual(@as(i64, 2), try run("at([1, 2, 3], 1)"));
+    try std.testing.expectEqual(@as(i64, 0), try run("len([])"));
+}
+
+test "real clause code walks a sequence by recursion" {
+    // The first thing in this language that looks like a standard-library
+    // function rather than a demonstration.
+    try std.testing.expectEqual(@as(i64, 6), try run(
+        \\fn sum_from(s, i) { if i < len(s) { at(s, i) + sum_from(s, i + 1) } else { 0 } }
+        \\fn sum(s) { sum_from(s, 0) }
+        \\sum([1, 2, 3])
+    ));
+    try std.testing.expectEqual(@as(i64, 24), try run(
+        \\fn prod_from(s, i) { if i < len(s) { at(s, i) * prod_from(s, i + 1) } else { 1 } }
+        \\fn product(s) { prod_from(s, 0) }
+        \\product([1, 2, 3, 4])
+    ));
+}
+
+test "a sequence may hold records, and its elements project" {
+    try std.testing.expectEqual(@as(i64, 9), try run("at([{ v: 9 }, { v: 8 }], 0).v"));
+}
+
+test "a heterogeneous sequence is refused, because a sequence is homogeneous" {
+    try std.testing.expectError(chk.Error.Mismatch, run("len([1, \"two\"])"));
+}
+
+test "indexing a non-sequence is refused before evaluation" {
+    try std.testing.expectError(chk.Error.Mismatch, run("at(5, 0)"));
+    try std.testing.expectError(chk.Error.Mismatch, run("len({ a: 1 })"));
+}
+
+test "an out-of-range index is a runtime refusal, since length is not in the type" {
+    try std.testing.expectError(Error.OutOfRange, run("at([1, 2], 5)"));
 }

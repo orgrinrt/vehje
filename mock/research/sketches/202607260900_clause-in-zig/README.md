@@ -71,15 +71,63 @@ The locus is demonstrated, not argued: a language front end runs where the canon
 puts it, and the arithmetic that was previously a host callback in a test file is
 now computed inside the runtime by data the language definition supplies.
 
+## Data: strings, records, sequences
+
+```
+let r = { a: 7, b: 9 }; r.a + r.b                ==> 16
+let r = { inner: { deep: 3 } }; r.inner.deep     ==> 3
+at([{ v: 9 }, { v: 8 }], 0).v                    ==> 9
+
+let r = { a: 1 }; r.b                            refused, NoSuchField
+let n = 1; n.a                                   refused, Mismatch
+if 1 < 2 { { a: 1 } } else { { a: "x" } }        refused, Mismatch
+len([1, "two"])                                  refused, Mismatch
+if { a: 1 } { 1 } else { 2 }                     refused, UnexpectedToken
+at([1, 2], 5)                                    refused at run time, OutOfRange
+```
+
+Construction is a family operation and projection is a Core form, which is the
+split the census fixes: content-as-values makes construction the signature's
+introduction projection, and the Core is the eliminator algebra.
+
+This is where the round's coverage question got answered by building rather than
+arguing. The scalar vocabulary that carries arithmetic cannot express a
+constructor, because a constructor takes a variable number of operands and yields
+a compound. The `TAG_RAW` arm branches on exactly that, and the branch is the
+finding made visible. It is one arm of the eventual bench, not a settled choice.
+
+The last refusal is the struct-literal ambiguity, resolved as Rust resolves it:
+`{` opens a block after an `if` condition and a record literal elsewhere.
+
+`len` and `at` are recognised by the parser as prelude names in call position.
+That is a sketch shortcut: in the finished shape the language definition supplies
+them as ordinary operations, and the parser recognises nothing.
+
+## Real Clause code
+
+The first program here that reads as a standard-library function rather than a
+demonstration:
+
+```
+fn sum_from(s, i) { if i < len(s) { at(s, i) + sum_from(s, i + 1) } else { 0 } }
+fn sum(s) { sum_from(s, 0) }
+sum([1, 2, 3])                                   ==> 6
+```
+
 ## What it does not establish, stated plainly
 
 **This is a slice of the grammar, and the bar is the whole grammar.** It has
-integers, names, `let`, `fn` with recursion and closures and currying,
-`if`/`else`, and four operators. It does not have generics, traits, associated
-types, patterns, `match`, macros, strings, records, sequences, loops, modules,
-`use`, attributes, or any of the rest of the surface the normative grammar
-(`mock/research/original-docs/CLAUSE_EBNF.md`) requires. Nothing is done until
-the full intended language is expressible.
+integers, strings, names, `let`, `fn` with recursion and closures and currying,
+`if`/`else`, four operators, records with field access, and sequences with a
+two-operation prelude. It does not have bounds, traits, associated types,
+coherence, patterns, `match`, macros, loops, modules, `use`, attributes, a
+separate resolve pass, or monomorphisation, nor the rest of the surface the
+normative grammar (`mock/research/original-docs/CLAUSE_EBNF.md`) requires.
+Nothing is done until the full intended language is expressible.
+
+Traits specifically are gated behind monomorphisation rather than syntax: types
+erase before the Core, so trait dispatch needs dictionaries or specialisation,
+and that is a pass between check and evaluation that does not exist.
 
 ## Inference, in the runtime, before evaluation
 
@@ -129,8 +177,8 @@ the intended one.
 ## Reproducing
 
 ```
-zig test eval.zig     # 12 tests: parse, lower, prove, evaluate
-zig test check.zig    #  9 tests: inference and its refusals
+zig test eval.zig     # 40 tests, the whole pipeline plus the checker's
+zig test check.zig    # the inference tests alone
 ```
 
 ## Still owed on the checker itself

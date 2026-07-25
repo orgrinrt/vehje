@@ -46,6 +46,14 @@ pub const OP_LT: u32 = 3;
 /// the candidate that answers it by growing the vocabulary rather than by adding
 /// a second kind of table entry.
 pub const OP_MAKE_REC: u32 = 4;
+/// Sequence construction, the second variable-arity constructor.
+pub const OP_MAKE_SEQ: u32 = 5;
+/// Sequence elimination. These are the beginnings of a prelude: in the finished
+/// shape the language definition supplies them as ordinary operations rather
+/// than the parser recognising two names, and that shortcut is noted in the
+/// sketch's README.
+pub const OP_LEN: u32 = 6;
+pub const OP_AT: u32 = 7;
 
 pub const Error = error{
     UnexpectedByte,
@@ -61,7 +69,7 @@ pub const Error = error{
 
 // ---------------------------------------------------------------- lexer
 
-const Kind = enum { int, str_lit, ident, dot, colon, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
+const Kind = enum { int, str_lit, ident, dot, colon, lbracket, rbracket, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
 
 const Token = struct { kind: Kind, start: usize, end: usize, value: i64 };
 
@@ -121,6 +129,8 @@ const Lexer = struct {
             ';' => .semi,
             ',' => .comma,
             '.' => .dot,
+            '[' => .lbracket,
+            ']' => .rbracket,
             ':' => .colon,
             '(' => .lparen,
             ')' => .rparen,
@@ -254,6 +264,25 @@ pub const Builder = struct {
         self.slot(idx, 1).* = ARITH;
         self.slot(idx, 2).* = start;
         self.slot(idx, 3).* = @intCast(1 + kv.len);
+        return idx;
+    }
+
+    /// A family operation over a variable number of operands, which is the shape
+    /// both constructors share.
+    pub fn variadic(self: *Builder, op: u32, args: []const u32) Error!u32 {
+        const code = try self.lit(@intCast(op));
+        if (@as(usize, self.p) + 1 + args.len > self.pool.len) return Error.OutOfPool;
+        const start = self.p;
+        self.pool[self.p] = code;
+        self.p += 1;
+        for (args) |x| {
+            self.pool[self.p] = x;
+            self.p += 1;
+        }
+        const idx = try self.alloc(TAG_RAW);
+        self.slot(idx, 1).* = ARITH;
+        self.slot(idx, 2).* = start;
+        self.slot(idx, 3).* = @intCast(1 + args.len);
         return idx;
     }
 
@@ -427,8 +456,35 @@ pub const Parser = struct {
     /// same Core, which is what makes partial application fall out rather than
     /// being a separate feature.
     fn postfix(self: *Parser) Error!u32 {
-        var e = try self.primary();
+        // A prelude name in call position lowers to its family operation rather
+        // than to an application of a binding, because no binding exists for it.
+        var builtin: ?u32 = null;
+        if (self.tok.kind == .ident) {
+            const t = self.lx.src[self.tok.start..self.tok.end];
+            if (std.mem.eql(u8, t, "len")) builtin = OP_LEN;
+            if (std.mem.eql(u8, t, "at")) builtin = OP_AT;
+            if (builtin != null) {
+                try self.bump();
+                if (self.tok.kind != .lparen) return Error.UnexpectedToken;
+            }
+        }
+        var e: u32 = if (builtin != null) 0 else try self.primary();
         while (self.tok.kind == .lparen or self.tok.kind == .dot) {
+            if (self.tok.kind == .lparen and builtin != null) {
+                try self.bump();
+                var args: [4]u32 = undefined;
+                var na: usize = 0;
+                while (self.tok.kind != .rparen) {
+                    if (na == args.len) return Error.TooManyParams;
+                    args[na] = try self.expression();
+                    na += 1;
+                    if (self.tok.kind == .comma) try self.bump();
+                }
+                try self.expect(.rparen);
+                e = try self.b.variadic(builtin.?, args[0..na]);
+                builtin = null;
+                continue;
+            }
             if (self.tok.kind == .dot) {
                 try self.bump();
                 if (self.tok.kind != .ident) return Error.UnexpectedToken;
@@ -482,6 +538,22 @@ pub const Parser = struct {
                 self.allow_record = saved;
                 try self.expect(.rparen);
                 return e;
+            },
+            .lbracket => {
+                try self.bump();
+                var items: [32]u32 = undefined;
+                var ni: usize = 0;
+                const saved = self.allow_record;
+                self.allow_record = true;
+                while (self.tok.kind != .rbracket) {
+                    if (ni == items.len) return Error.TooManyParams;
+                    items[ni] = try self.expression();
+                    ni += 1;
+                    if (self.tok.kind == .comma) try self.bump();
+                }
+                self.allow_record = saved;
+                try self.expect(.rbracket);
+                return self.b.variadic(OP_MAKE_SEQ, items[0..ni]);
             },
             .lbrace => {
                 if (!self.allow_record) return Error.UnexpectedToken;
