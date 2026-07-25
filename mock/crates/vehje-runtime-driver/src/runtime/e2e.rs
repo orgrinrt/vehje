@@ -15,7 +15,7 @@ mod end_to_end {
     // The tier-0 residual layout, mirrored here so the test states a program
     // rather than depending on the whole compile pipeline to build one.
     pub const WORD: usize = 4; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: wire word size; tracked: #207
-    pub const HEADER_WORDS: usize = 7; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: wire header width; tracked: #207
+    pub const HEADER_WORDS: usize = 8; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: wire header width (the eighth word is the clause count); tracked: #207
     pub const NODE_WORDS: usize = 7; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: wire node width; tracked: #207
 
     pub fn put(buf: &mut [u8], at: usize, w: u32) { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: wire byte encoding; tracked: #207
@@ -208,9 +208,13 @@ mod end_to_end_compound {
     /// knows nothing about it.
     const MAKE: u32 = 9; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a family id on the wire; tracked: #207
 
+    /// The VALUE image's header is seven words and is a DIFFERENT format from
+    /// the residual's, which gained an eighth word for the clause count. Sharing
+    /// one constant between them is exactly the conflation this names apart.
+    const VHEADER_WORDS: usize = 7; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: value-image header width; tracked: #207
     const VALUE_MAGIC: u32 = 0x3056_4556; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: value-image magic; tracked: #207
     const VNODE_WORDS: usize = 6; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: value-image node record width; tracked: #207
-    const IMG_LEN: usize = HEADER_WORDS * 4 + 5 * VNODE_WORDS * 4 + 4 * 4 + 19; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: value-image byte length; tracked: #207
+    const IMG_LEN: usize = VHEADER_WORDS * 4 + 5 * VNODE_WORDS * 4 + 4 * 4 + 19; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: value-image byte length; tracked: #207
 
     /// `{ name: "ok", count: 7 }` as a value image.
     ///
@@ -237,7 +241,7 @@ mod end_to_end_compound {
             [2, 0, 0, 0, 11, 8],  // 7
             [5, 0, 0, 4, 0, 0],   // the record
         ];
-        let base = HEADER_WORDS * WORD;
+        let base = VHEADER_WORDS * WORD;
         for (i, n) in nodes.iter().enumerate() {
             for (w, v) in n.iter().enumerate() {
                 put(&mut b, base + (i * VNODE_WORDS + w) * WORD, *v);

@@ -43,7 +43,9 @@ pub const VEHJE_RESULT_INVALID_INPUT: i32 = -3;
 
 // Wire format constants, mirroring `vehje-runtime-abi/src/wire/serialize.rs`.
 pub const WORD: usize = 4;
-pub const HEADER_WORDS: usize = 7;
+pub const HEADER_WORDS: usize = 8;
+/// Words per clause record: op, resume, arity, body.
+pub const CLAUSE_WORDS: usize = 4;
 pub const NODE_WORDS: usize = 7;
 pub const MAGIC: u32 = 0x3048_4556; // "VEH0" little-endian
 
@@ -60,6 +62,7 @@ pub const TAG_ITER: u32 = 8;
 pub const TAG_INTERP: u32 = 9;
 pub const TAG_RAW: u32 = 10;
 pub const TAG_HANDLE: u32 = 11;
+pub const TAG_PERFORM: u32 = 12;
 
 // Literal sub-tag codes.
 pub const LIT_UNIT: u32 = 0;
@@ -109,6 +112,27 @@ pub const EvalError = error{
     BadImage, // a handler returned bytes the value-image reader rejected
     NotARecord, // a Project whose base did not evaluate to a record
     NoSuchField, // a Project naming a field the record does not have
+    Unwound, // a performed operation is unwinding to its handler (see `Unwind`)
+    Unhandled, // an unwind reached the root with no clause servicing it
+};
+
+/// The unwind carrier: which operation is unwinding, and with what operands.
+///
+/// The carrier PROPAGATES rather than jumping, which is a correctness
+/// constraint rather than a preference: a future `finally` or resource-release
+/// clause must run code at each frame the unwind passes, which a propagated
+/// carrier can do and a direct jump to the handler cannot.
+///
+/// The payload travels beside the error rather than inside it, because a Zig
+/// error carries none. That is sound here for a reason worth stating: `try`
+/// returns immediately, so a site that evaluates two children cannot evaluate
+/// the second after the first unwound, which is exactly the left-to-right
+/// obligation the design names. The language enforces the per-site rule that
+/// would otherwise live in a convention.
+pub const Unwind = struct {
+    op: u32 = 0,
+    args: [ARG_CAP]Value = undefined,
+    n: usize = 0,
 };
 
 /// The caller-lent per-session state a runtime handle owns.
@@ -178,6 +202,8 @@ const Image = struct {
     blob_base: usize,
     blob_len: u32,
     root: u32,
+    clause_base: usize,
+    clause_count: u32,
 
     fn parse(bytes: []const u8) EvalError!Image {
         if (bytes.len < HEADER_WORDS * WORD) return EvalError.Corrupt;
@@ -186,10 +212,14 @@ const Image = struct {
         const pool_count = try readU32(bytes, 4 * WORD);
         const blob_len = try readU32(bytes, 5 * WORD);
         const root = try readU32(bytes, 6 * WORD);
-        // Sections are laid out header, nodes, pool, blob.
+        const clause_count = try readU32(bytes, 7 * WORD);
+        // Sections are laid out header, nodes, pool, blob, clauses.
         const pool_base = HEADER_WORDS * WORD + @as(usize, node_count) * NODE_WORDS * WORD;
         const blob_base = pool_base + @as(usize, pool_count) * WORD;
-        if (blob_base + @as(usize, blob_len) > bytes.len) return EvalError.Corrupt;
+        const clause_base = blob_base + @as(usize, blob_len);
+        if (clause_base + @as(usize, clause_count) * CLAUSE_WORDS * WORD > bytes.len) {
+            return EvalError.Corrupt;
+        }
         return .{
             .bytes = bytes,
             .node_count = node_count,
@@ -198,6 +228,8 @@ const Image = struct {
             .blob_base = blob_base,
             .blob_len = blob_len,
             .root = root,
+            .clause_base = clause_base,
+            .clause_count = clause_count,
         };
     }
 
@@ -205,6 +237,12 @@ const Image = struct {
     fn nodeAt(self: *const Image, idx: u32) EvalError!usize {
         if (idx >= self.node_count) return EvalError.Corrupt;
         return HEADER_WORDS * WORD + @as(usize, idx) * NODE_WORDS * WORD;
+    }
+
+    /// Clause word `slot` of clause `i` (0 = op, 1 = resume, 2 = arity, 3 = body).
+    fn clauseWord(self: *const Image, i: u32, slot: usize) EvalError!u32 {
+        if (i >= self.clause_count) return EvalError.Corrupt;
+        return readU32(self.bytes, self.clause_base + (@as(usize, i) * CLAUSE_WORDS + slot) * WORD);
     }
 
     /// Payload word `slot` of node `idx` (slot 0 is the tag).
@@ -237,7 +275,7 @@ fn readU32(bytes: []const u8, at: usize) EvalError!u32 {
 
 /// Evaluate node `idx` under the environment chain `cur`. Structural recursion
 /// over the finite arena.
-fn eval(img: *const Image, idx: u32, env: *Env, cur: u32, host: ?*const VehjeHost, session: ?*Session, arena: *varena.ValueArena) EvalError!Value {
+fn eval(img: *const Image, idx: u32, env: *Env, cur: u32, host: ?*const VehjeHost, session: ?*Session, arena: *varena.ValueArena, unwind: *Unwind) EvalError!Value {
     switch (try img.word(idx, 0)) {
         TAG_LIT => return switch (try img.word(idx, 1)) {
             LIT_UNIT => Value.unit,
@@ -253,7 +291,7 @@ fn eval(img: *const Image, idx: u32, env: *Env, cur: u32, host: ?*const VehjeHos
         TAG_PROJECT => {
             // the base is the first child word, the key a blob span in the two
             // after it, which is the shape a string literal already uses.
-            const base = try eval(img, try img.word(idx, 1), env, cur, host, session, arena);
+            const base = try eval(img, try img.word(idx, 1), env, cur, host, session, arena, unwind);
             const key = try img.blob(try img.word(idx, 2), try img.word(idx, 3));
             const rec_ref = switch (base) {
                 .compound => |r| r,
@@ -285,11 +323,11 @@ fn eval(img: *const Image, idx: u32, env: *Env, cur: u32, host: ?*const VehjeHos
                 // value produces captures a chain that already names it. The
                 // slot holds unit until the value is known, then takes it.
                 const slot = try env.push(name, Value.unit, cur);
-                env.slots[slot].val = try eval(img, value_ref, env, slot, host, session, arena);
-                return eval(img, body_ref, env, slot, host, session, arena);
+                env.slots[slot].val = try eval(img, value_ref, env, slot, host, session, arena, unwind);
+                return eval(img, body_ref, env, slot, host, session, arena, unwind);
             }
-            const v = try eval(img, value_ref, env, cur, host, session, arena);
-            return eval(img, body_ref, env, try env.push(name, v, cur), host, session, arena);
+            const v = try eval(img, value_ref, env, cur, host, session, arena, unwind);
+            return eval(img, body_ref, env, try env.push(name, v, cur), host, session, arena, unwind);
         },
         TAG_LAMBDA => return Value{ .closure = .{
             .param = try img.word(idx, 1),
@@ -300,27 +338,74 @@ fn eval(img: *const Image, idx: u32, env: *Env, cur: u32, host: ?*const VehjeHos
             const callee_ref = try img.word(idx, 1);
             const args_start = try img.word(idx, 2);
             const args_len = try img.word(idx, 3);
-            var f = try eval(img, callee_ref, env, cur, host, session, arena);
+            var f = try eval(img, callee_ref, env, cur, host, session, arena, unwind);
             // Multi-parameter lambdas desugar to nested `Lambda`, so a
             // multi-argument `Apply` is applied one argument at a time.
             var k: u32 = 0;
             while (k < args_len) : (k += 1) {
-                const arg = try eval(img, try img.pooled(args_start + k), env, cur, host, session, arena);
+                const arg = try eval(img, try img.pooled(args_start + k), env, cur, host, session, arena, unwind);
                 const c = switch (f) {
                     .closure => |c| c,
                     else => return EvalError.NotCallable,
                 };
-                f = try eval(img, c.body, env, try env.push(c.param, arg, c.env), host, session, arena);
+                f = try eval(img, c.body, env, try env.push(c.param, arg, c.env), host, session, arena, unwind);
             }
             return f;
         },
+        TAG_PERFORM => {
+            const op = try img.word(idx, 1);
+            const args_start = try img.word(idx, 2);
+            const args_len = try img.word(idx, 3);
+            if (args_len > ARG_CAP) return EvalError.TooManyOperands;
+            // operands evaluate left to right, and `try` returns immediately, so
+            // an operand that unwinds does so before any later one is evaluated.
+            var k: u32 = 0;
+            while (k < args_len) : (k += 1) {
+                unwind.args[k] = try eval(img, try img.pooled(args_start + k), env, cur, host, session, arena, unwind);
+            }
+            unwind.op = op;
+            unwind.n = args_len;
+            return EvalError.Unwound;
+        },
+        TAG_HANDLE => {
+            const body_ref = try img.word(idx, 1);
+            const cl_start = try img.word(idx, 2);
+            const cl_len = try img.word(idx, 3);
+            const v = eval(img, body_ref, env, cur, host, session, arena, unwind) catch |e| {
+                if (e != EvalError.Unwound) return e;
+                // find the clause servicing this operation. The match is exact,
+                // which is what lets a `break` pass through a `continue` handler
+                // untouched.
+                var i: u32 = 0;
+                while (i < cl_len) : (i += 1) {
+                    if ((try img.clauseWord(cl_start + i, 0)) != unwind.op) continue;
+                    const cbody = try img.clauseWord(cl_start + i, 3);
+                    // the clause body runs in the HANDLER's environment, not the
+                    // performer's, which is the correct scoping and comes free
+                    // from passing `cur` unchanged.
+                    var f = try eval(img, cbody, env, cur, host, session, arena, unwind);
+                    var k: usize = 0;
+                    while (k < unwind.n) : (k += 1) {
+                        const c = switch (f) {
+                            .closure => |c| c,
+                            else => return EvalError.NotCallable,
+                        };
+                        f = try eval(img, c.body, env, try env.push(c.param, unwind.args[k], c.env), host, session, arena, unwind);
+                    }
+                    return f;
+                }
+                // no clause here services it; keep unwinding outward.
+                return EvalError.Unwound;
+            };
+            return v;
+        },
         TAG_IF => {
-            const c = try eval(img, try img.word(idx, 1), env, cur, host, session, arena);
+            const c = try eval(img, try img.word(idx, 1), env, cur, host, session, arena, unwind);
             const take = switch (c) {
                 .boolean => |b| b,
                 else => return EvalError.Unsupported,
             };
-            return eval(img, try img.word(idx, if (take) 2 else 3), env, cur, host, session, arena);
+            return eval(img, try img.word(idx, if (take) 2 else 3), env, cur, host, session, arena, unwind);
         },
         TAG_RAW => {
             // A family operation. The runtime does not know what the family
@@ -337,7 +422,7 @@ fn eval(img: *const Image, idx: u32, env: *Env, cur: u32, host: ?*const VehjeHos
             // Left to right: a host call may have effects, so the order the
             // operands are produced in is part of what the program means.
             while (k < args_len) : (k += 1) {
-                const v = try eval(img, try img.pooled(args_start + k), env, cur, host, session, arena);
+                const v = try eval(img, try img.pooled(args_start + k), env, cur, host, session, arena, unwind);
                 args[k] = try host_boundary.toOperand(v, arena, session);
             }
 
@@ -373,7 +458,14 @@ fn valueOf(arena: *const varena.ValueArena, at: u32) Value {
 pub fn evalImage(bytes: []const u8, slots: []Binding, host: ?*const VehjeHost, session: ?*Session, arena: *varena.ValueArena) EvalError!Value {
     const img = try Image.parse(bytes);
     var env = Env{ .slots = slots };
-    return eval(&img, img.root, &env, ENV_NIL, host, session, arena);
+    var unwind = Unwind{};
+    return eval(&img, img.root, &env, ENV_NIL, host, session, arena, &unwind) catch |e| switch (e) {
+        // an unwind that reaches the root had no clause servicing it, which the
+        // check is supposed to have refused; naming it keeps a runtime failure
+        // distinguishable from a program outcome.
+        EvalError.Unwound => EvalError.Unhandled,
+        else => e,
+    };
 }
 
 /// One session's state, kept in the handle the host holds.

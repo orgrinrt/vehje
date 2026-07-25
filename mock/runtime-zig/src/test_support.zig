@@ -57,6 +57,8 @@ pub const Build = struct {
     pool_n: u32 = 0,
     blob: [64]u8 = undefined,
     blob_n: u32 = 0,
+    clauses: [64]u32 = undefined,
+    clause_n: u32 = 0,
 
     /// Append a node record: `tag` plus its payload words in encoder order.
     pub fn node(self: *Build, tag: u32, payload: []const u32) u32 {
@@ -135,6 +137,32 @@ pub const Build = struct {
     }
 
     /// Write the header and pool, returning the finished image.
+    /// `perform op(args)`: the operation in word 1, the argument list after it.
+    pub fn perform(self: *Build, op: u32, args: []const u32) u32 {
+        const start = self.pool_n;
+        for (args) |a| {
+            self.pool[self.pool_n] = a;
+            self.pool_n += 1;
+        }
+        return self.node(rt.TAG_PERFORM, &.{ op, start, @intCast(args.len) });
+    }
+
+    /// Append one handler clause, returning its index in the clause section.
+    pub fn clause(self: *Build, op: u32, arity: u32, body: u32) u32 {
+        const at = self.clause_n;
+        self.clauses[at * 4 + 0] = op;
+        self.clauses[at * 4 + 1] = 0; // resume: reserved, unbound
+        self.clauses[at * 4 + 2] = arity;
+        self.clauses[at * 4 + 3] = body;
+        self.clause_n += 1;
+        return at;
+    }
+
+    /// `handle body with clauses[start..start+len]`.
+    pub fn handle(self: *Build, body: u32, start: u32, len: u32) u32 {
+        return self.node(rt.TAG_HANDLE, &.{ body, start, len });
+    }
+
     pub fn finish(self: *Build, root: u32) []const u8 {
         putU32(self.buf[0..], 0 * WORD, MAGIC);
         putU32(self.buf[0..], 1 * WORD, 1); // version
@@ -143,6 +171,7 @@ pub const Build = struct {
         putU32(self.buf[0..], 4 * WORD, self.pool_n);
         putU32(self.buf[0..], 5 * WORD, self.blob_n); // blob_len
         putU32(self.buf[0..], 6 * WORD, root);
+        putU32(self.buf[0..], 7 * WORD, self.clause_n);
         const pool_base = HEADER_WORDS * WORD + @as(usize, self.n) * NODE_WORDS * WORD;
         var i: u32 = 0;
         while (i < self.pool_n) : (i += 1) {
@@ -151,7 +180,13 @@ pub const Build = struct {
         const blob_base = pool_base + @as(usize, self.pool_n) * WORD;
         var j: u32 = 0;
         while (j < self.blob_n) : (j += 1) self.buf[blob_base + j] = self.blob[j];
-        return self.buf[0 .. blob_base + self.blob_n];
+        // the clause section follows the blob, four words per clause
+        const clause_base = blob_base + self.blob_n;
+        var k: u32 = 0;
+        while (k < self.clause_n * 4) : (k += 1) {
+            putU32(self.buf[0..], clause_base + @as(usize, k) * WORD, self.clauses[k]);
+        }
+        return self.buf[0 .. clause_base + @as(usize, self.clause_n) * 4 * WORD];
     }
 };
 

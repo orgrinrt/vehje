@@ -371,3 +371,70 @@ test "projecting a field the record does not have is a different name" {
         evalImage(b.finish(root), slots[0..], &h, &session, arenaRef()),
     );
 }
+
+// ── non-local control flow: Perform and Handle ────────────────────────────
+
+/// Operation identities. A front end mints these fresh per handler site, which
+/// is what makes labelled `break` work; the tests use fixed words because they
+/// build the wire image directly.
+const OP_RETURN: u32 = 0x1001;
+const OP_BREAK: u32 = 0x1002;
+const OP_CONTINUE: u32 = 0x1003;
+
+test "a performed operation unwinds to its handler and yields its value" {
+    var b = Build{};
+    // handle (perform ret(7)) with ret -> \v. v
+    const p = b.perform(OP_RETURN, &.{b.int(7)});
+    const cbody = b.lambda(1, b.varRef(1)); // \v. v
+    const c = b.clause(OP_RETURN, 1, cbody);
+    const root = b.handle(p, c, 1);
+    const v = try run(b.finish(root));
+    try std.testing.expectEqual(@as(i64, 7), v.int);
+}
+
+test "the handler's value replaces the whole handled computation, not just the perform" {
+    var b = Build{};
+    // handle (let x = perform ret(1) in 99) with ret -> \v. v
+    // the `99` must never be reached: a non-resuming discharge abandons it.
+    const p = b.perform(OP_RETURN, &.{b.int(1)});
+    const body = b.let(2, p, b.int(99));
+    const cbody = b.lambda(1, b.varRef(1));
+    const c = b.clause(OP_RETURN, 1, cbody);
+    const root = b.handle(body, c, 1);
+    const v = try run(b.finish(root));
+    try std.testing.expectEqual(@as(i64, 1), v.int);
+}
+
+test "a break passes through a continue handler untouched" {
+    // The load-bearing case for exact operation identity. `continue` is handled
+    // around one iteration's body and `break` around the whole loop, so a break
+    // performed inside the body must cross the inner frame without matching it.
+    var b = Build{};
+    const p = b.perform(OP_BREAK, &.{b.int(42)});
+    const cont_body = b.lambda(1, b.int(0));
+    const cont = b.clause(OP_CONTINUE, 1, cont_body);
+    const inner = b.handle(p, cont, 1);
+    const brk_body = b.lambda(2, b.varRef(2));
+    const brk = b.clause(OP_BREAK, 1, brk_body);
+    const root = b.handle(inner, brk, 1);
+    const v = try run(b.finish(root));
+    try std.testing.expectEqual(@as(i64, 42), v.int);
+}
+
+test "an operation no clause services is named, not silently wrong" {
+    var b = Build{};
+    const p = b.perform(OP_BREAK, &.{b.int(1)});
+    const cont_body = b.lambda(1, b.int(0));
+    const c = b.clause(OP_CONTINUE, 1, cont_body);
+    const root = b.handle(p, c, 1);
+    try std.testing.expectError(EvalError.Unhandled, run(b.finish(root)));
+}
+
+test "a handler whose body performs nothing returns the body's own value" {
+    var b = Build{};
+    const cbody = b.lambda(1, b.varRef(1));
+    const c = b.clause(OP_RETURN, 1, cbody);
+    const root = b.handle(b.int(5), c, 1);
+    const v = try run(b.finish(root));
+    try std.testing.expectEqual(@as(i64, 5), v.int);
+}
