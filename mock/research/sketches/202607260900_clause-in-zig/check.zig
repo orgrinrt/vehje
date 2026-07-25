@@ -38,6 +38,9 @@ pub const Error = error{
 
 pub const NONE: u32 = 0xFFFF_FFFF;
 
+/// A closed record: no unknown remainder.
+pub const NO_ROW: u32 = 0xFFFF_FFFF;
+
 /// A type. `func` names its parameter and result by arena index, so the
 /// representation is flat and nothing points at anything it outlives.
 pub const Ty = union(enum) {
@@ -47,10 +50,11 @@ pub const Ty = union(enum) {
     str,
     tvar: u32,
     func: struct { p: u32, r: u32 },
-    /// A record type is a span of the field table. Fields are kept in the order
-    /// the literal wrote them, and two record types match only if their fields
-    /// match pairwise; reordering is not yet a subtyping question this answers.
-    record: struct { first: u32, count: u32 },
+    /// A record type is a span of the field table, plus a row: `NO_ROW` when the
+    /// type is closed (a literal says exactly which fields exist) and a type
+    /// variable when it is open (a projection says only that a field exists).
+    /// The open form is what lets a function take "some record with an `a`".
+    record: struct { first: u32, count: u32, row: u32 },
     /// A sequence is homogeneous: one element type, named by arena index. A
     /// heterogeneous list would need a sum type, which this subset has not got.
     seq: u32,
@@ -203,20 +207,80 @@ pub const Ctx = struct {
                 else => Error.Mismatch,
             },
             .record => |ra2| switch (self.types[rb]) {
-                .record => |rb2| {
-                    if (ra2.count != rb2.count) return Error.Mismatch;
-                    var i: u32 = 0;
-                    while (i < ra2.count) : (i += 1) {
-                        const fa2 = self.fields[ra2.first + i];
-                        const fb2 = self.fields[rb2.first + i];
-                        if (!std.mem.eql(u8, fa2.key, fb2.key)) return Error.Mismatch;
-                        try self.unify(fa2.ty, fb2.ty);
-                    }
-                },
+                .record => |rb2| try self.unifyRecords(ra2, rb2),
                 else => Error.Mismatch,
             },
             .tvar => unreachable,
         };
+    }
+
+    fn findField(self: *const Ctx, r: anytype, key: []const u8) ?u32 {
+        var i: u32 = 0;
+        while (i < r.count) : (i += 1) {
+            if (std.mem.eql(u8, self.fields[r.first + i].key, key)) return self.fields[r.first + i].ty;
+        }
+        return null;
+    }
+
+    /// Build a record type from gathered fields. Gathered first, appended after,
+    /// because building a nested record mid-loop interleaves its fields into the
+    /// span this one is about to name.
+    fn makeRecord(self: *Ctx, keys: []const []const u8, tys: []const u32, row: u32) Error!u32 {
+        if (@as(usize, self.nf) + keys.len > self.fields.len) return Error.OutOfTypes;
+        const at = self.nf;
+        var i: usize = 0;
+        while (i < keys.len) : (i += 1) {
+            self.fields[self.nf] = .{ .key = keys[i], .ty = tys[i] };
+            self.nf += 1;
+        }
+        return self.alloc(.{ .record = .{ .first = at, .count = @intCast(keys.len), .row = row } });
+    }
+
+    /// Row unification. Common labels unify; each side's row absorbs what the
+    /// other side has and it does not. A closed record has no row to absorb
+    /// with, so a label it lacks is an error rather than an extension.
+    fn unifyRecords(self: *Ctx, a: anytype, b: anytype) Error!void {
+        var ka: [16][]const u8 = undefined;
+        var ta: [16]u32 = undefined;
+        var na: usize = 0;
+        var kb: [16][]const u8 = undefined;
+        var tb: [16]u32 = undefined;
+        var nb: usize = 0;
+
+        var i: u32 = 0;
+        while (i < a.count) : (i += 1) {
+            const f = self.fields[a.first + i];
+            if (self.findField(b, f.key)) |bt| {
+                try self.unify(f.ty, bt);
+            } else {
+                if (b.row == NO_ROW) return Error.Mismatch;
+                if (nb == kb.len) return Error.OutOfTypes;
+                kb[nb] = f.key;
+                tb[nb] = f.ty;
+                nb += 1;
+            }
+        }
+        i = 0;
+        while (i < b.count) : (i += 1) {
+            const f = self.fields[b.first + i];
+            if (self.findField(a, f.key) == null) {
+                if (a.row == NO_ROW) return Error.Mismatch;
+                if (na == ka.len) return Error.OutOfTypes;
+                ka[na] = f.key;
+                ta[na] = f.ty;
+                na += 1;
+            }
+        }
+
+        if (a.row == NO_ROW and b.row == NO_ROW) {
+            if (a.count != b.count) return Error.Mismatch;
+            return;
+        }
+        // A fresh shared remainder, so two open records stay open in whatever
+        // neither of them named.
+        const rest = if (a.row != NO_ROW and b.row != NO_ROW) try self.fresh() else NO_ROW;
+        if (a.row != NO_ROW) try self.unify(a.row, try self.makeRecord(ka[0..na], ta[0..na], rest));
+        if (b.row != NO_ROW) try self.unify(b.row, try self.makeRecord(kb[0..nb], tb[0..nb], rest));
     }
 
     fn push(self: *Ctx, sym: u32, scheme: Scheme, parent: u32) Error!u32 {
@@ -288,7 +352,7 @@ pub const Ctx = struct {
                     self.fields[self.nf] = .{ .key = self.fields[rec.first + i].key, .ty = tmp[i] };
                     self.nf += 1;
                 }
-                break :blk try self.alloc(.{ .record = .{ .first = at, .count = rec.count } });
+                break :blk try self.alloc(.{ .record = .{ .first = at, .count = rec.count, .row = rec.row } });
             },
         };
     }
@@ -590,18 +654,28 @@ fn infer(img: *const Image, idx: u32, ctx: *Ctx, cur: u32) Error!u32 {
         cl.TAG_PROJECT => {
             const bt = ctx.resolve(try infer(img, try img.word(idx, 1), ctx, cur));
             const key = try img.blob(try img.word(idx, 2), try img.word(idx, 3));
-            const rec = switch (ctx.types[bt]) {
-                .record => |r| r,
-                // A projection off an unresolved variable would need row
-                // polymorphism to type; refusing is honest until that exists.
+            switch (ctx.types[bt]) {
+                .record => |rec| {
+                    var i: u32 = 0;
+                    while (i < rec.count) : (i += 1) {
+                        const f = ctx.fields[rec.first + i];
+                        if (std.mem.eql(u8, f.key, key)) return f.ty;
+                    }
+                    // A closed record simply lacks the field; an open one can
+                    // still grow it, so the projection extends the row instead
+                    // of failing.
+                    if (rec.row == NO_ROW) return Error.NoSuchField;
+                },
+                .tvar => {},
                 else => return Error.Mismatch,
-            };
-            var i: u32 = 0;
-            while (i < rec.count) : (i += 1) {
-                const f = ctx.fields[rec.first + i];
-                if (std.mem.eql(u8, f.key, key)) return f.ty;
             }
-            return Error.NoSuchField;
+            // "Some record with this field", which is what makes a projection
+            // off a parameter typeable at all.
+            const ft = try ctx.fresh();
+            const row = try ctx.fresh();
+            const want = try ctx.makeRecord(&.{key}, &.{ft}, row);
+            try ctx.unify(bt, want);
+            return ft;
         },
         cl.TAG_MATCH => {
             const st = try infer(img, try img.word(idx, 1), ctx, cur);
@@ -718,7 +792,7 @@ fn infer(img: *const Image, idx: u32, ctx: *Ctx, cur: u32) Error!u32 {
                     ctx.fields[ctx.nf] = .{ .key = keys[j], .ty = tys[j] };
                     ctx.nf += 1;
                 }
-                return ctx.alloc(.{ .record = .{ .first = at, .count = nfields } });
+                return ctx.alloc(.{ .record = .{ .first = at, .count = nfields, .row = NO_ROW } });
             }
             if (lo == cl.OP_MAKE_SEQ) {
                 // Every element unifies with one element type, which is what

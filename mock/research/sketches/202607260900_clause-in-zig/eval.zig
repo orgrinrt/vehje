@@ -1229,11 +1229,10 @@ test "a module is a value, so its items can be taken out and used" {
     ));
 }
 
-test "projecting off a parameter is refused, for want of row polymorphism" {
-    // Passing a module to a function and projecting inside it would need the
-    // parameter's type to be "some record with a double field", which is a row
-    // type. Refusing is honest; inferring a concrete record here would be wrong.
-    try std.testing.expectError(chk.Error.Mismatch, run(
+test "a record may be passed to a function and projected there" {
+    // The parameter's type is "some record with a double field", which is a row
+    // type. Modules are records, so this is also how a module is passed.
+    try std.testing.expectEqual(@as(i64, 8), try run(
         \\mod M { pub fn double(n) { n * 2 } }
         \\fn apply_double(m, v) { m.double(v) }
         \\apply_double(M, 4)
@@ -1949,4 +1948,35 @@ test "try outside a function is refused" {
         \\enum Maybe { None, Some(Int) }
         \\Maybe::Some(1)?
     ));
+}
+
+test "one parameter, several projections, one row" {
+    try std.testing.expectEqual(@as(i64, 7), try run(
+        \\fn add_parts(r) { r.a + r.b }
+        \\add_parts({ a: 3, b: 4 })
+    ));
+    // The same function accepts a wider record, because the row absorbs the
+    // fields it never named.
+    try std.testing.expectEqual(@as(i64, 7), try run(
+        \\fn add_parts(r) { r.a + r.b }
+        \\add_parts({ a: 3, b: 4, note: "extra" })
+    ));
+}
+
+test "a missing field is still refused, because a literal's type is closed" {
+    try std.testing.expectError(chk.Error.Mismatch, run(
+        \\fn add_parts(r) { r.a + r.b }
+        \\add_parts({ a: 3 })
+    ));
+}
+
+test "a projected field keeps its type through the row" {
+    try std.testing.expectError(chk.Error.Mismatch, run(
+        \\fn add_parts(r) { r.a + r.b }
+        \\add_parts({ a: 3, b: "four" })
+    ));
+}
+
+test "projection off a non-record is still refused" {
+    try std.testing.expectError(chk.Error.Mismatch, run("let n = 1; n.a"));
 }

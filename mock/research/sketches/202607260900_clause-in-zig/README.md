@@ -554,11 +554,29 @@ bound and passed, and none of it is a second namespace mechanism bolted beside
 the first. Items inside a module see each other, and may recurse, because they
 are ordinary recursive bindings that the record closes over.
 
-The limit this exposes is real and recorded: **projecting off a function
-parameter is refused**, because the parameter's type would have to mean "some
-record with a `double` field", which is a row type. Passing a module into a
-function and reaching into it there needs row polymorphism, which this does not
-have. Inferring a concrete record instead would be wrong, so it refuses.
+A module can be passed to a function and projected there, because record types
+carry a row:
+
+```
+mod M { pub fn double(n) { n * 2 } }
+fn apply_double(m, v) { m.double(v) }  apply_double(M, 4)   ==> 8
+
+fn add_parts(r) { r.a + r.b }
+add_parts({ a: 3, b: 4 })                            ==> 7
+add_parts({ a: 3, b: 4, note: "extra" })             ==> 7
+add_parts({ a: 3 })                                  refused, Mismatch
+add_parts({ a: 3, b: "four" })                       refused, Mismatch
+```
+
+A record literal's type is **closed**: it says exactly which fields exist. A
+projection produces an **open** one: it says only that a field exists, with a row
+variable standing for the rest. Unifying them is row unification, where common
+labels unify and each side's row absorbs what the other has and it does not. A
+closed record has no row to absorb with, so a label it lacks is an error rather
+than an extension, which is why the two refusals above still refuse.
+
+That is what lets one function take a wider record than it names, and it is the
+same mechanism that lets a module be a value you can pass.
 
 ## Macros, discharged at the compile stage
 
