@@ -20,30 +20,34 @@ use notko::Outcome;
 use crate::DriverError;
 
 /// `vehje_runtime_new`: create a runtime handle.
-pub type NewFn = extern "C" fn() -> *mut c_void; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the C ABI opaque handle is the contract; tracked: #207
+pub type NewFn = extern "C" fn(*mut u8, usize) -> *mut c_void; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the C ABI opaque handle is the contract; tracked: #207
 /// `vehje_runtime_free`: release a runtime handle.
 pub type FreeFn = extern "C" fn(*mut c_void); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the C ABI opaque handle is the contract; tracked: #207
 /// `vehje_runtime_execute`: evaluate a residual, committing any produced value
 /// through the sink.
 pub type ExecuteFn = extern "C" fn(*mut c_void, *const u8, usize, *const Sink, *const Host) -> i32; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the C ABI entry signature is the contract; tracked: #207
 
-/// One operand crossing to a family handler: a kind tag and a payload word.
+/// One operand crossing to a family handler: a kind tag, a payload word, and a
+/// bytes pointer.
 ///
-/// The tag values are the value image's scalar tags, so one vocabulary
-/// describes a scalar wherever it appears. A compound operand has no
-/// representation here yet.
+/// For a scalar the pointer is null and the payload is the value; for a string
+/// the pointer is the bytes and the payload is their length. One record serves
+/// both, so the common case is unchanged in size. The tag values are the value
+/// image's tags, so one vocabulary describes a value wherever it appears.
 #[repr(C)]
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub struct Scalar {
-    /// The scalar kind: unit, boolean, or integer.
+pub struct Operand {
+    /// The value kind: unit, boolean, integer, or string.
     pub tag: u32, // lint:allow(no-public-raw-field) lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the C ABI operand record is the contract; tracked: #207
-    /// The payload word.
+    /// The payload word, or a string's byte length.
     pub payload: i64, // lint:allow(no-public-raw-field) lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the C ABI operand record is the contract; tracked: #207
+    /// A string's bytes, or null for a scalar.
+    pub bytes: *const u8, // lint:allow(no-public-raw-field) lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the C ABI operand record is the contract; tracked: #207
 }
 
 /// Service one family operation, writing the produced operand through `out`
 /// and returning zero on success.
-pub type HostFn = extern "C" fn(*mut c_void, u32, *const Scalar, usize, *mut Scalar) -> i32; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the C ABI host callback is the contract; tracked: #207
+pub type HostFn = extern "C" fn(*mut c_void, u32, *const Operand, usize, *mut Operand) -> i32; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the C ABI host callback is the contract; tracked: #207
 
 /// The host a family operation is dispatched to.
 ///
@@ -128,7 +132,9 @@ impl Runtime {
         Self { entries }
     }
 
-    /// Evaluate `residual`, committing any produced value into `out`.
+    /// Evaluate `residual` with no session scratch.
+    ///
+    /// A program whose handlers return only scalars needs none.
     ///
     /// Returns the number of bytes committed, which is zero when the program
     /// produced nothing the host kept. Decode those bytes with
@@ -148,7 +154,17 @@ impl Runtime {
         self.run(residual, out, host)
     }
 
+    /// Evaluate `residual` with `host` and a lent session scratch, which is
+    /// what a handler returning a string writes its bytes into.
+    pub fn execute_with_scratch(&self, residual: &[u8], out: &mut [u8], host: &Host, scratch: &mut [u8]) -> Outcome<USize, DriverError> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI byte spans; tracked: #207
+        self.run_with(residual, out, host, scratch.as_mut_ptr(), scratch.len())
+    }
+
     fn run(&self, residual: &[u8], out: &mut [u8], host: *const Host) -> Outcome<USize, DriverError> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the residual and the lent output buffer are FFI byte spans; tracked: #207
+        self.run_with(residual, out, host, core::ptr::null_mut(), 0)
+    }
+
+    fn run_with(&self, residual: &[u8], out: &mut [u8], host: *const Host, scratch: *mut u8, scratch_len: usize) -> Outcome<USize, DriverError> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI byte spans; tracked: #207
         let mut ctx = SinkCtx { buf: out.as_mut_ptr(), cap: USize(out.len()), written: USize(0) };
         let sink = Sink {
             reserve: driver_reserve,
@@ -156,7 +172,7 @@ impl Runtime {
             userdata: (&raw mut ctx) as *mut c_void,
         };
 
-        let handle = (self.entries.new)();
+        let handle = (self.entries.new)(scratch, scratch_len);
         let code = (self.entries.execute)(handle, residual.as_ptr(), residual.len(), &sink, host);
         (self.entries.free)(handle);
 

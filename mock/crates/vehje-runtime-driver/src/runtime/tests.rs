@@ -10,7 +10,7 @@ mod fake {
     /// The bytes the stand-in commits.
     pub const PAYLOAD: &[u8] = &[1, 2, 3, 4]; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test payload bytes at the FFI boundary; tracked: #207
 
-    pub extern "C" fn new() -> *mut c_void { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: C ABI handle; tracked: #207
+    pub extern "C" fn new(_scratch: *mut u8, _len: usize) -> *mut c_void { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: C ABI handle; tracked: #207
         core::ptr::null_mut()
     }
 
@@ -218,9 +218,9 @@ mod end_to_end_host {
     extern "C" fn add_host( // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the C ABI host callback is the contract; tracked: #207
         _userdata: *mut c_void, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the C ABI signature is the contract; tracked: #207
         family: u32, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the C ABI signature is the contract; tracked: #207
-        args: *const Scalar, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the C ABI signature is the contract; tracked: #207
+        args: *const Operand, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the C ABI signature is the contract; tracked: #207
         argc: usize, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the C ABI signature is the contract; tracked: #207
-        out: *mut Scalar, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the C ABI signature is the contract; tracked: #207
+        out: *mut Operand, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the C ABI signature is the contract; tracked: #207
     ) -> i32 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the C ABI signature is the contract; tracked: #207
         if family != ADD {
             return -1; // lint:allow(no-bare-numeric) reason: the C ABI result code is the contract; tracked: #207
@@ -233,7 +233,7 @@ mod end_to_end_host {
             sum += a.payload;
         }
         // SAFETY: as above.
-        unsafe { *out = Scalar { tag: 2, payload: sum } }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the Int scalar tag on the wire; tracked: #207
+        unsafe { *out = Operand { tag: 2, payload: sum, bytes: core::ptr::null() } }; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the Int scalar tag on the wire; tracked: #207
         0 // lint:allow(no-bare-numeric) reason: the C ABI result code is the contract; tracked: #207
     }
 

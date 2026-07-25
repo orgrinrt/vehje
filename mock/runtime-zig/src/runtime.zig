@@ -71,6 +71,10 @@ pub const Value = union(enum) {
     unit,
     boolean: bool,
     int: i64,
+    /// A string: the bytes themselves, wherever they live. A literal's point
+    /// into the residual image and a handler's result into the session
+    /// scratch; both outlive the evaluation.
+    str: []const u8,
     closure: Closure,
 };
 
@@ -83,6 +87,27 @@ pub const EvalError = error{
     NoHost, // a family operation with no host to service it
     TooManyOperands, // a family operation wider than the operand buffer
     HostFailed, // the host reported that it could not service the operation
+    NoScratch, // a handler returned bytes with no session scratch to hold them
+    ScratchFull, // the session scratch cannot hold what a handler returned
+};
+
+/// The caller-lent per-session state a runtime handle owns.
+///
+/// The scratch holds bytes a handler produced, which exist nowhere else: the
+/// runtime allocates nothing, so the host lends the region and the handle's
+/// lifetime is the lifetime a returned string needs.
+pub const Session = struct {
+    scratch: []u8,
+    used: usize = 0,
+
+    /// Copy `bytes` into the scratch, returning the copy.
+    fn keep(self: *Session, bytes: []const u8) EvalError![]const u8 {
+        if (self.used + bytes.len > self.scratch.len) return EvalError.ScratchFull;
+        const at = self.used;
+        @memcpy(self.scratch[at .. at + bytes.len], bytes);
+        self.used += bytes.len;
+        return self.scratch[at .. at + bytes.len];
+    }
 };
 
 /// The most operands one family operation may carry.
@@ -91,20 +116,25 @@ pub const EvalError = error{
 /// named refusal, not a growing buffer.
 pub const ARG_CAP: usize = 16;
 
-/// One operand crossing to a handler: a kind tag and a payload word.
+/// One operand crossing to a handler: a kind tag, a payload word, and a bytes
+/// pointer.
 ///
-/// The tag values are the value image's scalar tags, so one vocabulary
-/// describes a scalar wherever it appears rather than two that must be kept in
-/// agreement. A compound operand has no representation here yet.
-pub const VehjeScalar = extern struct {
+/// For a scalar the pointer is null and the payload is the value; for a string
+/// the pointer is the bytes and the payload is their length. One record serves
+/// both, so the common case is unchanged in size and there is no second
+/// parallel form to keep in agreement. The tag values are the value image's
+/// tags, so one vocabulary describes a value wherever it appears.
+pub const VehjeOperand = extern struct {
     tag: u32,
     payload: i64,
+    bytes: ?[*]const u8 = null,
 };
 
-/// Scalar tag codes, matching `vehje-runtime-abi`'s `ValueTag`.
+/// Operand tag codes, matching `vehje-runtime-abi`'s `ValueTag`.
 pub const SCALAR_UNIT: u32 = 0;
 pub const SCALAR_BOOL: u32 = 1;
 pub const SCALAR_INT: u32 = 2;
+pub const SCALAR_STR: u32 = 3;
 
 /// The host a family operation is dispatched to.
 ///
@@ -115,29 +145,38 @@ pub const VehjeHost = extern struct {
     call: *const fn (
         userdata: ?*anyopaque,
         family: u32,
-        args: [*]const VehjeScalar,
+        args: [*]const VehjeOperand,
         argc: usize,
-        out: *VehjeScalar,
+        out: *VehjeOperand,
     ) callconv(.c) i32,
     userdata: ?*anyopaque,
 };
 
-/// The scalar form of a value, or null when it has none (a closure).
-fn toScalar(v: Value) ?VehjeScalar {
+/// The operand form of a value, or null when it has none (a closure).
+fn toOperand(v: Value) ?VehjeOperand {
     return switch (v) {
-        .unit => VehjeScalar{ .tag = SCALAR_UNIT, .payload = 0 },
-        .boolean => |b| VehjeScalar{ .tag = SCALAR_BOOL, .payload = @intFromBool(b) },
-        .int => |n| VehjeScalar{ .tag = SCALAR_INT, .payload = n },
+        .unit => VehjeOperand{ .tag = SCALAR_UNIT, .payload = 0 },
+        .boolean => |b| VehjeOperand{ .tag = SCALAR_BOOL, .payload = @intFromBool(b) },
+        .int => |n| VehjeOperand{ .tag = SCALAR_INT, .payload = n },
+        .str => |b| VehjeOperand{ .tag = SCALAR_STR, .payload = @intCast(b.len), .bytes = b.ptr },
         .closure => null,
     };
 }
 
 /// The value a returned operand denotes.
-fn fromScalar(s: VehjeScalar) EvalError!Value {
-    return switch (s.tag) {
+///
+/// A returned string's bytes exist only for the duration of the call, so they
+/// are copied into the session scratch and the value names the copy.
+fn fromOperand(o: VehjeOperand, session: ?*Session) EvalError!Value {
+    return switch (o.tag) {
         SCALAR_UNIT => Value.unit,
-        SCALAR_BOOL => Value{ .boolean = s.payload != 0 },
-        SCALAR_INT => Value{ .int = s.payload },
+        SCALAR_BOOL => Value{ .boolean = o.payload != 0 },
+        SCALAR_INT => Value{ .int = o.payload },
+        SCALAR_STR => blk: {
+            const p = o.bytes orelse return EvalError.Unsupported;
+            const s = session orelse return EvalError.NoScratch;
+            break :blk Value{ .str = try s.keep(p[0..@intCast(o.payload)]) };
+        },
         else => EvalError.Unsupported,
     };
 }
@@ -180,6 +219,8 @@ const Image = struct {
     node_count: u32,
     pool_base: usize,
     pool_count: u32,
+    blob_base: usize,
+    blob_len: u32,
     root: u32,
 
     fn parse(bytes: []const u8) EvalError!Image {
@@ -187,14 +228,19 @@ const Image = struct {
         if ((try readU32(bytes, 0)) != MAGIC) return EvalError.Corrupt;
         const node_count = try readU32(bytes, 3 * WORD);
         const pool_count = try readU32(bytes, 4 * WORD);
+        const blob_len = try readU32(bytes, 5 * WORD);
         const root = try readU32(bytes, 6 * WORD);
         // Sections are laid out header, nodes, pool, blob.
         const pool_base = HEADER_WORDS * WORD + @as(usize, node_count) * NODE_WORDS * WORD;
+        const blob_base = pool_base + @as(usize, pool_count) * WORD;
+        if (blob_base + @as(usize, blob_len) > bytes.len) return EvalError.Corrupt;
         return .{
             .bytes = bytes,
             .node_count = node_count,
             .pool_base = pool_base,
             .pool_count = pool_count,
+            .blob_base = blob_base,
+            .blob_len = blob_len,
             .root = root,
         };
     }
@@ -208,6 +254,13 @@ const Image = struct {
     /// Payload word `slot` of node `idx` (slot 0 is the tag).
     fn word(self: *const Image, idx: u32, slot: usize) EvalError!u32 {
         return readU32(self.bytes, (try self.nodeAt(idx)) + slot * WORD);
+    }
+
+    /// The blob bytes a literal's span names, bounds-checked because the image
+    /// is untrusted.
+    fn blob(self: *const Image, off: u32, len: u32) EvalError![]const u8 {
+        if (@as(usize, off) + @as(usize, len) > self.blob_len) return EvalError.Corrupt;
+        return self.bytes[self.blob_base + off .. self.blob_base + off + len];
     }
 
     /// The node index at pool position `at`.
@@ -228,7 +281,7 @@ fn readU32(bytes: []const u8, at: usize) EvalError!u32 {
 
 /// Evaluate node `idx` under the environment chain `cur`. Structural recursion
 /// over the finite arena.
-fn eval(img: *const Image, idx: u32, env: *Env, cur: u32, host: ?*const VehjeHost) EvalError!Value {
+fn eval(img: *const Image, idx: u32, env: *Env, cur: u32, host: ?*const VehjeHost, session: ?*Session) EvalError!Value {
     switch (try img.word(idx, 0)) {
         TAG_LIT => return switch (try img.word(idx, 1)) {
             LIT_UNIT => Value.unit,
@@ -238,7 +291,8 @@ fn eval(img: *const Image, idx: u32, env: *Env, cur: u32, host: ?*const VehjeHos
                 const hi = try img.word(idx, 3);
                 break :blk Value{ .int = @bitCast((@as(u64, hi) << 32) | @as(u64, lo)) };
             },
-            else => EvalError.Unsupported, // Str value: awaits the value arena
+            LIT_STR => Value{ .str = try img.blob(try img.word(idx, 2), try img.word(idx, 3)) },
+            else => EvalError.Unsupported,
         },
         TAG_VAR => return env.lookup(cur, try img.word(idx, 1)),
         TAG_LET => {
@@ -251,11 +305,11 @@ fn eval(img: *const Image, idx: u32, env: *Env, cur: u32, host: ?*const VehjeHos
                 // value produces captures a chain that already names it. The
                 // slot holds unit until the value is known, then takes it.
                 const slot = try env.push(name, Value.unit, cur);
-                env.slots[slot].val = try eval(img, value_ref, env, slot, host);
-                return eval(img, body_ref, env, slot, host);
+                env.slots[slot].val = try eval(img, value_ref, env, slot, host, session);
+                return eval(img, body_ref, env, slot, host, session);
             }
-            const v = try eval(img, value_ref, env, cur, host);
-            return eval(img, body_ref, env, try env.push(name, v, cur), host);
+            const v = try eval(img, value_ref, env, cur, host, session);
+            return eval(img, body_ref, env, try env.push(name, v, cur), host, session);
         },
         TAG_LAMBDA => return Value{ .closure = .{
             .param = try img.word(idx, 1),
@@ -266,27 +320,27 @@ fn eval(img: *const Image, idx: u32, env: *Env, cur: u32, host: ?*const VehjeHos
             const callee_ref = try img.word(idx, 1);
             const args_start = try img.word(idx, 2);
             const args_len = try img.word(idx, 3);
-            var f = try eval(img, callee_ref, env, cur, host);
+            var f = try eval(img, callee_ref, env, cur, host, session);
             // Multi-parameter lambdas desugar to nested `Lambda`, so a
             // multi-argument `Apply` is applied one argument at a time.
             var k: u32 = 0;
             while (k < args_len) : (k += 1) {
-                const arg = try eval(img, try img.pooled(args_start + k), env, cur, host);
+                const arg = try eval(img, try img.pooled(args_start + k), env, cur, host, session);
                 const c = switch (f) {
                     .closure => |c| c,
                     else => return EvalError.NotCallable,
                 };
-                f = try eval(img, c.body, env, try env.push(c.param, arg, c.env), host);
+                f = try eval(img, c.body, env, try env.push(c.param, arg, c.env), host, session);
             }
             return f;
         },
         TAG_IF => {
-            const c = try eval(img, try img.word(idx, 1), env, cur, host);
+            const c = try eval(img, try img.word(idx, 1), env, cur, host, session);
             const take = switch (c) {
                 .boolean => |b| b,
                 else => return EvalError.Unsupported,
             };
-            return eval(img, try img.word(idx, if (take) 2 else 3), env, cur, host);
+            return eval(img, try img.word(idx, if (take) 2 else 3), env, cur, host, session);
         },
         TAG_RAW => {
             // A family operation. The runtime does not know what the family
@@ -298,20 +352,20 @@ fn eval(img: *const Image, idx: u32, env: *Env, cur: u32, host: ?*const VehjeHos
             const args_len = try img.word(idx, 3);
             if (args_len > ARG_CAP) return EvalError.TooManyOperands;
 
-            var args: [ARG_CAP]VehjeScalar = undefined;
+            var args: [ARG_CAP]VehjeOperand = undefined;
             var k: u32 = 0;
             // Left to right: a host call may have effects, so the order the
             // operands are produced in is part of what the program means.
             while (k < args_len) : (k += 1) {
-                const v = try eval(img, try img.pooled(args_start + k), env, cur, host);
-                args[k] = toScalar(v) orelse return EvalError.Unsupported;
+                const v = try eval(img, try img.pooled(args_start + k), env, cur, host, session);
+                args[k] = toOperand(v) orelse return EvalError.Unsupported;
             }
 
-            var out: VehjeScalar = .{ .tag = SCALAR_UNIT, .payload = 0 };
+            var out: VehjeOperand = .{ .tag = SCALAR_UNIT, .payload = 0 };
             if (h.call(h.userdata, family, &args, args_len, &out) != 0) {
                 return EvalError.HostFailed;
             }
-            return fromScalar(out);
+            return fromOperand(out, session);
         },
         // Project, Match, Iter, Interp, and Handle land with their forms.
         else => return EvalError.Unsupported,
@@ -320,17 +374,28 @@ fn eval(img: *const Image, idx: u32, env: *Env, cur: u32, host: ?*const VehjeHos
 
 /// Evaluate a serialized residual image from its header's root, with a
 /// caller-lent environment arena.
-pub fn evalImage(bytes: []const u8, slots: []Binding, host: ?*const VehjeHost) EvalError!Value {
+pub fn evalImage(bytes: []const u8, slots: []Binding, host: ?*const VehjeHost, session: ?*Session) EvalError!Value {
     const img = try Image.parse(bytes);
     var env = Env{ .slots = slots };
-    return eval(&img, img.root, &env, ENV_NIL, host);
+    return eval(&img, img.root, &env, ENV_NIL, host, session);
 }
 
-export fn vehje_runtime_new() ?*anyopaque {
-    return null;
+/// One session's state, kept in the handle the host holds.
+///
+/// The runtime allocates nothing, so the scratch is the host's memory for the
+/// session's lifetime. A single session is enough: the handle is per-call in
+/// every current embedding, and a host wanting concurrency lends separate
+/// regions.
+var the_session: Session = .{ .scratch = &.{} };
+
+export fn vehje_runtime_new(scratch: ?[*]u8, len: usize) ?*anyopaque {
+    const p = scratch orelse return null;
+    the_session = .{ .scratch = p[0..len], .used = 0 };
+    return @ptrCast(&the_session);
 }
 
 export fn vehje_runtime_free(rt: ?*anyopaque) void {
+    // Nothing to release: the scratch was never the runtime's memory.
     _ = rt;
 }
 
@@ -359,6 +424,7 @@ fn marshal(v: Value, out: []u8) !usize {
             const payload = value_image.intPayload(n);
             break :blk value_image.writeScalar(out, .int, payload[0..]);
         },
+        .str => |b| value_image.writeScalar(out, .str, b),
         .closure => error.NotRepresentable,
     };
 }
@@ -370,9 +436,9 @@ pub export fn vehje_runtime_execute(
     sink: ?*const VehjeSink,
     host: ?*const VehjeHost,
 ) i32 {
-    _ = rt;
+    const session: ?*Session = if (rt) |p| @ptrCast(@alignCast(p)) else null;
     var slots: [1024]Binding = undefined;
-    const v = evalImage(input[0..len], slots[0..], host) catch return VEHJE_RESULT_ERR;
+    const v = evalImage(input[0..len], slots[0..], host, session) catch return VEHJE_RESULT_ERR;
 
     // With no sink the host wanted only the outcome, so evaluating was the
     // whole job. With one, the value crosses back as a value image.

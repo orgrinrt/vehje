@@ -22,7 +22,8 @@ const Value = rt.Value;
 const EvalError = rt.EvalError;
 const evalImage = rt.evalImage;
 const TAG_RAW = rt.TAG_RAW;
-const VehjeScalar = rt.VehjeScalar;
+const VehjeOperand = rt.VehjeOperand;
+const Session = rt.Session;
 const VehjeHost = rt.VehjeHost;
 
 fn putU32(buf: []u8, at: usize, w: u32) void {
@@ -38,6 +39,8 @@ const Build = struct {
     n: u32 = 0,
     pool: [32]u32 = undefined,
     pool_n: u32 = 0,
+    blob: [64]u8 = undefined,
+    blob_n: u32 = 0,
 
     /// Append a node record: `tag` plus its payload words in encoder order.
     fn node(self: *Build, tag: u32, payload: []const u32) u32 {
@@ -46,6 +49,16 @@ const Build = struct {
         for (payload, 0..) |w, i| putU32(self.buf[0..], at + (i + 1) * WORD, w);
         self.n += 1;
         return self.n - 1;
+    }
+
+    /// A string literal: the bytes go in the blob, the record names their span.
+    fn str(self: *Build, text: []const u8) u32 {
+        const off = self.blob_n;
+        for (text) |c| {
+            self.blob[self.blob_n] = c;
+            self.blob_n += 1;
+        }
+        return self.node(TAG_LIT, &.{ rt.LIT_STR, off, @intCast(text.len) });
     }
 
     fn unit(self: *Build) u32 {
@@ -101,20 +114,23 @@ const Build = struct {
         putU32(self.buf[0..], 2 * WORD, 0); // tier = Arena
         putU32(self.buf[0..], 3 * WORD, self.n);
         putU32(self.buf[0..], 4 * WORD, self.pool_n);
-        putU32(self.buf[0..], 5 * WORD, 0); // blob_len
+        putU32(self.buf[0..], 5 * WORD, self.blob_n); // blob_len
         putU32(self.buf[0..], 6 * WORD, root);
         const pool_base = HEADER_WORDS * WORD + @as(usize, self.n) * NODE_WORDS * WORD;
         var i: u32 = 0;
         while (i < self.pool_n) : (i += 1) {
             putU32(self.buf[0..], pool_base + @as(usize, i) * WORD, self.pool[i]);
         }
-        return self.buf[0 .. pool_base + @as(usize, self.pool_n) * WORD];
+        const blob_base = pool_base + @as(usize, self.pool_n) * WORD;
+        var j: u32 = 0;
+        while (j < self.blob_n) : (j += 1) self.buf[blob_base + j] = self.blob[j];
+        return self.buf[0 .. blob_base + self.blob_n];
     }
 };
 
 fn run(image: []const u8) EvalError!Value {
     var slots: [64]Binding = undefined;
-    return evalImage(image, slots[0..], null);
+    return evalImage(image, slots[0..], null, null);
 }
 
 test "let and if evaluate to a value" {
@@ -209,7 +225,7 @@ test "exhausting the lent environment arena is reported, not overrun" {
     const root = b.let(1, b.int(1), mid);
     const image = b.finish(root);
     var slots: [2]Binding = undefined;
-    try std.testing.expectError(EvalError.EnvFull, evalImage(image, slots[0..], null));
+    try std.testing.expectError(EvalError.EnvFull, evalImage(image, slots[0..], null, null));
 }
 
 // ── the value crossing ────────────────────────────────────────────────────
@@ -315,9 +331,9 @@ var host_refuses: bool = false;
 fn addHost(
     userdata: ?*anyopaque,
     family: u32,
-    args: [*]const VehjeScalar,
+    args: [*]const VehjeOperand,
     argc: usize,
-    out: *VehjeScalar,
+    out: *VehjeOperand,
 ) callconv(.c) i32 {
     _ = userdata;
     if (host_refuses or family != ADD_FAMILY) return -1;
@@ -341,7 +357,7 @@ fn hostOf() VehjeHost {
 
 fn runWithHost(image: []const u8, host: ?*const VehjeHost) EvalError!Value {
     var slots: [64]Binding = undefined;
-    return evalImage(image, slots[0..], host);
+    return evalImage(image, slots[0..], host, null);
 }
 
 test "a family operation reaches its handler and computes" {
@@ -411,4 +427,94 @@ test "a closure operand is refused, having no scalar form" {
     host_refuses = false;
     const h = hostOf();
     try std.testing.expectError(EvalError.Unsupported, runWithHost(b.finish(root), &h));
+}
+
+// ── strings ───────────────────────────────────────────────────────────────
+
+/// A host that returns the string it was handed, so a returned string's
+/// survival past the call is observable.
+fn echoHost(
+    userdata: ?*anyopaque,
+    family: u32,
+    args: [*]const VehjeOperand,
+    argc: usize,
+    out: *VehjeOperand,
+) callconv(.c) i32 {
+    _ = userdata;
+    _ = family;
+    if (argc != 1 or args[0].tag != rt.SCALAR_STR) return -1;
+    out.* = args[0];
+    return 0;
+}
+
+test "a string literal evaluates to its bytes" {
+    var b = Build{};
+    const root = b.str("hello");
+    const v = try run(b.finish(root));
+    try std.testing.expectEqualStrings("hello", v.str);
+}
+
+test "a literal reaching past the blob is refused" {
+    var b = Build{};
+    _ = b.str("hi");
+    // A record naming a span wider than the blob holds.
+    const bad = b.node(TAG_LIT, &.{ rt.LIT_STR, 0, 99 });
+    try std.testing.expectError(EvalError.Corrupt, run(b.finish(bad)));
+}
+
+test "a string reaches a handler with its bytes intact" {
+    var b = Build{};
+    const root = b.raw(1, &.{b.str("world")});
+    var scratch: [64]u8 = undefined;
+    var session = Session{ .scratch = scratch[0..] };
+    const h = VehjeHost{ .call = echoHost, .userdata = null };
+    var slots: [16]Binding = undefined;
+    const v = try evalImage(b.finish(root), slots[0..], &h, &session);
+    try std.testing.expectEqualStrings("world", v.str);
+}
+
+test "a returned string survives the call, having been copied into scratch" {
+    // The handler hands back bytes it borrowed; the value must not depend on
+    // the handler's frame still existing.
+    var b = Build{};
+    const root = b.raw(1, &.{b.str("kept")});
+    var scratch: [64]u8 = undefined;
+    var session = Session{ .scratch = scratch[0..] };
+    const h = VehjeHost{ .call = echoHost, .userdata = null };
+    var slots: [16]Binding = undefined;
+    const v = try evalImage(b.finish(root), slots[0..], &h, &session);
+    // The value points into the scratch, not at the handler's operand.
+    try std.testing.expect(v.str.ptr == scratch[0..].ptr);
+    try std.testing.expectEqualStrings("kept", v.str);
+}
+
+test "returning a string with no scratch, or too little, is named" {
+    var b = Build{};
+    const root = b.raw(1, &.{b.str("toolong")});
+    const image = b.finish(root);
+    const h = VehjeHost{ .call = echoHost, .userdata = null };
+    var slots: [16]Binding = undefined;
+
+    try std.testing.expectError(EvalError.NoScratch, evalImage(image, slots[0..], &h, null));
+
+    var tiny: [3]u8 = undefined;
+    var session = Session{ .scratch = tiny[0..] };
+    try std.testing.expectError(EvalError.ScratchFull, evalImage(image, slots[0..], &h, &session));
+}
+
+test "a string value marshals into the value image" {
+    var b = Build{};
+    const root = b.str("out");
+    const program = b.finish(root);
+
+    sink_refuses = false;
+    const sink = testSink();
+    const rc = rt.vehje_runtime_execute(null, program.ptr, program.len, &sink, null);
+    try std.testing.expectEqual(rt.VEHJE_RESULT_OK, rc);
+
+    const out = sink_buf[0..sink_len];
+    try std.testing.expectEqual(value_image.scalarLen(3), sink_len);
+    const node = 7 * 4;
+    try std.testing.expectEqual(@intFromEnum(value_image.Tag.str), imageWord(out, node));
+    try std.testing.expectEqualStrings("out", out[node + 6 * 4 ..]);
 }
