@@ -194,15 +194,52 @@ the restriction is where the missing pass shows, and lifting it is what
 monomorphisation buys. Two uses at different types are refused rather than
 silently mis-dispatched.
 
+## Patterns and match
+
+```
+match 5 { 0 => 1, 5 => 42, _ => 0 }                      ==> 42
+match 4 { 0 => 0, n => n + 5 }                           ==> 9
+match "a" { "a" => "yes", _ => "no" }                    ==> "yes"
+let r = { a: 3, b: 5 }; match r { { a: x, b: y } => x + y }   ==> 8
+let r = { a: 0, b: 5 }; match r { { a: 0, b: _ } => 1, _ => 2 } ==> 1
+
+match 1 { 0 => 1, _ => "other" }                  refused, Mismatch
+match 1 { "a" => 1, _ => 2 }                      refused, Mismatch
+match 1 { { a: x } => x, _ => 2 }                 refused, Mismatch
+match 1 { 0 => 1, 2 => 3 }                        refused, NonExhaustive
+```
+
+Patterns are literals, bindings, `_`, and records of sub-patterns. Every pattern
+must type against the scrutinee, so a match over the wrong shape is a static
+error rather than an arm that silently never fires, and all arms must agree on a
+result type.
+
+**Exhaustiveness is approximated by requiring an irrefutable last arm.** That is
+sound and checkable without a usefulness algorithm, and it refuses some programs
+a real exhaustiveness check would accept. A record pattern counts as irrefutable
+when all its sub-patterns are, because a record has exactly the fields it has and
+there is no other shape for the match to fall through to.
+
+A bare record literal cannot be a scrutinee, since `match r {` cannot tell the
+record from the arm block. Rust has the same restriction and the same two ways
+out: bind it first, or parenthesise it.
+
+**This is input to the Core round, not a decision it can skip.** The framework's
+pattern representation is still undecided (task #43); patterns here live in the
+same node arena as expressions with their own tags, which is a sketch choice that
+works and is exactly the kind of thing that round should weigh rather than
+inherit.
+
 ## What it does not establish, stated plainly
 
 **This is a slice of the grammar, and the bar is the whole grammar.** It has
 integers, strings, names, `let`, `fn` with recursion and closures and currying,
 `if`/`else`, four operators, records with field access, sequences with a
 three-operation prelude, single-method traits with impls, coherence, inferred
-bounds, and associated types. It does not have multi-method traits, supertraits,
-patterns, `match`, macros, loops, modules, `use`, attributes, a separate resolve
-pass, or monomorphisation, nor the rest of the surface the
+bounds, associated types, and pattern matching. It does not have multi-method
+traits, supertraits, or-patterns, ranges, guards, real exhaustiveness checking,
+macros, loops, modules, `use`, attributes, a separate resolve pass, or
+monomorphisation, nor the rest of the surface the
 normative grammar (`mock/research/original-docs/CLAUSE_EBNF.md`) requires.
 Nothing is done until the full intended language is expressible.
 

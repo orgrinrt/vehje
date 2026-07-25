@@ -387,6 +387,51 @@ fn rd(bytes: []const u8, at: usize) u32 {
     return std.mem.readInt(u32, bytes[at..][0..4], .little);
 }
 
+/// Type a pattern against the scrutinee's type, returning the scope its
+/// bindings introduce.
+fn patternScope(img: *const Image, pat: u32, st: u32, ctx: *Ctx, cur: u32) Error!u32 {
+    switch (try img.word(pat, 0)) {
+        cl.PAT_WILD => return cur,
+        cl.PAT_BIND => return ctx.push(try img.word(pat, 1), .{ .ty = st, .quantified = 0, .first = 0 }, cur),
+        cl.PAT_LIT_INT => {
+            try ctx.unify(st, try ctx.alloc(.int));
+            return cur;
+        },
+        cl.PAT_LIT_STR => {
+            try ctx.unify(st, try ctx.alloc(.str));
+            return cur;
+        },
+        cl.PAT_REC => {
+            const start = try img.word(pat, 1);
+            const n = try img.word(pat, 2);
+            const rt = ctx.resolve(st);
+            const rec = switch (ctx.types[rt]) {
+                .record => |r| r,
+                else => return Error.Mismatch,
+            };
+            var scope = cur;
+            var k: u32 = 0;
+            while (k < n) : (k += 2) {
+                const key_node = try img.pooled(start + k);
+                const key = try img.blob(try img.word(key_node, 2), try img.word(key_node, 3));
+                var fty: ?u32 = null;
+                var j: u32 = 0;
+                while (j < rec.count) : (j += 1) {
+                    const f = ctx.fields[rec.first + j];
+                    if (std.mem.eql(u8, f.key, key)) {
+                        fty = f.ty;
+                        break;
+                    }
+                }
+                const ft = fty orelse return Error.NoSuchField;
+                scope = try patternScope(img, try img.pooled(start + k + 1), ft, ctx, scope);
+            }
+            return scope;
+        },
+        else => return Error.Unsupported,
+    }
+}
+
 fn infer(img: *const Image, idx: u32, ctx: *Ctx, cur: u32) Error!u32 {
     switch (try img.word(idx, 0)) {
         cl.TAG_LIT => return switch (try img.word(idx, 1)) {
@@ -500,6 +545,24 @@ fn infer(img: *const Image, idx: u32, ctx: *Ctx, cur: u32) Error!u32 {
                 if (std.mem.eql(u8, f.key, key)) return f.ty;
             }
             return Error.NoSuchField;
+        },
+        cl.TAG_MATCH => {
+            const st = try infer(img, try img.word(idx, 1), ctx, cur);
+            const start = try img.word(idx, 2);
+            const arms = try img.word(idx, 3);
+            var result: ?u32 = null;
+            var a: u32 = 0;
+            while (a < arms) : (a += 1) {
+                const pat = try img.pooled(start + a * 2);
+                const body = try img.pooled(start + a * 2 + 1);
+                // Every pattern must type against the scrutinee, which is what
+                // makes a match over the wrong shape a static error rather than
+                // an arm that silently never fires.
+                const scope = try patternScope(img, pat, st, ctx, cur);
+                const bt = try infer(img, body, ctx, scope);
+                if (result) |r| try ctx.unify(bt, r) else result = bt;
+            }
+            return result orelse Error.Unsupported;
         },
         cl.TAG_IF => {
             const ct = try infer(img, try img.word(idx, 1), ctx, cur);

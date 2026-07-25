@@ -24,7 +24,19 @@ pub const TAG_LAMBDA: u32 = 3;
 pub const TAG_APPLY: u32 = 4;
 pub const TAG_PROJECT: u32 = 5;
 pub const TAG_IF: u32 = 6;
+pub const TAG_MATCH: u32 = 7;
 pub const TAG_RAW: u32 = 10;
+
+/// Pattern nodes. They live in the same arena as expressions but are never
+/// evaluated as expressions; the match arm is the only thing that reads them.
+/// Keeping them here rather than in a separate region is a sketch choice, and
+/// the Core round that settles the framework's pattern representation is where
+/// that gets decided properly.
+pub const PAT_WILD: u32 = 20;
+pub const PAT_BIND: u32 = 21;
+pub const PAT_LIT_INT: u32 = 22;
+pub const PAT_LIT_STR: u32 = 23;
+pub const PAT_REC: u32 = 24;
 
 pub const LIT_INT: u32 = 2;
 pub const LIT_STR: u32 = 3;
@@ -103,11 +115,12 @@ pub const Error = error{
     UnknownTrait,
     UnknownType,
     DuplicateImpl,
+    NonExhaustive,
 };
 
 // ---------------------------------------------------------------- lexer
 
-const Kind = enum { int, str_lit, ident, dot, colon, lbracket, rbracket, arrow, kw_trait, kw_impl, kw_for, kw_type, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
+const Kind = enum { int, str_lit, ident, dot, colon, lbracket, rbracket, arrow, kw_trait, kw_impl, kw_for, kw_type, kw_match, fat_arrow, underscore, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
 
 const Token = struct { kind: Kind, start: usize, end: usize, value: i64 };
 
@@ -162,6 +175,10 @@ const Lexer = struct {
                 .kw_for
             else if (std.mem.eql(u8, text, "type"))
                 .kw_type
+            else if (std.mem.eql(u8, text, "match"))
+                .kw_match
+            else if (std.mem.eql(u8, text, "_"))
+                .underscore
             else if (std.mem.eql(u8, text, "if"))
                 .kw_if
             else if (std.mem.eql(u8, text, "else"))
@@ -176,6 +193,10 @@ const Lexer = struct {
             if (self.i >= self.src.len) return Error.Unterminated;
             self.i += 1;
             return .{ .kind = .str_lit, .start = start, .end = self.i, .value = 0 };
+        }
+        if (c == '=' and self.i + 1 < self.src.len and self.src[self.i + 1] == '>') {
+            self.i += 2;
+            return .{ .kind = .fat_arrow, .start = start, .end = self.i, .value = 0 };
         }
         if (c == '-' and self.i + 1 < self.src.len and self.src[self.i + 1] == '>') {
             self.i += 2;
@@ -326,6 +347,65 @@ pub const Builder = struct {
         self.slot(idx, 1).* = ARITH;
         self.slot(idx, 2).* = start;
         self.slot(idx, 3).* = @intCast(1 + kv.len);
+        return idx;
+    }
+
+    pub fn patWild(self: *Builder) Error!u32 {
+        return self.alloc(PAT_WILD);
+    }
+
+    pub fn patBind(self: *Builder, sym: u32) Error!u32 {
+        const idx = try self.alloc(PAT_BIND);
+        self.slot(idx, 1).* = sym;
+        return idx;
+    }
+
+    pub fn patInt(self: *Builder, v: i64) Error!u32 {
+        const idx = try self.alloc(PAT_LIT_INT);
+        const bits: u64 = @bitCast(v);
+        self.slot(idx, 1).* = @truncate(bits);
+        self.slot(idx, 2).* = @truncate(bits >> 32);
+        return idx;
+    }
+
+    pub fn patStr(self: *Builder, text: []const u8) Error!u32 {
+        if (@as(usize, self.bl) + text.len > self.blob.len) return Error.OutOfBlob;
+        const off = self.bl;
+        @memcpy(self.blob[off .. off + text.len], text);
+        self.bl += @intCast(text.len);
+        const idx = try self.alloc(PAT_LIT_STR);
+        self.slot(idx, 1).* = off;
+        self.slot(idx, 2).* = @intCast(text.len);
+        return idx;
+    }
+
+    /// A record pattern: alternating key-string and sub-pattern nodes in the
+    /// pool, the same shape the record literal uses for its operands.
+    pub fn patRec(self: *Builder, kv: []const u32) Error!u32 {
+        if (@as(usize, self.p) + kv.len > self.pool.len) return Error.OutOfPool;
+        const start = self.p;
+        for (kv) |x| {
+            self.pool[self.p] = x;
+            self.p += 1;
+        }
+        const idx = try self.alloc(PAT_REC);
+        self.slot(idx, 1).* = start;
+        self.slot(idx, 2).* = @intCast(kv.len);
+        return idx;
+    }
+
+    /// Arms are pairs in the pool: a pattern then its body.
+    pub fn match_(self: *Builder, scrutinee: u32, arms: []const u32) Error!u32 {
+        if (@as(usize, self.p) + arms.len > self.pool.len) return Error.OutOfPool;
+        const start = self.p;
+        for (arms) |x| {
+            self.pool[self.p] = x;
+            self.p += 1;
+        }
+        const idx = try self.alloc(TAG_MATCH);
+        self.slot(idx, 1).* = scrutinee;
+        self.slot(idx, 2).* = start;
+        self.slot(idx, 3).* = @intCast(arms.len / 2);
         return idx;
     }
 
@@ -662,6 +742,81 @@ pub const Parser = struct {
     /// Call syntax, applied left to right so `f(a)(b)` and `f(a, b)` produce the
     /// same Core, which is what makes partial application fall out rather than
     /// being a separate feature.
+    /// One pattern. Deliberately small: a literal, a binding, a wildcard, or a
+    /// record of sub-patterns. Alternatives, ranges, and rest are the obvious
+    /// next ones and are not here.
+    fn pattern(self: *Parser) Error!u32 {
+        switch (self.tok.kind) {
+            .underscore => {
+                try self.bump();
+                return self.b.patWild();
+            },
+            .int => {
+                const v = self.tok.value;
+                try self.bump();
+                return self.b.patInt(v);
+            },
+            .minus => {
+                try self.bump();
+                if (self.tok.kind != .int) return Error.UnexpectedToken;
+                const v = self.tok.value;
+                try self.bump();
+                return self.b.patInt(-v);
+            },
+            .str_lit => {
+                const text = self.lx.src[self.tok.start + 1 .. self.tok.end - 1];
+                try self.bump();
+                return self.b.patStr(text);
+            },
+            .ident => {
+                const sym = try self.names.intern(self.lx.src[self.tok.start..self.tok.end]);
+                try self.bump();
+                return self.b.patBind(sym);
+            },
+            .lbrace => {
+                try self.bump();
+                var kv: [16]u32 = undefined;
+                var nk: usize = 0;
+                while (self.tok.kind != .rbrace) {
+                    if (self.tok.kind != .ident) return Error.UnexpectedToken;
+                    if (nk + 2 > kv.len) return Error.TooManyParams;
+                    const key = self.lx.src[self.tok.start..self.tok.end];
+                    try self.bump();
+                    try self.expect(.colon);
+                    kv[nk] = try self.b.str(key);
+                    kv[nk + 1] = try self.pattern();
+                    nk += 2;
+                    if (self.tok.kind == .comma) try self.bump();
+                }
+                try self.expect(.rbrace);
+                return self.b.patRec(kv[0..nk]);
+            },
+            else => return Error.UnexpectedToken,
+        }
+    }
+
+    /// Whether a pattern matches everything, which is how exhaustiveness is
+    /// approximated here: the last arm must be irrefutable. That is sound and
+    /// checkable without a usefulness algorithm, and it refuses some programs a
+    /// real exhaustiveness check would accept.
+    fn irrefutable(self: *const Parser, pat: u32) bool {
+        const tag = self.b.nodes[@as(usize, pat) * NODE_WORDS];
+        if (tag == PAT_WILD or tag == PAT_BIND) return true;
+        // A record pattern is irrefutable when every sub-pattern is, because a
+        // record has exactly the fields it has: there is no other shape it
+        // could have taken for the match to fall through.
+        if (tag == PAT_REC) {
+            const start = self.b.nodes[@as(usize, pat) * NODE_WORDS + 1];
+            const n = self.b.nodes[@as(usize, pat) * NODE_WORDS + 2];
+            var k: u32 = 1;
+            while (k < n) : (k += 2) {
+                if (!self.irrefutable(self.b.pool[start + k])) return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
     fn postfix(self: *Parser) Error!u32 {
         // A prelude name in call position lowers to its family operation rather
         // than to an application of a binding, because no binding exists for it.
@@ -781,6 +936,30 @@ pub const Parser = struct {
                 }
                 try self.expect(.rbrace);
                 return self.b.record(kv[0..nk]);
+            },
+            .kw_match => {
+                try self.bump();
+                const saved_m = self.allow_record;
+                self.allow_record = false;
+                const scrutinee = try self.expression();
+                self.allow_record = saved_m;
+                try self.expect(.lbrace);
+                var arms: [32]u32 = undefined;
+                var na: usize = 0;
+                var last_irrefutable = false;
+                while (self.tok.kind != .rbrace) {
+                    if (na + 2 > arms.len) return Error.TooManyParams;
+                    const pat = try self.pattern();
+                    last_irrefutable = self.irrefutable(pat);
+                    try self.expect(.fat_arrow);
+                    arms[na] = pat;
+                    arms[na + 1] = try self.expression();
+                    na += 2;
+                    if (self.tok.kind == .comma) try self.bump();
+                }
+                try self.expect(.rbrace);
+                if (na == 0 or !last_irrefutable) return Error.NonExhaustive;
+                return self.b.match_(scrutinee, arms[0..na]);
             },
             .kw_if => {
                 try self.bump();

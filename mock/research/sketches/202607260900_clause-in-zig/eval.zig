@@ -218,6 +218,61 @@ fn rd(bytes: []const u8, at: usize) u32 {
     return std.mem.readInt(u32, bytes[at..][0..4], .little);
 }
 
+/// Try one pattern against one value. Returns the environment the arm's body
+/// runs under, or null if the pattern did not match. Bindings made before a
+/// later sub-pattern fails are left on the arena, which is fine: nothing pops,
+/// and the failed arm's scope is simply never used.
+fn bindPattern(img: *const Image, pat: u32, v: Value, env: *Env, cur: u32) Error!?u32 {
+    switch (try img.word(pat, 0)) {
+        cl.PAT_WILD => return cur,
+        cl.PAT_BIND => return try env.push(try img.word(pat, 1), v, cur),
+        cl.PAT_LIT_INT => {
+            const lo = try img.word(pat, 1);
+            const hi = try img.word(pat, 2);
+            const want: i64 = @bitCast((@as(u64, hi) << 32) | @as(u64, lo));
+            return switch (v) {
+                .int => |n| if (n == want) cur else null,
+                else => Error.Unsupported,
+            };
+        },
+        cl.PAT_LIT_STR => {
+            const want = try img.blob(try img.word(pat, 1), try img.word(pat, 2));
+            return switch (v) {
+                .str => |t| if (std.mem.eql(u8, t, want)) cur else null,
+                else => Error.Unsupported,
+            };
+        },
+        cl.PAT_REC => {
+            const start = try img.word(pat, 1);
+            const n = try img.word(pat, 2);
+            const rec = switch (v) {
+                .record => |r| r,
+                else => return Error.NotARecord,
+            };
+            var scope = cur;
+            var k: u32 = 0;
+            while (k < n) : (k += 2) {
+                const key_node = try img.pooled(start + k);
+                const key = try img.blob(try img.word(key_node, 2), try img.word(key_node, 3));
+                var found: ?Value = null;
+                var j: u32 = 0;
+                while (j < rec.len) : (j += 1) {
+                    const e = env.recs[rec.start + j];
+                    if (std.mem.eql(u8, e.key, key)) {
+                        found = e.val;
+                        break;
+                    }
+                }
+                const fv = found orelse return Error.NoSuchField;
+                const sub = try bindPattern(img, try img.pooled(start + k + 1), fv, env, scope);
+                scope = sub orelse return null;
+            }
+            return scope;
+        },
+        else => return Error.Unsupported,
+    }
+}
+
 fn evalNode(img: *const Image, idx: u32, env: *Env, cur: u32) Error!Value {
     switch (try img.word(idx, 0)) {
         cl.TAG_LIT => switch (try img.word(idx, 1)) {
@@ -289,6 +344,23 @@ fn evalNode(img: *const Image, idx: u32, env: *Env, cur: u32) Error!Value {
                 if (std.mem.eql(u8, e.key, key)) return e.val;
             }
             return Error.NoSuchField;
+        },
+        cl.TAG_MATCH => {
+            const scrut = try evalNode(img, try img.word(idx, 1), env, cur);
+            const start = try img.word(idx, 2);
+            const arms = try img.word(idx, 3);
+            var a: u32 = 0;
+            while (a < arms) : (a += 1) {
+                const pat = try img.pooled(start + a * 2);
+                const body = try img.pooled(start + a * 2 + 1);
+                // Bindings a pattern introduces are pushed onto the environment
+                // chain, so the arm's body reads them like any other binding.
+                const scope = try bindPattern(img, pat, scrut, env, cur);
+                if (scope) |sc| return evalNode(img, body, env, sc);
+            }
+            // The parser requires an irrefutable last arm, so this is a decode
+            // fault rather than a program the checker let through.
+            return Error.Corrupt;
         },
         cl.TAG_IF => {
             const c = try (try evalNode(img, try img.word(idx, 1), env, cur)).asInt();
@@ -838,5 +910,64 @@ test "the associated type flows into an ordinary function" {
         \\impl Conv for Str { type Out = Int; fn conv(s) { 42 } }
         \\fn bump(v) { conv(v) + 1 }
         \\bump("x")
+    ));
+}
+
+test "match on integer literals, with a binding as the catch-all" {
+    try std.testing.expectEqual(@as(i64, 100), try run("match 0 { 0 => 100, n => n }"));
+    try std.testing.expectEqual(@as(i64, 7), try run("match 7 { 0 => 100, n => n }"));
+    try std.testing.expectEqual(@as(i64, 42), try run("match 5 { 0 => 1, 5 => 42, _ => 0 }"));
+}
+
+test "match binds what it destructures" {
+    try std.testing.expectEqual(@as(i64, 9), try run("match 4 { 0 => 0, n => n + 5 }"));
+    try std.testing.expectEqual(@as(i64, 12), try run(
+        \\fn classify(n) { match n { 0 => 0, 1 => 1, k => k * 4 } }
+        \\classify(3)
+    ));
+}
+
+test "match on strings" {
+    var out: [64]u8 = undefined;
+    try std.testing.expectEqualStrings("yes", try runStr("match \"a\" { \"a\" => \"yes\", _ => \"no\" }", &out));
+    try std.testing.expectEqualStrings("no", try runStr("match \"b\" { \"a\" => \"yes\", _ => \"no\" }", &out));
+}
+
+test "match destructures a record and binds its fields" {
+    // A bare record literal cannot be a scrutinee, because `match r {` cannot
+    // tell the record from the arm block. Rust has the same restriction and the
+    // same two ways out: bind it first, or parenthesise it.
+    try std.testing.expectEqual(@as(i64, 8), try run(
+        \\let r = { a: 3, b: 5 };
+        \\match r { { a: x, b: y } => x + y }
+    ));
+    try std.testing.expectEqual(@as(i64, 8), try run("match ({ a: 3, b: 5 }) { { a: x, b: y } => x + y }"));
+    try std.testing.expectEqual(@as(i64, 1), try run(
+        \\let r = { a: 0, b: 5 };
+        \\match r { { a: 0, b: _ } => 1, _ => 2 }
+    ));
+    try std.testing.expectEqual(@as(i64, 2), try run(
+        \\let r = { a: 9, b: 5 };
+        \\match r { { a: 0, b: _ } => 1, _ => 2 }
+    ));
+}
+
+test "match arms must agree on a result type" {
+    try std.testing.expectError(chk.Error.Mismatch, run("match 1 { 0 => 1, _ => \"other\" }"));
+}
+
+test "a pattern of the wrong shape is refused" {
+    try std.testing.expectError(chk.Error.Mismatch, run("match 1 { \"a\" => 1, _ => 2 }"));
+    try std.testing.expectError(chk.Error.Mismatch, run("match 1 { { a: x } => x, _ => 2 }"));
+}
+
+test "a match without an irrefutable last arm is refused" {
+    try std.testing.expectError(cl.Error.NonExhaustive, run("match 1 { 0 => 1, 2 => 3 }"));
+}
+
+test "match composes with the standard library" {
+    try std.testing.expectEqual(@as(i64, 3), try runWithStd(
+        \\fn size_class(s) { match len(s) { 0 => 0, 1 => 1, _ => 3 } }
+        \\size_class([1, 2, 3, 4])
     ));
 }
