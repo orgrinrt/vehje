@@ -14,6 +14,7 @@
 
 const std = @import("std");
 const cl = @import("clause.zig");
+const chk = @import("check.zig");
 
 // The closed primitive vocabulary, as in
 // `mock/research/sketches/202607260800_four-way-projection/`.
@@ -253,6 +254,17 @@ pub fn run(src: []const u8) !i64 {
     const root = try p.program();
     const len = try cl.writeImage(&b, root, &image);
 
+    // Prove, then evaluate. The canon's centre of gravity is prove-then-erase,
+    // and an evaluator that runs whatever it is handed does the erasing without
+    // the proving. This is the junction the shipped pipeline still lacks:
+    // `serialize` documents itself as taking a checked program while its
+    // signature takes a bare arena, so nothing enforces the order there.
+    var types: [1024]chk.Ty = undefined;
+    var subst: [256]u32 = undefined;
+    var tenv: [256]chk.TyBinding = undefined;
+    var ctx = chk.Ctx{ .types = &types, .subst = &subst, .env = &tenv };
+    _ = try chk.check(image[0..len], &ctx);
+
     const img = try Image.parse(image[0..len]);
     var env = Env{ .slots = &slots };
     return (try evalNode(&img, img.root, &env, ENV_NIL)).asInt();
@@ -318,4 +330,11 @@ test "partial application falls out of currying rather than being a feature" {
         \\fn add(a, b) { a + b }
         \\add(4)(7)
     ));
+}
+
+test "an ill-typed program is refused before it can evaluate" {
+    // The evaluator would happily run this: a bool is 0 or 1 in an i64, so the
+    // conditional would pick a branch. The gate is what stops it.
+    try std.testing.expectError(chk.Error.Mismatch, run("if 1 { 1 } else { 2 }"));
+    try std.testing.expectError(chk.Error.Mismatch, run("1 + (2 < 3)"));
 }

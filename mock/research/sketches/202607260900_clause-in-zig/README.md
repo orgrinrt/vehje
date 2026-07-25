@@ -120,15 +120,17 @@ a host. That change is the source changelist of round
 `202607260500_topic.the-languageauthor-specialisation-stage.md`, and this sketch
 exists to prove the shape before that changelist implements it.
 
-Booleans are represented as `0` and `1` in an `i64` rather than as the Core's
-`Bool`, because the comparison operation returns what its program computes and
-there is no checker yet to demand better. That is a subset artifact and it is not
-the intended representation.
+At runtime a boolean is still `0` or `1` in an `i64`, because the comparison
+operation returns what its program computes. The difference the checker makes is
+that this is no longer observable: a program that treats one as the other is
+refused before it runs. The representation remains a subset artifact and is not
+the intended one.
 
 ## Reproducing
 
 ```
-zig test eval.zig
+zig test eval.zig     # 12 tests: parse, lower, prove, evaluate
+zig test check.zig    #  9 tests: inference and its refusals
 ```
 
 ## Still owed on the checker itself

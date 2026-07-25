@@ -43,7 +43,7 @@ pub const Ty = union(enum) {
 /// with `quantified == 0` is a plain monotype; anything higher is a generic.
 const Scheme = struct { ty: u32, quantified: u32, first: u32 };
 
-const TyBinding = struct { sym: u32, scheme: Scheme, parent: u32 };
+pub const TyBinding = struct { sym: u32, scheme: Scheme, parent: u32 };
 
 pub const Ctx = struct {
     types: []Ty,
