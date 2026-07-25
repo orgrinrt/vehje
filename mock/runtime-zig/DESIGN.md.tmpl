@@ -41,7 +41,7 @@ within a run, and exhausting the lent arena is a named refusal, not an overrun.
 
 ## The value arena
 
-State: intended. A compound value is not a slice into anything the residual
+State: shipped. A compound value is not a slice into anything the residual
 already holds, so unlike a string literal it needs somewhere to live. That is a
 caller-lent value arena, in the same shape as the environment arena above: the
 host lends the space, the runtime bump-allocates within it, and the runtime owns
@@ -65,8 +65,10 @@ cheap operation for an expensive one and hopes repetition amortises it.
 Deduplicating records measured 9x to 19x slower than reuse and 6x to 7x slower
 than doing nothing at all.
 
-The update path is written so that a per-site uniqueness bit selects in-place
-mutation against copy, with copy as the behaviour until that bit exists. In-place
+The update path is shaped so that a per-site uniqueness bit selects in-place
+mutation against copy. The bit is the part that is genuinely still owed: the
+arena is shipped, the emit-time analysis that would produce the verdict is not,
+so copy is what the code does today. In-place
 update when the emitter proves a value unique is the one optimisation the
 measurements endorse here, at 2.7x to 2.9x over copy-on-write in the
 mostly-unique regime and never losing. The direction of the switch is the safe
