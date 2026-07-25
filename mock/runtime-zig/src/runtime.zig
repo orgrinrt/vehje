@@ -551,6 +551,7 @@ pub export fn vehje_runtime_execute(
 }
 
 test {
-    // Keep the split-out suite discoverable from this root.
+    // Keep the split-out suites discoverable from this root.
     _ = @import("runtime_test.zig");
+    _ = @import("runtime_family_test.zig");
 }
