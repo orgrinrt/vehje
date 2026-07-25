@@ -81,11 +81,38 @@ types, patterns, `match`, macros, strings, records, sequences, loops, modules,
 (`mock/research/original-docs/CLAUSE_EBNF.md`) requires. Nothing is done until
 the full intended language is expressible.
 
-It also has no resolve pass and no type checker, so it is not yet statically
-analysable in the sense the goal requires. Names bind by a backward scan at
-evaluation time, which is the wrong shape for a language whose identity is that
-the type system is the verification layer. The parser emits IR directly, which is
-right for a subset and will need revisiting when a checker sits between them.
+## Inference, in the runtime, before evaluation
+
+`check.zig` is Hindley-Milner over the same image, with generalisation at binding
+sites. Nine tests, all passing. It refuses what the untyped evaluator accepted:
+
+```
+if 1 { 1 } else { 2 }                      refused, Mismatch
+if 1 < 2 { 1 } else { 2 < 3 }              refused, Mismatch (branches disagree)
+1 + (2 < 3)                                refused, Mismatch
+fn double(n) { n * 2 } double(1 < 2)       refused, Mismatch
+fn f(x) { x(x) } 0                         refused, Occurs
+x + 1                                      refused, Unbound
+
+fn id(x) { x }
+if id(1 < 2) { id(1) } else { 0 }          ==> int
+```
+
+The last one is the load-bearing test. `id` is generalised, so its two uses do
+not constrain each other and one definition serves both `Bool` and `Int`. That is
+what a generic *is* in inference terms, and it is the seed the bounds and
+associated types grow from: a bound is a constraint carried alongside the
+quantifier, not a different mechanism.
+
+Two smaller points worth keeping. A recursive binding stays monomorphic inside
+its own body, because generalising before the value is inferred would let a
+recursive call take a type the definition has not earned. And the arithmetic
+family's operation *types* come from the same signature data that carries the
+operation bodies, so the checker reads what the operations mean rather than
+knowing what arithmetic is.
+
+The first refusal above is the one that matters most: booleans were `0` and `1`
+in an `i64` because nothing demanded better, and now something does.
 
 The evaluator here is a subset evaluator in the sketch, not a change to
 `mock/runtime-zig/src/runtime.zig`, which still routes every family operation to
@@ -103,3 +130,19 @@ the intended representation.
 ```
 zig test eval.zig
 ```
+
+## Still owed on the checker itself
+
+Inference runs, but nothing yet forces it to: `eval.zig`'s `run` evaluates
+without calling `check`, which is the same prove-then-erase gap the shipped
+pipeline has (`serialize` documents itself as taking a checked program while its
+signature takes a bare arena). Wiring the gate so an unchecked program cannot be
+evaluated is owed, and is the smaller half of the junction question.
+
+There is also no separate resolve pass. Names are looked up during inference and
+again during evaluation, by the same backward scan over a linked scope. That
+works for a subset with no modules, paths, or imports, and stops working the
+moment `use` and multi-segment paths arrive.
+
+Bounds, associated types, and coherence are not started. The generalisation
+machinery above is their foundation, not a partial version of them.
