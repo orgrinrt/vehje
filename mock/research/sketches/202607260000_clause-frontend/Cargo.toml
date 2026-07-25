@@ -16,3 +16,6 @@ vehje-ir = { path = "../../../crates/vehje-ir" }
 vehje-runtime-abi = { path = "../../../crates/vehje-runtime-abi" }
 hilavitkutin-str = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", branch = "dev" }
 hilavitkutin-sym = { git = "ssh://git@github.com/orgrinrt/hilavitkutin.git", branch = "dev" }
+
+[dev-dependencies]
+vehje-runtime-driver = { path = "../../../crates/vehje-runtime-driver", features = ["dynamic"] }
