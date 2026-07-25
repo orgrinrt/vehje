@@ -1,0 +1,14 @@
+[workspace]
+[package]
+name = "clause_frontend"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+name = "clause_frontend"
+path = "src/lib.rs"
+
+[dependencies]
+arvo = { git = "ssh://git@github.com/orgrinrt/arvo.git", branch = "dev", default-features = false }
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", default-features = false, features = ["const", "try_trait_v2"] }
