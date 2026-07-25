@@ -1,2 +1,0 @@
-cargo::rustc-check-cfg=cfg(arvo_fast_math)
-cargo::warning=mockspace: dependency build inside the cargo cache, skipping bootstrap
