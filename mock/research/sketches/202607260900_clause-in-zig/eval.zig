@@ -242,6 +242,19 @@ fn bindPattern(img: *const Image, pat: u32, v: Value, env: *Env, cur: u32) Error
                 else => Error.Unsupported,
             };
         },
+        cl.PAT_OR => {
+            if (try bindPattern(img, try img.word(pat, 1), v, env, cur)) |sc| return sc;
+            return bindPattern(img, try img.word(pat, 2), v, env, cur);
+        },
+        cl.PAT_RANGE => {
+            const lo: i64 = @bitCast((@as(u64, try img.word(pat, 2)) << 32) | @as(u64, try img.word(pat, 1)));
+            const hi: i64 = @bitCast((@as(u64, try img.word(pat, 4)) << 32) | @as(u64, try img.word(pat, 3)));
+            const inclusive = (try img.word(pat, 5)) != 0;
+            return switch (v) {
+                .int => |n| if (n >= lo and (if (inclusive) n <= hi else n < hi)) cur else null,
+                else => Error.Unsupported,
+            };
+        },
         cl.PAT_REC => {
             const start = try img.word(pat, 1);
             const n = try img.word(pat, 2);
@@ -351,12 +364,20 @@ fn evalNode(img: *const Image, idx: u32, env: *Env, cur: u32) Error!Value {
             const arms = try img.word(idx, 3);
             var a: u32 = 0;
             while (a < arms) : (a += 1) {
-                const pat = try img.pooled(start + a * 2);
-                const body = try img.pooled(start + a * 2 + 1);
+                const pat = try img.pooled(start + a * 3);
+                const guard = try img.pooled(start + a * 3 + 1);
+                const body = try img.pooled(start + a * 3 + 2);
                 // Bindings a pattern introduces are pushed onto the environment
                 // chain, so the arm's body reads them like any other binding.
                 const scope = try bindPattern(img, pat, scrut, env, cur);
-                if (scope) |sc| return evalNode(img, body, env, sc);
+                if (scope) |sc| {
+                    // The guard runs under the arm's bindings, so it may test
+                    // what the pattern just bound.
+                    if (guard != cl.NO_GUARD) {
+                        if ((try evalNode(img, guard, env, sc)).asInt() catch 0 == 0) continue;
+                    }
+                    return evalNode(img, body, env, sc);
+                }
             }
             // The parser requires an irrefutable last arm, so this is a decode
             // fault rather than a program the checker let through.
@@ -1184,5 +1205,67 @@ test "each method's signature is checked separately" {
         \\trait Num { fn dbl(Self) -> Self  fn name(Self) -> Str }
         \\impl Num for Int { fn dbl(x) { x * 2 } fn name(x) { x } }
         \\dbl(1)
+    ));
+}
+
+test "or-patterns match any alternative" {
+    try std.testing.expectEqual(@as(i64, 1), try run("match 2 { 1 | 2 | 3 => 1, _ => 0 }"));
+    try std.testing.expectEqual(@as(i64, 0), try run("match 9 { 1 | 2 | 3 => 1, _ => 0 }"));
+    var out: [64]u8 = undefined;
+    try std.testing.expectEqualStrings("vowel", try runStr(
+        \\match "e" { "a" | "e" | "i" => "vowel", _ => "other" }
+    , &out));
+}
+
+test "range patterns, exclusive and inclusive" {
+    try std.testing.expectEqual(@as(i64, 1), try run("match 3 { 0..5 => 1, _ => 0 }"));
+    try std.testing.expectEqual(@as(i64, 0), try run("match 5 { 0..5 => 1, _ => 0 }"));
+    try std.testing.expectEqual(@as(i64, 1), try run("match 5 { 0..=5 => 1, _ => 0 }"));
+    try std.testing.expectEqual(@as(i64, 1), try run("match -3 { -5..0 => 1, _ => 0 }"));
+}
+
+test "guards test what the pattern bound" {
+    try std.testing.expectEqual(@as(i64, 1), try run("match 8 { n if 5 < n => 1, _ => 0 }"));
+    try std.testing.expectEqual(@as(i64, 0), try run("match 2 { n if 5 < n => 1, _ => 0 }"));
+    try std.testing.expectEqual(@as(i64, 20), try run(
+        \\let r = { a: 3, b: 5 };
+        \\match r { { a: x, b: y } if x < y => x * y + 5, _ => 0 }
+    ));
+}
+
+test "a guard makes an arm refutable, so it cannot be the last one alone" {
+    try std.testing.expectError(cl.Error.NonExhaustive, run("match 1 { n if 0 < n => 1 }"));
+}
+
+test "a guard must be a condition" {
+    try std.testing.expectError(chk.Error.Mismatch, run("match 1 { n if n => 1, _ => 0 }"));
+}
+
+test "alternatives may not bind, because the two sides must agree" {
+    try std.testing.expectError(cl.Error.BindingInAlternative, run("match 1 { 1 | n => n, _ => 0 }"));
+}
+
+test "alternatives and ranges keep the scrutinee's type" {
+    try std.testing.expectError(chk.Error.Mismatch, run("match \"s\" { 1 | 2 => 1, _ => 0 }"));
+    try std.testing.expectError(chk.Error.Mismatch, run("match \"s\" { 0..5 => 1, _ => 0 }"));
+}
+
+test "guards and ranges compose in a classifier" {
+    try std.testing.expectEqual(@as(i64, 3), try runWithStd(
+        \\fn classify(n) {
+        \\  match n {
+        \\    0 => 0,
+        \\    1..=9 => 1,
+        \\    k if k < 100 => 2,
+        \\    _ => 3
+        \\  }
+        \\}
+        \\classify(500)
+    ));
+    try std.testing.expectEqual(@as(i64, 1), try runWithStd(
+        \\fn classify(n) {
+        \\  match n { 0 => 0, 1..=9 => 1, k if k < 100 => 2, _ => 3 }
+        \\}
+        \\classify(5)
     ));
 }

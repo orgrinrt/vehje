@@ -402,6 +402,17 @@ fn patternScope(img: *const Image, pat: u32, st: u32, ctx: *Ctx, cur: u32) Error
             try ctx.unify(st, try ctx.alloc(.str));
             return cur;
         },
+        cl.PAT_OR => {
+            // Alternatives bind nothing, so both sides type against the
+            // scrutinee and neither extends the scope.
+            _ = try patternScope(img, try img.word(pat, 1), st, ctx, cur);
+            _ = try patternScope(img, try img.word(pat, 2), st, ctx, cur);
+            return cur;
+        },
+        cl.PAT_RANGE => {
+            try ctx.unify(st, try ctx.alloc(.int));
+            return cur;
+        },
         cl.PAT_REC => {
             const start = try img.word(pat, 1);
             const n = try img.word(pat, 2);
@@ -560,12 +571,19 @@ fn infer(img: *const Image, idx: u32, ctx: *Ctx, cur: u32) Error!u32 {
             var result: ?u32 = null;
             var a: u32 = 0;
             while (a < arms) : (a += 1) {
-                const pat = try img.pooled(start + a * 2);
-                const body = try img.pooled(start + a * 2 + 1);
+                const pat = try img.pooled(start + a * 3);
+                const guard = try img.pooled(start + a * 3 + 1);
+                const body = try img.pooled(start + a * 3 + 2);
                 // Every pattern must type against the scrutinee, which is what
                 // makes a match over the wrong shape a static error rather than
                 // an arm that silently never fires.
                 const scope = try patternScope(img, pat, st, ctx, cur);
+                if (guard != cl.NO_GUARD) {
+                    // A guard is a condition, so it must be a boolean, and it
+                    // types under the arm's bindings.
+                    const gt = try infer(img, guard, ctx, scope);
+                    try ctx.unify(gt, try ctx.alloc(.boolean));
+                }
                 const bt = try infer(img, body, ctx, scope);
                 if (result) |r| try ctx.unify(bt, r) else result = bt;
             }

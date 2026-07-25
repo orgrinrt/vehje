@@ -228,7 +228,33 @@ match 1 { { a: x } => x, _ => 2 }                 refused, Mismatch
 match 1 { 0 => 1, 2 => 3 }                        refused, NonExhaustive
 ```
 
-Patterns are literals, bindings, `_`, and records of sub-patterns. Every pattern
+```
+match 2 { 1 | 2 | 3 => 1, _ => 0 }                       ==> 1
+match "e" { "a" | "e" | "i" => "vowel", _ => "other" }   ==> "vowel"
+match 3 { 0..5 => 1, _ => 0 }                            ==> 1
+match 5 { 0..5 => 1, _ => 0 }                            ==> 0
+match 5 { 0..=5 => 1, _ => 0 }                           ==> 1
+match 8 { n if 5 < n => 1, _ => 0 }                      ==> 1
+let r = { a: 3, b: 5 };
+match r { { a: x, b: y } if x < y => x * y + 5, _ => 0 } ==> 20
+
+match 1 { n if 0 < n => 1 }              refused, NonExhaustive
+match 1 { n if n => 1, _ => 0 }          refused, Mismatch
+match 1 { 1 | n => n, _ => 0 }           refused, BindingInAlternative
+match "s" { 0..5 => 1, _ => 0 }          refused, Mismatch
+```
+
+Patterns are literals, bindings, `_`, records of sub-patterns, alternatives,
+and integer ranges, with optional guards.
+
+**Alternatives may not bind.** Both sides then agree on the empty set of
+bindings by construction rather than by a check that their binding sets match,
+which is the cheaper way to be sound about it.
+
+**A guard makes an arm refutable however irrefutable its pattern is**, since the
+condition may be false, so a guarded arm cannot be the last one alone. The guard
+types under the arm's bindings, so it may test what the pattern just bound, and
+it must be a condition rather than merely a value. Every pattern
 must type against the scrutinee, so a match over the wrong shape is a static
 error rather than an arm that silently never fires, and all arms must agree on a
 result type.
@@ -320,7 +346,7 @@ integers, strings, names, `let`, `fn` with recursion and closures and currying,
 `if`/`else`, four operators, records with field access, sequences with a
 three-operation prelude, single-method traits with impls, coherence, inferred
 bounds, associated types, and pattern matching. It does not have multi-method
-traits, supertraits, or-patterns, ranges, guards, real exhaustiveness checking,
+supertraits, real exhaustiveness checking,
 macros, `loop` and `for`, row polymorphism, nested or re-exported modules,
 visibility, attributes, a separate resolve pass, or monomorphisation, nor the
 rest of the surface the

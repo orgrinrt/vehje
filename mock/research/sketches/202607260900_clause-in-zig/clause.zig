@@ -37,6 +37,14 @@ pub const PAT_BIND: u32 = 21;
 pub const PAT_LIT_INT: u32 = 22;
 pub const PAT_LIT_STR: u32 = 23;
 pub const PAT_REC: u32 = 24;
+/// Alternatives. They may not bind, so both sides agree on the empty set of
+/// bindings by construction rather than by a check that they match.
+pub const PAT_OR: u32 = 25;
+/// An integer range. `inclusive` is the third slot.
+pub const PAT_RANGE: u32 = 26;
+
+/// No guard on this arm.
+pub const NO_GUARD: u32 = 0xFFFF_FFFF;
 
 pub const LIT_INT: u32 = 2;
 pub const LIT_STR: u32 = 3;
@@ -135,11 +143,12 @@ pub const Error = error{
     NonExhaustive,
     NotMutable,
     MissingMethod,
+    BindingInAlternative,
 };
 
 // ---------------------------------------------------------------- lexer
 
-const Kind = enum { int, str_lit, ident, dot, colon, lbracket, rbracket, arrow, kw_trait, kw_impl, kw_for, kw_type, kw_match, kw_while, kw_mut, kw_mod, kw_use, colon_colon, fat_arrow, underscore, plus_assign, minus_assign, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
+const Kind = enum { int, str_lit, ident, dot, colon, lbracket, rbracket, arrow, kw_trait, kw_impl, kw_for, kw_type, kw_match, kw_while, kw_mut, kw_mod, kw_use, colon_colon, kw_if_guard, dotdot, dotdot_eq, pipe, fat_arrow, underscore, plus_assign, minus_assign, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
 
 const Token = struct { kind: Kind, start: usize, end: usize, value: i64 };
 
@@ -221,6 +230,14 @@ const Lexer = struct {
             self.i += 1;
             return .{ .kind = .str_lit, .start = start, .end = self.i, .value = 0 };
         }
+        if (c == '.' and self.i + 1 < self.src.len and self.src[self.i + 1] == '.') {
+            if (self.i + 2 < self.src.len and self.src[self.i + 2] == '=') {
+                self.i += 3;
+                return .{ .kind = .dotdot_eq, .start = start, .end = self.i, .value = 0 };
+            }
+            self.i += 2;
+            return .{ .kind = .dotdot, .start = start, .end = self.i, .value = 0 };
+        }
         if (c == ':' and self.i + 1 < self.src.len and self.src[self.i + 1] == ':') {
             self.i += 2;
             return .{ .kind = .colon_colon, .start = start, .end = self.i, .value = 0 };
@@ -251,6 +268,7 @@ const Lexer = struct {
             ';' => .semi,
             ',' => .comma,
             '.' => .dot,
+            '|' => .pipe,
             '[' => .lbracket,
             ']' => .rbracket,
             ':' => .colon,
@@ -420,6 +438,25 @@ pub const Builder = struct {
 
     /// A record pattern: alternating key-string and sub-pattern nodes in the
     /// pool, the same shape the record literal uses for its operands.
+    pub fn patOr(self: *Builder, a: u32, b: u32) Error!u32 {
+        const idx = try self.alloc(PAT_OR);
+        self.slot(idx, 1).* = a;
+        self.slot(idx, 2).* = b;
+        return idx;
+    }
+
+    pub fn patRange(self: *Builder, lo: i64, hi: i64, inclusive: bool) Error!u32 {
+        const idx = try self.alloc(PAT_RANGE);
+        const l: u64 = @bitCast(lo);
+        const h: u64 = @bitCast(hi);
+        self.slot(idx, 1).* = @truncate(l);
+        self.slot(idx, 2).* = @truncate(l >> 32);
+        self.slot(idx, 3).* = @truncate(h);
+        self.slot(idx, 4).* = @truncate(h >> 32);
+        self.slot(idx, 5).* = if (inclusive) 1 else 0;
+        return idx;
+    }
+
     pub fn patRec(self: *Builder, kv: []const u32) Error!u32 {
         if (@as(usize, self.p) + kv.len > self.pool.len) return Error.OutOfPool;
         const start = self.p;
@@ -433,7 +470,8 @@ pub const Builder = struct {
         return idx;
     }
 
-    /// Arms are pairs in the pool: a pattern then its body.
+    /// Arms are triples in the pool: a pattern, its guard (or NO_GUARD), then
+    /// its body.
     pub fn match_(self: *Builder, scrutinee: u32, arms: []const u32) Error!u32 {
         if (@as(usize, self.p) + arms.len > self.pool.len) return Error.OutOfPool;
         const start = self.p;
@@ -444,7 +482,7 @@ pub const Builder = struct {
         const idx = try self.alloc(TAG_MATCH);
         self.slot(idx, 1).* = scrutinee;
         self.slot(idx, 2).* = start;
-        self.slot(idx, 3).* = @intCast(arms.len / 2);
+        self.slot(idx, 3).* = @intCast(arms.len / 3);
         return idx;
     }
 
@@ -1008,23 +1046,71 @@ pub const Parser = struct {
     /// One pattern. Deliberately small: a literal, a binding, a wildcard, or a
     /// record of sub-patterns. Alternatives, ranges, and rest are the obvious
     /// next ones and are not here.
+    /// A pattern, possibly a chain of alternatives. Alternatives may not bind,
+    /// so both sides agree on the empty set of bindings by construction rather
+    /// than by a check that their binding sets match.
     fn pattern(self: *Parser) Error!u32 {
+        var p = try self.patternPrimary();
+        while (self.tok.kind == .pipe) {
+            try self.bump();
+            const q = try self.patternPrimary();
+            if (self.binds(p) or self.binds(q)) return Error.BindingInAlternative;
+            p = try self.b.patOr(p, q);
+        }
+        return p;
+    }
+
+    /// Whether a pattern introduces any binding.
+    fn binds(self: *const Parser, pat: u32) bool {
+        const tag = self.b.nodes[@as(usize, pat) * NODE_WORDS];
+        if (tag == PAT_BIND) return true;
+        if (tag == PAT_OR) {
+            return self.binds(self.b.nodes[@as(usize, pat) * NODE_WORDS + 1]) or
+                self.binds(self.b.nodes[@as(usize, pat) * NODE_WORDS + 2]);
+        }
+        if (tag == PAT_REC) {
+            const start = self.b.nodes[@as(usize, pat) * NODE_WORDS + 1];
+            const n = self.b.nodes[@as(usize, pat) * NODE_WORDS + 2];
+            var k: u32 = 1;
+            while (k < n) : (k += 2) {
+                if (self.binds(self.b.pool[start + k])) return true;
+            }
+        }
+        return false;
+    }
+
+    fn patternPrimary(self: *Parser) Error!u32 {
         switch (self.tok.kind) {
             .underscore => {
                 try self.bump();
                 return self.b.patWild();
             },
-            .int => {
-                const v = self.tok.value;
+            .int, .minus => {
+                var v: i64 = 0;
+                if (self.tok.kind == .minus) {
+                    try self.bump();
+                    if (self.tok.kind != .int) return Error.UnexpectedToken;
+                    v = -self.tok.value;
+                } else {
+                    v = self.tok.value;
+                }
                 try self.bump();
+                if (self.tok.kind == .dotdot or self.tok.kind == .dotdot_eq) {
+                    const inclusive = self.tok.kind == .dotdot_eq;
+                    try self.bump();
+                    var hi: i64 = 0;
+                    if (self.tok.kind == .minus) {
+                        try self.bump();
+                        if (self.tok.kind != .int) return Error.UnexpectedToken;
+                        hi = -self.tok.value;
+                    } else {
+                        if (self.tok.kind != .int) return Error.UnexpectedToken;
+                        hi = self.tok.value;
+                    }
+                    try self.bump();
+                    return self.b.patRange(v, hi, inclusive);
+                }
                 return self.b.patInt(v);
-            },
-            .minus => {
-                try self.bump();
-                if (self.tok.kind != .int) return Error.UnexpectedToken;
-                const v = self.tok.value;
-                try self.bump();
-                return self.b.patInt(-v);
             },
             .str_lit => {
                 const text = self.lx.src[self.tok.start + 1 .. self.tok.end - 1];
@@ -1153,6 +1239,16 @@ pub const Parser = struct {
                 try self.bump();
                 return self.b.lit(v);
             },
+            .minus => {
+                // Unary negation, lowered to a subtraction from zero rather
+                // than a separate operation: the arithmetic family already has
+                // subtraction, and a negate opcode would be a second spelling
+                // of it.
+                try self.bump();
+                const zero = try self.b.lit(0);
+                const e = try self.postfix();
+                return self.b.arith(OP_SUB, zero, e);
+            },
             .str_lit => {
                 // Trim the quotes; escapes are not in this subset.
                 const text = self.lx.src[self.tok.start + 1 .. self.tok.end - 1];
@@ -1215,17 +1311,28 @@ pub const Parser = struct {
                 const scrutinee = try self.expression();
                 self.allow_record = saved_m;
                 try self.expect(.lbrace);
-                var arms: [32]u32 = undefined;
+                var arms: [48]u32 = undefined;
                 var na: usize = 0;
                 var last_irrefutable = false;
                 while (self.tok.kind != .rbrace) {
-                    if (na + 2 > arms.len) return Error.TooManyParams;
+                    if (na + 3 > arms.len) return Error.TooManyParams;
                     const pat = try self.pattern();
-                    last_irrefutable = self.irrefutable(pat);
+                    var guard: u32 = NO_GUARD;
+                    if (self.tok.kind == .kw_if) {
+                        // A guard makes the arm refutable however irrefutable
+                        // its pattern is, because the condition may be false.
+                        try self.bump();
+                        const saved_g = self.allow_record;
+                        self.allow_record = false;
+                        guard = try self.expression();
+                        self.allow_record = saved_g;
+                    }
+                    last_irrefutable = guard == NO_GUARD and self.irrefutable(pat);
                     try self.expect(.fat_arrow);
                     arms[na] = pat;
-                    arms[na + 1] = try self.expression();
-                    na += 2;
+                    arms[na + 1] = guard;
+                    arms[na + 2] = try self.expression();
+                    na += 3;
                     if (self.tok.kind == .comma) try self.bump();
                 }
                 try self.expect(.rbrace);
