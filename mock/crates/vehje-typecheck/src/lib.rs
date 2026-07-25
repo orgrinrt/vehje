@@ -416,6 +416,151 @@ mod tests {
         assert_eq!(grade_of(&grades, root).effect, EffectMask::empty());
     }
 
+    /// A minted operation identity, distinct from any source name by kind.
+    fn op(id: u32) -> hilavitkutin_sym::Sym { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: test operation id; tracked: #207
+        hilavitkutin_sym::Sym::new(
+            hilavitkutin_sym::SymKind::from_raw(0b010),
+            arvo::Bits::from_raw(id),
+        )
+    }
+
+    #[test]
+    fn a_handled_operation_never_reaches_the_effect_mask() {
+        // handle (perform op) with op -> unit. The operation is discharged
+        // lexically, so it is not an effect of this program at all: it never
+        // enters the mask rather than being subtracted from it afterwards.
+        let mut nodes = [Node::Lit(Literal::Unit); 16];
+        let mut spans = [Span::default(); 16];
+        let mut pool = [NodeRef::new(USize(0)); 16];
+        let mut clauses = [vehje_ir::Clause {
+            op: op(1),
+            resume: op(0),
+            arity: arvo::Uint::<8, arvo::strategy::Hot>::from_raw(0), // lint:allow(no-bare-numeric) reason: nullary test operation; tracked: #207
+            body: NodeRef::new(USize(0)),
+            span: Span::default(),
+        }; 4];
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut clauses));
+        let unit = at(b.lit(Literal::Unit, Span::default()));
+        let empty = match b.alloc_list(&[]) {
+            Maybe::Is(l) => l,
+            Maybe::Isnt => panic!("pool full"),
+        };
+        let p = at(b.perform(op(1), empty, Span::default()));
+        let cl = match b.alloc_clauses(&[vehje_ir::Clause {
+            op: op(1),
+            resume: op(0),
+            arity: arvo::Uint::<8, arvo::strategy::Hot>::from_raw(0), // lint:allow(no-bare-numeric) reason: nullary test operation; tracked: #207
+            body: unit,
+            span: Span::default(),
+        }]) {
+            Maybe::Is(l) => l,
+            Maybe::Isnt => panic!("clause region full"),
+        };
+        let root = at(b.handle(p, cl, Span::default()));
+        let arena = b.into_arena();
+
+        let mut binders = [Maybe::Isnt; 16];
+        let mut res = Resolution::new(&mut binders);
+        assert!(matches!(resolve_into(&arena, root, &mut res), Outcome::Ok(())));
+
+        let mut grade_region = [Grade::default(); 16];
+        let mut grades = GradeTable::new(&mut grade_region);
+        assert!(matches!(check(&arena, root, &res, &mut grades), Outcome::Ok(_)));
+        assert_eq!(grade_of(&grades, root).effect, EffectMask::empty());
+    }
+
+    #[test]
+    fn an_unhandled_operation_is_an_effect_of_the_program() {
+        // The complement of the test above: with no handler in scope, the
+        // operation escapes, so it populates the mask and the target's
+        // `Permits` set is what decides whether it may ship.
+        let mut nodes = [Node::Lit(Literal::Unit); 16];
+        let mut spans = [Span::default(); 16];
+        let mut pool = [NodeRef::new(USize(0)); 16];
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
+        let empty = match b.alloc_list(&[]) {
+            Maybe::Is(l) => l,
+            Maybe::Isnt => panic!("pool full"),
+        };
+        let root = at(b.perform(op(1), empty, Span::default()));
+        let arena = b.into_arena();
+
+        let mut binders = [Maybe::Isnt; 16];
+        let mut res = Resolution::new(&mut binders);
+        assert!(matches!(resolve_into(&arena, root, &mut res), Outcome::Ok(())));
+
+        let mut grade_region = [Grade::default(); 16];
+        let mut grades = GradeTable::new(&mut grade_region);
+        assert!(matches!(check(&arena, root, &res, &mut grades), Outcome::Ok(_)));
+        assert_ne!(grade_of(&grades, root).effect, EffectMask::empty());
+    }
+
+    #[test]
+    fn an_operation_escaping_inside_a_returned_lambda_is_refused() {
+        // handle (\_. perform op) with op -> unit.
+        //
+        // The handled computation RETURNS a lambda whose body performs the
+        // handled operation. Nothing performs it while the handler is live, so
+        // the effect axis alone sees nothing wrong; the lambda VALUE, however,
+        // can perform it after the handler is gone. The promotion at `Lambda`
+        // puts the handler's slot on that value's reach and the check at
+        // `Handle` refuses a result that names its own slot.
+        //
+        // This is the first genuine effect-and-lease interaction rule in the
+        // system, which is why it gets a test of its own.
+        let mut nodes = [Node::Lit(Literal::Unit); 16];
+        let mut spans = [Span::default(); 16];
+        let mut pool = [NodeRef::new(USize(0)); 16];
+        let mut clause_region = [vehje_ir::Clause {
+            op: op(1),
+            resume: op(0),
+            arity: arvo::Uint::<8, arvo::strategy::Hot>::from_raw(0), // lint:allow(no-bare-numeric) reason: nullary test operation; tracked: #207
+            body: NodeRef::new(USize(0)),
+            span: Span::default(),
+        }; 4];
+        let mut b =
+            Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut clause_region));
+        let unit = at(b.lit(Literal::Unit, Span::default()));
+        let empty = match b.alloc_list(&[]) {
+            Maybe::Is(l) => l,
+            Maybe::Isnt => panic!("pool full"),
+        };
+        let p = at(b.perform(op(1), empty, Span::default()));
+        let lam = at(b.lambda(str_const!("x").as_sym(), p, Span::default()));
+        let cl = match b.alloc_clauses(&[vehje_ir::Clause {
+            op: op(1),
+            resume: op(0),
+            arity: arvo::Uint::<8, arvo::strategy::Hot>::from_raw(0), // lint:allow(no-bare-numeric) reason: nullary test operation; tracked: #207
+            body: unit,
+            span: Span::default(),
+        }]) {
+            Maybe::Is(l) => l,
+            Maybe::Isnt => panic!("clause region full"),
+        };
+        let root = at(b.handle(lam, cl, Span::default()));
+        let arena = b.into_arena();
+
+        let mut binders = [Maybe::Isnt; 16];
+        let mut res = Resolution::new(&mut binders);
+        assert!(matches!(resolve_into(&arena, root, &mut res), Outcome::Ok(())));
+
+        let mut grade_region = [Grade::default(); 16];
+        let mut grades = GradeTable::new(&mut grade_region);
+        assert!(matches!(
+            check(&arena, root, &res, &mut grades),
+            Outcome::Err(CheckError::UnplaceableLease { .. })
+        ));
+    }
+
+    #[test]
+    #[ignore = "catalogue: a clause whose body references its resumption must be a named refusal until the bounded-multi-shot budget machinery lands; the resumption binder is reserved and unbound today, so nothing refuses it yet; tracked #45"]
+    fn a_clause_referencing_its_resumption_is_refused() {
+        // A green test over a handler that cannot actually resume would be a lie
+        // about the cost, and the cost is the whole promise. So this asserts the
+        // intended behaviour and stays catalogued red until CR1 lands.
+        panic!("the resumption refusal is not built");
+    }
+
     #[test]
     fn refuses_a_too_small_grade_region() {
         let mut nodes = [Node::Lit(Literal::Unit); 8];
