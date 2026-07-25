@@ -33,6 +33,7 @@ pub const Error = error{
     MissingSuperImpl,
     BreakOutsideLoop,
     NotAVariant,
+    NotTryable,
 };
 
 pub const NONE: u32 = 0xFFFF_FFFF;
@@ -70,6 +71,11 @@ pub const Constraint = struct { ty: u32, assoc: u32, trait_idx: u32, method_idx:
 /// not merely the innermost one, because handlers for different operations nest.
 pub const Handled = struct { op: u32, param: u32 };
 
+/// A deferred `?`: the type it was applied to and the type it yielded. Like a
+/// trait obligation, it cannot be settled where it is raised, because the value
+/// is often a parameter whose type the call site supplies.
+pub const TryOb = struct { ty: u32, res: u32 };
+
 /// A binding's type, plus how many leading variables are quantified. A scheme
 /// with `quantified == 0` is a plain monotype; anything higher is a generic.
 const Scheme = struct { ty: u32, quantified: u32, first: u32 };
@@ -102,6 +108,8 @@ pub const Ctx = struct {
     /// lexical, so a stack is the whole of the resolution.
     handled: [32]Handled = undefined,
     nhandled: u32 = 0,
+    tries: [64]TryOb = undefined,
+    ntries: u32 = 0,
 
     fn alloc(self: *Ctx, t: Ty) Error!u32 {
         if (self.n >= self.types.len) return Error.OutOfTypes;
@@ -620,6 +628,24 @@ fn infer(img: *const Image, idx: u32, ctx: *Ctx, cur: u32) Error!u32 {
             }
             return result orelse Error.Unsupported;
         },
+        cl.TAG_TRY => {
+            const et = try infer(img, try img.word(idx, 1), ctx, cur);
+            // Propagating returns the same enum, so the enclosing function's
+            // result type is fixed by the `?` rather than merely compatible.
+            // Linking them here works even before the enum is known.
+            var h = ctx.nhandled;
+            while (h > 0) {
+                h -= 1;
+                if (ctx.handled[h].op != cl.RETURN_OP) continue;
+                try ctx.unify(ctx.handled[h].param, et);
+                const res = try ctx.fresh();
+                if (ctx.ntries == ctx.tries.len) return Error.TooManyConstraints;
+                ctx.tries[ctx.ntries] = .{ .ty = et, .res = res };
+                ctx.ntries += 1;
+                return res;
+            }
+            return Error.BreakOutsideLoop;
+        },
         cl.TAG_HANDLE => {
             // Two distinct types here, and conflating them was the mistake the
             // second operation exposed: what the operation carries, and what the
@@ -775,7 +801,28 @@ pub fn check(image: []const u8, ctx: *Ctx) Error!u32 {
     try checkSupertraits(ctx);
     const t = try infer(&img, img.root, ctx, scope);
     try discharge(ctx);
+    try dischargeTries(ctx);
     return ctx.resolve(t);
+}
+
+/// Settle every `?`: the type it was applied to must be an enum of exactly two
+/// variants, the first empty and the second carrying, which is what makes
+/// "propagate or unwrap" total.
+fn dischargeTries(ctx: *Ctx) Error!void {
+    var i: u32 = 0;
+    while (i < ctx.ntries) : (i += 1) {
+        const t = ctx.tries[i];
+        const rt = ctx.resolve(t.ty);
+        const ei = switch (ctx.types[rt]) {
+            .enum_ty => |x| x,
+            else => return Error.NotTryable,
+        };
+        const e = ctx.enums[ei];
+        if (e.nvariants != 2 or e.variants[0].has_payload or !e.variants[1].has_payload) {
+            return Error.NotTryable;
+        }
+        try ctx.unify(t.res, try concrete(ctx, e.variants[1].payload));
+    }
 }
 
 /// An impl of a trait with a supertrait requires an impl of that supertrait for

@@ -434,6 +434,22 @@ fn evalNode(img: *const Image, idx: u32, env: *Env, cur: u32) Error!Value {
             env.unwind_val = v;
             return Error.Unwound;
         },
+        cl.TAG_TRY => {
+            const v = try evalNode(img, try img.word(idx, 1), env, cur);
+            const va = switch (v) {
+                .variant => |x| x,
+                else => return Error.NotAVariant,
+            };
+            if (va.tag == 0) {
+                // The empty variant propagates whole, so the caller sees the
+                // same failure value rather than a reconstructed one.
+                env.unwind_op = cl.RETURN_OP;
+                env.unwind_val = v;
+                return Error.Unwound;
+            }
+            if (va.payload == NO_PAYLOAD) return Error.NoPayload;
+            return env.vals[va.payload];
+        },
         cl.TAG_HANDLE => {
             const body = try img.word(idx, 1);
             const op = try img.word(idx, 2);
@@ -1873,5 +1889,64 @@ test "enums flow through functions and the standard library" {
         \\enum Maybe { None, Some(Int) }
         \\fn or_else(m, d) { match m { Maybe::None => d, Maybe::Some(n) => n } }
         \\or_else(Maybe::Some(3), 0) + or_else(Maybe::None, 5)
+    ));
+}
+
+test "the try operator unwraps or propagates" {
+    // add_one returns Maybe; the ? unwraps a Some and propagates a None whole.
+    try std.testing.expectEqual(@as(i64, 1), try run(
+        \\enum Maybe { None, Some(Int) }
+        \\fn add_one(m) { let v = m?; Maybe::Some(v + 1) }
+        \\match add_one(Maybe::Some(0)) { Maybe::None => 99, Maybe::Some(n) => n }
+    ));
+    try std.testing.expectEqual(@as(i64, 99), try run(
+        \\enum Maybe { None, Some(Int) }
+        \\fn add_one(m) { let v = m?; Maybe::Some(v + 1) }
+        \\match add_one(Maybe::None) { Maybe::None => 99, Maybe::Some(n) => n }
+    ));
+}
+
+test "several tries chain, and the first failure wins" {
+    try std.testing.expectEqual(@as(i64, 30), try run(
+        \\enum Maybe { None, Some(Int) }
+        \\fn sum3(a, b, c) { Maybe::Some(a? + b? + c?) }
+        \\match sum3(Maybe::Some(10), Maybe::Some(20), Maybe::Some(0)) {
+        \\  Maybe::None => 0, Maybe::Some(n) => n
+        \\}
+    ));
+    try std.testing.expectEqual(@as(i64, 0), try run(
+        \\enum Maybe { None, Some(Int) }
+        \\fn sum3(a, b, c) { Maybe::Some(a? + b? + c?) }
+        \\match sum3(Maybe::Some(10), Maybe::None, Maybe::Some(5)) {
+        \\  Maybe::None => 0, Maybe::Some(n) => n
+        \\}
+    ));
+}
+
+test "try fixes the enclosing function's result type" {
+    // The propagated value is the same enum, so a function whose body tries a
+    // Maybe cannot return an Int.
+    try std.testing.expectError(chk.Error.Mismatch, run(
+        \\enum Maybe { None, Some(Int) }
+        \\fn bad(m) { let v = m?; v + 1 }
+        \\bad(Maybe::Some(1))
+    ));
+}
+
+test "try refuses a shape it cannot propagate" {
+    // The function returns the enum, so the only fault left is that three
+    // variants give no single failure case to propagate.
+    try std.testing.expectError(chk.Error.NotTryable, run(
+        \\enum Three { A, B, C }
+        \\fn f(x) { let v = x?; Three::A }
+        \\f(Three::A)
+    ));
+    try std.testing.expectError(chk.Error.NotTryable, run("fn f(x) { let v = x?; 1 } f(5)"));
+}
+
+test "try outside a function is refused" {
+    try std.testing.expectError(chk.Error.BreakOutsideLoop, run(
+        \\enum Maybe { None, Some(Int) }
+        \\Maybe::Some(1)?
     ));
 }

@@ -32,6 +32,10 @@ pub const TAG_RAW: u32 = 10;
 /// enclosing construct is the handled computation.
 pub const TAG_HANDLE: u32 = 11;
 pub const TAG_PERFORM: u32 = 12;
+/// `e?`: unwrap the carrying variant, or propagate the empty one to the
+/// enclosing function's return handler. The fourth operation on the same
+/// non-resuming discharge, and the only one with syntax rather than a keyword.
+pub const TAG_TRY: u32 = 13;
 
 /// The operation a `break` performs. One fixed symbol, from the synthetic range.
 pub const BREAK_OP: u32 = SYN_SYM_BASE + 0xF000;
@@ -223,7 +227,7 @@ pub const Error = error{
 
 // ---------------------------------------------------------------- lexer
 
-const Kind = enum { int, str_lit, ident, dot, colon, lbracket, rbracket, arrow, kw_trait, kw_impl, kw_for, kw_type, kw_match, kw_while, kw_mut, kw_mod, kw_use, kw_in, kw_macro, kw_pub, kw_loop, kw_break, kw_return, kw_continue, kw_enum, bang, pound, colon_colon, kw_if_guard, dotdot, dotdot_eq, pipe, fat_arrow, underscore, plus_assign, minus_assign, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, slash, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
+const Kind = enum { int, str_lit, ident, dot, colon, lbracket, rbracket, arrow, kw_trait, kw_impl, kw_for, kw_type, kw_match, kw_while, kw_mut, kw_mod, kw_use, kw_in, kw_macro, kw_pub, kw_loop, kw_break, kw_return, kw_continue, kw_enum, bang, pound, colon_colon, kw_if_guard, dotdot, dotdot_eq, pipe, fat_arrow, underscore, plus_assign, minus_assign, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, slash, question, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
 
 const Token = struct { kind: Kind, start: usize, end: usize, value: i64 };
 
@@ -362,6 +366,7 @@ const Lexer = struct {
             '.' => .dot,
             '|' => .pipe,
             '!' => .bang,
+            '?' => .question,
             '#' => .pound,
             '[' => .lbracket,
             ']' => .rbracket,
@@ -550,6 +555,12 @@ pub const Builder = struct {
         self.slot(idx, 2).* = op;
         self.slot(idx, 3).* = param;
         self.slot(idx, 4).* = clause;
+        return idx;
+    }
+
+    pub fn tryOp(self: *Builder, e: u32) Error!u32 {
+        const idx = try self.alloc(TAG_TRY);
+        self.slot(idx, 1).* = e;
         return idx;
     }
 
@@ -1418,6 +1429,7 @@ pub const Parser = struct {
                 const a = try self.cloneSubtree(self.b.nodes[src + 2]);
                 return self.b.perform(self.b.nodes[src + 1], a);
             },
+            TAG_TRY => return self.b.tryOp(try self.cloneSubtree(self.b.nodes[src + 1])),
             TAG_IF => {
                 const c = try self.cloneSubtree(self.b.nodes[src + 1]);
                 const t = try self.cloneSubtree(self.b.nodes[src + 2]);
@@ -1505,6 +1517,7 @@ pub const Parser = struct {
                 self.markSubtree(self.b.nodes[base + 4], marks);
             },
             TAG_PERFORM => self.markSubtree(self.b.nodes[base + 2], marks),
+            TAG_TRY => self.markSubtree(self.b.nodes[base + 1], marks),
             PAT_VARIANT => {
                 const sub = self.b.nodes[base + 3];
                 if (sub != NO_GUARD) self.markSubtree(sub, marks);
@@ -1670,6 +1683,7 @@ pub const Parser = struct {
             TAG_HANDLE => return self.selfReferences(self.b.nodes[base + 1], sym) or
                 self.selfReferences(self.b.nodes[base + 4], sym),
             TAG_PERFORM => return self.selfReferences(self.b.nodes[base + 2], sym),
+            TAG_TRY => return self.selfReferences(self.b.nodes[base + 1], sym),
             TAG_IF => return self.selfReferences(self.b.nodes[base + 1], sym) or
                 self.selfReferences(self.b.nodes[base + 2], sym) or
                 self.selfReferences(self.b.nodes[base + 3], sym),
@@ -2183,7 +2197,9 @@ pub const Parser = struct {
             }
         }
         var e: u32 = if (builtin != null or pending_enum != null) 0 else try self.primary();
-        while (self.tok.kind == .lparen or self.tok.kind == .dot or self.tok.kind == .colon_colon) {
+        while (self.tok.kind == .lparen or self.tok.kind == .dot or
+            self.tok.kind == .colon_colon or self.tok.kind == .question)
+        {
             if (self.tok.kind == .lparen and builtin != null) {
                 try self.bump();
                 var args: [4]u32 = undefined;
@@ -2227,6 +2243,11 @@ pub const Parser = struct {
                     continue;
                 }
                 e = try self.b.project(e, item);
+                continue;
+            }
+            if (self.tok.kind == .question) {
+                try self.bump();
+                e = try self.b.tryOp(e);
                 continue;
             }
             if (self.tok.kind == .dot) {

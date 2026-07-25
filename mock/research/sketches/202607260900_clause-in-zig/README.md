@@ -289,6 +289,36 @@ value, and its declaration erases once the checker has read it. The enum name in
 a path is recognised before it becomes a variable reference, since it is the head
 of a path rather than a value.
 
+### The try operator
+
+```
+enum Maybe { None, Some(Int) }
+fn add_one(m) { let v = m?; Maybe::Some(v + 1) }
+add_one(Maybe::Some(0))                          ==> Some(1)
+add_one(Maybe::None)                             ==> None
+
+fn sum3(a, b, c) { Maybe::Some(a? + b? + c?) }   first failure wins
+
+fn bad(m) { let v = m?; v + 1 }                  refused, Mismatch
+enum Three { A, B, C }  fn f(x) { x?; Three::A } refused, NotTryable
+Maybe::Some(1)?   (outside a function)           refused
+```
+
+`?` is the fourth operation on the same discharge, and the only one with syntax
+rather than a keyword. The empty variant propagates **whole** to the enclosing
+function's return handler, so the caller sees the same failure value rather than
+a reconstructed one; the carrying variant unwraps.
+
+Propagating returns the same enum, so a `?` **fixes** the enclosing function's
+result type rather than merely being compatible with it. `fn bad(m) { let v = m?;
+v + 1 }` is refused for that reason, not for an unrelated one.
+
+**The tryable check is deferred, like a trait obligation.** `m?` on a parameter
+cannot be settled where it is written: inference runs bottom-up and the enum
+arrives from the call site. So the obligation is recorded and discharged after
+inference, which is the same shape the trait constraints use and for the same
+reason.
+
 ## Patterns and match
 
 ```
