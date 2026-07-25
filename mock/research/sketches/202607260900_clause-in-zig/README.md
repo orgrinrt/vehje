@@ -26,16 +26,32 @@ anywhere in the path.
 
 ## Result
 
-Yes. `zig test eval.zig`, six tests, all passing:
+Yes. `zig test eval.zig`, eleven tests, all passing:
 
 ```
+1 + 2 * 3                                                   ==> 7
 let x = 2; let y = 3; if x < y { x * 10 } else { y * 10 }   ==> 20
-let x = 5; let y = 3; if x < y { x * 10 } else { y * 10 }   ==> 30
 if 1 < 2 { let k = 4; k * 3 } else { 0 }                    ==> 12
 let x = 2; let x = 9; x                                     ==> 9
-1 + 2 * 3                                                   ==> 7
 x + 1                                                       ==> refused, Unbound
+
+fn double(n) { n * 2 } double(3) + 1                        ==> 7
+fn add(a, b) { a + b } add(4, 7)                            ==> 11
+fn double(n) { n * 2 }
+fn quad(n) { double(double(n)) } quad(5)                    ==> 20
+fn fact(n) { if n < 2 { 1 } else { n * fact(n - 1) } }
+fact(5)                                                     ==> 120
+fn adder(a) { fn inner(b) { a + b } inner } adder(3)(4)     ==> 7
+fn add(a, b) { a + b } add(4)(7)                            ==> 11
 ```
+
+Three of those are worth naming. `fact` terminates because `fn` lowers to a
+binding in scope for its own value, so the call to itself resolves rather than
+escaping. `adder(3)(4)` works because a closure names the environment it was
+written in, which is why the environment is a linked chain rather than a stack
+that pops. And `add(4)(7)` equalling `add(4, 7)` is not a feature: Core
+application takes one argument at a time, so a multi-parameter function is nested
+lambdas and partial application falls out of the lowering.
 
 The path is: source, lexer, precedence-climbing parser, Core IR written straight
 into a lent wire buffer in the layout the runtime already decodes, then
@@ -58,9 +74,10 @@ now computed inside the runtime by data the language definition supplies.
 ## What it does not establish, stated plainly
 
 **This is a slice of the grammar, and the bar is the whole grammar.** It has
-integers, names, `let`, `if`/`else`, and four operators. It does not have
-functions, closures, generics, traits, associated types, patterns, macros,
-strings, records, or any of the surface the normative grammar
+integers, names, `let`, `fn` with recursion and closures and currying,
+`if`/`else`, and four operators. It does not have generics, traits, associated
+types, patterns, `match`, macros, strings, records, sequences, loops, modules,
+`use`, attributes, or any of the rest of the surface the normative grammar
 (`mock/research/original-docs/CLAUSE_EBNF.md`) requires. Nothing is done until
 the full intended language is expressible.
 

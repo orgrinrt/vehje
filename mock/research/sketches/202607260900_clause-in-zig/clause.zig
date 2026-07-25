@@ -20,6 +20,8 @@ pub const MAGIC: u32 = 0x3048_4556;
 pub const TAG_LIT: u32 = 0;
 pub const TAG_VAR: u32 = 1;
 pub const TAG_LET: u32 = 2;
+pub const TAG_LAMBDA: u32 = 3;
+pub const TAG_APPLY: u32 = 4;
 pub const TAG_IF: u32 = 6;
 pub const TAG_RAW: u32 = 10;
 
@@ -43,12 +45,13 @@ pub const Error = error{
     OutOfNodes,
     OutOfPool,
     TooManyNames,
+    TooManyParams,
     Unsupported,
 };
 
 // ---------------------------------------------------------------- lexer
 
-const Kind = enum { int, ident, kw_let, kw_if, kw_else, plus, minus, star, lt, assign, semi, lparen, rparen, lbrace, rbrace, eof };
+const Kind = enum { int, ident, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
 
 const Token = struct { kind: Kind, start: usize, end: usize, value: i64 };
 
@@ -81,6 +84,8 @@ const Lexer = struct {
             const text = self.src[start..self.i];
             const kind: Kind = if (std.mem.eql(u8, text, "let"))
                 .kw_let
+            else if (std.mem.eql(u8, text, "fn"))
+                .kw_fn
             else if (std.mem.eql(u8, text, "if"))
                 .kw_if
             else if (std.mem.eql(u8, text, "else"))
@@ -97,6 +102,7 @@ const Lexer = struct {
             '<' => .lt,
             '=' => .assign,
             ';' => .semi,
+            ',' => .comma,
             '(' => .lparen,
             ')' => .rparen,
             '{' => .lbrace,
@@ -160,6 +166,37 @@ pub const Builder = struct {
         self.slot(idx, 1).* = c;
         self.slot(idx, 2).* = t;
         self.slot(idx, 3).* = e;
+        return idx;
+    }
+
+    /// A binding in scope for its own value, which is what makes a recursive
+    /// function terminate rather than fail to find itself.
+    pub fn letRec(self: *Builder, name: u32, value: u32, body: u32) Error!u32 {
+        const idx = try self.let(name, value, body);
+        self.slot(idx, 1).* = 1;
+        return idx;
+    }
+
+    pub fn lambda(self: *Builder, param: u32, body: u32) Error!u32 {
+        const idx = try self.alloc(TAG_LAMBDA);
+        self.slot(idx, 1).* = param;
+        self.slot(idx, 2).* = body;
+        return idx;
+    }
+
+    /// Application takes its arguments from the pool. Core application is one
+    /// argument at a time, so a multi-argument call is a chain of these.
+    pub fn apply(self: *Builder, callee: u32, args: []const u32) Error!u32 {
+        if (@as(usize, self.p) + args.len > self.pool.len) return Error.OutOfPool;
+        const start = self.p;
+        for (args) |a| {
+            self.pool[self.p] = a;
+            self.p += 1;
+        }
+        const idx = try self.alloc(TAG_APPLY);
+        self.slot(idx, 1).* = callee;
+        self.slot(idx, 2).* = start;
+        self.slot(idx, 3).* = @intCast(args.len);
         return idx;
     }
 
@@ -227,6 +264,39 @@ pub const Parser = struct {
     /// which is exactly the shape `Let` nests into: each binding's body is
     /// everything after it.
     pub fn program(self: *Parser) Error!u32 {
+        if (self.tok.kind == .kw_fn) {
+            try self.bump();
+            if (self.tok.kind != .ident) return Error.UnexpectedToken;
+            const name = try self.names.intern(self.lx.src[self.tok.start..self.tok.end]);
+            try self.bump();
+            try self.expect(.lparen);
+            var params: [8]u32 = undefined;
+            var np: usize = 0;
+            while (self.tok.kind != .rparen) {
+                if (self.tok.kind != .ident) return Error.UnexpectedToken;
+                if (np == params.len) return Error.TooManyParams;
+                params[np] = try self.names.intern(self.lx.src[self.tok.start..self.tok.end]);
+                np += 1;
+                try self.bump();
+                if (self.tok.kind == .comma) try self.bump();
+            }
+            try self.expect(.rparen);
+            try self.expect(.lbrace);
+            const body = try self.program();
+            try self.expect(.rbrace);
+            // Curried: Core application takes one argument at a time, so a
+            // multi-parameter function is nested lambdas, innermost last.
+            var f = body;
+            var k = np;
+            while (k > 0) {
+                k -= 1;
+                f = try self.b.lambda(params[k], f);
+            }
+            const rest = try self.program();
+            // Recursive, so the function is in scope for its own body and calls
+            // to itself resolve rather than escaping to an outer binding.
+            return self.b.letRec(name, f, rest);
+        }
         if (self.tok.kind == .kw_let) {
             try self.bump();
             if (self.tok.kind != .ident) return Error.UnexpectedToken;
@@ -269,13 +339,38 @@ pub const Parser = struct {
     }
 
     fn multiplicative(self: *Parser) Error!u32 {
-        var lhs = try self.primary();
+        var lhs = try self.postfix();
         while (self.tok.kind == .star) {
             try self.bump();
-            const rhs = try self.primary();
+            const rhs = try self.postfix();
             lhs = try self.b.arith(OP_MUL, lhs, rhs);
         }
         return lhs;
+    }
+
+    /// Call syntax, applied left to right so `f(a)(b)` and `f(a, b)` produce the
+    /// same Core, which is what makes partial application fall out rather than
+    /// being a separate feature.
+    fn postfix(self: *Parser) Error!u32 {
+        var e = try self.primary();
+        while (self.tok.kind == .lparen) {
+            try self.bump();
+            var args: [8]u32 = undefined;
+            var na: usize = 0;
+            while (self.tok.kind != .rparen) {
+                if (na == args.len) return Error.TooManyParams;
+                args[na] = try self.expression();
+                na += 1;
+                if (self.tok.kind == .comma) try self.bump();
+            }
+            try self.expect(.rparen);
+            if (na == 0) return Error.Unsupported;
+            var i: usize = 0;
+            while (i < na) : (i += 1) {
+                e = try self.b.apply(e, args[i .. i + 1]);
+            }
+        }
+        return e;
     }
 
     fn primary(self: *Parser) Error!u32 {

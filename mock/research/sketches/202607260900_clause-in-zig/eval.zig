@@ -82,28 +82,56 @@ fn applyOp(op: u32, args: []const i64) Error!i64 {
     return Error.UnknownOperation;
 }
 
-pub const Error = error{ Corrupt, Unbound, Unsupported, UnknownOperation, EnvFull, TooManyOperands };
+pub const Error = error{
+    Corrupt,
+    Unbound,
+    Unsupported,
+    UnknownOperation,
+    EnvFull,
+    TooManyOperands,
+    NotCallable,
+    NotAnInt,
+};
 
-const Binding = struct { sym: u32, val: i64 };
+/// A closure names the environment it was written in, which is why the
+/// environment is a linked chain rather than a stack that pops: a function may
+/// outlive the scope that produced it and must still read what it captured.
+const Closure = struct { param: u32, body: u32, env: u32 };
 
-/// A caller-lent binding stack. No closures in this subset, so a flat scope with
-/// backward lookup is the honest shape; the shipped runtime's linked bump arena
-/// is what closures need and this does not pretend to it.
+const Value = union(enum) {
+    int: i64,
+    closure: Closure,
+
+    fn asInt(self: Value) Error!i64 {
+        return switch (self) {
+            .int => |v| v,
+            else => Error.NotAnInt,
+        };
+    }
+};
+
+const ENV_NIL: u32 = 0xFFFF_FFFF;
+
+const Binding = struct { sym: u32, val: Value, parent: u32 };
+
+/// A caller-lent bump arena of linked bindings. Nothing pops; a binding names
+/// its parent, so capturing an environment is recording one index.
 pub const Env = struct {
     slots: []Binding,
-    n: usize = 0,
+    n: u32 = 0,
 
-    fn push(self: *Env, sym: u32, val: i64) Error!void {
+    fn push(self: *Env, sym: u32, val: Value, parent: u32) Error!u32 {
         if (self.n >= self.slots.len) return Error.EnvFull;
-        self.slots[self.n] = .{ .sym = sym, .val = val };
+        self.slots[self.n] = .{ .sym = sym, .val = val, .parent = parent };
         self.n += 1;
+        return self.n - 1;
     }
 
-    fn lookup(self: *const Env, sym: u32) Error!i64 {
-        var i = self.n;
-        while (i > 0) {
-            i -= 1;
+    fn lookup(self: *const Env, sym: u32, cur: u32) Error!Value {
+        var i = cur;
+        while (i != ENV_NIL) {
             if (self.slots[i].sym == sym) return self.slots[i].val;
+            i = self.slots[i].parent;
         }
         return Error.Unbound;
     }
@@ -142,26 +170,55 @@ fn rd(bytes: []const u8, at: usize) u32 {
     return std.mem.readInt(u32, bytes[at..][0..4], .little);
 }
 
-fn evalNode(img: *const Image, idx: u32, env: *Env) Error!i64 {
+fn evalNode(img: *const Image, idx: u32, env: *Env, cur: u32) Error!Value {
     switch (try img.word(idx, 0)) {
         cl.TAG_LIT => {
             if ((try img.word(idx, 1)) != cl.LIT_INT) return Error.Unsupported;
             const lo = try img.word(idx, 2);
             const hi = try img.word(idx, 3);
-            return @bitCast((@as(u64, hi) << 32) | @as(u64, lo));
+            return Value{ .int = @bitCast((@as(u64, hi) << 32) | @as(u64, lo)) };
         },
-        cl.TAG_VAR => return env.lookup(try img.word(idx, 1)),
+        cl.TAG_VAR => return env.lookup(try img.word(idx, 1), cur),
         cl.TAG_LET => {
-            const v = try evalNode(img, try img.word(idx, 3), env);
-            const mark = env.n;
-            try env.push(try img.word(idx, 2), v);
-            const r = try evalNode(img, try img.word(idx, 4), env);
-            env.n = mark;
-            return r;
+            const rec = (try img.word(idx, 1)) != 0;
+            const name = try img.word(idx, 2);
+            const value_ref = try img.word(idx, 3);
+            const body_ref = try img.word(idx, 4);
+            if (rec) {
+                // In scope for its own value, so a closure the value produces
+                // captures a chain that already names it.
+                const slot = try env.push(name, Value{ .int = 0 }, cur);
+                env.slots[slot].val = try evalNode(img, value_ref, env, slot);
+                return evalNode(img, body_ref, env, slot);
+            }
+            const v = try evalNode(img, value_ref, env, cur);
+            return evalNode(img, body_ref, env, try env.push(name, v, cur));
+        },
+        cl.TAG_LAMBDA => return Value{ .closure = .{
+            .param = try img.word(idx, 1),
+            .body = try img.word(idx, 2),
+            .env = cur,
+        } },
+        cl.TAG_APPLY => {
+            var f = try evalNode(img, try img.word(idx, 1), env, cur);
+            const start = try img.word(idx, 2);
+            const len = try img.word(idx, 3);
+            var k: u32 = 0;
+            while (k < len) : (k += 1) {
+                const arg = try evalNode(img, try img.pooled(start + k), env, cur);
+                const c = switch (f) {
+                    .closure => |c| c,
+                    else => return Error.NotCallable,
+                };
+                // The body runs under the environment the lambda captured, not
+                // the caller's, which is what makes capture lexical.
+                f = try evalNode(img, c.body, env, try env.push(c.param, arg, c.env));
+            }
+            return f;
         },
         cl.TAG_IF => {
-            const c = try evalNode(img, try img.word(idx, 1), env);
-            return evalNode(img, try img.word(idx, if (c != 0) 2 else 3), env);
+            const c = try (try evalNode(img, try img.word(idx, 1), env, cur)).asInt();
+            return evalNode(img, try img.word(idx, if (c != 0) 2 else 3), env, cur);
         },
         cl.TAG_RAW => {
             if ((try img.word(idx, 1)) != cl.ARITH) return Error.Unsupported;
@@ -170,14 +227,13 @@ fn evalNode(img: *const Image, idx: u32, env: *Env) Error!i64 {
             if (len < 1 or len > 4) return Error.TooManyOperands;
             // Operand 0 carries the opcode; the rest are the arguments, evaluated
             // left to right because operand order is observable.
-            const op_node = try img.pooled(start);
-            const op: u32 = @intCast(try evalNode(img, op_node, env));
+            const op: u32 = @intCast(try (try evalNode(img, try img.pooled(start), env, cur)).asInt());
             var args: [3]i64 = undefined;
             var k: u32 = 1;
             while (k < len) : (k += 1) {
-                args[k - 1] = try evalNode(img, try img.pooled(start + k), env);
+                args[k - 1] = try (try evalNode(img, try img.pooled(start + k), env, cur)).asInt();
             }
-            return applyOp(op, args[0 .. len - 1]);
+            return Value{ .int = try applyOp(op, args[0 .. len - 1]) };
         },
         else => return Error.Unsupported,
     }
@@ -188,8 +244,8 @@ pub fn run(src: []const u8) !i64 {
     var node_buf: [512 * cl.NODE_WORDS]u32 = undefined;
     var pool_buf: [256]u32 = undefined;
     var name_buf: [64][]const u8 = undefined;
-    var image: [8192]u8 = undefined;
-    var slots: [64]Binding = undefined;
+    var image: [16384]u8 = undefined;
+    var slots: [512]Binding = undefined;
 
     var b = cl.Builder{ .nodes = &node_buf, .pool = &pool_buf };
     var names = cl.Names{ .buf = &name_buf };
@@ -199,7 +255,7 @@ pub fn run(src: []const u8) !i64 {
 
     const img = try Image.parse(image[0..len]);
     var env = Env{ .slots = &slots };
-    return evalNode(&img, img.root, &env);
+    return (try evalNode(&img, img.root, &env, ENV_NIL)).asInt();
 }
 
 test "a clause program computes, with no host and no rust" {
@@ -228,4 +284,38 @@ test "a branch body is itself a program, so it may bind" {
 
 test "an unbound name is refused rather than defaulted" {
     try std.testing.expectError(Error.Unbound, run("x + 1"));
+}
+
+test "a function is declared and called" {
+    try std.testing.expectEqual(@as(i64, 7), try run("fn double(n) { n * 2 } double(3) + 1"));
+    try std.testing.expectEqual(@as(i64, 11), try run("fn add(a, b) { a + b } add(4, 7)"));
+}
+
+test "a function calls another function" {
+    try std.testing.expectEqual(@as(i64, 20), try run(
+        \\fn double(n) { n * 2 }
+        \\fn quad(n) { double(double(n)) }
+        \\quad(5)
+    ));
+}
+
+test "recursion terminates because a fn binds recursively" {
+    try std.testing.expectEqual(@as(i64, 120), try run(
+        \\fn fact(n) { if n < 2 { 1 } else { n * fact(n - 1) } }
+        \\fact(5)
+    ));
+}
+
+test "a closure captures where it was written, not where it is called" {
+    try std.testing.expectEqual(@as(i64, 7), try run(
+        \\fn adder(a) { fn inner(b) { a + b } inner }
+        \\adder(3)(4)
+    ));
+}
+
+test "partial application falls out of currying rather than being a feature" {
+    try std.testing.expectEqual(@as(i64, 11), try run(
+        \\fn add(a, b) { a + b }
+        \\add(4)(7)
+    ));
 }
