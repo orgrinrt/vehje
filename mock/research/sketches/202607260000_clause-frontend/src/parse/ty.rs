@@ -13,6 +13,18 @@ use crate::token::TokenKind;
 
 use super::{Gather, ParseError, Parser};
 
+/// Whether `k` can begin a path segment.
+fn seg_follows(k: TokenKind) -> bool {
+    matches!(
+        k,
+        TokenKind::Ident
+            | TokenKind::Keyword(crate::token::Keyword::LowerSelf)
+            | TokenKind::Keyword(crate::token::Keyword::UpperSelf)
+            | TokenKind::Keyword(crate::token::Keyword::Super)
+            | TokenKind::Keyword(crate::token::Keyword::Crate)
+    )
+}
+
 impl<'t, 'a, 's> Parser<'t, 'a, 's> {
     /// `Path ::= [ "::" ] PathSeg { "::" PathSeg } [ PathGenerics ]`
     ///
@@ -45,9 +57,11 @@ impl<'t, 'a, 's> Parser<'t, 'a, 's> {
             let seg = self.push(Node::PathSeg { name }, name.0)?;
             segs.push(seg, name.0)?;
 
-            // `::` continues the path only when a segment follows; `::<` is the
-            // turbofish and belongs to the generics, not to the segment list.
-            if self.is(TokenKind::ColonColon) && !matches!(self.peek_at(1).kind, TokenKind::Lt) {
+            // `::` continues the path only when a SEGMENT follows. `::<` is the
+            // turbofish and belongs to the generics; `::{` and `::*` belong to a
+            // use tree. Consuming the `::` for either would strand the caller on
+            // a token it cannot start.
+            if self.is(TokenKind::ColonColon) && seg_follows(self.peek_at(1).kind) {
                 self.bump();
                 continue;
             }

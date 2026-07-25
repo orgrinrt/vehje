@@ -1,90 +1,9 @@
-//! The AST: one lent arena, one node enum, four syntactic categories.
-//!
-//! Items, types, expressions, and patterns share one arena and one node enum
-//! rather than getting four of each. The IR the front end lowers into is shaped
-//! that way, so the two halves read alike, and a parser that returns one handle
-//! type has no conversions between categories to get wrong. The categories are
-//! kept honest by the parser rather than by the type system, which is the trade
-//! this makes deliberately: four arenas would encode the distinction and cost
-//! four lending budgets, four cursors, and four sets of accessors.
+//! The node enum: four syntactic categories in one arena.
 
-use arvo::USize;
 use notko::Maybe;
 
+use super::{AstList, AstRef, LitKind, Name, BinOp, UnOp};
 use crate::token::Span;
-
-/// A handle into the node arena.
-#[repr(transparent)]
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub struct AstRef(pub USize);
-
-/// A `{ start, len }` slice of the child-index pool.
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub struct AstList {
-    /// First child.
-    pub start: USize,
-    /// How many.
-    pub len: USize,
-}
-
-impl AstList {
-    /// The empty list.
-    pub const EMPTY: Self = Self { start: USize(0), len: USize(0) };
-}
-
-/// A name, by the span of the source text that spelled it.
-///
-/// Not interned here: interning wants a table the front end does not own, and
-/// the span is enough for every comparison the parser makes.
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub struct Name(pub Span);
-
-/// Binary operators, in the grammar's precedence order.
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub enum BinOp {
-    Mul,
-    Div,
-    Rem,
-    Add,
-    Sub,
-    Shl,
-    Shr,
-    BitAnd,
-    BitXor,
-    BitOr,
-    Eq,
-    Ne,
-    Lt,
-    Gt,
-    Le,
-    Ge,
-    And,
-    Or,
-}
-
-/// Unary operators.
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub enum UnOp {
-    /// `-e`
-    Neg,
-    /// `!e`
-    Not,
-    /// `&e`, which erases to its pointee downstream.
-    Ref,
-    /// `&mut e`, likewise.
-    RefMut,
-}
-
-/// The kind of a literal, with its text left in the source.
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub enum LitKind {
-    Int,
-    Float,
-    Str,
-    RawStr,
-    Char,
-    Bool,
-}
 
 /// One AST node.
 ///
@@ -184,74 +103,140 @@ pub enum Node {
     PatRest,
     /// `a | b`.
     PatOr { alts: AstList },
-}
 
-/// The lent AST arena: nodes, a child-index pool, and a parallel span table.
-pub struct Arena<'a> {
-    nodes: &'a mut [Node],
-    spans: &'a mut [Span],
-    node_len: USize,
-    pool: &'a mut [AstRef],
-    pool_len: USize,
-}
+    // ── items ────────────────────────────────────────────────────────────
+    /// A whole file: inner attributes, then items.
+    File { attrs: AstList, items: AstList },
+    /// `#[path(args)]` or `#![path(args)]`. The argument tokens stay a span,
+    /// because attribute semantics are the consumer's, parsed lazily by whoever
+    /// cares rather than by the grammar.
+    Attr { inner: bool, path: AstRef, args: Maybe<Span> },
+    /// `pub`, `pub(crate)`, `pub(super)`, `pub(in path)`.
+    Vis { restriction: Maybe<AstRef> },
 
-impl<'a> Arena<'a> {
-    /// Wrap three caller-provided regions. All cursors start empty.
-    pub fn new(nodes: &'a mut [Node], spans: &'a mut [Span], pool: &'a mut [AstRef]) -> Self {
-        Self { nodes, spans, node_len: USize(0), pool, pool_len: USize(0) }
-    }
+    /// `fn name<G>(params) -> ret where ... { body }`. A `;` body is a
+    /// signature-only declaration, which is what trait items and extern fns are.
+    ItemFn {
+        attrs: AstList,
+        vis: Maybe<AstRef>,
+        name: Name,
+        generics: AstList,
+        params: AstList,
+        ret: Maybe<AstRef>,
+        wheres: AstList,
+        body: Maybe<AstRef>,
+    },
+    /// One function parameter: `self` in its four spellings, or `name: Ty`.
+    Param { self_param: bool, name: Maybe<Name>, ty: Maybe<AstRef> },
 
-    /// Append a node with its span. `Isnt` when either region is full.
-    #[must_use]
-    pub fn push(&mut self, node: Node, span: Span) -> Maybe<AstRef> {
-        let at = self.node_len.0;
-        if at >= self.nodes.len() || at >= self.spans.len() {
-            return Maybe::Isnt;
-        }
-        self.nodes[at] = node;
-        self.spans[at] = span;
-        self.node_len = USize(at + 1);
-        Maybe::Is(AstRef(USize(at)))
-    }
+    /// `struct Name<G>: BindTarget where ... { fields }`.
+    ///
+    /// The colon tail is the bind-target syntax, a constraint the checker reads
+    /// and then erases.
+    ItemStruct {
+        attrs: AstList,
+        vis: Maybe<AstRef>,
+        sealed: bool,
+        name: Name,
+        generics: AstList,
+        bind_target: Maybe<AstRef>,
+        wheres: AstList,
+        fields: AstList,
+    },
+    /// One struct field.
+    Field2 {
+        vis: Maybe<AstRef>,
+        is_const: bool,
+        is_mut: bool,
+        name: Name,
+        ty: AstRef,
+        default: Maybe<AstRef>,
+    },
 
-    /// Copy `refs` into the pool. `Isnt` when it cannot fit them.
-    #[must_use]
-    pub fn alloc_list(&mut self, refs: &[AstRef]) -> Maybe<AstList> {
-        let start = self.pool_len.0;
-        let end = start + refs.len();
-        if end > self.pool.len() {
-            return Maybe::Isnt;
-        }
-        self.pool[start..end].copy_from_slice(refs);
-        self.pool_len = USize(end);
-        Maybe::Is(AstList { start: USize(start), len: USize(refs.len()) })
-    }
+    /// `enum Name<G> where ... { variants }`.
+    ItemEnum {
+        attrs: AstList,
+        vis: Maybe<AstRef>,
+        name: Name,
+        generics: AstList,
+        wheres: AstList,
+        variants: AstList,
+    },
+    /// One enum variant, with an optional tuple payload.
+    Variant { name: Name, payload: AstList },
 
-    /// How many nodes exist.
-    pub fn len(&self) -> USize {
-        self.node_len
-    }
+    /// `trait Name<G>: Supertraits where ... { items }`.
+    ItemTrait {
+        attrs: AstList,
+        vis: Maybe<AstRef>,
+        sealed: bool,
+        name: Name,
+        generics: AstList,
+        supertraits: AstList,
+        wheres: AstList,
+        items: AstList,
+    },
+    /// `impl<G> Trait for Type where ... { items }`, with `for_ty` absent on an
+    /// inherent impl.
+    ItemImpl {
+        attrs: AstList,
+        generics: AstList,
+        ty: AstRef,
+        for_ty: Maybe<AstRef>,
+        wheres: AstList,
+        items: AstList,
+    },
 
-    /// Whether no node exists.
-    pub fn is_empty(&self) -> bool {
-        self.node_len.0 == 0
-    }
+    /// `type Name = Ty;`. Without the `= Ty`, an associated-type DECLARATION,
+    /// which is legal only in a trait body.
+    ItemTypeAlias { attrs: AstList, vis: Maybe<AstRef>, name: Name, ty: Maybe<AstRef> },
+    /// `const NAME: Ty [= value];`, the initialiser absent on an associated
+    /// const declaration.
+    ItemConst { attrs: AstList, vis: Maybe<AstRef>, name: Name, ty: AstRef, value: Maybe<AstRef> },
+    /// `static [mut] NAME: Ty = value;`
+    ItemStatic {
+        attrs: AstList,
+        vis: Maybe<AstRef>,
+        mutable: bool,
+        name: Name,
+        ty: AstRef,
+        value: AstRef,
+    },
 
-    /// Read a node by handle.
-    pub fn get(&self, at: AstRef) -> Node {
-        self.nodes[at.0 .0]
-    }
+    /// `mod path;` or `mod path { items }`.
+    ItemMod { attrs: AstList, vis: Maybe<AstRef>, path: AstRef, items: Maybe<AstList> },
+    /// `use tree;`
+    ItemUse { attrs: AstList, vis: Maybe<AstRef>, tree: AstRef },
+    /// One `use` tree: a path, optionally renamed, globbed, or branching.
+    UseTree { path: Maybe<AstRef>, alias: Maybe<Name>, glob: bool, children: AstList },
 
-    /// A node's span.
-    pub fn span(&self, at: AstRef) -> Span {
-        self.spans[at.0 .0]
-    }
+    /// `macro name<G>(params) -> Ty { body }`. The return type is mandatory,
+    /// which is what makes a macro a typed function at a compile stage rather
+    /// than a token rewriter.
+    ItemMacro {
+        attrs: AstList,
+        vis: Maybe<AstRef>,
+        name: Name,
+        generics: AstList,
+        params: AstList,
+        ret: AstRef,
+        body: AstRef,
+    },
+    /// `event Name for Type { body }`: a named handler registration.
+    ItemEvent { attrs: AstList, name: Name, for_ty: AstRef, body: AstRef },
+    /// `expect item` / `actual item`: an obligation and its provider, chosen at
+    /// whichever stage supplies it.
+    ItemExpect { inner: AstRef },
+    ItemActual { inner: AstRef },
+    /// `extern` in its several shapes; the body is the declared item.
+    ItemExtern { attrs: AstList, inner: AstRef },
+    /// A macro invocation in item position.
+    ItemMacroCall { attrs: AstList, path: AstRef, body: Span },
 
-    /// The children a list addresses, clamped to the live pool so a malformed
-    /// list is an empty slice rather than a panic.
-    pub fn list(&self, list: AstList) -> &[AstRef] {
-        let start = list.start.0.min(self.pool_len.0);
-        let end = (start + list.len.0).min(self.pool_len.0);
-        &self.pool[start..end]
-    }
+    /// A generic type parameter with its bounds.
+    GenericParam { name: Name, bounds: AstList },
+    /// `const N: Ty` in a generic parameter list.
+    ConstParam { name: Name, ty: AstRef },
+    /// One `Ty: Bounds` predicate of a where clause.
+    WherePred { ty: AstRef, bounds: AstList },
 }
