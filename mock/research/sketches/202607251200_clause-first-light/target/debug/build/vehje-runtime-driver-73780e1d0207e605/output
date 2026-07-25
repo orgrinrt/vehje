@@ -1,0 +1,5 @@
+cargo::rerun-if-changed=/Users/orgrinrt/Dev/clause-dev/vehje/mock/mockspace.toml
+cargo::rerun-if-changed=/Users/orgrinrt/Dev/clause-dev/vehje/.cargo/config.toml
+cargo::rerun-if-changed=/Users/orgrinrt/Dev/clause-dev/vehje/.git/hooks/pre-commit
+cargo::rerun-if-changed=/Users/orgrinrt/Dev/clause-dev/vehje/.git/hooks/pre-push
+cargo::rerun-if-changed=/Users/orgrinrt/Dev/clause-dev/vehje/mock/lints

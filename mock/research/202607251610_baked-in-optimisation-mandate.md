@@ -58,3 +58,28 @@ The wiring comes first because it is where measured value is sitting unclaimed. 
 The new cells come second, and there are three: constructed runtime strings across a construct-to-compare ratio sweep; compound deduplication against the same sweep; and the two together across the sharing axis, which is the one that decides whether they can both be defaults.
 
 The sequencing consequence for the language work is direct. The compound operand and return escape is the widest unblock in the framework, and it is the same decision as how a produced value is represented, interned, deduplicated, and reclaimed. Building the value arena first and revisiting its representation after these cells run would be building it twice. So the cells run first, and the value arena lands once, shaped by what they say.
+
+## Resolution of the composition question (2026-07-25, same day)
+
+The third cell named above was built and run, so this section supersedes the "unmeasured" status of the
+interaction. It is `mock/benches/dedup-vs-reuse/` with its generator, harness results across five sizes and two
+sharing regimes, and a findings artifact; the numbers are in `results/dedup_reuse_unique/` and
+`results/dedup_reuse_shared/`.
+
+The interaction is not a tradeoff to tune. It is an exclusion. Once a value is handed to a deduplication table
+the table holds a reference to it, so no local uniqueness verdict can ever again license an in-place write on
+that value. Interning does not merely raise the sharing rate that reuse is sensitive to; it permanently
+forfeits reuse for every value it touches while still charging the hash on construction. Measured: reuse alone
+is fastest at every size in both regimes (2.7x to 2.9x over copy-on-write at 20% sharing, 1.4x to 1.6x at 60%),
+deduplicating records is 9x to 19x slower than reuse and 6x to 7x slower than doing nothing, and the two
+combined land at 4.0x to 5.9x, which is worse than plain. Combining them is worse than either alone and worse
+than neither.
+
+So of the mechanisms the directive named, reuse is confirmed as a default by two independent cells, and
+deduplicating compound values is refused for records at this shape. The refusal has a stated boundary: narrow
+records, comparison-heavy workloads, and the memory axis are each unmeasured and are where deduplication could
+still earn a place. Strings remain a separate population with their own cell owed, and must not inherit this
+verdict, since a constructed string is cheaper to hash and compared more often than a sixteen-field record.
+
+This is the directive working as intended. The instinct to bake interning in was reasonable, the measurement
+refused it for the largest case, and the refusal came with the structural reason rather than only a number.
