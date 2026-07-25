@@ -59,22 +59,47 @@ pub trait Grammar {
 
 /// Run a program from its IR through the per-program compile path.
 ///
-/// The dev-time compiler's per-program path: resolve the Core binders, then
-/// (the next wiring gate) the graded check, the cheap lowering, the inclusion
-/// check to a `Checked`, the emit through the target, and the hand-off to the
-/// runtime driver. M-level validates resolution and reports an unresolved name
-/// as a diagnostic.
-// FIXME: thread caller-provided grade and resolution regions to run
-// vehje-check (the graded judgment) and vehje-lower (the cheap subset), then
-// build the Checked and emit through the target into a sink and hand the
-// residual to vehje-runtime-driver. The resolve stage ships; the rest is the
-// next behavior gate.
-pub fn run<T: Target>(_target: &T, arena: &Arena<'_>, root: NodeRef) -> Outcome<(), Diagnostic> {
-    match resolve(arena, root) {
+/// Resolves the Core binders, runs the graded check, mints the `Checked`
+/// witness through the target's family and effect inclusion sets, and emits
+/// through the target into `sink`. A stage failure returns a `Diagnostic`
+/// naming the failing `Phase`. The caller lends the resolution and grade
+/// regions (no alloc) and names the program's family (`Families`) and effect
+/// (`Effects`) sets, which the target proves it `Supports` / `Permits`.
+// FIXME: the cheap lowering (ANF) is not yet threaded here; the
+// check-then-lower sequencing and which arena the `Checked` covers is its own
+// design gate. The runtime execution hand-off to vehje-runtime-driver (the Zig
+// runtime that executes the emitted residual) is the separate downstream gate.
+pub fn run<T, Families, Effects, S>(
+    target: &T,
+    arena: &Arena<'_>,
+    root: NodeRef,
+    res: &mut Resolution<'_>,
+    grades: &mut GradeTable<'_>,
+    sink: &mut S,
+) -> Outcome<(), Diagnostic>
+where
+    T: Target,
+    T::Supports: ContainsAll<Families>,
+    T::Permits: ContainsAll<Effects>,
+    S: ByteEmitter,
+{
+    if let Outcome::Err(ResolveError::Unresolved { span, .. }) = resolve_into(arena, root, res) {
+        return Outcome::Err(Diagnostic::error(Phase::Resolve, span, "unresolved name"));
+    }
+    let graded = match check(arena, root, res, grades) {
+        Outcome::Ok(g) => g,
+        // FIXME: surface the CheckError's node span (each variant carries `at`);
+        // M-level reports the check phase without the precise span.
+        Outcome::Err(_) => {
+            return Outcome::Err(Diagnostic::error(Phase::Check, Span::default(), "check failed"));
+        },
+    };
+    let checked = check_for::<T, Families, Effects>(graded);
+    match target.emit(&checked, sink) {
         Outcome::Ok(()) => Outcome::Ok(()),
-        Outcome::Err(ResolveError::Unresolved { span, .. }) => {
-            Outcome::Err(Diagnostic::error(Phase::Resolve, span, "unresolved name"))
-        }
+        Outcome::Err(_) => {
+            Outcome::Err(Diagnostic::error(Phase::Emit, Span::default(), "emit failed"))
+        },
     }
 }
 
@@ -206,6 +231,39 @@ mod tests {
         assert!(matches!(target.emit(&checked, &mut sink), Outcome::Ok(())));
 
         // pre-order: let, then the value (lit), then the body (var).
+        assert_eq!(&sink.buf[..sink.len.0], b"let lit var ");
+    }
+
+    #[test]
+    fn run_emits_the_program() {
+        let mut nodes = [Node::Lit(Literal::Unit); 8];
+        let mut spans = [Span::default(); 8];
+        let mut pool = [NodeRef::new(USize::ZERO); 8];
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+
+        // let x = () in x, driven through the public `run` entry end to end.
+        let x = str_const!("x").as_sym();
+        let unit = expect(b.lit(Literal::Unit, Span::default()));
+        let var = expect(b.var(x, Span::default()));
+        let root = expect(b.let_(Bool::FALSE, x, unit, var, Span::default()));
+        let arena = b.into_arena();
+
+        let mut binders = [notko::Maybe::Isnt; 8];
+        let mut res = Resolution::new(&mut binders);
+        let mut grade_region = [Grade::default(); 8];
+        let mut grades = GradeTable::new(&mut grade_region);
+        // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) reason: byte-stream buffer init; byte contract; tracked: #207
+        let mut sink = BufSink { buf: [0; 128], len: USize::ZERO };
+
+        let out = run::<DebugTarget, Cons<Core, Empty>, Empty, _>(
+            &DebugTarget,
+            &arena,
+            root,
+            &mut res,
+            &mut grades,
+            &mut sink,
+        );
+        assert!(matches!(out, Outcome::Ok(())));
         assert_eq!(&sink.buf[..sink.len.0], b"let lit var ");
     }
 }
