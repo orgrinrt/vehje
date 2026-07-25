@@ -115,6 +115,8 @@ pub const Error = error{
     NotASequence,
     OutOfRange,
     ValArenaFull,
+    NoPayload,
+    NotAVariant,
     DivideByZero,
     Unwound,
     Unhandled,
@@ -134,6 +136,9 @@ const Value = union(enum) {
     int: i64,
     record: struct { start: u32, len: u32 },
     seq: struct { start: u32, len: u32 },
+    /// A variant: which enum, which variant, and where its payload sits in the
+    /// value arena. `payload` is NO_PAYLOAD for a variant that carries none.
+    variant: struct { enum_idx: u32, tag: u32, payload: u32 },
     /// A zero-copy slice of the image's blob. The wire already carries the
     /// bytes, so producing a string value costs nothing.
     str: []const u8,
@@ -148,6 +153,7 @@ const Value = union(enum) {
 };
 
 const ENV_NIL: u32 = 0xFFFF_FFFF;
+pub const NO_PAYLOAD: u32 = 0xFFFF_FFFF;
 
 const Binding = struct { sym: u32, val: Value, parent: u32 };
 
@@ -279,6 +285,18 @@ fn bindPattern(img: *const Image, pat: u32, v: Value, env: *Env, cur: u32) Error
                 .int => |n| if (n >= lo and (if (inclusive) n <= hi else n < hi)) cur else null,
                 else => Error.Unsupported,
             };
+        },
+        cl.PAT_VARIANT => {
+            const want_tag = try img.word(pat, 2);
+            const sub = try img.word(pat, 3);
+            const va = switch (v) {
+                .variant => |x| x,
+                else => return Error.NotAVariant,
+            };
+            if (va.tag != want_tag) return null;
+            if (sub == cl.NO_GUARD) return cur;
+            if (va.payload == NO_PAYLOAD) return Error.NoPayload;
+            return bindPattern(img, sub, env.vals[va.payload], env, cur);
         },
         cl.PAT_REC => {
             const start = try img.word(pat, 1);
@@ -489,6 +507,19 @@ fn evalNode(img: *const Image, idx: u32, env: *Env, cur: u32) Error!Value {
                 if (i < 0 or @as(u32, @intCast(i)) >= q.len) return Error.OutOfRange;
                 return env.vals[q.start + @as(u32, @intCast(i))];
             }
+            if (op == cl.OP_MAKE_VARIANT) {
+                const ei: u32 = @intCast(try (try evalNode(img, try img.pooled(start + 1), env, cur)).asInt());
+                const vi: u32 = @intCast(try (try evalNode(img, try img.pooled(start + 2), env, cur)).asInt());
+                var payload: u32 = NO_PAYLOAD;
+                if (len > 3) {
+                    const pv = try evalNode(img, try img.pooled(start + 3), env, cur);
+                    if (env.nval >= env.vals.len) return Error.ValArenaFull;
+                    payload = env.nval;
+                    env.vals[env.nval] = pv;
+                    env.nval += 1;
+                }
+                return Value{ .variant = .{ .enum_idx = ei, .tag = vi, .payload = payload } };
+            }
             if (op == cl.OP_PUSH) {
                 const s0 = try evalNode(img, try img.pooled(start + 1), env, cur);
                 const v = try evalNode(img, try img.pooled(start + 2), env, cur);
@@ -559,6 +590,7 @@ pub fn run(src: []const u8) !i64 {
         .subst = &subst,
         .env = &tenv,
         .fields = &tfields,
+        .enums = p.enums[0..p.nenums],
         .traits = traits[0..p.ntraits],
         .impls = impls[0..p.nimpls],
         .resolved = resolved[0..b.n],
@@ -622,6 +654,7 @@ pub fn runStr(src: []const u8, out: []u8) ![]const u8 {
         .subst = &subst,
         .env = &tenv,
         .fields = &tfields,
+        .enums = p.enums[0..p.nenums],
         .traits = traits[0..p.ntraits],
         .impls = impls[0..p.nimpls],
         .resolved = resolved[0..b.n],
@@ -1777,4 +1810,68 @@ test "break and continue nest, each finding its own handler" {
 
 test "return outside a function is refused" {
     try std.testing.expectError(chk.Error.BreakOutsideLoop, run("return 1;"));
+}
+
+test "an enum's variants are constructed and matched" {
+    try std.testing.expectEqual(@as(i64, 1), try run(
+        \\enum Colour { Red, Green, Blue }
+        \\match Colour::Red { Colour::Red => 1, Colour::Green => 2, Colour::Blue => 3 }
+    ));
+    try std.testing.expectEqual(@as(i64, 3), try run(
+        \\enum Colour { Red, Green, Blue }
+        \\match Colour::Blue { Colour::Red => 1, Colour::Green => 2, Colour::Blue => 3 }
+    ));
+}
+
+test "a variant may carry a payload, and the pattern binds it" {
+    try std.testing.expectEqual(@as(i64, 12), try run(
+        \\enum Maybe { None, Some(Int) }
+        \\match Maybe::Some(5) { Maybe::None => 0, Maybe::Some(n) => n + 7 }
+    ));
+    try std.testing.expectEqual(@as(i64, 0), try run(
+        \\enum Maybe { None, Some(Int) }
+        \\match Maybe::None { Maybe::None => 0, Maybe::Some(n) => n + 7 }
+    ));
+}
+
+test "covering every variant is exhaustive without a catch-all" {
+    try std.testing.expectEqual(@as(i64, 2), try run(
+        \\enum Two { A, B }
+        \\match Two::B { Two::A => 1, Two::B => 2 }
+    ));
+    // Missing a variant is not exhaustive, and there is no catch-all to save it.
+    try std.testing.expectError(cl.Error.NonExhaustive, run(
+        \\enum Three { A, B, C }
+        \\match Three::A { Three::A => 1, Three::B => 2 }
+    ));
+}
+
+test "two enums are different types even with the same variants" {
+    try std.testing.expectError(chk.Error.Mismatch, run(
+        \\enum A { X }
+        \\enum B { X }
+        \\match A::X { B::X => 1 }
+    ));
+}
+
+test "a variant's payload keeps its declared type" {
+    try std.testing.expectError(chk.Error.Mismatch, run(
+        \\enum Maybe { None, Some(Int) }
+        \\match Maybe::Some("text") { Maybe::None => 0, Maybe::Some(n) => n }
+    ));
+}
+
+test "an unknown variant is refused" {
+    try std.testing.expectError(cl.Error.UnknownVariant, run(
+        \\enum Colour { Red }
+        \\Colour::Purple
+    ));
+}
+
+test "enums flow through functions and the standard library" {
+    try std.testing.expectEqual(@as(i64, 8), try runWithStd(
+        \\enum Maybe { None, Some(Int) }
+        \\fn or_else(m, d) { match m { Maybe::None => d, Maybe::Some(n) => n } }
+        \\or_else(Maybe::Some(3), 0) + or_else(Maybe::None, 5)
+    ));
 }

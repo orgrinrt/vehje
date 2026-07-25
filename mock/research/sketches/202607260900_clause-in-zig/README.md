@@ -259,6 +259,36 @@ Types still erase throughout. Nothing type-shaped exists at run time, which is
 why this is monomorphisation rather than dictionary passing; the design memo at
 `mock/research/202607261000_monomorphisation-shapes.md` prices that fork.
 
+## Enums
+
+```
+enum Maybe { None, Some(Int) }
+match Maybe::Some(5) { Maybe::None => 0, Maybe::Some(n) => n + 7 }   ==> 12
+
+enum Two { A, B }
+match Two::B { Two::A => 1, Two::B => 2 }                            ==> 2
+
+enum Three { A, B, C }
+match Three::A { Three::A => 1, Three::B => 2 }   refused, NonExhaustive
+enum A { X }  enum B { X }  match A::X { B::X => 1 }  refused, Mismatch
+Maybe::Some("text")                               refused, Mismatch
+Colour::Purple                                    refused, UnknownVariant
+```
+
+**Covering every variant is exhaustive without a catch-all.** That is a real
+exhaustiveness answer rather than the irrefutable-last-arm approximation, and it
+is the shape the approximation was standing in for: a match over a sum is
+complete when it names every summand, with irrefutable sub-patterns.
+
+Enums are **nominal**, so two with identical variants are different types. That
+is what makes covering them meaningful; structural equality would let a match
+over one satisfy a scrutinee of the other.
+
+A variant is introduced by a family operation, like every other constructed
+value, and its declaration erases once the checker has read it. The enum name in
+a path is recognised before it becomes a variable reference, since it is the head
+of a path rather than a value.
+
 ## Patterns and match
 
 ```
@@ -305,9 +335,11 @@ must type against the scrutinee, so a match over the wrong shape is a static
 error rather than an arm that silently never fires, and all arms must agree on a
 result type.
 
-**Exhaustiveness is approximated by requiring an irrefutable last arm.** That is
-sound and checkable without a usefulness algorithm, and it refuses some programs
-a real exhaustiveness check would accept. A record pattern counts as irrefutable
+**Exhaustiveness is decided exactly for sums and approximated elsewhere.** A
+match that names every variant of an enum is complete; otherwise the last arm
+must be irrefutable. The approximation is sound and refuses some programs a full
+usefulness algorithm would accept, notably a union of ranges that covers the
+integers. A record pattern counts as irrefutable
 when all its sub-patterns are, because a record has exactly the fields it has and
 there is no other shape for the match to fall through to.
 

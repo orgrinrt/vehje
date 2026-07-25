@@ -32,6 +32,7 @@ pub const Error = error{
     TooManyConstraints,
     MissingSuperImpl,
     BreakOutsideLoop,
+    NotAVariant,
 };
 
 pub const NONE: u32 = 0xFFFF_FFFF;
@@ -52,6 +53,8 @@ pub const Ty = union(enum) {
     /// A sequence is homogeneous: one element type, named by arena index. A
     /// heterogeneous list would need a sum type, which this subset has not got.
     seq: u32,
+    /// Nominal, so two enums with the same variants are different types.
+    enum_ty: u32,
 };
 
 /// One field of a record type: its name, and the type at that name.
@@ -85,6 +88,7 @@ pub const Ctx = struct {
     nf: u32 = 0,
     /// The trait and impl tables the parser collected. The checker reads them;
     /// it knows nothing about any particular trait.
+    enums: []const cl.EnumDecl = &.{},
     traits: []const cl.TraitDecl = &.{},
     impls: []const cl.ImplDecl = &.{},
     /// Per node: which impl a trait-method reference resolved to, or NONE. This
@@ -182,6 +186,10 @@ pub const Ctx = struct {
                 },
                 else => Error.Mismatch,
             },
+            .enum_ty => |ea| switch (self.types[rb]) {
+                .enum_ty => |eb| if (ea == eb) {} else Error.Mismatch,
+                else => Error.Mismatch,
+            },
             .seq => |ea| switch (self.types[rb]) {
                 .seq => |eb| try self.unify(ea, eb),
                 else => Error.Mismatch,
@@ -247,7 +255,7 @@ pub const Ctx = struct {
         const r = self.resolve(t);
         return switch (self.types[r]) {
             .tvar => |v| if (v >= first and v < first + count) map[v - first] else r,
-            .unit, .int, .boolean, .str => r,
+            .unit, .int, .boolean, .str, .enum_ty => r,
             .seq => |e| try self.alloc(.{ .seq = try self.copy(e, first, count, map) }),
             .func => |f| blk: {
                 const p = try self.copy(f.p, first, count, map);
@@ -426,6 +434,14 @@ fn patternScope(img: *const Image, pat: u32, st: u32, ctx: *Ctx, cur: u32) Error
         cl.PAT_RANGE => {
             try ctx.unify(st, try ctx.alloc(.int));
             return cur;
+        },
+        cl.PAT_VARIANT => {
+            const ei = try img.word(pat, 1);
+            const vi = try img.word(pat, 2);
+            const sub = try img.word(pat, 3);
+            try ctx.unify(st, try ctx.alloc(.{ .enum_ty = ei }));
+            if (sub == cl.NO_GUARD) return cur;
+            return patternScope(img, sub, try concrete(ctx, ctx.enums[ei].variants[vi].payload), ctx, cur);
         },
         cl.PAT_REC => {
             const start = try img.word(pat, 1);
@@ -706,6 +722,17 @@ fn infer(img: *const Image, idx: u32, ctx: *Ctx, cur: u32) Error!u32 {
                 try ctx.unify(st, want);
                 return et;
             }
+            if (lo == cl.OP_MAKE_VARIANT) {
+                const en = try img.pooled(start + 1);
+                const vn = try img.pooled(start + 2);
+                const ei: u32 = try img.word(en, 2);
+                const vi: u32 = try img.word(vn, 2);
+                if (len > 3) {
+                    const pt = try infer(img, try img.pooled(start + 3), ctx, cur);
+                    try ctx.unify(pt, try concrete(ctx, ctx.enums[ei].variants[vi].payload));
+                }
+                return ctx.alloc(.{ .enum_ty = ei });
+            }
             if (lo == cl.OP_PUSH) {
                 const st = try infer(img, try img.pooled(start + 1), ctx, cur);
                 const vt = try infer(img, try img.pooled(start + 2), ctx, cur);
@@ -803,7 +830,7 @@ fn discharge(ctx: *Ctx) Error!void {
 
 // ---------------------------------------------------------------- tests
 
-const Shape = enum { unit, int, boolean, str, func, record, seq };
+const Shape = enum { unit, int, boolean, str, func, record, seq, enum_ty };
 
 fn typeOf(src: []const u8) !Shape {
     var node_buf: [8192 * cl.NODE_WORDS]u32 = undefined;
@@ -834,6 +861,7 @@ fn typeOf(src: []const u8) !Shape {
         .subst = &subst,
         .env = &env,
         .fields = &fields,
+        .enums = p.enums[0..p.nenums],
         .traits = traits[0..p.ntraits],
         .impls = impls[0..p.nimpls],
         .resolved = resolved[0..b.n],
@@ -848,6 +876,7 @@ fn typeOf(src: []const u8) !Shape {
         .func => .func,
         .record => .record,
         .seq => .seq,
+        .enum_ty => .enum_ty,
         .tvar => .func,
     };
 }

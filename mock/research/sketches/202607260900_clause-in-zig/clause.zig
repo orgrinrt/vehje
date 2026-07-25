@@ -56,6 +56,8 @@ pub const PAT_REC: u32 = 24;
 pub const PAT_OR: u32 = 25;
 /// An integer range. `inclusive` is the third slot.
 pub const PAT_RANGE: u32 = 26;
+/// A variant pattern: the enum, the variant, and the payload's sub-pattern.
+pub const PAT_VARIANT: u32 = 27;
 
 /// No guard on this arm.
 pub const NO_GUARD: u32 = 0xFFFF_FFFF;
@@ -76,6 +78,10 @@ pub const OP_SUB: u32 = 1;
 pub const OP_MUL: u32 = 2;
 pub const OP_LT: u32 = 3;
 pub const OP_DIV: u32 = 9;
+/// Construct an enum variant: the enum's index, the variant's index, and the
+/// payload if the variant carries one. A variant is introduced like any other
+/// value, which is to say by a family operation.
+pub const OP_MAKE_VARIANT: u32 = 10;
 /// Record construction. Unlike the scalar operations above, its arity is not
 /// fixed: it takes alternating key and value operands and yields a compound.
 /// That shape is the coverage finding recorded in the round topic, and this is
@@ -170,6 +176,18 @@ pub const MacroDecl = struct {
 
 /// A binding whose body raises trait obligations: its binder, its value
 /// subtree, and whether it refers to itself.
+/// One variant of an enum: its name, and the type of its payload if it has one.
+pub const VariantDecl = struct { name: []const u8, has_payload: bool, payload: TyName };
+
+/// A nominal sum type. Two enums with identical variants are different types,
+/// which is what makes a match on one of them exhaustive rather than merely
+/// plausible.
+pub const EnumDecl = struct {
+    name: []const u8,
+    variants: [8]VariantDecl,
+    nvariants: u8,
+};
+
 pub const Bounded = struct { sym: u32, value: u32, recursive: bool };
 
 /// An open loop: its function binder, how many mutable locals it threads, and
@@ -194,6 +212,8 @@ pub const Error = error{
     NonExhaustive,
     NotMutable,
     MissingMethod,
+    UnknownVariant,
+    NonExhaustiveEnum,
     BindingInAlternative,
     UnreachableArm,
     NotConstant,
@@ -203,7 +223,7 @@ pub const Error = error{
 
 // ---------------------------------------------------------------- lexer
 
-const Kind = enum { int, str_lit, ident, dot, colon, lbracket, rbracket, arrow, kw_trait, kw_impl, kw_for, kw_type, kw_match, kw_while, kw_mut, kw_mod, kw_use, kw_in, kw_macro, kw_pub, kw_loop, kw_break, kw_return, kw_continue, bang, pound, colon_colon, kw_if_guard, dotdot, dotdot_eq, pipe, fat_arrow, underscore, plus_assign, minus_assign, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, slash, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
+const Kind = enum { int, str_lit, ident, dot, colon, lbracket, rbracket, arrow, kw_trait, kw_impl, kw_for, kw_type, kw_match, kw_while, kw_mut, kw_mod, kw_use, kw_in, kw_macro, kw_pub, kw_loop, kw_break, kw_return, kw_continue, kw_enum, bang, pound, colon_colon, kw_if_guard, dotdot, dotdot_eq, pipe, fat_arrow, underscore, plus_assign, minus_assign, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, slash, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
 
 const Token = struct { kind: Kind, start: usize, end: usize, value: i64 };
 
@@ -282,6 +302,8 @@ const Lexer = struct {
                 .kw_return
             else if (std.mem.eql(u8, text, "continue"))
                 .kw_continue
+            else if (std.mem.eql(u8, text, "enum"))
+                .kw_enum
             else if (std.mem.eql(u8, text, "_"))
                 .underscore
             else if (std.mem.eql(u8, text, "if"))
@@ -588,6 +610,14 @@ pub const Builder = struct {
 
     /// A family operation over a variable number of operands, which is the shape
     /// both constructors share.
+    pub fn patVariant(self: *Builder, enum_idx: u32, variant_idx: u32, sub: u32) Error!u32 {
+        const idx = try self.alloc(PAT_VARIANT);
+        self.slot(idx, 1).* = enum_idx;
+        self.slot(idx, 2).* = variant_idx;
+        self.slot(idx, 3).* = sub;
+        return idx;
+    }
+
     pub fn variadic(self: *Builder, op: u32, args: []const u32) Error!u32 {
         const code = try self.lit(@intCast(op));
         if (@as(usize, self.p) + 1 + args.len > self.pool.len) return Error.OutOfPool;
@@ -663,6 +693,8 @@ pub const Parser = struct {
     tok: Token,
     b: *Builder,
     names: *Names,
+    enums: [16]EnumDecl = undefined,
+    nenums: u32 = 0,
     macros: [16]MacroDecl = undefined,
     nmacros: u32 = 0,
     /// Bindings whose body references a trait method, so their obligations are
@@ -1048,6 +1080,39 @@ pub const Parser = struct {
             const looped = try self.b.letRec(loop_sym, f, call);
             return self.b.let(s_sym, seq, looped);
         }
+        if (self.tok.kind == .kw_enum) {
+            try self.bump();
+            if (self.tok.kind != .ident) return Error.UnexpectedToken;
+            const ename = self.lx.src[self.tok.start..self.tok.end];
+            try self.bump();
+            try self.expect(.lbrace);
+            var vs: [8]VariantDecl = undefined;
+            var nv: u8 = 0;
+            while (self.tok.kind != .rbrace) {
+                if (self.tok.kind != .ident) return Error.UnexpectedToken;
+                if (nv == vs.len) return Error.TooManyParams;
+                const vname = self.lx.src[self.tok.start..self.tok.end];
+                try self.bump();
+                var has_p = false;
+                var pty: TyName = .int;
+                if (self.tok.kind == .lparen) {
+                    try self.bump();
+                    pty = try self.tyName();
+                    try self.expect(.rparen);
+                    has_p = true;
+                }
+                vs[nv] = .{ .name = vname, .has_payload = has_p, .payload = pty };
+                nv += 1;
+                if (self.tok.kind == .comma) try self.bump();
+            }
+            try self.expect(.rbrace);
+            if (self.nenums == self.enums.len) return Error.TooManyTraits;
+            self.enums[self.nenums] = .{ .name = ename, .variants = vs, .nvariants = nv };
+            self.nenums += 1;
+            // An enum binds nothing: its variants are reached by path, and the
+            // declaration erases once the checker has read it.
+            return self.program();
+        }
         if (self.tok.kind == .kw_return) {
             try self.bump();
             const payload = if (self.tok.kind == .semi) try self.b.unit() else try self.expression();
@@ -1372,6 +1437,11 @@ pub const Parser = struct {
                 const bb = try self.cloneSubtree(self.b.nodes[src + 2]);
                 return self.b.patOr(a, bb);
             },
+            PAT_VARIANT => {
+                const sub = self.b.nodes[src + 3];
+                const c = if (sub == NO_GUARD) NO_GUARD else try self.cloneSubtree(sub);
+                return self.b.patVariant(self.b.nodes[src + 1], self.b.nodes[src + 2], c);
+            },
             TAG_APPLY, TAG_RAW, TAG_MATCH, PAT_REC => {
                 const start = self.b.nodes[src + 2];
                 const n = self.b.nodes[src + 3];
@@ -1435,6 +1505,10 @@ pub const Parser = struct {
                 self.markSubtree(self.b.nodes[base + 4], marks);
             },
             TAG_PERFORM => self.markSubtree(self.b.nodes[base + 2], marks),
+            PAT_VARIANT => {
+                const sub = self.b.nodes[base + 3];
+                if (sub != NO_GUARD) self.markSubtree(sub, marks);
+            },
             TAG_IF => {
                 self.markSubtree(self.b.nodes[base + 1], marks);
                 self.markSubtree(self.b.nodes[base + 2], marks);
@@ -1733,6 +1807,22 @@ pub const Parser = struct {
         }
     }
 
+    fn enumIndex(self: *const Parser, name: []const u8) ?u32 {
+        var i: u32 = 0;
+        while (i < self.nenums) : (i += 1) {
+            if (std.mem.eql(u8, self.enums[i].name, name)) return i;
+        }
+        return null;
+    }
+
+    fn variantIndex(self: *const Parser, e: u32, name: []const u8) ?u32 {
+        var v: u8 = 0;
+        while (v < self.enums[e].nvariants) : (v += 1) {
+            if (std.mem.eql(u8, self.enums[e].variants[v].name, name)) return v;
+        }
+        return null;
+    }
+
     fn macroIndex(self: *const Parser, sym: u32) ?u32 {
         var i: u32 = 0;
         while (i < self.nmacros) : (i += 1) {
@@ -1972,7 +2062,23 @@ pub const Parser = struct {
                 return self.b.patStr(text);
             },
             .ident => {
-                const sym = try self.names.intern(self.lx.src[self.tok.start..self.tok.end]);
+                const text = self.lx.src[self.tok.start..self.tok.end];
+                if (self.enumIndex(text)) |ei| {
+                    try self.bump();
+                    try self.expect(.colon_colon);
+                    if (self.tok.kind != .ident) return Error.UnexpectedToken;
+                    const vname = self.lx.src[self.tok.start..self.tok.end];
+                    const vi = self.variantIndex(ei, vname) orelse return Error.UnknownVariant;
+                    try self.bump();
+                    var sub: u32 = NO_GUARD;
+                    if (self.enums[ei].variants[vi].has_payload) {
+                        try self.expect(.lparen);
+                        sub = try self.pattern();
+                        try self.expect(.rparen);
+                    }
+                    return self.b.patVariant(ei, vi, sub);
+                }
+                const sym = try self.names.intern(text);
                 try self.bump();
                 return self.b.patBind(sym);
             },
@@ -2066,7 +2172,17 @@ pub const Parser = struct {
             self.lx = save_lx;
             self.tok = save_tok;
         }
-        var e: u32 = if (builtin != null) 0 else try self.primary();
+        // An identifier naming an enum is not a value; it is the head of a
+        // variant path, so it is recognised before `primary` turns it into a
+        // variable reference that would be unbound.
+        var pending_enum: ?u32 = null;
+        if (builtin == null and self.tok.kind == .ident) {
+            if (self.enumIndex(self.lx.src[self.tok.start..self.tok.end])) |ei| {
+                pending_enum = ei;
+                try self.bump();
+            }
+        }
+        var e: u32 = if (builtin != null or pending_enum != null) 0 else try self.primary();
         while (self.tok.kind == .lparen or self.tok.kind == .dot or self.tok.kind == .colon_colon) {
             if (self.tok.kind == .lparen and builtin != null) {
                 try self.bump();
@@ -2088,6 +2204,28 @@ pub const Parser = struct {
                 if (self.tok.kind != .ident) return Error.UnexpectedToken;
                 const item = self.lx.src[self.tok.start..self.tok.end];
                 try self.bump();
+                // An enum path constructs a variant; anything else is a module
+                // path, which is a projection.
+                if (pending_enum) |ei| {
+                    const vi = self.variantIndex(ei, item) orelse return Error.UnknownVariant;
+                    var payload: u32 = NO_GUARD;
+                    if (self.enums[ei].variants[vi].has_payload) {
+                        try self.expect(.lparen);
+                        payload = try self.expression();
+                        try self.expect(.rparen);
+                    }
+                    var args: [3]u32 = undefined;
+                    args[0] = try self.b.lit(@intCast(ei));
+                    args[1] = try self.b.lit(@intCast(vi));
+                    var n_args: usize = 2;
+                    if (payload != NO_GUARD) {
+                        args[2] = payload;
+                        n_args = 3;
+                    }
+                    e = try self.b.variadic(OP_MAKE_VARIANT, args[0..n_args]);
+                    pending_enum = null;
+                    continue;
+                }
                 e = try self.b.project(e, item);
                 continue;
             }
@@ -2211,6 +2349,13 @@ pub const Parser = struct {
                 var arms: [48]u32 = undefined;
                 var na: usize = 0;
                 var last_irrefutable = false;
+                // Variant coverage: if every arm matches a variant of one enum
+                // and between them they name all of its variants, the match is
+                // exhaustive without a catch-all. That is a real exhaustiveness
+                // answer rather than the irrefutable-last-arm approximation.
+                var cov_enum: ?u32 = null;
+                var covered: [8]bool = .{false} ** 8;
+                var all_variants = true;
                 while (self.tok.kind != .rbrace) {
                     if (na + 3 > arms.len) return Error.TooManyParams;
                     // An arm after one that already matches everything can never
@@ -2230,6 +2375,20 @@ pub const Parser = struct {
                         guard = try self.expression();
                         self.allow_record = saved_g;
                     }
+                    const ptag = self.b.nodes[@as(usize, pat) * NODE_WORDS];
+                    if (guard == NO_GUARD and ptag == PAT_VARIANT) {
+                        const pe = self.b.nodes[@as(usize, pat) * NODE_WORDS + 1];
+                        const pv = self.b.nodes[@as(usize, pat) * NODE_WORDS + 2];
+                        const sub = self.b.nodes[@as(usize, pat) * NODE_WORDS + 3];
+                        if (cov_enum == null) cov_enum = pe;
+                        if (cov_enum.? != pe or (sub != NO_GUARD and !self.irrefutable(sub))) {
+                            all_variants = false;
+                        } else {
+                            covered[pv] = true;
+                        }
+                    } else if (!(guard == NO_GUARD and self.irrefutable(pat))) {
+                        all_variants = false;
+                    }
                     last_irrefutable = guard == NO_GUARD and self.irrefutable(pat);
                     try self.expect(.fat_arrow);
                     arms[na] = pat;
@@ -2239,7 +2398,17 @@ pub const Parser = struct {
                     if (self.tok.kind == .comma) try self.bump();
                 }
                 try self.expect(.rbrace);
-                if (na == 0 or !last_irrefutable) return Error.NonExhaustive;
+                var covers_all = false;
+                if (all_variants) {
+                    if (cov_enum) |ce| {
+                        covers_all = true;
+                        var vv: u8 = 0;
+                        while (vv < self.enums[ce].nvariants) : (vv += 1) {
+                            if (!covered[vv]) covers_all = false;
+                        }
+                    }
+                }
+                if (na == 0 or !(last_irrefutable or covers_all)) return Error.NonExhaustive;
                 return self.b.match_(scrutinee, arms[0..na]);
             },
             .kw_if => {
