@@ -306,6 +306,28 @@ branch, so the whole thing is one tail-recursive function rather than a loop plu
 a follow-on. And the state keeps its type across iterations, so reassigning a
 counter to a string is refused rather than quietly widening.
 
+`for` is the same desugaring with an index the parser supplies:
+
+```
+let mut total = 0;
+for x in [1, 2, 3, 4] { total += x; }
+total                                            ==> 10
+
+for x in map(add2(10), range(3)) { total += x; } ==> 33
+for x in ["a", "b"] { total += x; }              refused, Mismatch
+for x in 5 { total += x; }                       refused, Mismatch
+```
+
+The sequence is bound once so it is not re-evaluated per turn, and the index
+joins the mutable locals so the loop function carries it alongside whatever the
+enclosing scope was already threading. The increment is emitted rather than
+parsed, so a body that never mentions the index still advances.
+
+**The index and the sequence come from a synthetic binder range** that no source
+name can reach, so a program using the names `i` or `s` neither captures them nor
+is captured by them. Hygiene here is structural rather than a naming convention,
+the same as impl-method binders.
+
 **Loops are bounded by the evaluator's stack.** Each iteration is a call, and the
 evaluator does not yet trampoline (task #49), so a long loop overflows where a
 real one would not. The desugaring is right; the evaluator has not caught up.

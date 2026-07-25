@@ -126,6 +126,11 @@ pub const IMPL_SYM_BASE: u32 = 0x4000_0000;
 /// Loop-function binders. Disjoint from both source names and impl methods.
 pub const LOOP_SYM_BASE: u32 = 0x5000_0000;
 
+/// Binders a desugaring invents (a `for` loop's index and its sequence), from a
+/// range no source name can reach, so a program that happens to use the name
+/// `i` cannot capture or be captured by one.
+pub const SYN_SYM_BASE: u32 = 0x6000_0000;
+
 pub const Error = error{
     UnexpectedByte,
     UnexpectedToken,
@@ -148,7 +153,7 @@ pub const Error = error{
 
 // ---------------------------------------------------------------- lexer
 
-const Kind = enum { int, str_lit, ident, dot, colon, lbracket, rbracket, arrow, kw_trait, kw_impl, kw_for, kw_type, kw_match, kw_while, kw_mut, kw_mod, kw_use, colon_colon, kw_if_guard, dotdot, dotdot_eq, pipe, fat_arrow, underscore, plus_assign, minus_assign, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
+const Kind = enum { int, str_lit, ident, dot, colon, lbracket, rbracket, arrow, kw_trait, kw_impl, kw_for, kw_type, kw_match, kw_while, kw_mut, kw_mod, kw_use, kw_in, colon_colon, kw_if_guard, dotdot, dotdot_eq, pipe, fat_arrow, underscore, plus_assign, minus_assign, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
 
 const Token = struct { kind: Kind, start: usize, end: usize, value: i64 };
 
@@ -213,6 +218,8 @@ const Lexer = struct {
                 .kw_mod
             else if (std.mem.eql(u8, text, "use"))
                 .kw_use
+            else if (std.mem.eql(u8, text, "in"))
+                .kw_in
             else if (std.mem.eql(u8, text, "_"))
                 .underscore
             else if (std.mem.eql(u8, text, "if"))
@@ -816,6 +823,60 @@ pub const Parser = struct {
             const proj = try self.b.project(base, item);
             return self.b.let(isym, proj, try self.program());
         }
+        if (self.tok.kind == .kw_for) {
+            // `for x in E { body }` is the while desugaring with an index the
+            // parser supplies: bind the sequence once, count up to its length,
+            // bind the element each turn.
+            try self.bump();
+            if (self.tok.kind != .ident) return Error.UnexpectedToken;
+            const elem = try self.names.intern(self.lx.src[self.tok.start..self.tok.end]);
+            try self.bump();
+            try self.expect(.kw_in);
+            const saved_f = self.allow_record;
+            self.allow_record = false;
+            const seq = try self.expression();
+            self.allow_record = saved_f;
+            try self.expect(.lbrace);
+
+            const s_sym = SYN_SYM_BASE + self.nloops * 2;
+            const i_sym = SYN_SYM_BASE + self.nloops * 2 + 1;
+            const loop_sym = LOOP_SYM_BASE + self.nloops;
+            self.nloops += 1;
+
+            // The index joins the mutable locals, so the loop function carries
+            // it alongside whatever the enclosing scope was already threading.
+            if (self.nmuts == self.muts.len) return Error.TooManyParams;
+            self.muts[self.nmuts] = i_sym;
+            self.nmuts += 1;
+            const n = self.nmuts;
+
+            const body = try self.forBody(loop_sym, n, i_sym, s_sym, elem);
+            try self.expect(.rbrace);
+            self.nmuts -= 1;
+            const rest = try self.program();
+
+            const len_call = try self.b.variadic(OP_LEN, &[_]u32{try self.b.variable(s_sym)});
+            const cond = try self.b.arith(OP_LT, try self.b.variable(i_sym), len_call);
+            const branch = try self.b.cond(cond, body, rest);
+
+            var f = branch;
+            var k = n;
+            while (k > 0) {
+                k -= 1;
+                f = try self.b.lambda(self.muts[k], f);
+            }
+            // Start at zero: the index is the last parameter, so the call passes
+            // the enclosing mutables as they stand and zero for the counter.
+            var args: [16]u32 = undefined;
+            var j: u32 = 0;
+            while (j + 1 < n) : (j += 1) args[j] = try self.b.variable(self.muts[j]);
+            args[n - 1] = try self.b.lit(0);
+            var call = try self.b.variable(loop_sym);
+            j = 0;
+            while (j < n) : (j += 1) call = try self.b.apply(call, args[j .. j + 1]);
+            const looped = try self.b.letRec(loop_sym, f, call);
+            return self.b.let(s_sym, seq, looped);
+        }
         if (self.tok.kind == .kw_while) {
             // `while c { body } rest` becomes a recursive function of the
             // mutable locals:
@@ -995,6 +1056,60 @@ pub const Parser = struct {
         j = 0;
         while (j < n) : (j += 1) call = try self.b.apply(call, args[j .. j + 1]);
         return call;
+    }
+
+    /// A `for` body: bind the element, then the statements, then advance the
+    /// index and recurse. The increment is emitted here rather than parsed, so
+    /// a body that never mentions the index still advances.
+    fn forBody(self: *Parser, loop_sym: u32, n: u32, i_sym: u32, s_sym: u32, elem: u32) Error!u32 {
+        const at_call = try self.b.variadic(OP_AT, &[_]u32{
+            try self.b.variable(s_sym),
+            try self.b.variable(i_sym),
+        });
+        const inner = try self.forStatements(loop_sym, n, i_sym);
+        return self.b.let(elem, at_call, inner);
+    }
+
+    fn forStatements(self: *Parser, loop_sym: u32, n: u32, i_sym: u32) Error!u32 {
+        if (self.tok.kind == .rbrace) {
+            const bumped = try self.b.arith(OP_ADD, try self.b.variable(i_sym), try self.b.lit(1));
+            return self.b.let(i_sym, bumped, try self.loopCall(loop_sym, n));
+        }
+        if (self.tok.kind == .kw_let) {
+            try self.bump();
+            if (self.tok.kind == .kw_mut) try self.bump();
+            if (self.tok.kind != .ident) return Error.UnexpectedToken;
+            const name = try self.names.intern(self.lx.src[self.tok.start..self.tok.end]);
+            try self.bump();
+            try self.expect(.assign);
+            const value = try self.expression();
+            try self.expect(.semi);
+            return self.b.let(name, value, try self.forStatements(loop_sym, n, i_sym));
+        }
+        if (self.tok.kind == .ident) {
+            const save_lx = self.lx;
+            const save_tok = self.tok;
+            const name = try self.names.intern(self.lx.src[self.tok.start..self.tok.end]);
+            try self.bump();
+            const k = self.tok.kind;
+            if (k == .assign or k == .plus_assign or k == .minus_assign) {
+                if (!self.isMut(name)) return Error.NotMutable;
+                try self.bump();
+                const rhs = try self.expression();
+                try self.expect(.semi);
+                const value = switch (k) {
+                    .plus_assign => try self.b.arith(OP_ADD, try self.b.variable(name), rhs),
+                    .minus_assign => try self.b.arith(OP_SUB, try self.b.variable(name), rhs),
+                    else => rhs,
+                };
+                return self.b.let(name, value, try self.forStatements(loop_sym, n, i_sym));
+            }
+            self.lx = save_lx;
+            self.tok = save_tok;
+        }
+        const e = try self.expression();
+        try self.expect(.semi);
+        return self.b.let(try self.names.intern("_"), e, try self.forStatements(loop_sym, n, i_sym));
     }
 
     /// A loop body: statements, then the recursive call. An assignment is a

@@ -217,7 +217,7 @@ pub const Ctx = struct {
     /// which is the type an obligation is about.
     fn instantiateSelf(self: *Ctx, s: Scheme) Error!struct { ty: u32, first_var: u32, second_var: u32 } {
         if (s.quantified == 0) return .{ .ty = s.ty, .first_var = s.ty, .second_var = s.ty };
-        var map_buf: [32]u32 = undefined;
+        var map_buf: [256]u32 = undefined;
         if (s.quantified > map_buf.len) return Error.TooManyVars;
         var i: u32 = 0;
         while (i < s.quantified) : (i += 1) map_buf[i] = try self.fresh();

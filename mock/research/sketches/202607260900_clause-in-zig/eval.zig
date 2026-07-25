@@ -1269,3 +1269,64 @@ test "guards and ranges compose in a classifier" {
         \\classify(5)
     ));
 }
+
+test "a for loop walks a sequence" {
+    try std.testing.expectEqual(@as(i64, 10), try run(
+        \\let mut total = 0;
+        \\for x in [1, 2, 3, 4] { total += x; }
+        \\total
+    ));
+}
+
+test "a for loop over an empty sequence runs no iterations" {
+    try std.testing.expectEqual(@as(i64, 7), try run(
+        \\let mut total = 7;
+        \\for x in [] { total += x; }
+        \\total
+    ));
+}
+
+test "a for loop body may bind and may use the element" {
+    try std.testing.expectEqual(@as(i64, 20), try run(
+        \\let mut total = 0;
+        \\for x in [1, 2, 3, 4] { let doubled = x * 2; total += doubled; }
+        \\total
+    ));
+}
+
+test "for composes with the standard library" {
+    // range(3) is [0,1,2]; add2(10) makes it [10,11,12]; the total is 33.
+    try std.testing.expectEqual(@as(i64, 33), try runWithStd(
+        \\let mut total = 0;
+        \\for x in map(add2(10), range(3)) { total += x; }
+        \\total
+    ));
+}
+
+test "the loop index cannot be captured by a source name" {
+    // The desugaring's index and sequence come from a synthetic range, so a
+    // program using the names i or s is unaffected by them.
+    try std.testing.expectEqual(@as(i64, 106), try run(
+        \\let i = 100;
+        \\let s = 0;
+        \\let mut total = 0;
+        \\for x in [1, 2, 3] { total += x; }
+        \\total + i
+    ));
+}
+
+test "for keeps the element's type" {
+    try std.testing.expectError(chk.Error.Mismatch, run(
+        \\let mut total = 0;
+        \\for x in ["a", "b"] { total += x; }
+        \\total
+    ));
+}
+
+test "iterating a non-sequence is refused" {
+    try std.testing.expectError(chk.Error.Mismatch, run(
+        \\let mut total = 0;
+        \\for x in 5 { total += x; }
+        \\total
+    ));
+}
