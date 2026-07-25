@@ -107,6 +107,8 @@ pub const EvalError = error{
     ScratchFull, // the session scratch cannot hold what a handler returned
     ValueArenaFull, // the caller-lent value arena is exhausted (no alloc)
     BadImage, // a handler returned bytes the value-image reader rejected
+    NotARecord, // a Project whose base did not evaluate to a record
+    NoSuchField, // a Project naming a field the record does not have
 };
 
 /// The caller-lent per-session state a runtime handle owns.
@@ -248,6 +250,30 @@ fn eval(img: *const Image, idx: u32, env: *Env, cur: u32, host: ?*const VehjeHos
             LIT_STR => Value{ .str = try img.blob(try img.word(idx, 2), try img.word(idx, 3)) },
             else => EvalError.Unsupported,
         },
+        TAG_PROJECT => {
+            // the base is the first child word, the key a blob span in the two
+            // after it, which is the shape a string literal already uses.
+            const base = try eval(img, try img.word(idx, 1), env, cur, host, session, arena);
+            const key = try img.blob(try img.word(idx, 2), try img.word(idx, 3));
+            const rec_ref = switch (base) {
+                .compound => |r| r,
+                else => return EvalError.NotARecord,
+            };
+            const rec = arena.node(rec_ref);
+            if (rec.tag != .record) return EvalError.NotARecord;
+            // children alternate a key string with its value, so field i is the
+            // pair at 2i and 2i+1. The dynamic lookup is the floor the measured
+            // accelerations fall back to; they need a shape the emitter does not
+            // yet name.
+            var k: u32 = 0;
+            while (k + 1 < rec.children.len) : (k += 2) {
+                const kn = arena.node(arena.child(rec.children, k));
+                if (std.mem.eql(u8, arena.blobOf(kn.blob), key)) {
+                    return valueOf(arena, arena.child(rec.children, k + 1));
+                }
+            }
+            return EvalError.NoSuchField;
+        },
         TAG_VAR => return env.lookup(cur, try img.word(idx, 1)),
         TAG_LET => {
             const rec = (try img.word(idx, 1)) != 0;
@@ -324,6 +350,22 @@ fn eval(img: *const Image, idx: u32, env: *Env, cur: u32, host: ?*const VehjeHos
         // Project, Match, Iter, Interp, and Handle land with their forms.
         else => return EvalError.Unsupported,
     }
+}
+
+/// The runtime value an arena node denotes.
+///
+/// A scalar reads back inline, which is what the arena keeps it there for; a
+/// compound stays a reference into the arena, because copying it out would
+/// duplicate a value that is already where it belongs.
+fn valueOf(arena: *const varena.ValueArena, at: u32) Value {
+    const n = arena.node(at);
+    return switch (n.tag) {
+        .unit => Value.unit,
+        .boolean => Value{ .boolean = n.payload != 0 },
+        .int => Value{ .int = n.payload },
+        .str => Value{ .str = arena.blobOf(n.blob) },
+        .seq, .record, .outcome => Value{ .compound = at },
+    };
 }
 
 /// Evaluate a serialized residual image from its header's root, with a

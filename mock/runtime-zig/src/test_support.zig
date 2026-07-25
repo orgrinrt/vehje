@@ -77,6 +77,17 @@ pub const Build = struct {
         return self.node(TAG_LIT, &.{ rt.LIT_STR, off, @intCast(text.len) });
     }
 
+    /// `base.key`: the base is the first child word, the key a blob span in the
+    /// two after it, which is the shape a string literal already uses.
+    pub fn project(self: *Build, base: u32, key: []const u8) u32 {
+        const off = self.blob_n;
+        for (key) |c| {
+            self.blob[self.blob_n] = c;
+            self.blob_n += 1;
+        }
+        return self.node(rt.TAG_PROJECT, &.{ base, off, @intCast(key.len) });
+    }
+
     pub fn unit(self: *Build) u32 {
         return self.node(TAG_LIT, &.{LIT_UNIT});
     }

@@ -337,3 +337,37 @@ test "a record crosses back to the host as a value image" {
     try std.testing.expectEqualStrings("name", try r.blob(try r.child(r.root, 0)));
 }
 
+
+test "Project reads a named field out of a record" {
+    var b = Build{};
+    const root = b.project(b.raw(1, &.{b.int(0)}), "count");
+    var scratch: [512]u8 = undefined;
+    var session = Session{ .scratch = scratch[0..] };
+    const h = VehjeHost{ .call = recordHost, .userdata = null };
+    var slots: [16]Binding = undefined;
+    const v = try evalImage(b.finish(root), slots[0..], &h, &session, arenaRef());
+    try std.testing.expectEqual(@as(i64, 7), v.int);
+}
+
+test "projecting from something that is not a record is named" {
+    var b = Build{};
+    const root = b.project(b.int(3), "count");
+    var slots: [16]Binding = undefined;
+    try std.testing.expectError(
+        EvalError.NotARecord,
+        evalImage(b.finish(root), slots[0..], null, null, arenaRef()),
+    );
+}
+
+test "projecting a field the record does not have is a different name" {
+    var b = Build{};
+    const root = b.project(b.raw(1, &.{b.int(0)}), "absent");
+    var scratch: [512]u8 = undefined;
+    var session = Session{ .scratch = scratch[0..] };
+    const h = VehjeHost{ .call = recordHost, .userdata = null };
+    var slots: [16]Binding = undefined;
+    try std.testing.expectError(
+        EvalError.NoSuchField,
+        evalImage(b.finish(root), slots[0..], &h, &session, arenaRef()),
+    );
+}
