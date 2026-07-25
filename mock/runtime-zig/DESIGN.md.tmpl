@@ -43,7 +43,11 @@ within a run, and exhausting the lent arena is a named refusal, not an overrun.
 
 State: shipped.
 
-- Literals: unit, boolean, and integer.
+- Literals: unit, boolean, integer, and string. A string costs nothing to
+  produce: the residual ends in a self-contained byte blob and a string literal
+  is an offset and a length into it, so the value is a slice of bytes the
+  runtime already holds, with no copy and no allocation. The span is
+  bounds-checked against the blob, because the image is untrusted.
 - `Var`, resolved against the environment chain by `Sym` bits.
 - `Let`, including the recursive form. A recursive binding is in scope for its
   own value, so the closure that value produces captures a chain already naming
@@ -55,6 +59,12 @@ State: shipped.
 - `Apply`, applying one argument at a time, because multi-parameter lambdas
   desugar to nested `Lambda`.
 
+A string value is a byte slice wherever its bytes live. A literal's point into
+the residual image and a handler's result points into the session scratch. Both
+outlive the evaluation, and neither is distinguishable to the code that reads
+them: the value is the bytes, and where they came from is not part of what it
+is.
+
 ## The refusal set
 
 State: shipped. Every failure is a named error, never a wrong answer: an
@@ -64,7 +74,13 @@ corrupt index or record reaching past the image.
 
 ## The C ABI surface
 
-State: shipped. `vehje_runtime_new`, `vehje_runtime_free`,
+State: shipped. `vehje_runtime_new` takes the scratch region the host lends and
+returns a handle over it; `vehje_runtime_execute` takes that handle and uses its
+scratch; `vehje_runtime_free` releases nothing, because the memory was never the
+runtime's. A null handle means no scratch, under which a handler returning a
+string is a named refusal rather than a crash.
+
+The entries are `vehje_runtime_new`, `vehje_runtime_free`,
 `vehje_runtime_execute`, and the `VEHJE_RESULT_OK`, `VEHJE_RESULT_ERR`,
 `VEHJE_RESULT_NULL_HANDLE`, and `VEHJE_RESULT_INVALID_INPUT` constants
 mirroring the Rust discriminants.
@@ -99,6 +115,8 @@ which lends the backing up front so the runtime holds no output memory after the
 call. Writing the whole image in one reservation is the degenerate single-chunk
 case the transfer contract allows.
 
+A string marshals with the `Str` tag and its bytes in the image blob.
+
 A closure is refused with a named reason rather than partially written. It names
 an environment inside this run, so it has no value-arena representation and
 cannot be a value the host still holds after the call returns. A reservation the
@@ -120,12 +138,20 @@ fixed-capacity operand buffer, and calls the host with the family id and that
 buffer. Exceeding the buffer is a named refusal, in keeping with every other
 bound here being lent rather than assumed.
 
-An operand is a small record of a kind tag and a payload word, covering unit,
-boolean, and integer, which is the runtime's whole value set. The tag values are
-the value image's scalar tags, so one vocabulary describes a scalar wherever it
-appears rather than two that have to be kept in agreement. A compound operand
-has no representation yet; when sequences and records become values, they arrive
-through the value image and this form gains an explicit escape.
+An operand is a small record of a kind tag, a payload word, and a bytes pointer.
+For a scalar the pointer is null and the payload is the value; for a string the
+pointer is the bytes and the payload is their length. One record serves both, so
+the common case is unchanged in size and cost and there is no second parallel
+form to keep in agreement. The tag values are the value image's tags, so one
+vocabulary describes a value wherever it appears.
+
+A handler returns a string the same way it receives one, writing a pointer and a
+length into the out-slot. The runtime copies those bytes into the session
+scratch, so the value stays valid after the handler returns and the host keeps
+no obligation once the call ends. Exhausting the scratch is a named refusal,
+like every other lent bound here. Sequences and records are not operands yet;
+they need a value arena rather than a byte scratch, because their elements are
+values rather than bytes.
 
 The failure modes stay distinguishable. A `Raw` under a null host is a named
 refusal rather than a crash, and a non-zero result code from the host propagates
@@ -138,10 +164,14 @@ with a host that produced a value.
   passed to a handler yet, because neither is a value here yet.
 - The compile-stage counterpart, where a handler services a macro operation at
   its binding time. That is the same discipline aimed at the other stage.
-- Strings, sequences, and records as values, and the remaining Core forms
-  (`Project`, `Match`, `Iter`, `Interp`, `Handle`).
+- Sequences and records as values. They need a value arena rather than the byte
+  scratch a string uses, because their elements are values rather than bytes.
+- The remaining Core forms (`Project`, `Match`, `Iter`, `Interp`, `Handle`).
+  `Project` reads a field and so waits on records; `Match`'s arms carry no
+  pattern representation yet, which is an undecided Core design rather than an
+  unbuilt one.
 - The `Bytecode` tier over the CFG-of-blocks form.
-- Per-session arena state, and diagnostics mapped to the ABI diagnostic shape.
+- Diagnostics mapped to the ABI diagnostic shape.
 
 ## Non-scope
 
