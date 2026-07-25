@@ -1330,3 +1330,67 @@ test "iterating a non-sequence is refused" {
         \\total
     ));
 }
+
+test "a macro is evaluated at the compile stage and leaves a constant" {
+    try std.testing.expectEqual(@as(i64, 10), try run(
+        \\macro double(n) -> Int { n * 2 }
+        \\double!(5)
+    ));
+    try std.testing.expectEqual(@as(i64, 26), try run(
+        \\macro double(n) -> Int { n * 2 }
+        \\double!(3) + double!(10)
+    ));
+}
+
+test "a macro may branch and take several parameters" {
+    try std.testing.expectEqual(@as(i64, 7), try run(
+        \\macro pick(a, b) -> Int { if a < b { b } else { a } }
+        \\pick!(7, 3)
+    ));
+    try std.testing.expectEqual(@as(i64, 9), try run(
+        \\macro pick(a, b) -> Int { if a < b { b } else { a } }
+        \\pick!(2, 9)
+    ));
+}
+
+test "a macro may take another macro's expansion" {
+    try std.testing.expectEqual(@as(i64, 20), try run(
+        \\macro double(n) -> Int { n * 2 }
+        \\macro quad(n) -> Int { double!(0) + n * 4 }
+        \\quad!(5)
+    ));
+}
+
+test "the expansion is a constant, so it composes with runtime code" {
+    try std.testing.expectEqual(@as(i64, 30), try run(
+        \\macro ten() -> Int { 10 }
+        \\fn triple(n) { n * 3 }
+        \\triple(ten!())
+    ));
+}
+
+test "a macro given a runtime value is refused, because there is no later stage" {
+    try std.testing.expectError(cl.Error.NotConstant, run(
+        \\macro double(n) -> Int { n * 2 }
+        \\fn f(x) { double!(x) }
+        \\f(3)
+    ));
+}
+
+test "an undeclared macro is refused" {
+    try std.testing.expectError(cl.Error.UnknownMacro, run("nope!(1)"));
+}
+
+test "a macro called with the wrong number of arguments is refused" {
+    try std.testing.expectError(cl.Error.WrongMacroArity, run(
+        \\macro double(n) -> Int { n * 2 }
+        \\double!(1, 2)
+    ));
+}
+
+test "a macro body that is not constant-evaluable is refused at the call" {
+    try std.testing.expectError(cl.Error.NotConstant, run(
+        \\macro bad(n) -> Int { unknown_name + n }
+        \\bad!(1)
+    ));
+}

@@ -131,6 +131,17 @@ pub const LOOP_SYM_BASE: u32 = 0x5000_0000;
 /// `i` cannot capture or be captured by one.
 pub const SYN_SYM_BASE: u32 = 0x6000_0000;
 
+/// A macro: a function evaluated at a compile stage rather than at run time.
+/// The census's reading, made operational: the operation is discharged by
+/// whichever stage provides its handler, and for a macro that stage is this one.
+pub const MacroDecl = struct {
+    sym: u32,
+    params: [4]u32,
+    nparams: u8,
+    body: u32,
+    ret: TyName,
+};
+
 pub const Error = error{
     UnexpectedByte,
     UnexpectedToken,
@@ -149,11 +160,14 @@ pub const Error = error{
     NotMutable,
     MissingMethod,
     BindingInAlternative,
+    NotConstant,
+    UnknownMacro,
+    WrongMacroArity,
 };
 
 // ---------------------------------------------------------------- lexer
 
-const Kind = enum { int, str_lit, ident, dot, colon, lbracket, rbracket, arrow, kw_trait, kw_impl, kw_for, kw_type, kw_match, kw_while, kw_mut, kw_mod, kw_use, kw_in, colon_colon, kw_if_guard, dotdot, dotdot_eq, pipe, fat_arrow, underscore, plus_assign, minus_assign, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
+const Kind = enum { int, str_lit, ident, dot, colon, lbracket, rbracket, arrow, kw_trait, kw_impl, kw_for, kw_type, kw_match, kw_while, kw_mut, kw_mod, kw_use, kw_in, kw_macro, bang, colon_colon, kw_if_guard, dotdot, dotdot_eq, pipe, fat_arrow, underscore, plus_assign, minus_assign, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
 
 const Token = struct { kind: Kind, start: usize, end: usize, value: i64 };
 
@@ -220,6 +234,8 @@ const Lexer = struct {
                 .kw_use
             else if (std.mem.eql(u8, text, "in"))
                 .kw_in
+            else if (std.mem.eql(u8, text, "macro"))
+                .kw_macro
             else if (std.mem.eql(u8, text, "_"))
                 .underscore
             else if (std.mem.eql(u8, text, "if"))
@@ -276,6 +292,7 @@ const Lexer = struct {
             ',' => .comma,
             '.' => .dot,
             '|' => .pipe,
+            '!' => .bang,
             '[' => .lbracket,
             ']' => .rbracket,
             ':' => .colon,
@@ -570,6 +587,8 @@ pub const Parser = struct {
     tok: Token,
     b: *Builder,
     names: *Names,
+    macros: [16]MacroDecl = undefined,
+    nmacros: u32 = 0,
     traits: []TraitDecl,
     ntraits: u32 = 0,
     impls: []ImplDecl,
@@ -823,6 +842,37 @@ pub const Parser = struct {
             const proj = try self.b.project(base, item);
             return self.b.let(isym, proj, try self.program());
         }
+        if (self.tok.kind == .kw_macro) {
+            // A macro declares its result type, which is what makes it a typed
+            // function at a compile stage rather than a token rewriter.
+            try self.bump();
+            if (self.tok.kind != .ident) return Error.UnexpectedToken;
+            const mname = try self.names.intern(self.lx.src[self.tok.start..self.tok.end]);
+            try self.bump();
+            try self.expect(.lparen);
+            var ps: [4]u32 = undefined;
+            var np: u8 = 0;
+            while (self.tok.kind != .rparen) {
+                if (self.tok.kind != .ident) return Error.UnexpectedToken;
+                if (np == ps.len) return Error.TooManyParams;
+                ps[np] = try self.names.intern(self.lx.src[self.tok.start..self.tok.end]);
+                np += 1;
+                try self.bump();
+                if (self.tok.kind == .comma) try self.bump();
+            }
+            try self.expect(.rparen);
+            try self.expect(.arrow);
+            const ret = try self.tyName();
+            try self.expect(.lbrace);
+            const body = try self.expression();
+            try self.expect(.rbrace);
+            if (self.nmacros == self.macros.len) return Error.TooManyTraits;
+            self.macros[self.nmacros] = .{ .sym = mname, .params = ps, .nparams = np, .body = body, .ret = ret };
+            self.nmacros += 1;
+            // A macro binds nothing: it erases entirely, and only its call sites
+            // remain, as the constants it produced.
+            return self.program();
+        }
         if (self.tok.kind == .kw_for) {
             // `for x in E { body }` is the while desugaring with an index the
             // parser supplies: bind the sequence once, count up to its length,
@@ -1035,6 +1085,61 @@ pub const Parser = struct {
             return self.b.letRec(d.name, d.value, try self.moduleBody(names_out, srcs, n));
         }
         return Error.UnexpectedToken;
+    }
+
+    /// Evaluate a node at compile time. Only what a macro body may contain: a
+    /// literal, a parameter, arithmetic, and a conditional. Anything else is
+    /// refused rather than deferred, because a macro that cannot be evaluated
+    /// here has no other stage to fall back to.
+    fn constEval(self: *const Parser, node: u32, env: []const u32, vals: []const i64) Error!i64 {
+        const base = @as(usize, node) * NODE_WORDS;
+        const tag = self.b.nodes[base];
+        switch (tag) {
+            TAG_LIT => {
+                if (self.b.nodes[base + 1] != LIT_INT) return Error.NotConstant;
+                const lo = self.b.nodes[base + 2];
+                const hi = self.b.nodes[base + 3];
+                return @bitCast((@as(u64, hi) << 32) | @as(u64, lo));
+            },
+            TAG_VAR => {
+                const sym = self.b.nodes[base + 1];
+                var i: usize = 0;
+                while (i < env.len) : (i += 1) {
+                    if (env[i] == sym) return vals[i];
+                }
+                return Error.NotConstant;
+            },
+            TAG_IF => {
+                const c = try self.constEval(self.b.nodes[base + 1], env, vals);
+                const branch = if (c != 0) self.b.nodes[base + 2] else self.b.nodes[base + 3];
+                return self.constEval(branch, env, vals);
+            },
+            TAG_RAW => {
+                const start = self.b.nodes[base + 2];
+                const len = self.b.nodes[base + 3];
+                if (len != 3) return Error.NotConstant;
+                const op_node = self.b.pool[start];
+                const op = try self.constEval(op_node, env, vals);
+                const a = try self.constEval(self.b.pool[start + 1], env, vals);
+                const bb = try self.constEval(self.b.pool[start + 2], env, vals);
+                return switch (@as(u32, @intCast(op))) {
+                    OP_ADD => a + bb,
+                    OP_SUB => a - bb,
+                    OP_MUL => a * bb,
+                    OP_LT => if (a < bb) 1 else 0,
+                    else => Error.NotConstant,
+                };
+            },
+            else => return Error.NotConstant,
+        }
+    }
+
+    fn macroIndex(self: *const Parser, sym: u32) ?u32 {
+        var i: u32 = 0;
+        while (i < self.nmacros) : (i += 1) {
+            if (self.macros[i].sym == sym) return i;
+        }
+        return null;
     }
 
     fn isMut(self: *const Parser, sym: u32) bool {
@@ -1294,6 +1399,38 @@ pub const Parser = struct {
                 try self.bump();
                 if (self.tok.kind != .lparen) return Error.UnexpectedToken;
             }
+        }
+        if (builtin == null and self.tok.kind == .ident) {
+            const save_lx = self.lx;
+            const save_tok = self.tok;
+            const sym = try self.names.intern(self.lx.src[self.tok.start..self.tok.end]);
+            try self.bump();
+            if (self.tok.kind == .bang) {
+                const mi = self.macroIndex(sym) orelse return Error.UnknownMacro;
+                try self.bump();
+                try self.expect(.lparen);
+                var argv: [4]i64 = undefined;
+                var na: u8 = 0;
+                while (self.tok.kind != .rparen) {
+                    if (na == argv.len) return Error.TooManyParams;
+                    // Arguments are evaluated at this stage too, so a macro may
+                    // take the result of another macro but not a runtime value.
+                    const anode = try self.expression();
+                    argv[na] = try self.constEval(anode, &.{}, &.{});
+                    na += 1;
+                    if (self.tok.kind == .comma) try self.bump();
+                }
+                try self.expect(.rparen);
+                const m = self.macros[mi];
+                if (na != m.nparams) return Error.WrongMacroArity;
+                const v = try self.constEval(m.body, m.params[0..m.nparams], argv[0..na]);
+                // The expansion is a constant. Nothing of the macro survives
+                // into the residual, which is the whole point of discharging it
+                // at this stage.
+                return self.b.lit(v);
+            }
+            self.lx = save_lx;
+            self.tok = save_tok;
         }
         var e: u32 = if (builtin != null) 0 else try self.primary();
         while (self.tok.kind == .lparen or self.tok.kind == .dot or self.tok.kind == .colon_colon) {

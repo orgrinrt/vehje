@@ -361,6 +361,49 @@ record with a `double` field", which is a row type. Passing a module into a
 function and reaching into it there needs row polymorphism, which this does not
 have. Inferring a concrete record instead would be wrong, so it refuses.
 
+## Macros, discharged at the compile stage
+
+```
+macro double(n) -> Int { n * 2 }
+double!(3) + double!(10)                         ==> 26
+
+macro pick(a, b) -> Int { if a < b { b } else { a } }
+pick!(7, 3)                                      ==> 7
+
+macro ten() -> Int { 10 }
+fn triple(n) { n * 3 }  triple(ten!())           ==> 30
+
+fn f(x) { double!(x) }                  refused, NotConstant
+nope!(1)                                refused, UnknownMacro
+double!(1, 2)                           refused, WrongMacroArity
+macro bad(n) -> Int { unknown_name + n } bad!(1) refused, NotConstant
+```
+
+The census's reading made operational: **a macro is a function evaluated at a
+compile stage**, and which stage services an operation is a binding-time
+coordinate rather than a separate mechanism. Here that stage is the parser, so a
+macro's body is evaluated there and the call site keeps only the constant it
+produced. Nothing of the macro survives into the residual, which is the point of
+discharging it at that stage.
+
+A macro declares its result type, which is what makes it a typed function at a
+stage rather than a token rewriter.
+
+**A macro given a runtime value is refused rather than deferred**, because there
+is no later stage for it to fall back to. That refusal is the binding-time
+discipline showing: the argument's value is not known when the handler runs, so
+the operation cannot be discharged at all.
+
+Arguments are evaluated at the same stage, so a macro may take another macro's
+expansion but not a function parameter.
+
+**This is the constant-evaluation half of macros, not the syntactic half.** The
+normative grammar's macros take a token stream with `$` interpolation, and
+nothing here does that: there is no token-stream representation, no splicing of
+syntax, and no hygiene question yet because a constant has no names in it. The
+binding-time axis is what this demonstrates; the token-stream story is separate
+and unbuilt.
+
 ## What it does not establish, stated plainly
 
 **This is a slice of the grammar, and the bar is the whole grammar.** It has
@@ -369,7 +412,8 @@ integers, strings, names, `let`, `fn` with recursion and closures and currying,
 three-operation prelude, single-method traits with impls, coherence, inferred
 bounds, associated types, and pattern matching. It does not have multi-method
 supertraits, real exhaustiveness checking,
-macros, `loop` and `for`, row polymorphism, nested or re-exported modules,
+syntactic macros over token streams, `loop`, row polymorphism, nested or
+re-exported modules,
 visibility, attributes, a separate resolve pass, or monomorphisation, nor the
 rest of the surface the
 normative grammar (`mock/research/original-docs/CLAUSE_EBNF.md`) requires.
