@@ -12,8 +12,12 @@
 #![no_std]
 #![deny(unused, unreachable_code, unused_must_use, unused_imports, dead_code)]
 
+pub mod ast;
 pub mod lex;
+pub mod parse;
 pub mod token;
 
+pub use ast::{Arena, AstList, AstRef, Node};
 pub use lex::{lex, LexError};
+pub use parse::{ParseError, Parser};
 pub use token::{Keyword, Span, Token, TokenKind};
