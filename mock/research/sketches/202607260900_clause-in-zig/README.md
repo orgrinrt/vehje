@@ -172,6 +172,26 @@ declared is caught. Each method's signature is checked separately against its ow
 declaration, and each dispatches independently: two methods of one trait resolve
 through the same impl but are separate binders.
 
+### Supertraits
+
+```
+trait Base { fn base(Self) -> Int }
+trait Derived: Base { fn derived(Self) -> Int }
+impl Derived for Int { fn derived(x) { x + 2 } }
+impl Base for Int { fn base(x) { x + 1 } }
+base(4) + derived(5)                             ==> 12
+
+impl Derived for Int { ... }  (with no Base impl) refused, MissingSuperImpl
+trait Derived: Nope { ... }                       refused, UnknownTrait
+```
+
+An impl of a trait with a supertrait requires an impl of that supertrait for the
+same type, and the whole chain is walked so a grandparent is required too. The
+requirement is checked over the whole impl table rather than in declaration
+order, so the two impls may be written either way round. Doing it in order would
+have been easier and would have made a correct program's acceptance depend on
+how it was laid out.
+
 ### Associated types
 
 ```
@@ -411,7 +431,7 @@ integers, strings, names, `let`, `fn` with recursion and closures and currying,
 `if`/`else`, four operators, records with field access, sequences with a
 three-operation prelude, single-method traits with impls, coherence, inferred
 bounds, associated types, and pattern matching. It does not have multi-method
-supertraits, real exhaustiveness checking,
+real exhaustiveness checking,
 syntactic macros over token streams, `loop`, row polymorphism, nested or
 re-exported modules,
 visibility, attributes, a separate resolve pass, or monomorphisation, nor the

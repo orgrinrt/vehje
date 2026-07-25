@@ -107,7 +107,13 @@ pub const TraitDecl = struct {
     /// associated type is a second thing an impl chooses, alongside the method
     /// bodies, and any signature may mention it wherever it mentions Self.
     assoc_name: []const u8 = "",
+    /// The supertrait's index, or NO_SUPER. An impl of this trait requires an
+    /// impl of its supertrait for the same type.
+    super_idx: u32 = NO_SUPER,
 };
+
+/// This trait has no supertrait.
+pub const NO_SUPER: u32 = 0xFFFF_FFFF;
 
 /// An implementation: which trait, for which type, and the binder its method
 /// body was bound under. Coherence is one impl per trait-and-type pair.
@@ -669,6 +675,15 @@ pub const Parser = struct {
             if (self.tok.kind != .ident) return Error.UnexpectedToken;
             const tname = self.lx.src[self.tok.start..self.tok.end];
             try self.bump();
+            // `trait B: A { .. }` declares A as B's supertrait. Resolved here
+            // because A must already be declared to be named.
+            var super_idx: u32 = NO_SUPER;
+            if (self.tok.kind == .colon) {
+                try self.bump();
+                if (self.tok.kind != .ident) return Error.UnexpectedToken;
+                super_idx = try self.traitIndex(self.lx.src[self.tok.start..self.tok.end]);
+                try self.bump();
+            }
             try self.expect(.lbrace);
             var assoc_name: []const u8 = "";
             if (self.tok.kind == .kw_type) {
@@ -715,6 +730,7 @@ pub const Parser = struct {
                 .methods = ms,
                 .nmethods = nm,
                 .assoc_name = assoc_name,
+                .super_idx = super_idx,
             };
             self.ntraits += 1;
             return self.program();

@@ -30,6 +30,7 @@ pub const Error = error{
     NoImpl,
     AmbiguousConstraint,
     TooManyConstraints,
+    MissingSuperImpl,
 };
 
 pub const NONE: u32 = 0xFFFF_FFFF;
@@ -697,9 +698,33 @@ pub fn check(image: []const u8, ctx: *Ctx) Error!u32 {
             );
         }
     }
+    try checkSupertraits(ctx);
     const t = try infer(&img, img.root, ctx, scope);
     try discharge(ctx);
     return ctx.resolve(t);
+}
+
+/// An impl of a trait with a supertrait requires an impl of that supertrait for
+/// the same type. Checked over the whole impl table rather than in declaration
+/// order, so the two impls may be written in either order.
+fn checkSupertraits(ctx: *const Ctx) Error!void {
+    var i: u32 = 0;
+    while (i < ctx.impls.len) : (i += 1) {
+        var sup = ctx.traits[ctx.impls[i].trait_idx].super_idx;
+        // Walk the whole chain, so a grandparent is required too.
+        while (sup != cl.NO_SUPER) {
+            var j: u32 = 0;
+            var found = false;
+            while (j < ctx.impls.len) : (j += 1) {
+                if (ctx.impls[j].trait_idx == sup and ctx.impls[j].for_ty == ctx.impls[i].for_ty) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) return Error.MissingSuperImpl;
+            sup = ctx.traits[sup].super_idx;
+        }
+    }
 }
 
 /// Every obligation must name a concrete type with an impl. An obligation whose

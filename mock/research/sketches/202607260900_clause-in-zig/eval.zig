@@ -1394,3 +1394,58 @@ test "a macro body that is not constant-evaluable is refused at the call" {
         \\bad!(1)
     ));
 }
+
+test "a supertrait's impl is required, in either declaration order" {
+    try std.testing.expectEqual(@as(i64, 12), try run(
+        \\trait Base { fn base(Self) -> Int }
+        \\trait Derived: Base { fn derived(Self) -> Int }
+        \\impl Base for Int { fn base(x) { x + 1 } }
+        \\impl Derived for Int { fn derived(x) { x + 2 } }
+        \\base(4) + derived(5)
+    ));
+    // The supertrait's impl written second is still accepted, because the
+    // requirement is checked over the whole table rather than in order.
+    try std.testing.expectEqual(@as(i64, 12), try run(
+        \\trait Base { fn base(Self) -> Int }
+        \\trait Derived: Base { fn derived(Self) -> Int }
+        \\impl Derived for Int { fn derived(x) { x + 2 } }
+        \\impl Base for Int { fn base(x) { x + 1 } }
+        \\base(4) + derived(5)
+    ));
+}
+
+test "implementing a trait without its supertrait is refused" {
+    try std.testing.expectError(chk.Error.MissingSuperImpl, run(
+        \\trait Base { fn base(Self) -> Int }
+        \\trait Derived: Base { fn derived(Self) -> Int }
+        \\impl Derived for Int { fn derived(x) { x + 2 } }
+        \\derived(5)
+    ));
+}
+
+test "the whole supertrait chain is required" {
+    try std.testing.expectError(chk.Error.MissingSuperImpl, run(
+        \\trait A { fn a(Self) -> Int }
+        \\trait B: A { fn b(Self) -> Int }
+        \\trait C: B { fn c(Self) -> Int }
+        \\impl B for Int { fn b(x) { x } }
+        \\impl C for Int { fn c(x) { x } }
+        \\c(1)
+    ));
+    try std.testing.expectEqual(@as(i64, 6), try run(
+        \\trait A { fn a(Self) -> Int }
+        \\trait B: A { fn b(Self) -> Int }
+        \\trait C: B { fn c(Self) -> Int }
+        \\impl A for Int { fn a(x) { x } }
+        \\impl B for Int { fn b(x) { x * 2 } }
+        \\impl C for Int { fn c(x) { x * 3 } }
+        \\a(1) + b(1) + c(1)
+    ));
+}
+
+test "naming an undeclared supertrait is refused" {
+    try std.testing.expectError(cl.Error.UnknownTrait, run(
+        \\trait Derived: Nope { fn derived(Self) -> Int }
+        \\1
+    ));
+}
