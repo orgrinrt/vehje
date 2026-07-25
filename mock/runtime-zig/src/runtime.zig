@@ -80,7 +80,67 @@ pub const EvalError = error{
     NotCallable, // an Apply whose callee did not evaluate to a closure
     EnvFull, // the caller-lent environment arena is exhausted (no alloc)
     Corrupt, // a node index, pool index, or record past the image
+    NoHost, // a family operation with no host to service it
+    TooManyOperands, // a family operation wider than the operand buffer
+    HostFailed, // the host reported that it could not service the operation
 };
+
+/// The most operands one family operation may carry.
+///
+/// Lent rather than assumed, like every other bound here: exceeding it is a
+/// named refusal, not a growing buffer.
+pub const ARG_CAP: usize = 16;
+
+/// One operand crossing to a handler: a kind tag and a payload word.
+///
+/// The tag values are the value image's scalar tags, so one vocabulary
+/// describes a scalar wherever it appears rather than two that must be kept in
+/// agreement. A compound operand has no representation here yet.
+pub const VehjeScalar = extern struct {
+    tag: u32,
+    payload: i64,
+};
+
+/// Scalar tag codes, matching `vehje-runtime-abi`'s `ValueTag`.
+pub const SCALAR_UNIT: u32 = 0;
+pub const SCALAR_BOOL: u32 = 1;
+pub const SCALAR_INT: u32 = 2;
+
+/// The host a family operation is dispatched to.
+///
+/// One callback plus opaque userdata, mirroring the sink: the host owns the
+/// context, and the runtime retains nothing past the call. The callback returns
+/// zero on success, having written the produced operand through `out`.
+pub const VehjeHost = extern struct {
+    call: *const fn (
+        userdata: ?*anyopaque,
+        family: u32,
+        args: [*]const VehjeScalar,
+        argc: usize,
+        out: *VehjeScalar,
+    ) callconv(.c) i32,
+    userdata: ?*anyopaque,
+};
+
+/// The scalar form of a value, or null when it has none (a closure).
+fn toScalar(v: Value) ?VehjeScalar {
+    return switch (v) {
+        .unit => VehjeScalar{ .tag = SCALAR_UNIT, .payload = 0 },
+        .boolean => |b| VehjeScalar{ .tag = SCALAR_BOOL, .payload = @intFromBool(b) },
+        .int => |n| VehjeScalar{ .tag = SCALAR_INT, .payload = n },
+        .closure => null,
+    };
+}
+
+/// The value a returned operand denotes.
+fn fromScalar(s: VehjeScalar) EvalError!Value {
+    return switch (s.tag) {
+        SCALAR_UNIT => Value.unit,
+        SCALAR_BOOL => Value{ .boolean = s.payload != 0 },
+        SCALAR_INT => Value{ .int = s.payload },
+        else => EvalError.Unsupported,
+    };
+}
 
 /// One environment binding: a binder's `Sym` bits, its value, and the binding
 /// it extends. A chain of these is an environment; capturing one is recording
@@ -168,7 +228,7 @@ fn readU32(bytes: []const u8, at: usize) EvalError!u32 {
 
 /// Evaluate node `idx` under the environment chain `cur`. Structural recursion
 /// over the finite arena.
-fn eval(img: *const Image, idx: u32, env: *Env, cur: u32) EvalError!Value {
+fn eval(img: *const Image, idx: u32, env: *Env, cur: u32, host: ?*const VehjeHost) EvalError!Value {
     switch (try img.word(idx, 0)) {
         TAG_LIT => return switch (try img.word(idx, 1)) {
             LIT_UNIT => Value.unit,
@@ -191,11 +251,11 @@ fn eval(img: *const Image, idx: u32, env: *Env, cur: u32) EvalError!Value {
                 // value produces captures a chain that already names it. The
                 // slot holds unit until the value is known, then takes it.
                 const slot = try env.push(name, Value.unit, cur);
-                env.slots[slot].val = try eval(img, value_ref, env, slot);
-                return eval(img, body_ref, env, slot);
+                env.slots[slot].val = try eval(img, value_ref, env, slot, host);
+                return eval(img, body_ref, env, slot, host);
             }
-            const v = try eval(img, value_ref, env, cur);
-            return eval(img, body_ref, env, try env.push(name, v, cur));
+            const v = try eval(img, value_ref, env, cur, host);
+            return eval(img, body_ref, env, try env.push(name, v, cur), host);
         },
         TAG_LAMBDA => return Value{ .closure = .{
             .param = try img.word(idx, 1),
@@ -206,42 +266,64 @@ fn eval(img: *const Image, idx: u32, env: *Env, cur: u32) EvalError!Value {
             const callee_ref = try img.word(idx, 1);
             const args_start = try img.word(idx, 2);
             const args_len = try img.word(idx, 3);
-            var f = try eval(img, callee_ref, env, cur);
+            var f = try eval(img, callee_ref, env, cur, host);
             // Multi-parameter lambdas desugar to nested `Lambda`, so a
             // multi-argument `Apply` is applied one argument at a time.
             var k: u32 = 0;
             while (k < args_len) : (k += 1) {
-                const arg = try eval(img, try img.pooled(args_start + k), env, cur);
+                const arg = try eval(img, try img.pooled(args_start + k), env, cur, host);
                 const c = switch (f) {
                     .closure => |c| c,
                     else => return EvalError.NotCallable,
                 };
-                f = try eval(img, c.body, env, try env.push(c.param, arg, c.env));
+                f = try eval(img, c.body, env, try env.push(c.param, arg, c.env), host);
             }
             return f;
         },
         TAG_IF => {
-            const c = try eval(img, try img.word(idx, 1), env, cur);
+            const c = try eval(img, try img.word(idx, 1), env, cur, host);
             const take = switch (c) {
                 .boolean => |b| b,
                 else => return EvalError.Unsupported,
             };
-            return eval(img, try img.word(idx, if (take) 2 else 3), env, cur);
+            return eval(img, try img.word(idx, if (take) 2 else 3), env, cur, host);
         },
-        // Project, Match, Iter, Interp, Raw, Handle land with their forms.
-        // Arithmetic is not a Core form: it arrives as a family operation
-        // through `Raw`, dispatched to a host-provided handler (the runtime
-        // half of the handler discipline), which is the next gate.
+        TAG_RAW => {
+            // A family operation. The runtime does not know what the family
+            // means; it evaluates the operands and hands them to whoever
+            // declared it, which is what keeps the framework family-free.
+            const h = host orelse return EvalError.NoHost;
+            const family = try img.word(idx, 1);
+            const args_start = try img.word(idx, 2);
+            const args_len = try img.word(idx, 3);
+            if (args_len > ARG_CAP) return EvalError.TooManyOperands;
+
+            var args: [ARG_CAP]VehjeScalar = undefined;
+            var k: u32 = 0;
+            // Left to right: a host call may have effects, so the order the
+            // operands are produced in is part of what the program means.
+            while (k < args_len) : (k += 1) {
+                const v = try eval(img, try img.pooled(args_start + k), env, cur, host);
+                args[k] = toScalar(v) orelse return EvalError.Unsupported;
+            }
+
+            var out: VehjeScalar = .{ .tag = SCALAR_UNIT, .payload = 0 };
+            if (h.call(h.userdata, family, &args, args_len, &out) != 0) {
+                return EvalError.HostFailed;
+            }
+            return fromScalar(out);
+        },
+        // Project, Match, Iter, Interp, and Handle land with their forms.
         else => return EvalError.Unsupported,
     }
 }
 
 /// Evaluate a serialized residual image from its header's root, with a
 /// caller-lent environment arena.
-pub fn evalImage(bytes: []const u8, slots: []Binding) EvalError!Value {
+pub fn evalImage(bytes: []const u8, slots: []Binding, host: ?*const VehjeHost) EvalError!Value {
     const img = try Image.parse(bytes);
     var env = Env{ .slots = slots };
-    return eval(&img, img.root, &env, ENV_NIL);
+    return eval(&img, img.root, &env, ENV_NIL, host);
 }
 
 export fn vehje_runtime_new() ?*anyopaque {
@@ -286,10 +368,11 @@ pub export fn vehje_runtime_execute(
     input: [*]const u8,
     len: usize,
     sink: ?*const VehjeSink,
+    host: ?*const VehjeHost,
 ) i32 {
     _ = rt;
     var slots: [1024]Binding = undefined;
-    const v = evalImage(input[0..len], slots[0..]) catch return VEHJE_RESULT_ERR;
+    const v = evalImage(input[0..len], slots[0..], host) catch return VEHJE_RESULT_ERR;
 
     // With no sink the host wanted only the outcome, so evaluating was the
     // whole job. With one, the value crosses back as a value image.

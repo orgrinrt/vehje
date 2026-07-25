@@ -21,6 +21,9 @@ const Binding = rt.Binding;
 const Value = rt.Value;
 const EvalError = rt.EvalError;
 const evalImage = rt.evalImage;
+const TAG_RAW = rt.TAG_RAW;
+const VehjeScalar = rt.VehjeScalar;
+const VehjeHost = rt.VehjeHost;
 
 fn putU32(buf: []u8, at: usize, w: u32) void {
     buf[at] = @truncate(w & 0xff);
@@ -81,6 +84,16 @@ const Build = struct {
         return self.node(TAG_APPLY, &.{ callee, start, @intCast(args.len) });
     }
 
+    /// A family operation over `args`, pooling the operand list.
+    fn raw(self: *Build, family: u32, args: []const u32) u32 {
+        const start = self.pool_n;
+        for (args) |a| {
+            self.pool[self.pool_n] = a;
+            self.pool_n += 1;
+        }
+        return self.node(TAG_RAW, &.{ family, start, @intCast(args.len) });
+    }
+
     /// Write the header and pool, returning the finished image.
     fn finish(self: *Build, root: u32) []const u8 {
         putU32(self.buf[0..], 0 * WORD, MAGIC);
@@ -101,7 +114,7 @@ const Build = struct {
 
 fn run(image: []const u8) EvalError!Value {
     var slots: [64]Binding = undefined;
-    return evalImage(image, slots[0..]);
+    return evalImage(image, slots[0..], null);
 }
 
 test "let and if evaluate to a value" {
@@ -196,7 +209,7 @@ test "exhausting the lent environment arena is reported, not overrun" {
     const root = b.let(1, b.int(1), mid);
     const image = b.finish(root);
     var slots: [2]Binding = undefined;
-    try std.testing.expectError(EvalError.EnvFull, evalImage(image, slots[0..]));
+    try std.testing.expectError(EvalError.EnvFull, evalImage(image, slots[0..], null));
 }
 
 // ── the value crossing ────────────────────────────────────────────────────
@@ -239,7 +252,7 @@ test "a produced value crosses back through the sink as a value image" {
 
     sink_refuses = false;
     const sink = testSink();
-    const rc = rt.vehje_runtime_execute(null, program.ptr, program.len, &sink);
+    const rc = rt.vehje_runtime_execute(null, program.ptr, program.len, &sink, null);
     try std.testing.expectEqual(rt.VEHJE_RESULT_OK, rc);
 
     const out = sink_buf[0..sink_len];
@@ -263,7 +276,7 @@ test "a closure is refused rather than partially written" {
 
     sink_refuses = false;
     const sink = testSink();
-    const rc = rt.vehje_runtime_execute(null, program.ptr, program.len, &sink);
+    const rc = rt.vehje_runtime_execute(null, program.ptr, program.len, &sink, null);
     try std.testing.expectEqual(rt.VEHJE_RESULT_ERR, rc);
     try std.testing.expectEqual(@as(usize, 0), sink_len);
 }
@@ -275,7 +288,7 @@ test "a sink that refuses its reservation is backpressure, not a crash" {
 
     sink_refuses = true;
     const sink = testSink();
-    const rc = rt.vehje_runtime_execute(null, program.ptr, program.len, &sink);
+    const rc = rt.vehje_runtime_execute(null, program.ptr, program.len, &sink, null);
     try std.testing.expectEqual(rt.VEHJE_RESULT_ERR, rc);
     try std.testing.expectEqual(@as(usize, 0), sink_len);
     sink_refuses = false;
@@ -285,5 +298,117 @@ test "no sink means the host wanted only the outcome" {
     var b = Build{};
     const root = b.int(1);
     const program = b.finish(root);
-    try std.testing.expectEqual(rt.VEHJE_RESULT_OK, rt.vehje_runtime_execute(null, program.ptr, program.len, null));
+    try std.testing.expectEqual(rt.VEHJE_RESULT_OK, rt.vehje_runtime_execute(null, program.ptr, program.len, null, null));
+}
+
+// ── family operations ─────────────────────────────────────────────────────
+
+/// A stand-in host implementing one family: integer addition over its operands.
+/// The runtime knows none of this, which is the point.
+const ADD_FAMILY: u32 = 1;
+
+/// The order operands were seen in, so left-to-right evaluation is observable.
+var seen: [8]i64 = undefined;
+var seen_n: usize = 0;
+var host_refuses: bool = false;
+
+fn addHost(
+    userdata: ?*anyopaque,
+    family: u32,
+    args: [*]const VehjeScalar,
+    argc: usize,
+    out: *VehjeScalar,
+) callconv(.c) i32 {
+    _ = userdata;
+    if (host_refuses or family != ADD_FAMILY) return -1;
+    var sum: i64 = 0;
+    var i: usize = 0;
+    while (i < argc) : (i += 1) {
+        if (seen_n < seen.len) {
+            seen[seen_n] = args[i].payload;
+            seen_n += 1;
+        }
+        sum += args[i].payload;
+    }
+    out.* = .{ .tag = rt.SCALAR_INT, .payload = sum };
+    return 0;
+}
+
+fn hostOf() VehjeHost {
+    seen_n = 0;
+    return .{ .call = addHost, .userdata = null };
+}
+
+fn runWithHost(image: []const u8, host: ?*const VehjeHost) EvalError!Value {
+    var slots: [64]Binding = undefined;
+    return evalImage(image, slots[0..], host);
+}
+
+test "a family operation reaches its handler and computes" {
+    // The whole point: the Core has no addition, and a program adds anyway.
+    var b = Build{};
+    const root = b.raw(ADD_FAMILY, &.{ b.int(2), b.int(3) });
+    host_refuses = false;
+    const h = hostOf();
+    try std.testing.expectEqual(Value{ .int = 5 }, try runWithHost(b.finish(root), &h));
+}
+
+test "operands reach the handler left to right" {
+    // A host call may have effects, so the order operands are produced in is
+    // part of what the program means, not an implementation detail.
+    var b = Build{};
+    const root = b.raw(ADD_FAMILY, &.{ b.int(10), b.int(20), b.int(30) });
+    host_refuses = false;
+    const h = hostOf();
+    _ = try runWithHost(b.finish(root), &h);
+    try std.testing.expectEqual(@as(usize, 3), seen_n);
+    try std.testing.expectEqual(@as(i64, 10), seen[0]);
+    try std.testing.expectEqual(@as(i64, 20), seen[1]);
+    try std.testing.expectEqual(@as(i64, 30), seen[2]);
+}
+
+test "a handler's result is an ordinary value, so operations nest" {
+    // add(add(1, 2), 3) => 6
+    var b = Build{};
+    const inner = b.raw(ADD_FAMILY, &.{ b.int(1), b.int(2) });
+    const root = b.raw(ADD_FAMILY, &.{ inner, b.int(3) });
+    host_refuses = false;
+    const h = hostOf();
+    try std.testing.expectEqual(Value{ .int = 6 }, try runWithHost(b.finish(root), &h));
+}
+
+test "a family operation composes with the Core forms" {
+    // let x = add(2, 3) in if true then x else 0  =>  5
+    var b = Build{};
+    const x: u32 = 99;
+    const sum = b.raw(ADD_FAMILY, &.{ b.int(2), b.int(3) });
+    const body = b.if_(b.boolean(true), b.varRef(x), b.int(0));
+    const root = b.let(x, sum, body);
+    host_refuses = false;
+    const h = hostOf();
+    try std.testing.expectEqual(Value{ .int = 5 }, try runWithHost(b.finish(root), &h));
+}
+
+test "a family operation with no host is refused, not crashed" {
+    var b = Build{};
+    const root = b.raw(ADD_FAMILY, &.{b.int(1)});
+    try std.testing.expectError(EvalError.NoHost, runWithHost(b.finish(root), null));
+}
+
+test "a host that refuses an operation is distinguishable from one that answers" {
+    var b = Build{};
+    const root = b.raw(ADD_FAMILY, &.{b.int(1)});
+    host_refuses = true;
+    const h = hostOf();
+    try std.testing.expectError(EvalError.HostFailed, runWithHost(b.finish(root), &h));
+    host_refuses = false;
+}
+
+test "a closure operand is refused, having no scalar form" {
+    var b = Build{};
+    const lam = b.lambda(1, b.int(1));
+    const root = b.raw(ADD_FAMILY, &.{lam});
+    host_refuses = false;
+    const h = hostOf();
+    try std.testing.expectError(EvalError.Unsupported, runWithHost(b.finish(root), &h));
 }

@@ -25,7 +25,39 @@ pub type NewFn = extern "C" fn() -> *mut c_void; // lint:allow(no-bare-numeric) 
 pub type FreeFn = extern "C" fn(*mut c_void); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the C ABI opaque handle is the contract; tracked: #207
 /// `vehje_runtime_execute`: evaluate a residual, committing any produced value
 /// through the sink.
-pub type ExecuteFn = extern "C" fn(*mut c_void, *const u8, usize, *const Sink) -> i32; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the C ABI entry signature is the contract; tracked: #207
+pub type ExecuteFn = extern "C" fn(*mut c_void, *const u8, usize, *const Sink, *const Host) -> i32; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the C ABI entry signature is the contract; tracked: #207
+
+/// One operand crossing to a family handler: a kind tag and a payload word.
+///
+/// The tag values are the value image's scalar tags, so one vocabulary
+/// describes a scalar wherever it appears. A compound operand has no
+/// representation here yet.
+#[repr(C)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub struct Scalar {
+    /// The scalar kind: unit, boolean, or integer.
+    pub tag: u32, // lint:allow(no-public-raw-field) lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the C ABI operand record is the contract; tracked: #207
+    /// The payload word.
+    pub payload: i64, // lint:allow(no-public-raw-field) lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the C ABI operand record is the contract; tracked: #207
+}
+
+/// Service one family operation, writing the produced operand through `out`
+/// and returning zero on success.
+pub type HostFn = extern "C" fn(*mut c_void, u32, *const Scalar, usize, *mut Scalar) -> i32; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the C ABI host callback is the contract; tracked: #207
+
+/// The host a family operation is dispatched to.
+///
+/// One callback plus opaque userdata, mirroring the sink: the host owns the
+/// context, and the runtime retains nothing past the call. The driver carries
+/// this record through and interprets no family itself.
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct Host {
+    /// Service one family operation.
+    pub call: HostFn,
+    /// Host-owned opaque context, passed back to the callback.
+    pub userdata: *mut c_void, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI opaque userdata pointer; tracked: #207
+}
 
 /// The host's transfer sink, mirroring `vehje-runtime-abi`'s `VehjeSink`.
 ///
@@ -103,6 +135,20 @@ impl Runtime {
     /// `vehje_runtime_abi::ValueImage`, which bounds-checks an untrusted image;
     /// this crate adds no second decoder.
     pub fn execute(&self, residual: &[u8], out: &mut [u8]) -> Outcome<USize, DriverError> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the residual and the lent output buffer are FFI byte spans; tracked: #207
+        self.run(residual, out, core::ptr::null())
+    }
+
+    /// Evaluate `residual` with `host` servicing its family operations.
+    ///
+    /// A program that uses no family needs no host, which is why [`execute`]
+    /// exists alongside this and is not a lesser path.
+    ///
+    /// [`execute`]: Runtime::execute
+    pub fn execute_with_host(&self, residual: &[u8], out: &mut [u8], host: &Host) -> Outcome<USize, DriverError> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the residual and the lent output buffer are FFI byte spans; tracked: #207
+        self.run(residual, out, host)
+    }
+
+    fn run(&self, residual: &[u8], out: &mut [u8], host: *const Host) -> Outcome<USize, DriverError> { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the residual and the lent output buffer are FFI byte spans; tracked: #207
         let mut ctx = SinkCtx { buf: out.as_mut_ptr(), cap: USize(out.len()), written: USize(0) };
         let sink = Sink {
             reserve: driver_reserve,
@@ -111,7 +157,7 @@ impl Runtime {
         };
 
         let handle = (self.entries.new)();
-        let code = (self.entries.execute)(handle, residual.as_ptr(), residual.len(), &sink);
+        let code = (self.entries.execute)(handle, residual.as_ptr(), residual.len(), &sink, host);
         (self.entries.free)(handle);
 
         if code != 0 {
