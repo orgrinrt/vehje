@@ -971,3 +971,90 @@ test "match composes with the standard library" {
         \\size_class([1, 2, 3, 4])
     ));
 }
+
+test "a while loop accumulates through rebinding" {
+    try std.testing.expectEqual(@as(i64, 10), try run(
+        \\let mut acc = 0;
+        \\let mut i = 0;
+        \\while i < 5 {
+        \\  acc += i;
+        \\  i += 1;
+        \\}
+        \\acc
+    ));
+}
+
+test "a while loop walks a sequence" {
+    try std.testing.expectEqual(@as(i64, 10), try runWithStd(
+        \\let s = [1, 2, 3, 4];
+        \\let mut total = 0;
+        \\let mut i = 0;
+        \\while i < len(s) {
+        \\  total += at(s, i);
+        \\  i += 1;
+        \\}
+        \\total
+    ));
+}
+
+test "a loop that never runs leaves its state alone" {
+    try std.testing.expectEqual(@as(i64, 99), try run(
+        \\let mut x = 99;
+        \\let mut i = 5;
+        \\while i < 5 {
+        \\  x += 1;
+        \\  i += 1;
+        \\}
+        \\x
+    ));
+}
+
+test "a loop body may bind its own locals" {
+    // i runs 0..3, so step is 2,3,4,5 and the total is 14.
+    try std.testing.expectEqual(@as(i64, 14), try run(
+        \\let mut acc = 0;
+        \\let mut i = 0;
+        \\while i < 4 {
+        \\  let step = i + 2;
+        \\  acc += step;
+        \\  i += 1;
+        \\}
+        \\acc
+    ));
+}
+
+test "minus-assign counts down" {
+    try std.testing.expectEqual(@as(i64, 6), try run(
+        \\let mut n = 3;
+        \\let mut acc = 0;
+        \\while 0 < n {
+        \\  acc += n;
+        \\  n -= 1;
+        \\}
+        \\acc
+    ));
+}
+
+test "assigning a non-mutable binding is refused" {
+    try std.testing.expectError(cl.Error.NotMutable, run(
+        \\let x = 1;
+        \\let mut i = 0;
+        \\while i < 2 {
+        \\  x = 5;
+        \\  i += 1;
+        \\}
+        \\x
+    ));
+}
+
+test "the loop's state keeps its type" {
+    try std.testing.expectError(chk.Error.Mismatch, run(
+        \\let mut acc = 0;
+        \\let mut i = 0;
+        \\while i < 2 {
+        \\  acc = "text";
+        \\  i += 1;
+        \\}
+        \\acc
+    ));
+}

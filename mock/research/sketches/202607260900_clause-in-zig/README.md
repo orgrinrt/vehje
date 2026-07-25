@@ -230,6 +230,41 @@ same node arena as expressions with their own tags, which is a sketch choice tha
 works and is exactly the kind of thing that round should weigh rather than
 inherit.
 
+## Loops, without mutation
+
+```
+let mut acc = 0;
+let mut i = 0;
+while i < 5 { acc += i; i += 1; }
+acc                                              ==> 10
+
+let x = 1; ... x = 5;                            refused, NotMutable
+let mut acc = 0; ... acc = "text";               refused, Mismatch
+```
+
+`while` needs no new Core form. It becomes a recursive function of exactly the
+mutable locals in scope:
+
+```
+while c { body } rest
+  =>  let rec L = \x1..\xn. if c { body; L(x1..xn) } else { rest } in L(x1..xn)
+```
+
+Assignments inside the body are `let` rebindings that shadow the parameters, so
+the tail call reads the updated values with no renaming at all: **shadowing is
+the state update.** That is the census's resolution of `mut` made operational.
+A local reassignment is rebinding; only a genuine place, a field someone else can
+observe, would need an effect, and this subset has none.
+
+Two consequences worth naming. The loop's continuation lives in the `else`
+branch, so the whole thing is one tail-recursive function rather than a loop plus
+a follow-on. And the state keeps its type across iterations, so reassigning a
+counter to a string is refused rather than quietly widening.
+
+**Loops are bounded by the evaluator's stack.** Each iteration is a call, and the
+evaluator does not yet trampoline (task #49), so a long loop overflows where a
+real one would not. The desugaring is right; the evaluator has not caught up.
+
 ## What it does not establish, stated plainly
 
 **This is a slice of the grammar, and the bar is the whole grammar.** It has
@@ -238,8 +273,8 @@ integers, strings, names, `let`, `fn` with recursion and closures and currying,
 three-operation prelude, single-method traits with impls, coherence, inferred
 bounds, associated types, and pattern matching. It does not have multi-method
 traits, supertraits, or-patterns, ranges, guards, real exhaustiveness checking,
-macros, loops, modules, `use`, attributes, a separate resolve pass, or
-monomorphisation, nor the rest of the surface the
+macros, `loop` and `for`, modules, `use`, attributes, a separate resolve pass,
+or monomorphisation, nor the rest of the surface the
 normative grammar (`mock/research/original-docs/CLAUSE_EBNF.md`) requires.
 Nothing is done until the full intended language is expressible.
 

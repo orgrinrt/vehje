@@ -101,6 +101,9 @@ pub const ImplDecl = struct { trait_idx: u32, for_ty: TyName, method_sym: u32, a
 /// from zero, so the two ranges cannot meet.
 pub const IMPL_SYM_BASE: u32 = 0x4000_0000;
 
+/// Loop-function binders. Disjoint from both source names and impl methods.
+pub const LOOP_SYM_BASE: u32 = 0x5000_0000;
+
 pub const Error = error{
     UnexpectedByte,
     UnexpectedToken,
@@ -116,11 +119,12 @@ pub const Error = error{
     UnknownType,
     DuplicateImpl,
     NonExhaustive,
+    NotMutable,
 };
 
 // ---------------------------------------------------------------- lexer
 
-const Kind = enum { int, str_lit, ident, dot, colon, lbracket, rbracket, arrow, kw_trait, kw_impl, kw_for, kw_type, kw_match, fat_arrow, underscore, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
+const Kind = enum { int, str_lit, ident, dot, colon, lbracket, rbracket, arrow, kw_trait, kw_impl, kw_for, kw_type, kw_match, kw_while, kw_mut, fat_arrow, underscore, plus_assign, minus_assign, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
 
 const Token = struct { kind: Kind, start: usize, end: usize, value: i64 };
 
@@ -177,6 +181,10 @@ const Lexer = struct {
                 .kw_type
             else if (std.mem.eql(u8, text, "match"))
                 .kw_match
+            else if (std.mem.eql(u8, text, "while"))
+                .kw_while
+            else if (std.mem.eql(u8, text, "mut"))
+                .kw_mut
             else if (std.mem.eql(u8, text, "_"))
                 .underscore
             else if (std.mem.eql(u8, text, "if"))
@@ -193,6 +201,14 @@ const Lexer = struct {
             if (self.i >= self.src.len) return Error.Unterminated;
             self.i += 1;
             return .{ .kind = .str_lit, .start = start, .end = self.i, .value = 0 };
+        }
+        if (c == '+' and self.i + 1 < self.src.len and self.src[self.i + 1] == '=') {
+            self.i += 2;
+            return .{ .kind = .plus_assign, .start = start, .end = self.i, .value = 0 };
+        }
+        if (c == '-' and self.i + 1 < self.src.len and self.src[self.i + 1] == '=') {
+            self.i += 2;
+            return .{ .kind = .minus_assign, .start = start, .end = self.i, .value = 0 };
         }
         if (c == '=' and self.i + 1 < self.src.len and self.src[self.i + 1] == '>') {
             self.i += 2;
@@ -494,6 +510,13 @@ pub const Parser = struct {
     /// literal in ordinary expression position. Cleared while parsing a
     /// condition, which is the same resolution Rust uses.
     allow_record: bool = true,
+    /// The mutable locals in scope, innermost last. A `while` becomes a
+    /// recursive function over exactly these, so the list is the loop's state.
+    muts: [16]u32 = undefined,
+    nmuts: u32 = 0,
+    /// Loop functions get binders from their own range, disjoint from source
+    /// names, for the same reason impl methods do.
+    nloops: u32 = 0,
 
     pub fn init(src: []const u8, b: *Builder, names: *Names, traits: []TraitDecl, impls: []ImplDecl) Error!Parser {
         var lx = Lexer{ .src = src };
@@ -688,14 +711,59 @@ pub const Parser = struct {
             // to itself resolve rather than escaping to an outer binding.
             return self.b.letRec(name, f, rest);
         }
+        if (self.tok.kind == .kw_while) {
+            // `while c { body } rest` becomes a recursive function of the
+            // mutable locals:
+            //
+            //   let rec L = \x1..\xn. if c { body; L(x1..xn) } else { rest }
+            //   in L(x1..xn)
+            //
+            // Assignments inside the body are `let` rebindings that shadow the
+            // parameters, so the tail call reads the updated values without any
+            // renaming: shadowing is the state update.
+            try self.bump();
+            const saved_r = self.allow_record;
+            self.allow_record = false;
+            const cond = try self.expression();
+            self.allow_record = saved_r;
+            try self.expect(.lbrace);
+
+            const loop_sym = LOOP_SYM_BASE + self.nloops;
+            self.nloops += 1;
+            const n = self.nmuts;
+
+            const body = try self.loopBody(loop_sym, n);
+            try self.expect(.rbrace);
+            const rest = try self.program();
+            const branch = try self.b.cond(cond, body, rest);
+
+            var f = branch;
+            var k = n;
+            while (k > 0) {
+                k -= 1;
+                f = try self.b.lambda(self.muts[k], f);
+            }
+            const call = try self.loopCall(loop_sym, n);
+            return self.b.letRec(loop_sym, f, call);
+        }
         if (self.tok.kind == .kw_let) {
             try self.bump();
+            var is_mut = false;
+            if (self.tok.kind == .kw_mut) {
+                try self.bump();
+                is_mut = true;
+            }
             if (self.tok.kind != .ident) return Error.UnexpectedToken;
             const name = try self.names.intern(self.lx.src[self.tok.start..self.tok.end]);
             try self.bump();
             try self.expect(.assign);
             const value = try self.expression();
             try self.expect(.semi);
+            if (is_mut) {
+                if (self.nmuts == self.muts.len) return Error.TooManyParams;
+                self.muts[self.nmuts] = name;
+                self.nmuts += 1;
+            }
             const body = try self.program();
             return self.b.let(name, value, body);
         }
@@ -742,6 +810,73 @@ pub const Parser = struct {
     /// Call syntax, applied left to right so `f(a)(b)` and `f(a, b)` produce the
     /// same Core, which is what makes partial application fall out rather than
     /// being a separate feature.
+    fn isMut(self: *const Parser, sym: u32) bool {
+        var i: u32 = 0;
+        while (i < self.nmuts) : (i += 1) {
+            if (self.muts[i] == sym) return true;
+        }
+        return false;
+    }
+
+    /// The recursive call that closes a loop body, passing the mutable locals as
+    /// they currently stand. Shadowing means "as they currently stand" is
+    /// whatever the body's assignments rebound them to.
+    fn loopCall(self: *Parser, loop_sym: u32, n: u32) Error!u32 {
+        var args: [16]u32 = undefined;
+        var j: u32 = 0;
+        while (j < n) : (j += 1) args[j] = try self.b.variable(self.muts[j]);
+        var call = try self.b.variable(loop_sym);
+        j = 0;
+        while (j < n) : (j += 1) call = try self.b.apply(call, args[j .. j + 1]);
+        return call;
+    }
+
+    /// A loop body: statements, then the recursive call. An assignment is a
+    /// `let` that shadows, which is the census's resolution of `mut`: a local
+    /// reassignment is rebinding, and only a genuine place would need an effect.
+    fn loopBody(self: *Parser, loop_sym: u32, n: u32) Error!u32 {
+        if (self.tok.kind == .rbrace) return self.loopCall(loop_sym, n);
+        if (self.tok.kind == .kw_let) {
+            try self.bump();
+            if (self.tok.kind == .kw_mut) try self.bump();
+            if (self.tok.kind != .ident) return Error.UnexpectedToken;
+            const name = try self.names.intern(self.lx.src[self.tok.start..self.tok.end]);
+            try self.bump();
+            try self.expect(.assign);
+            const value = try self.expression();
+            try self.expect(.semi);
+            return self.b.let(name, value, try self.loopBody(loop_sym, n));
+        }
+        if (self.tok.kind == .ident) {
+            // Two-token lookahead by save and restore, because an identifier at
+            // statement position may open an assignment or an expression.
+            const save_lx = self.lx;
+            const save_tok = self.tok;
+            const name = try self.names.intern(self.lx.src[self.tok.start..self.tok.end]);
+            try self.bump();
+            const k = self.tok.kind;
+            if (k == .assign or k == .plus_assign or k == .minus_assign) {
+                if (!self.isMut(name)) return Error.NotMutable;
+                try self.bump();
+                const rhs = try self.expression();
+                try self.expect(.semi);
+                const value = switch (k) {
+                    .plus_assign => try self.b.arith(OP_ADD, try self.b.variable(name), rhs),
+                    .minus_assign => try self.b.arith(OP_SUB, try self.b.variable(name), rhs),
+                    else => rhs,
+                };
+                return self.b.let(name, value, try self.loopBody(loop_sym, n));
+            }
+            self.lx = save_lx;
+            self.tok = save_tok;
+        }
+        // A bare expression statement still binds, so its effects keep their
+        // place in the order even though its value is discarded.
+        const e = try self.expression();
+        try self.expect(.semi);
+        return self.b.let(try self.names.intern("_"), e, try self.loopBody(loop_sym, n));
+    }
+
     /// One pattern. Deliberately small: a literal, a binding, a wildcard, or a
     /// record of sub-patterns. Alternatives, ranges, and rest are the obvious
     /// next ones and are not here.
