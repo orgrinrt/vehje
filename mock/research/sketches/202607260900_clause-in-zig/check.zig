@@ -27,6 +27,9 @@ pub const Error = error{
     OutOfTypes,
     TooManyVars,
     EnvFull,
+    NoImpl,
+    AmbiguousConstraint,
+    TooManyConstraints,
 };
 
 pub const NONE: u32 = 0xFFFF_FFFF;
@@ -51,6 +54,11 @@ pub const Ty = union(enum) {
 /// One field of a record type: its name, and the type at that name.
 pub const Field = struct { key: []const u8, ty: u32 };
 
+/// An obligation: the type at `tvar` must implement `trait_idx`, and the node
+/// that demanded it is `node`, so the discharge can be recorded where dispatch
+/// will look for it.
+pub const Constraint = struct { ty: u32, trait_idx: u32, node: u32 };
+
 /// A binding's type, plus how many leading variables are quantified. A scheme
 /// with `quantified == 0` is a plain monotype; anything higher is a generic.
 const Scheme = struct { ty: u32, quantified: u32, first: u32 };
@@ -67,6 +75,16 @@ pub const Ctx = struct {
     nenv: u32 = 0,
     fields: []Field,
     nf: u32 = 0,
+    /// The trait and impl tables the parser collected. The checker reads them;
+    /// it knows nothing about any particular trait.
+    traits: []const cl.TraitDecl = &.{},
+    impls: []const cl.ImplDecl = &.{},
+    /// Per node: which impl a trait-method reference resolved to, or NONE. This
+    /// is the whole of dispatch. The evaluator reads it and never inspects a
+    /// value's shape, so types still erase.
+    resolved: []u32 = &.{},
+    pending: []Constraint = &.{},
+    npend: u32 = 0,
 
     fn alloc(self: *Ctx, t: Ty) Error!u32 {
         if (self.n >= self.types.len) return Error.OutOfTypes;
@@ -191,12 +209,20 @@ pub const Ctx = struct {
     /// generic binding do not constrain each other. This is where a generic
     /// becomes usable at more than one type.
     fn instantiate(self: *Ctx, s: Scheme) Error!u32 {
-        if (s.quantified == 0) return s.ty;
+        return (try self.instantiateSelf(s)).ty;
+    }
+
+    /// Instantiate, and also hand back the fresh variable standing for the
+    /// scheme's first quantified variable. For a trait method that is `Self`,
+    /// which is the type an obligation is about.
+    fn instantiateSelf(self: *Ctx, s: Scheme) Error!struct { ty: u32, first_var: u32 } {
+        if (s.quantified == 0) return .{ .ty = s.ty, .first_var = s.ty };
         var map_buf: [32]u32 = undefined;
         if (s.quantified > map_buf.len) return Error.TooManyVars;
         var i: u32 = 0;
         while (i < s.quantified) : (i += 1) map_buf[i] = try self.fresh();
-        return self.copy(s.ty, s.first, s.quantified, map_buf[0..s.quantified]);
+        const ty = try self.copy(s.ty, s.first, s.quantified, map_buf[0..s.quantified]);
+        return .{ .ty = ty, .first_var = map_buf[0] };
     }
 
     fn copy(self: *Ctx, t: u32, first: u32, count: u32, map: []const u32) Error!u32 {
@@ -233,6 +259,66 @@ pub const Ctx = struct {
         };
     }
 };
+
+/// The concrete type a resolved type index names, in the trait table's
+/// vocabulary, or null if it is still a variable or has no name there.
+fn tyNameOf(ctx: *const Ctx, t: u32) ?cl.TyName {
+    return switch (ctx.types[ctx.resolve(t)]) {
+        .int => .int,
+        .boolean => .boolean,
+        .str => .str,
+        else => null,
+    };
+}
+
+/// Build a trait method's scheme: one quantified variable standing for `Self`,
+/// the declared parameters curried, and the declared result.
+fn methodScheme(ctx: *Ctx, t: cl.TraitDecl) Error!struct { ty: u32, first: u32 } {
+    const first = ctx.nvars;
+    const self_ty = try ctx.fresh();
+    const pick = struct {
+        fn f(c: *Ctx, n: cl.TyName, sv: u32) Error!u32 {
+            return switch (n) {
+                .self_ty => sv,
+                .int => c.alloc(.int),
+                .boolean => c.alloc(.boolean),
+                .str => c.alloc(.str),
+            };
+        }
+    }.f;
+    var ty = try pick(ctx, t.ret, self_ty);
+    var i: u8 = t.nparams;
+    while (i > 0) {
+        i -= 1;
+        const p = try pick(ctx, t.params[i], self_ty);
+        ty = try ctx.alloc(.{ .func = .{ .p = p, .r = ty } });
+    }
+    return .{ .ty = ty, .first = first };
+}
+
+/// A trait method's declared type with `Self` replaced by a concrete type,
+/// which is what an impl for that type must have.
+fn declaredType(ctx: *Ctx, t: cl.TraitDecl, for_ty: cl.TyName) Error!u32 {
+    const pick = struct {
+        fn f(c: *Ctx, n: cl.TyName, sv: cl.TyName) Error!u32 {
+            const eff = if (n == .self_ty) sv else n;
+            return switch (eff) {
+                .int => c.alloc(.int),
+                .boolean => c.alloc(.boolean),
+                .str => c.alloc(.str),
+                .self_ty => Error.Unsupported,
+            };
+        }
+    }.f;
+    var ty = try pick(ctx, t.ret, for_ty);
+    var i: u8 = t.nparams;
+    while (i > 0) {
+        i -= 1;
+        const p = try pick(ctx, t.params[i], for_ty);
+        ty = try ctx.alloc(.{ .func = .{ .p = p, .r = ty } });
+    }
+    return ty;
+}
 
 /// The arithmetic family's operation types, which in the real stage arrive as
 /// part of the same signature data that carries the operation bodies. The
@@ -290,7 +376,22 @@ fn infer(img: *const Image, idx: u32, ctx: *Ctx, cur: u32) Error!u32 {
             cl.LIT_STR => ctx.alloc(.str),
             else => Error.Unsupported,
         },
-        cl.TAG_VAR => return ctx.instantiate(try ctx.lookup(try img.word(idx, 1), cur)),
+        cl.TAG_VAR => {
+            const sym = try img.word(idx, 1);
+            const inst = try ctx.instantiateSelf(try ctx.lookup(sym, cur));
+            var ti: u32 = 0;
+            while (ti < ctx.traits.len) : (ti += 1) {
+                if (ctx.traits[ti].method_sym != sym) continue;
+                // A reference to a trait method raises an obligation about the
+                // type it was used at, recorded against this node so dispatch
+                // can be written back here.
+                if (ctx.npend == ctx.pending.len) return Error.TooManyConstraints;
+                ctx.pending[ctx.npend] = .{ .ty = inst.first_var, .trait_idx = ti, .node = idx };
+                ctx.npend += 1;
+                break;
+            }
+            return inst.ty;
+        },
         cl.TAG_LET => {
             const rec = (try img.word(idx, 1)) != 0;
             const name = try img.word(idx, 2);
@@ -311,7 +412,33 @@ fn infer(img: *const Image, idx: u32, ctx: *Ctx, cur: u32) Error!u32 {
             // Generalise the variables this binding introduced. A binding whose
             // type still mentions only its own fresh variables is generic in
             // them, which is what makes one definition usable at many types.
-            const gen = ctx.nvars - mark;
+            // An impl's method must have the type its trait declared, at the
+            // type it is implemented for. Without this an impl body could be
+            // anything and the call site would still type-check against the
+            // trait's signature, which is a hole rather than a leniency.
+            if (name >= cl.IMPL_SYM_BASE) {
+                const ii = name - cl.IMPL_SYM_BASE;
+                if (ii < ctx.impls.len) {
+                    const im = ctx.impls[ii];
+                    const want = try declaredType(ctx, ctx.traits[im.trait_idx], im.for_ty);
+                    try ctx.unify(vt, want);
+                }
+            }
+            var gen = ctx.nvars - mark;
+            // A binding whose body raised an obligation stays monomorphic in the
+            // variable that obligation is about. Generalising it would let two
+            // uses pick different impls with nothing recording which, and the
+            // single `resolved` slot per node could not hold both. Full
+            // generality needs specialisation, which is a later pass.
+            var ci: u32 = 0;
+            while (ci < ctx.npend) : (ci += 1) {
+                switch (ctx.types[ctx.resolve(ctx.pending[ci].ty)]) {
+                    .tvar => |v| if (v >= mark) {
+                        gen = 0;
+                    },
+                    else => {},
+                }
+            }
             const body_scope = try ctx.push(name, .{ .ty = vt, .quantified = gen, .first = mark }, cur);
             return infer(img, try img.word(idx, 4), ctx, body_scope);
         },
@@ -439,11 +566,47 @@ fn infer(img: *const Image, idx: u32, ctx: *Ctx, cur: u32) Error!u32 {
     }
 }
 
-/// Infer the program's type, refusing an ill-typed one.
+/// Infer the program's type, refusing an ill-typed one, and discharge every
+/// trait obligation it raised.
 pub fn check(image: []const u8, ctx: *Ctx) Error!u32 {
     const img = try Image.parse(image);
-    const t = try infer(&img, img.root, ctx, NONE);
+    // Trait methods are in scope everywhere, as constrained schemes. A method is
+    // generic in Self; the constraint is what a bound is, carried alongside the
+    // quantifier rather than as separate machinery.
+    var scope: u32 = NONE;
+    var i: u32 = 0;
+    while (i < ctx.traits.len) : (i += 1) {
+        const ms = try methodScheme(ctx, ctx.traits[i]);
+        scope = try ctx.push(
+            ctx.traits[i].method_sym,
+            .{ .ty = ms.ty, .quantified = ctx.nvars - ms.first, .first = ms.first },
+            scope,
+        );
+    }
+    const t = try infer(&img, img.root, ctx, scope);
+    try discharge(ctx);
     return ctx.resolve(t);
+}
+
+/// Every obligation must name a concrete type with an impl. An obligation whose
+/// variable never resolved is ambiguous rather than false: the program did not
+/// say enough, and guessing would be unsound.
+fn discharge(ctx: *Ctx) Error!void {
+    var i: u32 = 0;
+    while (i < ctx.npend) : (i += 1) {
+        const c = ctx.pending[i];
+        const tn = tyNameOf(ctx, c.ty) orelse return Error.AmbiguousConstraint;
+        var j: u32 = 0;
+        var found = false;
+        while (j < ctx.impls.len) : (j += 1) {
+            if (ctx.impls[j].trait_idx == c.trait_idx and ctx.impls[j].for_ty == tn) {
+                ctx.resolved[c.node] = ctx.impls[j].method_sym;
+                found = true;
+                break;
+            }
+        }
+        if (!found) return Error.NoImpl;
+    }
 }
 
 // ---------------------------------------------------------------- tests
@@ -461,13 +624,28 @@ fn typeOf(src: []const u8) !Shape {
     var env: [4096]TyBinding = undefined;
     var fields: [4096]Field = undefined;
 
+    var traits: [32]cl.TraitDecl = undefined;
+    var impls: [64]cl.ImplDecl = undefined;
+    var resolved: [8192]u32 = undefined;
+    var pending: [1024]Constraint = undefined;
+
     var b = cl.Builder{ .nodes = &node_buf, .pool = &pool_buf, .blob = &blob_buf };
     var names = cl.Names{ .buf = &name_buf };
-    var p = try cl.Parser.init(src, &b, &names);
+    var p = try cl.Parser.init(src, &b, &names, &traits, &impls);
     const root = try p.program();
     const len = try cl.writeImage(&b, root, &image);
 
-    var ctx = Ctx{ .types = &types, .subst = &subst, .env = &env, .fields = &fields };
+    @memset(resolved[0..b.n], NONE);
+    var ctx = Ctx{
+        .types = &types,
+        .subst = &subst,
+        .env = &env,
+        .fields = &fields,
+        .traits = traits[0..p.ntraits],
+        .impls = impls[0..p.nimpls],
+        .resolved = resolved[0..b.n],
+        .pending = &pending,
+    };
     const t = try check(image[0..len], &ctx);
     return switch (ctx.types[t]) {
         .int => .int,

@@ -144,6 +144,9 @@ pub const Env = struct {
     /// record fields have one.
     vals: []Value,
     nval: u32 = 0,
+    /// Per node, the impl binder a trait-method reference resolved to, or NONE.
+    /// Written by the checker, read here. This is the whole of dispatch.
+    resolved: []const u32 = &.{},
 
     fn push(self: *Env, sym: u32, val: Value, parent: u32) Error!u32 {
         if (self.n >= self.slots.len) return Error.EnvFull;
@@ -226,7 +229,16 @@ fn evalNode(img: *const Image, idx: u32, env: *Env, cur: u32) Error!Value {
             cl.LIT_STR => return Value{ .str = try img.blob(try img.word(idx, 2), try img.word(idx, 3)) },
             else => return Error.Unsupported,
         },
-        cl.TAG_VAR => return env.lookup(try img.word(idx, 1), cur),
+        cl.TAG_VAR => {
+            // Dispatch: if the checker resolved this reference to an impl, the
+            // impl's binder is what to look up. The value's shape is never
+            // inspected, so types still erase.
+            const sym = if (env.resolved.len > idx and env.resolved[idx] != chk.NONE)
+                env.resolved[idx]
+            else
+                try img.word(idx, 1);
+            return env.lookup(sym, cur);
+        },
         cl.TAG_LET => {
             const rec = (try img.word(idx, 1)) != 0;
             const name = try img.word(idx, 2);
@@ -378,9 +390,13 @@ pub fn run(src: []const u8) !i64 {
     var recs: [2048]RecEntry = undefined;
     var vals: [8192]Value = undefined;
 
+    var traits: [32]cl.TraitDecl = undefined;
+    var impls: [64]cl.ImplDecl = undefined;
+    var resolved: [8192]u32 = undefined;
+
     var b = cl.Builder{ .nodes = &node_buf, .pool = &pool_buf, .blob = &blob_buf };
     var names = cl.Names{ .buf = &name_buf };
-    var p = try cl.Parser.init(src, &b, &names);
+    var p = try cl.Parser.init(src, &b, &names, &traits, &impls);
     const root = try p.program();
     const len = try cl.writeImage(&b, root, &image);
 
@@ -393,11 +409,22 @@ pub fn run(src: []const u8) !i64 {
     var subst: [8192]u32 = undefined;
     var tenv: [4096]chk.TyBinding = undefined;
     var tfields: [4096]chk.Field = undefined;
-    var ctx = chk.Ctx{ .types = &types, .subst = &subst, .env = &tenv, .fields = &tfields };
+    var pending: [1024]chk.Constraint = undefined;
+    @memset(resolved[0..b.n], chk.NONE);
+    var ctx = chk.Ctx{
+        .types = &types,
+        .subst = &subst,
+        .env = &tenv,
+        .fields = &tfields,
+        .traits = traits[0..p.ntraits],
+        .impls = impls[0..p.nimpls],
+        .resolved = resolved[0..b.n],
+        .pending = &pending,
+    };
     _ = try chk.check(image[0..len], &ctx);
 
     const img = try Image.parse(image[0..len]);
-    var env = Env{ .slots = &slots, .recs = &recs, .vals = &vals };
+    var env = Env{ .slots = &slots, .recs = &recs, .vals = &vals, .resolved = resolved[0..b.n] };
     return (try evalNode(&img, img.root, &env, ENV_NIL)).asInt();
 }
 
@@ -430,9 +457,13 @@ pub fn runStr(src: []const u8, out: []u8) ![]const u8 {
     var recs: [2048]RecEntry = undefined;
     var vals: [8192]Value = undefined;
 
+    var traits: [32]cl.TraitDecl = undefined;
+    var impls: [64]cl.ImplDecl = undefined;
+    var resolved: [8192]u32 = undefined;
+
     var b = cl.Builder{ .nodes = &node_buf, .pool = &pool_buf, .blob = &blob_buf };
     var names = cl.Names{ .buf = &name_buf };
-    var p = try cl.Parser.init(src, &b, &names);
+    var p = try cl.Parser.init(src, &b, &names, &traits, &impls);
     const root = try p.program();
     const len = try cl.writeImage(&b, root, &image);
 
@@ -440,11 +471,22 @@ pub fn runStr(src: []const u8, out: []u8) ![]const u8 {
     var subst: [8192]u32 = undefined;
     var tenv: [4096]chk.TyBinding = undefined;
     var tfields: [4096]chk.Field = undefined;
-    var ctx = chk.Ctx{ .types = &types, .subst = &subst, .env = &tenv, .fields = &tfields };
+    var pending: [1024]chk.Constraint = undefined;
+    @memset(resolved[0..b.n], chk.NONE);
+    var ctx = chk.Ctx{
+        .types = &types,
+        .subst = &subst,
+        .env = &tenv,
+        .fields = &tfields,
+        .traits = traits[0..p.ntraits],
+        .impls = impls[0..p.nimpls],
+        .resolved = resolved[0..b.n],
+        .pending = &pending,
+    };
     _ = try chk.check(image[0..len], &ctx);
 
     const img = try Image.parse(image[0..len]);
-    var env = Env{ .slots = &slots, .recs = &recs, .vals = &vals };
+    var env = Env{ .slots = &slots, .recs = &recs, .vals = &vals, .resolved = resolved[0..b.n] };
     return switch (try evalNode(&img, img.root, &env, ENV_NIL)) {
         .str => |t| blk: {
             @memcpy(out[0..t.len], t);
@@ -682,5 +724,71 @@ test "the library composes with itself" {
         \\fn double(n) { n * 2 }
         \\fn odd_ish(n) { 1 < n }
         \\sum(map(double, filter(odd_ish, range(5))))
+    ));
+}
+
+test "a trait dispatches to its impl" {
+    try std.testing.expectEqual(@as(i64, 10), try run(
+        \\trait Doubler { fn dbl(Self) -> Self }
+        \\impl Doubler for Int { fn dbl(x) { x * 2 } }
+        \\dbl(5)
+    ));
+}
+
+test "one trait, several impls, chosen by the type at the call site" {
+    const src =
+        \\trait Sizer { fn size(Self) -> Int }
+        \\impl Sizer for Int { fn size(x) { x + 100 } }
+        \\impl Sizer for Str { fn size(s) { 7 } }
+    ;
+    var buf: [4096]u8 = undefined;
+    @memcpy(buf[0..src.len], src);
+    const tail1 = "\nsize(5)";
+    @memcpy(buf[src.len..][0..tail1.len], tail1);
+    try std.testing.expectEqual(@as(i64, 105), try run(buf[0 .. src.len + tail1.len]));
+    const tail2 = "\nsize(\"anything\")";
+    @memcpy(buf[src.len..][0..tail2.len], tail2);
+    try std.testing.expectEqual(@as(i64, 7), try run(buf[0 .. src.len + tail2.len]));
+}
+
+test "a function with a trait bound resolves through to the impl" {
+    try std.testing.expectEqual(@as(i64, 20), try run(
+        \\trait Doubler { fn dbl(Self) -> Self }
+        \\impl Doubler for Int { fn dbl(x) { x * 2 } }
+        \\fn twice(v) { dbl(dbl(v)) }
+        \\twice(5)
+    ));
+}
+
+test "a trait method with no impl for the type is refused" {
+    try std.testing.expectError(chk.Error.NoImpl, run(
+        \\trait Doubler { fn dbl(Self) -> Self }
+        \\impl Doubler for Int { fn dbl(x) { x * 2 } }
+        \\fn use_it(v) { dbl(v) }
+        \\use_it("a string")
+    ));
+}
+
+test "an impl whose body does not match the trait signature is refused" {
+    try std.testing.expectError(chk.Error.Mismatch, run(
+        \\trait Doubler { fn dbl(Self) -> Self }
+        \\impl Doubler for Int { fn dbl(x) { 0 < x } }
+        \\dbl(5)
+    ));
+}
+
+test "coherence: a second impl for the same type is refused" {
+    try std.testing.expectError(cl.Error.DuplicateImpl, run(
+        \\trait Doubler { fn dbl(Self) -> Self }
+        \\impl Doubler for Int { fn dbl(x) { x * 2 } }
+        \\impl Doubler for Int { fn dbl(x) { x * 3 } }
+        \\dbl(5)
+    ));
+}
+
+test "an impl of an undeclared trait is refused" {
+    try std.testing.expectError(cl.Error.UnknownTrait, run(
+        \\impl Nope for Int { fn dbl(x) { x } }
+        \\1
     ));
 }

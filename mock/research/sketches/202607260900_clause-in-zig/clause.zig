@@ -59,6 +59,32 @@ pub const OP_AT: u32 = 7;
 /// static.
 pub const OP_PUSH: u32 = 8;
 
+/// A type as written in a trait method's signature. `Self` is the implementing
+/// type; the rest are the concrete types this subset has.
+pub const TyName = enum { self_ty, int, boolean, str };
+
+/// A trait: one method, its parameter types, and its result type. One method per
+/// trait keeps the constraint machinery honest without a method table, and the
+/// generalisation to several is mechanical.
+pub const TraitDecl = struct {
+    name: []const u8,
+    method: []const u8,
+    /// The method name's interned sym, so the checker can bind it without
+    /// re-interning and the parser stays the only place names are interned.
+    method_sym: u32,
+    params: [4]TyName,
+    nparams: u8,
+    ret: TyName,
+};
+
+/// An implementation: which trait, for which type, and the binder its method
+/// body was bound under. Coherence is one impl per trait-and-type pair.
+pub const ImplDecl = struct { trait_idx: u32, for_ty: TyName, method_sym: u32 };
+
+/// Impl-method binders start here. Source names are interner indices counting
+/// from zero, so the two ranges cannot meet.
+pub const IMPL_SYM_BASE: u32 = 0x4000_0000;
+
 pub const Error = error{
     UnexpectedByte,
     UnexpectedToken,
@@ -69,11 +95,15 @@ pub const Error = error{
     TooManyNames,
     TooManyParams,
     Unsupported,
+    TooManyTraits,
+    UnknownTrait,
+    UnknownType,
+    DuplicateImpl,
 };
 
 // ---------------------------------------------------------------- lexer
 
-const Kind = enum { int, str_lit, ident, dot, colon, lbracket, rbracket, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
+const Kind = enum { int, str_lit, ident, dot, colon, lbracket, rbracket, arrow, kw_trait, kw_impl, kw_for, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
 
 const Token = struct { kind: Kind, start: usize, end: usize, value: i64 };
 
@@ -120,6 +150,12 @@ const Lexer = struct {
                 .kw_let
             else if (std.mem.eql(u8, text, "fn"))
                 .kw_fn
+            else if (std.mem.eql(u8, text, "trait"))
+                .kw_trait
+            else if (std.mem.eql(u8, text, "impl"))
+                .kw_impl
+            else if (std.mem.eql(u8, text, "for"))
+                .kw_for
             else if (std.mem.eql(u8, text, "if"))
                 .kw_if
             else if (std.mem.eql(u8, text, "else"))
@@ -134,6 +170,10 @@ const Lexer = struct {
             if (self.i >= self.src.len) return Error.Unterminated;
             self.i += 1;
             return .{ .kind = .str_lit, .start = start, .end = self.i, .value = 0 };
+        }
+        if (c == '-' and self.i + 1 < self.src.len and self.src[self.i + 1] == '>') {
+            self.i += 2;
+            return .{ .kind = .arrow, .start = start, .end = self.i, .value = 0 };
         }
         self.i += 1;
         const kind: Kind = switch (c) {
@@ -360,15 +400,50 @@ pub const Parser = struct {
     tok: Token,
     b: *Builder,
     names: *Names,
+    traits: []TraitDecl,
+    ntraits: u32 = 0,
+    impls: []ImplDecl,
+    nimpls: u32 = 0,
     /// `{` is ambiguous: it opens a block after an `if` condition and a record
     /// literal in ordinary expression position. Cleared while parsing a
     /// condition, which is the same resolution Rust uses.
     allow_record: bool = true,
 
-    pub fn init(src: []const u8, b: *Builder, names: *Names) Error!Parser {
+    pub fn init(src: []const u8, b: *Builder, names: *Names, traits: []TraitDecl, impls: []ImplDecl) Error!Parser {
         var lx = Lexer{ .src = src };
         const first = try lx.next();
-        return .{ .lx = lx, .tok = first, .b = b, .names = names };
+        return .{ .lx = lx, .tok = first, .b = b, .names = names, .traits = traits, .impls = impls };
+    }
+
+    fn tyName(self: *Parser) Error!TyName {
+        if (self.tok.kind != .ident) return Error.UnexpectedToken;
+        const t = self.lx.src[self.tok.start..self.tok.end];
+        try self.bump();
+        if (std.mem.eql(u8, t, "Self")) return .self_ty;
+        if (std.mem.eql(u8, t, "Int")) return .int;
+        if (std.mem.eql(u8, t, "Bool")) return .boolean;
+        if (std.mem.eql(u8, t, "Str")) return .str;
+        return Error.UnknownType;
+    }
+
+    fn traitIndex(self: *const Parser, name: []const u8) Error!u32 {
+        var i: u32 = 0;
+        while (i < self.ntraits) : (i += 1) {
+            if (std.mem.eql(u8, self.traits[i].name, name)) return i;
+        }
+        return Error.UnknownTrait;
+    }
+
+    /// Every impl's method gets its own binder, so the impls of one trait for
+    /// different types are different bindings and dispatch is a choice between
+    /// binders rather than a runtime inspection of a value.
+    ///
+    /// Minted from a numeric range disjoint from source names rather than by
+    /// interning a mangled string: a mangled name would have to live somewhere,
+    /// and the obvious somewhere is a stack buffer the interner would outlive.
+    /// Hygiene here is structural, not a naming convention.
+    fn implSym(_: *Parser, impl_index: u32) u32 {
+        return IMPL_SYM_BASE + impl_index;
     }
 
     fn bump(self: *Parser) Error!void {
@@ -384,6 +459,91 @@ pub const Parser = struct {
     /// which is exactly the shape `Let` nests into: each binding's body is
     /// everything after it.
     pub fn program(self: *Parser) Error!u32 {
+        if (self.tok.kind == .kw_trait) {
+            // A trait declares a method's shape. It binds nothing and erases
+            // entirely; only the checker ever sees it.
+            try self.bump();
+            if (self.tok.kind != .ident) return Error.UnexpectedToken;
+            const tname = self.lx.src[self.tok.start..self.tok.end];
+            try self.bump();
+            try self.expect(.lbrace);
+            try self.expect(.kw_fn);
+            if (self.tok.kind != .ident) return Error.UnexpectedToken;
+            const mname = self.lx.src[self.tok.start..self.tok.end];
+            try self.bump();
+            try self.expect(.lparen);
+            var ps: [4]TyName = undefined;
+            var np: u8 = 0;
+            while (self.tok.kind != .rparen) {
+                if (np == ps.len) return Error.TooManyParams;
+                ps[np] = try self.tyName();
+                np += 1;
+                if (self.tok.kind == .comma) try self.bump();
+            }
+            try self.expect(.rparen);
+            try self.expect(.arrow);
+            const ret = try self.tyName();
+            try self.expect(.rbrace);
+            if (self.ntraits == self.traits.len) return Error.TooManyTraits;
+            self.traits[self.ntraits] = .{
+                .name = tname,
+                .method = mname,
+                .method_sym = try self.names.intern(mname),
+                .params = ps,
+                .nparams = np,
+                .ret = ret,
+            };
+            self.ntraits += 1;
+            return self.program();
+        }
+        if (self.tok.kind == .kw_impl) {
+            try self.bump();
+            if (self.tok.kind != .ident) return Error.UnexpectedToken;
+            const tname = self.lx.src[self.tok.start..self.tok.end];
+            try self.bump();
+            const ti = try self.traitIndex(tname);
+            try self.expect(.kw_for);
+            const for_ty = try self.tyName();
+            // Coherence: one impl per trait and type. Checked here because a
+            // second impl would make dispatch ambiguous with nothing to break
+            // the tie.
+            var j: u32 = 0;
+            while (j < self.nimpls) : (j += 1) {
+                if (self.impls[j].trait_idx == ti and self.impls[j].for_ty == for_ty) return Error.DuplicateImpl;
+            }
+            try self.expect(.lbrace);
+            try self.expect(.kw_fn);
+            if (self.tok.kind != .ident) return Error.UnexpectedToken;
+            try self.bump();
+            try self.expect(.lparen);
+            var params: [4]u32 = undefined;
+            var np: usize = 0;
+            while (self.tok.kind != .rparen) {
+                if (self.tok.kind != .ident) return Error.UnexpectedToken;
+                if (np == params.len) return Error.TooManyParams;
+                params[np] = try self.names.intern(self.lx.src[self.tok.start..self.tok.end]);
+                np += 1;
+                try self.bump();
+                if (self.tok.kind == .comma) try self.bump();
+            }
+            try self.expect(.rparen);
+            try self.expect(.lbrace);
+            const body = try self.program();
+            try self.expect(.rbrace);
+            try self.expect(.rbrace);
+            var f = body;
+            var k = np;
+            while (k > 0) {
+                k -= 1;
+                f = try self.b.lambda(params[k], f);
+            }
+            if (self.nimpls == self.impls.len) return Error.TooManyTraits;
+            const sym = self.implSym(self.nimpls);
+            self.impls[self.nimpls] = .{ .trait_idx = ti, .for_ty = for_ty, .method_sym = sym };
+            self.nimpls += 1;
+            const rest = try self.program();
+            return self.b.letRec(sym, f, rest);
+        }
         if (self.tok.kind == .kw_fn) {
             try self.bump();
             if (self.tok.kind != .ident) return Error.UnexpectedToken;

@@ -114,20 +114,69 @@ fn sum(s) { sum_from(s, 0) }
 sum([1, 2, 3])                                   ==> 6
 ```
 
+## Traits, with bounds and coherence
+
+```
+trait Doubler { fn dbl(Self) -> Self }
+impl Doubler for Int { fn dbl(x) { x * 2 } }
+dbl(5)                                           ==> 10
+
+trait Sizer { fn size(Self) -> Int }
+impl Sizer for Int { fn size(x) { x + 100 } }
+impl Sizer for Str { fn size(s) { 7 } }
+size(5)                                          ==> 105
+size("anything")                                 ==> 7
+
+fn twice(v) { dbl(dbl(v)) }
+twice(5)                                         ==> 20
+
+fn use_it(v) { dbl(v) }  use_it("a string")      refused, NoImpl
+impl Doubler for Int { fn dbl(x) { 0 < x } }     refused, Mismatch
+impl Doubler for Int { ... } twice               refused, DuplicateImpl
+impl Nope for Int { ... }                        refused, UnknownTrait
+```
+
+**Dispatch keeps prove-then-erase.** A trait method reference raises an
+obligation about the type it was used at, recorded against its node. After
+inference, each obligation resolves to the one impl for that trait and type, and
+the choice is written into a per-node table. The evaluator reads that table and
+never inspects a value's shape, so types still erase and the runtime stays a dumb
+evaluator of proven-safe programs.
+
+**An impl must have the type its trait declared**, with `Self` replaced by the
+implementing type. Without that check an impl body could be anything and the call
+site would still type-check against the signature, which is a hole rather than a
+leniency.
+
+**Impl binders are minted from a numeric range disjoint from source names**
+rather than by interning a mangled string. A mangled name would have to live
+somewhere, and the obvious somewhere is a stack buffer the interner outlives.
+Hygiene here is structural rather than a naming convention.
+
+### The one real limitation, stated precisely
+
+A function whose body raises an obligation stays **monomorphic** in the type that
+obligation is about. `twice` above works, but it is usable at one type per
+program rather than at every type implementing `Doubler`.
+
+The reason is exact: generalising it would let two uses pick different impls,
+and the single resolution slot per node cannot hold both. Recording several
+would be specialisation, which is the pass this deliberately does not have. So
+the restriction is where the missing pass shows, and lifting it is what
+monomorphisation buys. Two uses at different types are refused rather than
+silently mis-dispatched.
+
 ## What it does not establish, stated plainly
 
 **This is a slice of the grammar, and the bar is the whole grammar.** It has
 integers, strings, names, `let`, `fn` with recursion and closures and currying,
-`if`/`else`, four operators, records with field access, and sequences with a
-two-operation prelude. It does not have bounds, traits, associated types,
-coherence, patterns, `match`, macros, loops, modules, `use`, attributes, a
+`if`/`else`, four operators, records with field access, sequences with a
+three-operation prelude, single-method traits with impls, coherence, and
+inferred bounds. It does not have associated types, multi-method traits,
+supertraits, patterns, `match`, macros, loops, modules, `use`, attributes, a
 separate resolve pass, or monomorphisation, nor the rest of the surface the
 normative grammar (`mock/research/original-docs/CLAUSE_EBNF.md`) requires.
 Nothing is done until the full intended language is expressible.
-
-Traits specifically are gated behind monomorphisation rather than syntax: types
-erase before the Core, so trait dispatch needs dictionaries or specialisation,
-and that is a pass between check and evaluation that does not exist.
 
 ## Inference, in the runtime, before evaluation
 
