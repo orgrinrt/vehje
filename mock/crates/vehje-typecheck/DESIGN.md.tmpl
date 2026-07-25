@@ -65,6 +65,45 @@ schema come from `vehje-signature`.
   effect outside `Permits`, a lease that cannot be placed, a family outside
   `Supports`).
 
+## Operations, escape, and the first axis interaction
+
+State: intended.
+
+**The effect scope chain.** A lexically handled `Perform` contributes nothing to
+the effect mask in the first place, so the mask is only ever populated by
+operations that genuinely escape, which are the declared named effects a target's
+`Permits` set is about. The alternative, subtracting a mask at the `Handle`, is
+unsound when two operations share a slot; carrying the handled operations down
+the walk as a scope chain, the way resolve already carries binders, avoids the
+question rather than answering it. This retires the standing subtraction FIXME.
+
+**The escape rule is an axis interaction, not a scoping rule.** `Perform` is not
+a value, so a direct escape is impossible by construction. The residual case is a
+`Lambda` whose body performs, returned out of the `Handle` and called afterward.
+The effect axis records that the lambda's body performs; the coeffect axis has to
+record that the lambda value can perform later. So the rule has two halves: a
+promotion at `Lambda`, where the body's unhandled operations become the lambda
+value's reach of the corresponding handler slots, which is the latent effect on
+the arrow; and a check at `Handle`, where the result's reach must not contain the
+handler's slot.
+
+This is the first genuine effect-and-lease interaction rule in the system, which
+is what the graded spine owes before the word theorem is earned. It is intended,
+not proven, and it is where that debt starts being paid rather than where it is
+discharged.
+
+**Two declared error variants become real.** `ForbiddenEffect` is constructed by
+the obligation that every performed operation resolves to a lexically enclosing
+clause or to an operation the target permits, which is what lets the runtime
+treat an unwind reaching the root as an invariant violation rather than a program
+outcome. `UnplaceableLease` is constructed by the escape check above.
+
+**The slot collision is conservative in the right direction.** Folding a node
+index modulo the mask width makes two handlers share a slot, which
+over-approximates reach, which produces a false refusal and never a false
+acceptance. So the mechanism lands before the mask widens, and widening is an
+accuracy fix rather than a soundness fix.
+
 ## Generative freshness
 
 Generative discharge is fresh by construction. Macro expansion produces fresh
