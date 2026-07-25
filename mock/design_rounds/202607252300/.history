@@ -1,0 +1,50 @@
+44a96414 chore: lock src changelist for the test split
+bc714362 test: move the typecheck tests to a sibling file
+2e767ecc docs: src changelist for the test split
+1bb4fb24 docs: open the typecheck test split round
+755ffd47 chore: close the Perform round
+dbfb6563 chore: lock src changelist for Perform
+3d523cc9 test: the effect scope chain and the escape refusal
+688d89ad feat: an operation unwinds to its handler and the handler's value replaces the computation
+861696ad refactor: split the handler scope and escape promotion into their own module
+6efb184f feat: Perform is the thirteenth form, and a handled operation never reaches the mask
+8a3b23ac docs: src changelist for Perform
+5d568043 docs: the wire clause section, the carrier, and the loop bound
+d1b6c443 docs: the handler scope chain and the first axis interaction
+fe59b0e1 docs: Perform is the thirteenth form and clauses get a region
+51ffadb3 docs: doc changelist for Perform
+b98d732a docs: open the Perform and non-resuming discharge round
+a04dce2e research: the clause representation and how an operation is performed
+b2d568f5 chore: untrack two build dirs from earlier sketch rounds
+9a983cbb chore: untrack a nested sketch target dir and ignore nested targets
+a7c88974 research: lease masks give escape, not uniqueness
+067c4005 chore: close the state label round
+f8f921bb chore: lock src changelist for the state label
+ea6ac7d2 docs: src changelist for the state label
+d58fb408 chore: lock doc changelist for the state label
+c06ea64f docs: the value arena is shipped, its uniqueness bit is not
+8e0941af docs: open a round to correct the value arena state label
+7a2b69b1 chore: close the Project evaluation round
+d7a098e5 chore: lock src changelist for Project
+83ed3b1b feat: Project reads a field out of a record
+8c5a2275 docs: src changelist for Project
+28a104d1 chore: lock doc changelist for Project
+726abf69 docs: Project joins the evaluated set
+b87b1667 docs: open the Project evaluation round
+cdf8f6d9 chore: close the compound values round
+4bc8f6f8 chore: lock src changelist for compound values
+7ab607f3 refactor: split the host boundary out of the runtime root
+7623a160 test: split the artifact-backed driver tests into their own module
+77a48696 feat: a handler can return a record, and the host reads it back
+2c10a7db test: split the runtime suite into core, family, and shared support
+1604be2b feat: compound values cross the host boundary as value images
+295d6da7 feat: the runtime value arena and the value-image tree writer and reader
+2e6a518b docs: src changelist for compound values
+d9595f80 chore: lock doc changelist for compound values
+8056a1f4 docs: align doc changelist with the landed edits
+ecd5d3f1 docs: compound values cross as value images in both directions
+07e85709 docs: doc changelist for compound values
+2db8fd73 docs: open round for compound values across the host boundary
+2ba2275e research: record the string verdict against the mandate
+1d1dbe52 bench: interning constructed strings loses in every regime
+54fa1215 research: record the composition result against the mandate
