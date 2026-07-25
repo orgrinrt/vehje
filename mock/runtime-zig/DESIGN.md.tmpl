@@ -39,6 +39,46 @@ captured. A popping stack cannot promise that, because the entries the closure
 referred to would be gone or reused by the time it is called. Nothing is freed
 within a run, and exhausting the lent arena is a named refusal, not an overrun.
 
+## The value arena
+
+State: intended. A compound value is not a slice into anything the residual
+already holds, so unlike a string literal it needs somewhere to live. That is a
+caller-lent value arena, in the same shape as the environment arena above: the
+host lends the space, the runtime bump-allocates within it, and the runtime owns
+none of it once the call returns. A record is a node with its fields in a child
+pool, which is the shape the value image already describes, so materialising a
+returned image is a walk rather than a translation. Exhausting the arena is a
+named refusal.
+
+Its node record carries operands inline rather than reaching them through a pool
+indirection. That is measured rather than assumed: a pool-indirected walk costs
+10.7 ns per node against 4.4 ns inline, and the difference is attributable to the
+indirection itself rather than to transport.
+
+The arena stores values plainly, with no interning and no deduplication. This is
+a design statement rather than an omission, because both were candidates and
+both were refused by measurement for this exact domain. Interning a constructed
+string measured 2.2x to 3.1x slower across three regimes, including the regime
+built specifically to remove the bias that flattered the do-nothing strategy;
+hashing is intrinsically dearer per byte than comparing, so interning trades a
+cheap operation for an expensive one and hopes repetition amortises it.
+Deduplicating records measured 9x to 19x slower than reuse and 6x to 7x slower
+than doing nothing at all.
+
+The update path is written so that a per-site uniqueness bit selects in-place
+mutation against copy, with copy as the behaviour until that bit exists. In-place
+update when the emitter proves a value unique is the one optimisation the
+measurements endorse here, at 2.7x to 2.9x over copy-on-write in the
+mostly-unique regime and never losing. The direction of the switch is the safe
+one: ignoring the bit means copying, which is always sound, while reusing without
+a verdict has nothing to read.
+
+Reuse and deduplication cannot both be defaults, and the reason is structural
+rather than a matter of tuning. A deduplication table holds a reference to every
+value it contains, so the table is itself a referrer, and interning a value
+forfeits reuse on it permanently while still charging the hash at construction.
+Measured, the two combined are worse than either alone and worse than neither.
+
 ## The evaluated set
 
 State: shipped.
@@ -69,8 +109,9 @@ is.
 
 State: shipped. Every failure is a named error, never a wrong answer: an
 unbound variable, an application whose callee is not a closure, a form or
-literal kind this tier does not evaluate, an exhausted environment arena, and a
-corrupt index or record reaching past the image.
+literal kind this tier does not evaluate, an exhausted environment arena, an
+exhausted value arena, a returned value image the decoder rejects, and a corrupt
+index or record reaching past the image.
 
 ## The C ABI surface
 
@@ -139,19 +180,31 @@ buffer. Exceeding the buffer is a named refusal, in keeping with every other
 bound here being lent rather than assumed.
 
 An operand is a small record of a kind tag, a payload word, and a bytes pointer.
-For a scalar the pointer is null and the payload is the value; for a string the
-pointer is the bytes and the payload is their length. One record serves both, so
-the common case is unchanged in size and cost and there is no second parallel
-form to keep in agreement. The tag values are the value image's tags, so one
-vocabulary describes a value wherever it appears.
+It serves three shapes without changing its own. For a scalar the pointer is
+null and the payload is the value. For a string the pointer is the bytes and the
+payload is their length. For a compound the pointer is a value image and the
+payload is that image's byte length, which is the string convention generalised
+rather than a new one. So the common case is unchanged in size and cost and
+there is no second parallel form to keep in agreement. The tag values are the
+value image's tags, so one vocabulary describes a value wherever it appears.
+
+A compound crosses as a value image in both directions, and that is deliberate.
+The image already exists as the format a produced value crosses back in, it
+already carries a root so it can describe a subtree rather than only a whole
+result, and its reader already bounds-checks every index and span and proves
+acyclicity with the one monotone check that children-before-parents emission
+buys. Reusing it means a compound arriving from a handler is validated by the
+same decoder that validates a value leaving for the host, instead of by a second
+decoder written to the same specification and trusted to agree with the first.
 
 A handler returns a string the same way it receives one, writing a pointer and a
 length into the out-slot. The runtime copies those bytes into the session
 scratch, so the value stays valid after the handler returns and the host keeps
-no obligation once the call ends. Exhausting the scratch is a named refusal,
-like every other lent bound here. Sequences and records are not operands yet;
-they need a value arena rather than a byte scratch, because their elements are
-values rather than bytes.
+no obligation once the call ends. A compound return uses that same scratch and
+that same out-slot, with the bytes being a value image the runtime materialises
+into its value arena. Exhausting the scratch is a named refusal, like every
+other lent bound here, and so is a returned image the decoder rejects, which
+keeps a handler that produced something unusable distinct from one that failed.
 
 The failure modes stay distinguishable. A `Raw` under a null host is a named
 refusal rather than a crash, and a non-zero result code from the host propagates
@@ -160,16 +213,21 @@ with a host that produced a value.
 
 ## Intended, not shipped
 
-- Compound operands for a family operation. A sequence or a record cannot be
-  passed to a handler yet, because neither is a value here yet.
 - The compile-stage counterpart, where a handler services a macro operation at
   its binding time. That is the same discipline aimed at the other stage.
-- Sequences and records as values. They need a value arena rather than the byte
-  scratch a string uses, because their elements are values rather than bytes.
+- The reuse analysis that produces the per-site uniqueness bit the update path
+  reads. The runtime side is designed for it; the emit-time verdict is not built,
+  and its derivation from the lease masks the check pass already computes is
+  intended rather than demonstrated.
 - The remaining Core forms (`Project`, `Match`, `Iter`, `Interp`, `Handle`).
-  `Project` reads a field and so waits on records; `Match`'s arms carry no
-  pattern representation yet, which is an undecided Core design rather than an
-  unbuilt one.
+  `Project` becomes implementable once records exist, and its strategy is already
+  settled by measurement: resolve to a fixed offset where the shape is static
+  (0.54 ns), use a monomorphic inline cache otherwise (0.61 ns), and fall back to
+  a hashed lookup (1.27 ns) rather than a scan (1.57 ns) at a polymorphic site.
+  `Match`'s arms carry no pattern representation yet, which is an undecided Core
+  design rather than an unbuilt one. `Handle` is what non-local control flow
+  (`return`, `break`, `continue`, and the loop forms) lowers to, and it needs
+  only the non-resuming discharge for that.
 - The `Bytecode` tier over the CFG-of-blocks form.
 - Diagnostics mapped to the ABI diagnostic shape.
 

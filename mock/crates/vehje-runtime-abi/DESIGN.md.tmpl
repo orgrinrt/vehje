@@ -95,6 +95,18 @@ search.
   bounds-checked against the image, so a malformed input is a refusal and never
   a read past the end.
 
+The image is also the marshalling format for the host boundary, in both
+directions, and not only for the produced value crossing back at the end of a
+run. A compound operand handed to a family handler is an image, and a compound a
+handler returns is an image. Two properties make that work rather than merely
+being convenient: the header carries a root, so an image can describe a subtree
+instead of only a whole result, and the reader bounds-checks every index and span
+against the image it was given. So a compound arriving from a handler is
+validated by the same decoder that validates a value leaving for the host,
+instead of by a second decoder written to the same specification and trusted to
+agree with the first. An image the decoder rejects is a named refusal, distinct
+from a handler reporting that it failed.
+
 A closure has no representation here. A closure names an environment inside one
 run of the runtime, so it cannot be a value the host still holds after the call
 returns. A program whose final value is a closure is refused with a named
