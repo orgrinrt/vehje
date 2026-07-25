@@ -83,3 +83,30 @@ verdict, since a constructed string is cheaper to hash and compared more often t
 
 This is the directive working as intended. The instinct to bake interning in was reasonable, the measurement
 refused it for the largest case, and the refusal came with the structural reason rather than only a number.
+
+## Resolution of the string question (2026-07-25, same day)
+
+The string cell was built and run too, so this section supersedes its "unmeasured" status above. It is
+`mock/benches/string-interning/findings.md` with `gen_string_interning.py`, three regimes across five sizes.
+
+Interning a constructed string is refused, in every regime, by 2.2x to 3.1x. The reason is that hashing is
+intrinsically more expensive per byte than comparing: a 21-byte comparison is a couple of wide loads, while a
+21-byte hash is a chain of dependent multiplies followed by a table probe. Interning does not trade a cheap
+operation for a cheaper one; it trades a cheap one for an expensive one and hopes repetition amortises it, and
+at eight comparisons per construction it has not.
+
+Two method notes worth keeping. The first two regimes let the byte comparison exit on the first differing
+byte, which flattered the do-nothing strategy by construction; a third regime was added specifically to remove
+that advantage, and the verdict survived it. A conclusion that survives the test designed to overturn it is
+worth more than the same conclusion asserted twice. Second, the lazy strategy (intern on first comparison
+rather than at construction) is not a strictly better eager: it matches eager where most strings are never
+compared and loses by 20% to 30% where comparisons are frequent, because deferring the hash does not avoid it
+and adds a check to every comparison.
+
+So the mandate's two interning candidates are both refused for the runtime value domain, and the
+reclaim-on-scope-exit candidate is confirmed by two independent cells. Interning remains right where it is
+already used, on compile-side identifiers, field-name keys, and family ids, where the population is bounded and
+the hash is paid once during lexing rather than once per construction in a hot loop.
+
+That split is the substantive answer to the directive: bake in reuse, leave values as bytes, and expose the
+refused mechanisms as opt-in for the workloads whose shape the boundaries name rather than as defaults.
