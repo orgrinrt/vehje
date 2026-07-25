@@ -1,0 +1,9 @@
+# Build outputs of this sketch. Named explicitly rather than by a broad pattern,
+# because the sketch's own text artifacts (rust_out.txt, zig_out.txt) ARE the
+# evidence and must stay tracked. A `git add -A` swept a nested build directory
+# into pushed history once (task #48); an untracked binary sitting next to
+# tracked evidence is exactly that hazard.
+emit
+proj_rs
+*.a
+*.o
