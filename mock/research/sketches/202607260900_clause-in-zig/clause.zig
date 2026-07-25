@@ -78,24 +78,38 @@ pub const TyName = enum { self_ty, assoc_ty, int, boolean, str };
 /// A trait: one method, its parameter types, and its result type. One method per
 /// trait keeps the constraint machinery honest without a method table, and the
 /// generalisation to several is mechanical.
-pub const TraitDecl = struct {
+/// One method's declared shape.
+pub const MethodDecl = struct {
     name: []const u8,
-    method: []const u8,
     /// The method name's interned sym, so the checker can bind it without
     /// re-interning and the parser stays the only place names are interned.
-    method_sym: u32,
+    sym: u32,
     params: [4]TyName,
     nparams: u8,
     ret: TyName,
+};
+
+pub const MAX_METHODS: usize = 4;
+
+pub const TraitDecl = struct {
+    name: []const u8,
+    methods: [MAX_METHODS]MethodDecl,
+    nmethods: u8,
     /// The associated type's name, empty when the trait declares none. An
     /// associated type is a second thing an impl chooses, alongside the method
-    /// body, and the signature may mention it wherever it mentions Self.
+    /// bodies, and any signature may mention it wherever it mentions Self.
     assoc_name: []const u8 = "",
 };
 
 /// An implementation: which trait, for which type, and the binder its method
 /// body was bound under. Coherence is one impl per trait-and-type pair.
-pub const ImplDecl = struct { trait_idx: u32, for_ty: TyName, method_sym: u32, assoc: TyName = .int };
+pub const ImplDecl = struct {
+    trait_idx: u32,
+    for_ty: TyName,
+    /// One binder per method, in the trait's declaration order.
+    method_syms: [MAX_METHODS]u32,
+    assoc: TyName = .int,
+};
 
 /// Impl-method binders start here. Source names are interner indices counting
 /// from zero, so the two ranges cannot meet.
@@ -120,6 +134,7 @@ pub const Error = error{
     DuplicateImpl,
     NonExhaustive,
     NotMutable,
+    MissingMethod,
 };
 
 // ---------------------------------------------------------------- lexer
@@ -567,7 +582,7 @@ pub const Parser = struct {
     /// and the obvious somewhere is a stack buffer the interner would outlive.
     /// Hygiene here is structural, not a naming convention.
     fn implSym(_: *Parser, impl_index: u32) u32 {
-        return IMPL_SYM_BASE + impl_index;
+        return IMPL_SYM_BASE + impl_index * @as(u32, MAX_METHODS);
     }
 
     fn bump(self: *Parser) Error!void {
@@ -599,31 +614,42 @@ pub const Parser = struct {
                 try self.bump();
                 try self.expect(.semi);
             }
-            try self.expect(.kw_fn);
-            if (self.tok.kind != .ident) return Error.UnexpectedToken;
-            const mname = self.lx.src[self.tok.start..self.tok.end];
-            try self.bump();
-            try self.expect(.lparen);
-            var ps: [4]TyName = undefined;
-            var np: u8 = 0;
-            while (self.tok.kind != .rparen) {
-                if (np == ps.len) return Error.TooManyParams;
-                ps[np] = try self.tyNameIn(assoc_name);
-                np += 1;
-                if (self.tok.kind == .comma) try self.bump();
+            var ms: [MAX_METHODS]MethodDecl = undefined;
+            var nm: u8 = 0;
+            while (self.tok.kind == .kw_fn) {
+                try self.bump();
+                if (self.tok.kind != .ident) return Error.UnexpectedToken;
+                if (nm == MAX_METHODS) return Error.TooManyTraits;
+                const mname = self.lx.src[self.tok.start..self.tok.end];
+                try self.bump();
+                try self.expect(.lparen);
+                var ps: [4]TyName = undefined;
+                var np: u8 = 0;
+                while (self.tok.kind != .rparen) {
+                    if (np == ps.len) return Error.TooManyParams;
+                    ps[np] = try self.tyNameIn(assoc_name);
+                    np += 1;
+                    if (self.tok.kind == .comma) try self.bump();
+                }
+                try self.expect(.rparen);
+                try self.expect(.arrow);
+                const ret = try self.tyNameIn(assoc_name);
+                ms[nm] = .{
+                    .name = mname,
+                    .sym = try self.names.intern(mname),
+                    .params = ps,
+                    .nparams = np,
+                    .ret = ret,
+                };
+                nm += 1;
             }
-            try self.expect(.rparen);
-            try self.expect(.arrow);
-            const ret = try self.tyNameIn(assoc_name);
             try self.expect(.rbrace);
+            if (nm == 0) return Error.UnexpectedToken;
             if (self.ntraits == self.traits.len) return Error.TooManyTraits;
             self.traits[self.ntraits] = .{
                 .name = tname,
-                .method = mname,
-                .method_sym = try self.names.intern(mname),
-                .params = ps,
-                .nparams = np,
-                .ret = ret,
+                .methods = ms,
+                .nmethods = nm,
                 .assoc_name = assoc_name,
             };
             self.ntraits += 1;
@@ -654,37 +680,40 @@ pub const Parser = struct {
                 assoc = try self.tyName();
                 try self.expect(.semi);
             }
-            try self.expect(.kw_fn);
-            if (self.tok.kind != .ident) return Error.UnexpectedToken;
-            try self.bump();
-            try self.expect(.lparen);
-            var params: [4]u32 = undefined;
-            var np: usize = 0;
-            while (self.tok.kind != .rparen) {
-                if (self.tok.kind != .ident) return Error.UnexpectedToken;
-                if (np == params.len) return Error.TooManyParams;
-                params[np] = try self.names.intern(self.lx.src[self.tok.start..self.tok.end]);
-                np += 1;
-                try self.bump();
-                if (self.tok.kind == .comma) try self.bump();
-            }
-            try self.expect(.rparen);
-            try self.expect(.lbrace);
-            const body = try self.program();
-            try self.expect(.rbrace);
-            try self.expect(.rbrace);
-            var f = body;
-            var k = np;
-            while (k > 0) {
-                k -= 1;
-                f = try self.b.lambda(params[k], f);
-            }
             if (self.nimpls == self.impls.len) return Error.TooManyTraits;
-            const sym = self.implSym(self.nimpls);
-            self.impls[self.nimpls] = .{ .trait_idx = ti, .for_ty = for_ty, .method_sym = sym, .assoc = assoc };
+            const impl_index = self.nimpls;
+            var syms: [MAX_METHODS]u32 = undefined;
+            var bodies: [MAX_METHODS]u32 = undefined;
+            var nb: u8 = 0;
+            while (self.tok.kind == .kw_fn) {
+                const d = try self.fnDecl();
+                if (nb == self.traits[ti].nmethods) return Error.TooManyTraits;
+                // Methods are matched to the trait by name, not by order, so an
+                // impl may write them in any order and a missing one is caught.
+                var mi: u8 = 0;
+                var found_m = false;
+                while (mi < self.traits[ti].nmethods) : (mi += 1) {
+                    if (self.traits[ti].methods[mi].sym == d.name) {
+                        found_m = true;
+                        break;
+                    }
+                }
+                if (!found_m) return Error.UnknownTrait;
+                syms[mi] = self.implSym(impl_index) + mi;
+                bodies[mi] = d.value;
+                nb += 1;
+            }
+            try self.expect(.rbrace);
+            if (nb != self.traits[ti].nmethods) return Error.MissingMethod;
+            self.impls[impl_index] = .{ .trait_idx = ti, .for_ty = for_ty, .method_syms = syms, .assoc = assoc };
             self.nimpls += 1;
-            const rest = try self.program();
-            return self.b.letRec(sym, f, rest);
+            var out = try self.program();
+            var mk: u8 = self.traits[ti].nmethods;
+            while (mk > 0) {
+                mk -= 1;
+                out = try self.b.letRec(syms[mk], bodies[mk], out);
+            }
+            return out;
         }
         if (self.tok.kind == .kw_fn) {
             try self.bump();

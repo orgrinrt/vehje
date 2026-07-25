@@ -57,7 +57,7 @@ pub const Field = struct { key: []const u8, ty: u32 };
 /// An obligation: the type at `tvar` must implement `trait_idx`, and the node
 /// that demanded it is `node`, so the discharge can be recorded where dispatch
 /// will look for it.
-pub const Constraint = struct { ty: u32, assoc: u32, trait_idx: u32, node: u32 };
+pub const Constraint = struct { ty: u32, assoc: u32, trait_idx: u32, method_idx: u8, node: u32 };
 
 /// A binding's type, plus how many leading variables are quantified. A scheme
 /// with `quantified == 0` is a plain monotype; anything higher is a generic.
@@ -277,7 +277,8 @@ fn tyNameOf(ctx: *const Ctx, t: u32) ?cl.TyName {
 
 /// Build a trait method's scheme: one quantified variable standing for `Self`,
 /// the declared parameters curried, and the declared result.
-fn methodScheme(ctx: *Ctx, t: cl.TraitDecl) Error!struct { ty: u32, first: u32 } {
+fn methodScheme(ctx: *Ctx, t: cl.TraitDecl, m: cl.MethodDecl) Error!struct { ty: u32, first: u32 } {
+    _ = t;
     const first = ctx.nvars;
     const self_ty = try ctx.fresh();
     // The associated type is a second quantified variable, always allocated so
@@ -295,11 +296,11 @@ fn methodScheme(ctx: *Ctx, t: cl.TraitDecl) Error!struct { ty: u32, first: u32 }
             };
         }
     }.f;
-    var ty = try pick(ctx, t.ret, self_ty, assoc_ty);
-    var i: u8 = t.nparams;
+    var ty = try pick(ctx, m.ret, self_ty, assoc_ty);
+    var i: u8 = m.nparams;
     while (i > 0) {
         i -= 1;
-        const p = try pick(ctx, t.params[i], self_ty, assoc_ty);
+        const p = try pick(ctx, m.params[i], self_ty, assoc_ty);
         ty = try ctx.alloc(.{ .func = .{ .p = p, .r = ty } });
     }
     return .{ .ty = ty, .first = first };
@@ -317,7 +318,7 @@ fn concrete(ctx: *Ctx, n: cl.TyName) Error!u32 {
 
 /// A trait method's declared type with `Self` replaced by a concrete type,
 /// which is what an impl for that type must have.
-fn declaredType(ctx: *Ctx, t: cl.TraitDecl, for_ty: cl.TyName, assoc: cl.TyName) Error!u32 {
+fn declaredType(ctx: *Ctx, m: cl.MethodDecl, for_ty: cl.TyName, assoc: cl.TyName) Error!u32 {
     const pick = struct {
         fn f(c: *Ctx, n: cl.TyName, sv: cl.TyName, av: cl.TyName) Error!u32 {
             const eff = switch (n) {
@@ -328,11 +329,11 @@ fn declaredType(ctx: *Ctx, t: cl.TraitDecl, for_ty: cl.TyName, assoc: cl.TyName)
             return concrete(c, eff);
         }
     }.f;
-    var ty = try pick(ctx, t.ret, for_ty, assoc);
-    var i: u8 = t.nparams;
+    var ty = try pick(ctx, m.ret, for_ty, assoc);
+    var i: u8 = m.nparams;
     while (i > 0) {
         i -= 1;
-        const p = try pick(ctx, t.params[i], for_ty, assoc);
+        const p = try pick(ctx, m.params[i], for_ty, assoc);
         ty = try ctx.alloc(.{ .func = .{ .p = p, .r = ty } });
     }
     return ty;
@@ -443,20 +444,24 @@ fn infer(img: *const Image, idx: u32, ctx: *Ctx, cur: u32) Error!u32 {
             const sym = try img.word(idx, 1);
             const inst = try ctx.instantiateSelf(try ctx.lookup(sym, cur));
             var ti: u32 = 0;
-            while (ti < ctx.traits.len) : (ti += 1) {
-                if (ctx.traits[ti].method_sym != sym) continue;
+            outer: while (ti < ctx.traits.len) : (ti += 1) {
+                var mi: u8 = 0;
+                while (mi < ctx.traits[ti].nmethods) : (mi += 1) {
+                    if (ctx.traits[ti].methods[mi].sym != sym) continue;
                 // A reference to a trait method raises an obligation about the
                 // type it was used at, recorded against this node so dispatch
                 // can be written back here.
-                if (ctx.npend == ctx.pending.len) return Error.TooManyConstraints;
-                ctx.pending[ctx.npend] = .{
-                    .ty = inst.first_var,
-                    .assoc = inst.second_var,
-                    .trait_idx = ti,
-                    .node = idx,
-                };
-                ctx.npend += 1;
-                break;
+                    if (ctx.npend == ctx.pending.len) return Error.TooManyConstraints;
+                    ctx.pending[ctx.npend] = .{
+                        .ty = inst.first_var,
+                        .assoc = inst.second_var,
+                        .trait_idx = ti,
+                        .method_idx = mi,
+                        .node = idx,
+                    };
+                    ctx.npend += 1;
+                    break :outer;
+                }
             }
             return inst.ty;
         },
@@ -484,11 +489,13 @@ fn infer(img: *const Image, idx: u32, ctx: *Ctx, cur: u32) Error!u32 {
             // type it is implemented for. Without this an impl body could be
             // anything and the call site would still type-check against the
             // trait's signature, which is a hole rather than a leniency.
-            if (name >= cl.IMPL_SYM_BASE) {
-                const ii = name - cl.IMPL_SYM_BASE;
+            if (name >= cl.IMPL_SYM_BASE and name < cl.LOOP_SYM_BASE) {
+                const flat = name - cl.IMPL_SYM_BASE;
+                const ii = flat / @as(u32, cl.MAX_METHODS);
+                const mi = flat % @as(u32, cl.MAX_METHODS);
                 if (ii < ctx.impls.len) {
                     const im = ctx.impls[ii];
-                    const want = try declaredType(ctx, ctx.traits[im.trait_idx], im.for_ty, im.assoc);
+                    const want = try declaredType(ctx, ctx.traits[im.trait_idx].methods[mi], im.for_ty, im.assoc);
                     try ctx.unify(vt, want);
                 }
             }
@@ -662,12 +669,15 @@ pub fn check(image: []const u8, ctx: *Ctx) Error!u32 {
     var scope: u32 = NONE;
     var i: u32 = 0;
     while (i < ctx.traits.len) : (i += 1) {
-        const ms = try methodScheme(ctx, ctx.traits[i]);
-        scope = try ctx.push(
-            ctx.traits[i].method_sym,
-            .{ .ty = ms.ty, .quantified = ctx.nvars - ms.first, .first = ms.first },
-            scope,
-        );
+        var mi: u8 = 0;
+        while (mi < ctx.traits[i].nmethods) : (mi += 1) {
+            const ms = try methodScheme(ctx, ctx.traits[i], ctx.traits[i].methods[mi]);
+            scope = try ctx.push(
+                ctx.traits[i].methods[mi].sym,
+                .{ .ty = ms.ty, .quantified = ctx.nvars - ms.first, .first = ms.first },
+                scope,
+            );
+        }
     }
     const t = try infer(&img, img.root, ctx, scope);
     try discharge(ctx);
@@ -686,7 +696,7 @@ fn discharge(ctx: *Ctx) Error!void {
         var found = false;
         while (j < ctx.impls.len) : (j += 1) {
             if (ctx.impls[j].trait_idx == c.trait_idx and ctx.impls[j].for_ty == tn) {
-                ctx.resolved[c.node] = ctx.impls[j].method_sym;
+                ctx.resolved[c.node] = ctx.impls[j].method_syms[c.method_idx];
                 // The associated type is whatever this impl said it is. Unifying
                 // here rather than during inference is what lets a method's
                 // result type depend on which impl is chosen.

@@ -153,6 +153,25 @@ rather than by interning a mangled string. A mangled name would have to live
 somewhere, and the obvious somewhere is a stack buffer the interner outlives.
 Hygiene here is structural rather than a naming convention.
 
+### Several methods per trait
+
+```
+trait Num { fn dbl(Self) -> Self  fn trip(Self) -> Self }
+impl Num for Int { fn dbl(x) { x * 2 } fn trip(x) { x * 3 } }
+dbl(6) + trip(5)                                 ==> 27
+
+impl Num for Int { fn dbl(x) { x * 2 } }         refused, MissingMethod
+impl Num for Int { fn nope(x) { x } }            refused, UnknownTrait
+trait Num { ... fn name(Self) -> Str }
+impl Num for Int { ... fn name(x) { x } }        refused, Mismatch
+```
+
+Methods are matched to the trait by name rather than by position, so an impl may
+write them in any order, a missing one is caught, and a method the trait never
+declared is caught. Each method's signature is checked separately against its own
+declaration, and each dispatches independently: two methods of one trait resolve
+through the same impl but are separate binders.
+
 ### Associated types
 
 ```

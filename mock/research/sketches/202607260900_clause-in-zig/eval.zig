@@ -1130,3 +1130,59 @@ test "a module's items keep their types across the path" {
         \\M::double("not a number")
     ));
 }
+
+test "a trait may declare several methods" {
+    try std.testing.expectEqual(@as(i64, 27), try run(
+        \\trait Num { fn dbl(Self) -> Self  fn trip(Self) -> Self }
+        \\impl Num for Int { fn dbl(x) { x * 2 } fn trip(x) { x * 3 } }
+        \\dbl(6) + trip(5)
+    ));
+}
+
+test "an impl may write its methods in any order" {
+    try std.testing.expectEqual(@as(i64, 27), try run(
+        \\trait Num { fn dbl(Self) -> Self  fn trip(Self) -> Self }
+        \\impl Num for Int { fn trip(x) { x * 3 } fn dbl(x) { x * 2 } }
+        \\dbl(6) + trip(5)
+    ));
+}
+
+test "methods of a multi-method trait dispatch independently by type" {
+    const decls =
+        \\trait Show { fn tag(Self) -> Int  fn width(Self) -> Int }
+        \\impl Show for Int { fn tag(x) { 1 } fn width(x) { x } }
+        \\impl Show for Str { fn tag(s) { 2 } fn width(s) { 99 } }
+    ;
+    var buf: [4096]u8 = undefined;
+    @memcpy(buf[0..decls.len], decls);
+    const t1 = "\ntag(5) + width(7)";
+    @memcpy(buf[decls.len..][0..t1.len], t1);
+    try std.testing.expectEqual(@as(i64, 8), try run(buf[0 .. decls.len + t1.len]));
+    const t2 = "\ntag(\"s\") + width(\"s\")";
+    @memcpy(buf[decls.len..][0..t2.len], t2);
+    try std.testing.expectEqual(@as(i64, 101), try run(buf[0 .. decls.len + t2.len]));
+}
+
+test "an impl missing one of the trait's methods is refused" {
+    try std.testing.expectError(cl.Error.MissingMethod, run(
+        \\trait Num { fn dbl(Self) -> Self  fn trip(Self) -> Self }
+        \\impl Num for Int { fn dbl(x) { x * 2 } }
+        \\dbl(6)
+    ));
+}
+
+test "an impl of a method the trait never declared is refused" {
+    try std.testing.expectError(cl.Error.UnknownTrait, run(
+        \\trait Num { fn dbl(Self) -> Self }
+        \\impl Num for Int { fn nope(x) { x } }
+        \\1
+    ));
+}
+
+test "each method's signature is checked separately" {
+    try std.testing.expectError(chk.Error.Mismatch, run(
+        \\trait Num { fn dbl(Self) -> Self  fn name(Self) -> Str }
+        \\impl Num for Int { fn dbl(x) { x * 2 } fn name(x) { x } }
+        \\dbl(1)
+    ));
+}
