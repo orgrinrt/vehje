@@ -124,7 +124,7 @@ pub const Error = error{
 
 // ---------------------------------------------------------------- lexer
 
-const Kind = enum { int, str_lit, ident, dot, colon, lbracket, rbracket, arrow, kw_trait, kw_impl, kw_for, kw_type, kw_match, kw_while, kw_mut, fat_arrow, underscore, plus_assign, minus_assign, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
+const Kind = enum { int, str_lit, ident, dot, colon, lbracket, rbracket, arrow, kw_trait, kw_impl, kw_for, kw_type, kw_match, kw_while, kw_mut, kw_mod, kw_use, colon_colon, fat_arrow, underscore, plus_assign, minus_assign, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
 
 const Token = struct { kind: Kind, start: usize, end: usize, value: i64 };
 
@@ -185,6 +185,10 @@ const Lexer = struct {
                 .kw_while
             else if (std.mem.eql(u8, text, "mut"))
                 .kw_mut
+            else if (std.mem.eql(u8, text, "mod"))
+                .kw_mod
+            else if (std.mem.eql(u8, text, "use"))
+                .kw_use
             else if (std.mem.eql(u8, text, "_"))
                 .underscore
             else if (std.mem.eql(u8, text, "if"))
@@ -201,6 +205,10 @@ const Lexer = struct {
             if (self.i >= self.src.len) return Error.Unterminated;
             self.i += 1;
             return .{ .kind = .str_lit, .start = start, .end = self.i, .value = 0 };
+        }
+        if (c == ':' and self.i + 1 < self.src.len and self.src[self.i + 1] == ':') {
+            self.i += 2;
+            return .{ .kind = .colon_colon, .start = start, .end = self.i, .value = 0 };
         }
         if (c == '+' and self.i + 1 < self.src.len and self.src[self.i + 1] == '=') {
             self.i += 2;
@@ -711,6 +719,36 @@ pub const Parser = struct {
             // to itself resolve rather than escaping to an outer binding.
             return self.b.letRec(name, f, rest);
         }
+        if (self.tok.kind == .kw_mod) {
+            try self.bump();
+            if (self.tok.kind != .ident) return Error.UnexpectedToken;
+            const mname = try self.names.intern(self.lx.src[self.tok.start..self.tok.end]);
+            try self.bump();
+            try self.expect(.lbrace);
+            var item_syms: [32]u32 = undefined;
+            var item_srcs: [32][]const u8 = undefined;
+            var nitems: usize = 0;
+            const value = try self.moduleBody(&item_syms, &item_srcs, &nitems);
+            try self.expect(.rbrace);
+            return self.b.let(mname, value, try self.program());
+        }
+        if (self.tok.kind == .kw_use) {
+            // `use M::f;` binds f to M's f. A path is a projection, so this is
+            // an ordinary binding and not a second namespace mechanism.
+            try self.bump();
+            if (self.tok.kind != .ident) return Error.UnexpectedToken;
+            const mname = try self.names.intern(self.lx.src[self.tok.start..self.tok.end]);
+            try self.bump();
+            try self.expect(.colon_colon);
+            if (self.tok.kind != .ident) return Error.UnexpectedToken;
+            const item = self.lx.src[self.tok.start..self.tok.end];
+            const isym = try self.names.intern(item);
+            try self.bump();
+            try self.expect(.semi);
+            const base = try self.b.variable(mname);
+            const proj = try self.b.project(base, item);
+            return self.b.let(isym, proj, try self.program());
+        }
         if (self.tok.kind == .kw_while) {
             // `while c { body } rest` becomes a recursive function of the
             // mutable locals:
@@ -810,6 +848,67 @@ pub const Parser = struct {
     /// Call syntax, applied left to right so `f(a)(b)` and `f(a, b)` produce the
     /// same Core, which is what makes partial application fall out rather than
     /// being a separate feature.
+    /// Parse `fn name(params) { body }` and return the name and the curried
+    /// lambda. Shared by top-level declarations and module bodies so the two
+    /// cannot drift apart.
+    fn fnDecl(self: *Parser) Error!struct { name: u32, value: u32 } {
+        try self.expect(.kw_fn);
+        if (self.tok.kind != .ident) return Error.UnexpectedToken;
+        const name = try self.names.intern(self.lx.src[self.tok.start..self.tok.end]);
+        try self.bump();
+        try self.expect(.lparen);
+        var params: [8]u32 = undefined;
+        var np: usize = 0;
+        while (self.tok.kind != .rparen) {
+            if (self.tok.kind != .ident) return Error.UnexpectedToken;
+            if (np == params.len) return Error.TooManyParams;
+            params[np] = try self.names.intern(self.lx.src[self.tok.start..self.tok.end]);
+            np += 1;
+            try self.bump();
+            if (self.tok.kind == .comma) try self.bump();
+        }
+        try self.expect(.rparen);
+        try self.expect(.lbrace);
+        const body = try self.program();
+        try self.expect(.rbrace);
+        var f = body;
+        var k = np;
+        while (k > 0) {
+            k -= 1;
+            f = try self.b.lambda(params[k], f);
+        }
+        return .{ .name = name, .value = f };
+    }
+
+    /// A module body: items, then a record of them. A module IS a record, so a
+    /// path is a projection and nothing new is needed to represent one.
+    fn moduleBody(self: *Parser, names_out: []u32, srcs: [][]const u8, n: *usize) Error!u32 {
+        if (self.tok.kind == .rbrace) {
+            var kv: [32]u32 = undefined;
+            var i: usize = 0;
+            while (i < n.*) : (i += 1) {
+                if (i * 2 + 2 > kv.len) return Error.TooManyParams;
+                kv[i * 2] = try self.b.str(srcs[i]);
+                kv[i * 2 + 1] = try self.b.variable(names_out[i]);
+            }
+            return self.b.record(kv[0 .. n.* * 2]);
+        }
+        if (self.tok.kind == .kw_fn) {
+            const start_tok = self.tok;
+            const d = try self.fnDecl();
+            if (n.* == names_out.len) return Error.TooManyParams;
+            names_out[n.*] = d.name;
+            // The item's source text is its key, read back from the token that
+            // opened the declaration.
+            var lx2 = Lexer{ .src = self.lx.src, .i = start_tok.end };
+            const nt = try lx2.next();
+            srcs[n.*] = self.lx.src[nt.start..nt.end];
+            n.* += 1;
+            return self.b.letRec(d.name, d.value, try self.moduleBody(names_out, srcs, n));
+        }
+        return Error.UnexpectedToken;
+    }
+
     fn isMut(self: *const Parser, sym: u32) bool {
         var i: u32 = 0;
         while (i < self.nmuts) : (i += 1) {
@@ -967,7 +1066,7 @@ pub const Parser = struct {
             }
         }
         var e: u32 = if (builtin != null) 0 else try self.primary();
-        while (self.tok.kind == .lparen or self.tok.kind == .dot) {
+        while (self.tok.kind == .lparen or self.tok.kind == .dot or self.tok.kind == .colon_colon) {
             if (self.tok.kind == .lparen and builtin != null) {
                 try self.bump();
                 var args: [4]u32 = undefined;
@@ -981,6 +1080,14 @@ pub const Parser = struct {
                 try self.expect(.rparen);
                 e = try self.b.variadic(builtin.?, args[0..na]);
                 builtin = null;
+                continue;
+            }
+            if (self.tok.kind == .colon_colon) {
+                try self.bump();
+                if (self.tok.kind != .ident) return Error.UnexpectedToken;
+                const item = self.lx.src[self.tok.start..self.tok.end];
+                try self.bump();
+                e = try self.b.project(e, item);
                 continue;
             }
             if (self.tok.kind == .dot) {

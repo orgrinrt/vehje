@@ -1058,3 +1058,75 @@ test "the loop's state keeps its type" {
         \\acc
     ));
 }
+
+test "a module groups items and a path reaches them" {
+    try std.testing.expectEqual(@as(i64, 10), try run(
+        \\mod M { fn double(n) { n * 2 } }
+        \\M::double(5)
+    ));
+    try std.testing.expectEqual(@as(i64, 11), try run(
+        \\mod M {
+        \\  fn double(n) { n * 2 }
+        \\  fn bump(n) { n + 1 }
+        \\}
+        \\M::bump(M::double(5))
+    ));
+}
+
+test "items inside a module see each other" {
+    try std.testing.expectEqual(@as(i64, 21), try run(
+        \\mod M {
+        \\  fn double(n) { n * 2 }
+        \\  fn quad_plus(n) { double(double(n)) + 1 }
+        \\}
+        \\M::quad_plus(5)
+    ));
+}
+
+test "a module's function may recurse" {
+    try std.testing.expectEqual(@as(i64, 120), try run(
+        \\mod M { fn fact(n) { if n < 2 { 1 } else { n * fact(n - 1) } } }
+        \\M::fact(5)
+    ));
+}
+
+test "use brings one item into scope" {
+    try std.testing.expectEqual(@as(i64, 10), try run(
+        \\mod M { fn double(n) { n * 2 } }
+        \\use M::double;
+        \\double(5)
+    ));
+}
+
+test "a module is a value, so its items can be taken out and used" {
+    try std.testing.expectEqual(@as(i64, 8), try run(
+        \\mod M { fn double(n) { n * 2 } }
+        \\let d = M.double;
+        \\d(4)
+    ));
+}
+
+test "projecting off a parameter is refused, for want of row polymorphism" {
+    // Passing a module to a function and projecting inside it would need the
+    // parameter's type to be "some record with a double field", which is a row
+    // type. Refusing is honest; inferring a concrete record here would be wrong.
+    try std.testing.expectError(chk.Error.Mismatch, run(
+        \\mod M { fn double(n) { n * 2 } }
+        \\fn apply_double(m, v) { m.double(v) }
+        \\apply_double(M, 4)
+    ));
+}
+
+test "reaching a name a module does not have is refused" {
+    try std.testing.expectError(chk.Error.NoSuchField, run(
+        \\mod M { fn double(n) { n * 2 } }
+        \\M::missing(5)
+    ));
+}
+
+test "a module's items keep their types across the path" {
+    try std.testing.expectError(chk.Error.Mismatch, run(
+        \\mod M { fn double(n) { n * 2 } }
+        \\M::double("not a number")
+    ));
+}

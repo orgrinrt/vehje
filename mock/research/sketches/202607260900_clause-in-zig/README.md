@@ -265,6 +265,35 @@ counter to a string is refused rather than quietly widening.
 evaluator does not yet trampoline (task #49), so a long loop overflows where a
 real one would not. The desugaring is right; the evaluator has not caught up.
 
+## Modules
+
+```
+mod M { fn double(n) { n * 2 } fn bump(n) { n + 1 } }
+M::bump(M::double(5))                            ==> 11
+
+mod M { fn fact(n) { if n < 2 { 1 } else { n * fact(n - 1) } } }
+M::fact(5)                                       ==> 120
+
+use M::double;  double(5)                        ==> 10
+let d = M.double;  d(4)                          ==> 8
+
+M::missing(5)                                    refused, NoSuchField
+M::double("not a number")                        refused, Mismatch
+```
+
+**A module is a record of its items.** `mod M { ... }` binds `M` to a record
+whose fields are the items; `M::f` is a projection; `use M::f;` is an ordinary
+binding of `f` to that projection. So modules are first-class values that can be
+bound and passed, and none of it is a second namespace mechanism bolted beside
+the first. Items inside a module see each other, and may recurse, because they
+are ordinary recursive bindings that the record closes over.
+
+The limit this exposes is real and recorded: **projecting off a function
+parameter is refused**, because the parameter's type would have to mean "some
+record with a `double` field", which is a row type. Passing a module into a
+function and reaching into it there needs row polymorphism, which this does not
+have. Inferring a concrete record instead would be wrong, so it refuses.
+
 ## What it does not establish, stated plainly
 
 **This is a slice of the grammar, and the bar is the whole grammar.** It has
@@ -273,8 +302,9 @@ integers, strings, names, `let`, `fn` with recursion and closures and currying,
 three-operation prelude, single-method traits with impls, coherence, inferred
 bounds, associated types, and pattern matching. It does not have multi-method
 traits, supertraits, or-patterns, ranges, guards, real exhaustiveness checking,
-macros, `loop` and `for`, modules, `use`, attributes, a separate resolve pass,
-or monomorphisation, nor the rest of the surface the
+macros, `loop` and `for`, row polymorphism, nested or re-exported modules,
+visibility, attributes, a separate resolve pass, or monomorphisation, nor the
+rest of the surface the
 normative grammar (`mock/research/original-docs/CLAUSE_EBNF.md`) requires.
 Nothing is done until the full intended language is expressible.
 
