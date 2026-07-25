@@ -26,6 +26,15 @@ pub const TAG_PROJECT: u32 = 5;
 pub const TAG_IF: u32 = 6;
 pub const TAG_MATCH: u32 = 7;
 pub const TAG_RAW: u32 = 10;
+/// The effect pair, with the framework's own tag numbers. `Handle` eliminates,
+/// `Perform` introduces; the census's finding is that non-local control flow
+/// needs no new form beyond these, because an early exit is an operation and the
+/// enclosing construct is the handled computation.
+pub const TAG_HANDLE: u32 = 11;
+pub const TAG_PERFORM: u32 = 12;
+
+/// The operation a `break` performs. One fixed symbol, from the synthetic range.
+pub const BREAK_OP: u32 = SYN_SYM_BASE + 0xF000;
 
 /// Pattern nodes. They live in the same arena as expressions but are never
 /// evaluated as expressions; the match arm is the only thing that reads them.
@@ -184,7 +193,7 @@ pub const Error = error{
 
 // ---------------------------------------------------------------- lexer
 
-const Kind = enum { int, str_lit, ident, dot, colon, lbracket, rbracket, arrow, kw_trait, kw_impl, kw_for, kw_type, kw_match, kw_while, kw_mut, kw_mod, kw_use, kw_in, kw_macro, kw_pub, bang, pound, colon_colon, kw_if_guard, dotdot, dotdot_eq, pipe, fat_arrow, underscore, plus_assign, minus_assign, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, slash, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
+const Kind = enum { int, str_lit, ident, dot, colon, lbracket, rbracket, arrow, kw_trait, kw_impl, kw_for, kw_type, kw_match, kw_while, kw_mut, kw_mod, kw_use, kw_in, kw_macro, kw_pub, kw_loop, kw_break, bang, pound, colon_colon, kw_if_guard, dotdot, dotdot_eq, pipe, fat_arrow, underscore, plus_assign, minus_assign, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, slash, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
 
 const Token = struct { kind: Kind, start: usize, end: usize, value: i64 };
 
@@ -255,6 +264,10 @@ const Lexer = struct {
                 .kw_macro
             else if (std.mem.eql(u8, text, "pub"))
                 .kw_pub
+            else if (std.mem.eql(u8, text, "loop"))
+                .kw_loop
+            else if (std.mem.eql(u8, text, "break"))
+                .kw_break
             else if (std.mem.eql(u8, text, "_"))
                 .underscore
             else if (std.mem.eql(u8, text, "if"))
@@ -492,6 +505,25 @@ pub const Builder = struct {
 
     /// A record pattern: alternating key-string and sub-pattern nodes in the
     /// pool, the same shape the record literal uses for its operands.
+    /// `Handle` with a single clause: the operation it services, the binder its
+    /// payload arrives under, and the clause body. Non-resuming, so the clause's
+    /// value replaces the whole handled computation.
+    pub fn handle(self: *Builder, body: u32, op: u32, param: u32, clause: u32) Error!u32 {
+        const idx = try self.alloc(TAG_HANDLE);
+        self.slot(idx, 1).* = body;
+        self.slot(idx, 2).* = op;
+        self.slot(idx, 3).* = param;
+        self.slot(idx, 4).* = clause;
+        return idx;
+    }
+
+    pub fn perform(self: *Builder, op: u32, arg: u32) Error!u32 {
+        const idx = try self.alloc(TAG_PERFORM);
+        self.slot(idx, 1).* = op;
+        self.slot(idx, 2).* = arg;
+        return idx;
+    }
+
     pub fn patOr(self: *Builder, a: u32, b: u32) Error!u32 {
         const idx = try self.alloc(PAT_OR);
         self.slot(idx, 1).* = a;
@@ -727,6 +759,10 @@ pub const Parser = struct {
 
     pub fn program(self: *Parser) Error!u32 {
         try self.skipAttributes();
+        // An empty block is unit. Without this a one-armed conditional whose
+        // body does nothing has no value at all, and `if c { } else { .. }` is
+        // an ordinary shape rather than a mistake.
+        if (self.tok.kind == .rbrace or self.tok.kind == .eof) return self.b.unit();
         // `pub` at the top level is accepted and means nothing: there is no
         // enclosing module to be private from.
         if (self.tok.kind == .kw_pub) try self.bump();
@@ -982,6 +1018,53 @@ pub const Parser = struct {
             while (j < n) : (j += 1) call = try self.b.apply(call, args[j .. j + 1]);
             const looped = try self.b.letRec(loop_sym, f, call);
             return self.b.let(s_sym, seq, looped);
+        }
+        if (self.tok.kind == .kw_break) {
+            // A break is a statement wherever a statement may stand, not only
+            // at the top of a loop body: it performs an operation, and where the
+            // handler is sits with the loop rather than with the syntax here.
+            try self.bump();
+            const payload = if (self.tok.kind == .semi) try self.b.unit() else try self.expression();
+            try self.expect(.semi);
+            return self.b.perform(BREAK_OP, payload);
+        }
+        if (self.tok.kind == .kw_loop) {
+            // `loop { body } rest` is an unbounded recursive binding wrapped in
+            // a handler for break. The census's reading: an unbounded loop is a
+            // recursive binding applied to itself with the exit as an effect,
+            // so no new Core form is needed for either half.
+            try self.bump();
+            try self.expect(.lbrace);
+            const loop_sym = LOOP_SYM_BASE + self.nloops;
+            self.nloops += 1;
+            const n = self.nmuts;
+            const body = try self.loopBody(loop_sym, n);
+            try self.expect(.rbrace);
+
+            var f = body;
+            var k = n;
+            while (k > 0) {
+                k -= 1;
+                f = try self.b.lambda(self.muts[k], f);
+            }
+            if (n == 0) f = try self.b.lambda(SYN_SYM_BASE + 0xFFFE, f);
+            var call = try self.b.variable(loop_sym);
+            if (n == 0) {
+                call = try self.b.apply(call, &[_]u32{try self.b.unit()});
+            } else {
+                var j: u32 = 0;
+                while (j < n) : (j += 1) {
+                    const a = try self.b.variable(self.muts[j]);
+                    call = try self.b.apply(call, &[_]u32{a});
+                }
+            }
+            const looped = try self.b.letRec(loop_sym, f, call);
+            const bsym = SYN_SYM_BASE + 0xF001 + self.nloops;
+            const clause_body = try self.b.variable(bsym);
+            const handled = try self.b.handle(looped, BREAK_OP, bsym, clause_body);
+            // The loop's value is whatever break carried, and the rest of the
+            // program follows it, if anything does.
+            return self.thenRest(handled);
         }
         if (self.tok.kind == .kw_while) {
             // `while c { body } rest` becomes a recursive function of the
@@ -1555,6 +1638,15 @@ pub const Parser = struct {
         return null;
     }
 
+    /// Sequence a construct with whatever follows it. At the end of a block or
+    /// of the input there is nothing to follow, and the construct's own value is
+    /// the block's value, so no binding is introduced for a continuation that
+    /// does not exist.
+    fn thenRest(self: *Parser, value: u32) Error!u32 {
+        if (self.tok.kind == .eof or self.tok.kind == .rbrace) return value;
+        return self.b.let(try self.names.intern("_"), value, try self.program());
+    }
+
     fn isMut(self: *const Parser, sym: u32) bool {
         var i: u32 = 0;
         while (i < self.nmuts) : (i += 1) {
@@ -1625,8 +1717,13 @@ pub const Parser = struct {
             self.lx = save_lx;
             self.tok = save_tok;
         }
+        const block_shaped = self.tok.kind == .kw_if or self.tok.kind == .kw_match or self.tok.kind == .kw_loop;
         const e = try self.expression();
-        try self.expect(.semi);
+        if (block_shaped) {
+            if (self.tok.kind == .semi) try self.bump();
+        } else {
+            try self.expect(.semi);
+        }
         return self.b.let(try self.names.intern("_"), e, try self.forStatements(loop_sym, n, i_sym));
     }
 
@@ -1635,6 +1732,21 @@ pub const Parser = struct {
     /// reassignment is rebinding, and only a genuine place would need an effect.
     fn loopBody(self: *Parser, loop_sym: u32, n: u32) Error!u32 {
         if (self.tok.kind == .rbrace) return self.loopCall(loop_sym, n);
+        if (self.tok.kind == .kw_break) {
+            try self.bump();
+            var payload: u32 = undefined;
+            if (self.tok.kind == .semi) {
+                payload = try self.b.unit();
+            } else {
+                payload = try self.expression();
+            }
+            try self.expect(.semi);
+            // Everything after a break in the same block is unreachable, so it
+            // is not parsed as the continuation: the perform never returns.
+            const p = try self.b.perform(BREAK_OP, payload);
+            while (self.tok.kind != .rbrace) try self.bump();
+            return p;
+        }
         if (self.tok.kind == .kw_let) {
             try self.bump();
             if (self.tok.kind == .kw_mut) try self.bump();
@@ -1670,9 +1782,15 @@ pub const Parser = struct {
             self.tok = save_tok;
         }
         // A bare expression statement still binds, so its effects keep their
-        // place in the order even though its value is discarded.
+        // place in the order even though its value is discarded. A block-shaped
+        // statement carries no trailing semicolon, the same as in Rust.
+        const block_shaped = self.tok.kind == .kw_if or self.tok.kind == .kw_match or self.tok.kind == .kw_loop;
         const e = try self.expression();
-        try self.expect(.semi);
+        if (block_shaped) {
+            if (self.tok.kind == .semi) try self.bump();
+        } else {
+            try self.expect(.semi);
+        }
         return self.b.let(try self.names.intern("_"), e, try self.loopBody(loop_sym, n));
     }
 
@@ -2030,7 +2148,15 @@ pub const Parser = struct {
                 try self.expect(.lbrace);
                 const t = try self.program();
                 try self.expect(.rbrace);
-                try self.expect(.kw_else);
+                if (self.tok.kind != .kw_else) {
+                    // `If` is total, so a missing else is unit. The then branch
+                    // must then be unit too, which is what makes a one-armed if
+                    // a statement rather than an expression that sometimes has
+                    // no value.
+                    const u = try self.b.unit();
+                    return self.b.cond(c, t, u);
+                }
+                try self.bump();
                 try self.expect(.lbrace);
                 const e = try self.program();
                 try self.expect(.rbrace);

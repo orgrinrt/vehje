@@ -374,6 +374,37 @@ name can reach, so a program using the names `i` or `s` neither captures them no
 is captured by them. Hygiene here is structural rather than a naming convention,
 the same as impl-method binders.
 
+`loop` with `break` is the effect pair, not a third loop form:
+
+```
+let mut i = 0;
+loop { if 4 < i { break i * 2; } i += 1; }       ==> 10
+loop { if 2 < i { break "done"; } i += 1; }      ==> "done"
+
+loop { if i < 1 { break 1; } else { break "two"; } }  refused, Mismatch
+break 1;                                              refused, BreakOutsideLoop
+```
+
+`loop { body }` is an unbounded recursive binding wrapped in a handler for the
+break operation, and `break e` performs that operation. The census's reading
+holds exactly: an early exit is an operation, the enclosing construct is the
+handled computation, and the discharge never resumes, so the clause's value
+replaces the whole loop. No new Core form for either half.
+
+The handler's result type and its clause's parameter are one variable, so a
+break's payload and the loop's value agree by construction, and two breaks
+disagreeing is a type error rather than a coincidence. Handling is lexical, so a
+stack of handled types is the whole of the resolution.
+
+At run time the effect **propagates as an error with its value beside it rather
+than as a jump**, so every frame between the perform and its handler still gets
+to return. That is what would let a later `finally` run at each frame.
+
+Adding it surfaced three plain gaps that had never come up: `break` had to be a
+statement wherever a statement may stand rather than only at the top of a loop
+body, `if` had to work without `else` (yielding unit, since `If` is total), and
+an empty block had to be unit. All three are ordinary shapes, not corner cases.
+
 **Loops are bounded by the evaluator's stack.** Each iteration is a call, and the
 evaluator does not yet trampoline (task #49), so a long loop overflows where a
 real one would not. The desugaring is right; the evaluator has not caught up.

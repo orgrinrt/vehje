@@ -31,6 +31,7 @@ pub const Error = error{
     AmbiguousConstraint,
     TooManyConstraints,
     MissingSuperImpl,
+    BreakOutsideLoop,
 };
 
 pub const NONE: u32 = 0xFFFF_FFFF;
@@ -87,6 +88,11 @@ pub const Ctx = struct {
     resolved: []u32 = &.{},
     pending: []Constraint = &.{},
     npend: u32 = 0,
+    /// The type each enclosing handler yields, innermost last. A perform's
+    /// payload must match the handler that will catch it, and handling is
+    /// lexical, so a stack is the whole of the resolution.
+    handled: [16]u32 = undefined,
+    nhandled: u32 = 0,
 
     fn alloc(self: *Ctx, t: Ty) Error!u32 {
         if (self.n >= self.types.len) return Error.OutOfTypes;
@@ -592,6 +598,29 @@ fn infer(img: *const Image, idx: u32, ctx: *Ctx, cur: u32) Error!u32 {
                 if (result) |r| try ctx.unify(bt, r) else result = bt;
             }
             return result orelse Error.Unsupported;
+        },
+        cl.TAG_HANDLE => {
+            // The handler's result type is what its clause yields, and the
+            // clause's parameter is what a perform carries. Both are the same
+            // variable, so a break's payload and the loop's value agree.
+            const yield = try ctx.fresh();
+            if (ctx.nhandled == ctx.handled.len) return Error.TooManyConstraints;
+            ctx.handled[ctx.nhandled] = yield;
+            ctx.nhandled += 1;
+            _ = try infer(img, try img.word(idx, 1), ctx, cur);
+            ctx.nhandled -= 1;
+            const scope = try ctx.push(try img.word(idx, 3), .{ .ty = yield, .quantified = 0, .first = 0 }, cur);
+            const ct = try infer(img, try img.word(idx, 4), ctx, scope);
+            try ctx.unify(ct, yield);
+            return yield;
+        },
+        cl.TAG_PERFORM => {
+            if (ctx.nhandled == 0) return Error.BreakOutsideLoop;
+            const at = try infer(img, try img.word(idx, 2), ctx, cur);
+            try ctx.unify(at, ctx.handled[ctx.nhandled - 1]);
+            // A perform never returns, so its type is free: whatever the
+            // context needs it to be.
+            return ctx.fresh();
         },
         cl.TAG_IF => {
             const ct = try infer(img, try img.word(idx, 1), ctx, cur);

@@ -116,6 +116,8 @@ pub const Error = error{
     OutOfRange,
     ValArenaFull,
     DivideByZero,
+    Unwound,
+    Unhandled,
 };
 
 /// A closure names the environment it was written in, which is why the
@@ -165,6 +167,11 @@ pub const Env = struct {
     /// Per node, the impl binder a trait-method reference resolved to, or NONE.
     /// Written by the checker, read here. This is the whole of dispatch.
     resolved: []const u32 = &.{},
+    /// The payload of an in-flight unwind. An effect propagates as an error
+    /// with its value beside it rather than as a jump, so every frame between
+    /// the perform and its handler still gets to return.
+    unwind_op: u32 = 0,
+    unwind_val: Value = Value.unit,
 
     fn push(self: *Env, sym: u32, val: Value, parent: u32) Error!u32 {
         if (self.n >= self.slots.len) return Error.EnvFull;
@@ -401,6 +408,29 @@ fn evalNode(img: *const Image, idx: u32, env: *Env, cur: u32) Error!Value {
             // The parser requires an irrefutable last arm, so this is a decode
             // fault rather than a program the checker let through.
             return Error.Corrupt;
+        },
+        cl.TAG_PERFORM => {
+            const op = try img.word(idx, 1);
+            const v = try evalNode(img, try img.word(idx, 2), env, cur);
+            env.unwind_op = op;
+            env.unwind_val = v;
+            return Error.Unwound;
+        },
+        cl.TAG_HANDLE => {
+            const body = try img.word(idx, 1);
+            const op = try img.word(idx, 2);
+            const param = try img.word(idx, 3);
+            const clause = try img.word(idx, 4);
+            const r = evalNode(img, body, env, cur) catch |e| {
+                if (e != Error.Unwound) return e;
+                if (env.unwind_op != op) return e;
+                // Non-resuming: the clause's value replaces the whole handled
+                // computation, so the abandoned continuation is never reached.
+                const payload = env.unwind_val;
+                const sc = try env.push(param, payload, cur);
+                return evalNode(img, clause, env, sc);
+            };
+            return r;
         },
         cl.TAG_IF => {
             const c = try (try evalNode(img, try img.word(idx, 1), env, cur)).asInt();
@@ -1637,4 +1667,48 @@ test "a recursive bounded function still refuses a type with no impl" {
         \\fn dbl_n(v, n) { if n < 1 { v } else { dbl_n(dbl(v), n - 1) } }
         \\dbl_n("no impl", 2)
     ));
+}
+
+test "loop runs until break, and break carries the value" {
+    try std.testing.expectEqual(@as(i64, 10), try run(
+        \\let mut i = 0;
+        \\loop {
+        \\  if 4 < i { break i * 2; }
+        \\  i += 1;
+        \\}
+    ));
+}
+
+test "break exits from inside a conditional" {
+    try std.testing.expectEqual(@as(i64, 6), try run(
+        \\let mut n = 0;
+        \\loop {
+        \\  n += 1;
+        \\  if n < 6 { } else { break n; }
+        \\}
+    ));
+}
+
+test "the loop's value and the break's payload are one type" {
+    var out: [64]u8 = undefined;
+    try std.testing.expectEqualStrings("done", try runStr(
+        \\let mut i = 0;
+        \\loop {
+        \\  if 2 < i { break "done"; }
+        \\  i += 1;
+        \\}
+    , &out));
+}
+
+test "two breaks in one loop must agree on a type" {
+    try std.testing.expectError(chk.Error.Mismatch, run(
+        \\let mut i = 0;
+        \\loop {
+        \\  if i < 1 { break 1; } else { break "two"; }
+        \\}
+    ));
+}
+
+test "break outside a loop is refused" {
+    try std.testing.expectError(chk.Error.BreakOutsideLoop, run("break 1;"));
 }
