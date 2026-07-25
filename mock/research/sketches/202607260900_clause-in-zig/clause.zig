@@ -831,37 +831,15 @@ pub const Parser = struct {
             return out;
         }
         if (self.tok.kind == .kw_fn) {
-            try self.bump();
-            if (self.tok.kind != .ident) return Error.UnexpectedToken;
-            const name = try self.names.intern(self.lx.src[self.tok.start..self.tok.end]);
-            try self.bump();
-            try self.expect(.lparen);
-            var params: [8]u32 = undefined;
-            var np: usize = 0;
-            while (self.tok.kind != .rparen) {
-                if (self.tok.kind != .ident) return Error.UnexpectedToken;
-                if (np == params.len) return Error.TooManyParams;
-                params[np] = try self.names.intern(self.lx.src[self.tok.start..self.tok.end]);
-                np += 1;
-                try self.bump();
-                if (self.tok.kind == .comma) try self.bump();
-            }
-            try self.expect(.rparen);
-            try self.expect(.lbrace);
-            const body = try self.program();
-            try self.expect(.rbrace);
-            // Curried: Core application takes one argument at a time, so a
-            // multi-parameter function is nested lambdas, innermost last.
-            var f = body;
-            var k = np;
-            while (k > 0) {
-                k -= 1;
-                f = try self.b.lambda(params[k], f);
-            }
+            // Shared with module bodies and impl methods. This branch used to
+            // carry its own copy, which is how the nullary-parameter change
+            // landed in one place and not here: the two drifted exactly as a
+            // duplicated parser always does.
+            const d = try self.fnDecl();
             const rest = try self.program();
             // Recursive, so the function is in scope for its own body and calls
             // to itself resolve rather than escaping to an outer binding.
-            return self.b.letRec(name, f, rest);
+            return self.b.letRec(d.name, d.value, rest);
         }
         if (self.tok.kind == .kw_mod) {
             try self.bump();
