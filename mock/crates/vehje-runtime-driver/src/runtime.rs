@@ -235,3 +235,6 @@ pub mod dynamic {
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(all(test, feature = "dynamic"))]
+mod e2e;
