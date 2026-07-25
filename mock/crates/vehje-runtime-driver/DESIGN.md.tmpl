@@ -4,17 +4,31 @@ The compiler-side embedding and dispatch over the wire ABI, and the in-process
 consumer of what crosses back. It serializes a `Checked` residual through
 `vehje-runtime-abi`, hands it to the embedded Zig runtime, and maps the
 runtime's result and diagnostics back to `vehje-ir` diagnostics; it also holds
-the safe reader over the value-arena a produced value crosses back in. It is
-designed to be the one framework crate with a `std` role, for the dlopen of the
-Zig runtime artifact, `#![no_std]` on the core paths with `std` behind the
-embedding feature. State: that role is owed. Today `dispatch` is a stub (it
-ignores its argument and returns success), `libloading` is a BACKLOG item (the
-dep is commented out), the `std` feature is empty, and the crate is `#![no_std]`
-unconditionally in source; the dlopen and the `std`-gated embedding are the
-intended design, not shipped.
+the safe reader over the value-arena a produced value crosses back in.
+
+Loading the artifact goes through `hilavitkutin-linking`, the workspace's
+cross-platform loader primitive: pull-based explicit-symbol resolution over
+dlopen and LoadLibrary, `no_std`, and no allocator. The workspace already owns
+this problem, so the driver reaches for the stack primitive rather than a
+third-party loader. That carries a consequence worth stating plainly: embedding
+the runtime needs no `std`. The crate is `#![no_std]` with no alloc, and the
+`std` feature does not gate the embedding.
 
 ## Scope
 
+- `Runtime`. The loaded runtime artifact. It opens by path, resolves the three
+  exported entries (`vehje_runtime_new`, `vehje_runtime_free`,
+  `vehje_runtime_execute`) once at open, so a later call cannot fail on a
+  missing symbol; executes a serialized residual against a caller-lent output
+  buffer; and closes explicitly with the platform result surfaced, the drop path
+  remaining the fallback. Resolved symbols cannot outlive the library they came
+  from, which the type enforces rather than asks for.
+- The sink the driver supplies. The runtime writes a produced value through the
+  host's reserve-then-commit callbacks, so the driver lends one caller-provided
+  buffer and records what was committed, which is the degenerate single-reserve
+  case the transfer contract allows. A buffer too small to hold the image
+  refuses the reservation, which the runtime reads as backpressure rather than
+  as a failure to write.
 - `dispatch`. Hand a `Checked` residual to the runtime through the wire ABI and
   read back its outcome, mapping the wire diagnostics to `vehje-ir::Diagnostic`.
 - `Reader`. The safe value-arena reader. The runtime output is a
@@ -25,12 +39,17 @@ intended design, not shipped.
   and blob spans are bounds-checked against the arena, and the children-first
   emission order makes acyclicity a single monotone index check (a child index
   must be strictly below its parent), so the untrusted path is validated linearly
-  before any read. The in-process trusted path may skip it.
-- `DriverError`. Dispatch diagnostics (the runtime rejected the residual, the
-  residual could not be serialized).
+  before any read. The in-process trusted path may skip it. The untrusted decode
+  over the bytes a runtime committed is `ValueImage` in `vehje-runtime-abi`, so
+  this crate adds no second decoder.
+- `DriverError`. Dispatch diagnostics, each naming what went wrong rather than
+  collapsing into one code: the runtime rejected the residual, the residual
+  could not be serialized, a produced value failed the structural decode, the
+  artifact could not be loaded, an expected symbol was missing, and the runtime
+  reported an execution failure. A missing symbol and a rejected program are
+  different problems for whoever has to fix them.
 - The embedding of the Zig runtime artifact: a separate build artifact the
-  driver links (statically for the compiler layer) or dlopens (behind the `std`
-  embedding feature). Multiple runtime backends, if they ever exist, compose at
+  driver loads. Multiple runtime backends, if they ever exist, compose at
   compile time, never through `dyn` or a shared-object registry at the compiler
   layer.
 
@@ -43,12 +62,13 @@ intended design, not shipped.
 
 ## Dependencies
 
-`vehje-runtime-abi` for the wire form and the value-arena; `vehje-ir` for the
-diagnostic type; `vehje-schedule` for the pass order; `hilavitkutin-api` and
-`notko` for the primitives. `#![no_std]` on the core paths; `std` behind the
-embedding feature for the dlopen.
+`vehje-runtime-abi` for the wire form, the value-arena, and the value image;
+`hilavitkutin-linking` for loading the artifact and resolving its symbols;
+`vehje-ir` for the diagnostic type; `vehje-schedule` for the pass order;
+`hilavitkutin-api` and `notko` for the primitives. `#![no_std]`, no alloc.
 
 ## Deferred (BACKLOG)
 
-The concrete dlopen embedding and the diagnostic mapping wiring. The Zig runtime
-build integration (the runtime is a repo-level artifact, not a crate).
+The diagnostic mapping wiring, which waits on the runtime carrying wire
+diagnostics to map. The Zig runtime build integration (the runtime is a
+repo-level artifact, not a crate).

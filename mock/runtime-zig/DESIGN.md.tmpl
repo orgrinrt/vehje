@@ -69,6 +69,10 @@ State: shipped. `vehje_runtime_new`, `vehje_runtime_free`,
 `VEHJE_RESULT_NULL_HANDLE`, and `VEHJE_RESULT_INVALID_INPUT` constants
 mirroring the Rust discriminants.
 
+`vehje_runtime_execute` takes a sink pointer alongside the residual bytes. A
+null sink means the host wanted only the outcome, so evaluating is the whole
+job; a non-null one receives the produced value.
+
 ### `VehjeResult` ABI layout. scalar i32
 
 The Rust side declares `#[repr(i32)] enum VehjeResult { Ok = 0, Err = -1,
@@ -86,13 +90,21 @@ the trivially portable form across every ABI.
 Named constants mirror the Rust discriminants exactly and give Zig-side call
 sites a readable form instead of bare integer literals.
 
+## The produced value crossing back
+
+State: shipped. The value is marshalled into the value-image layout pinned by
+round `202607251109` and committed through the host's reserve-then-commit sink,
+which lends the backing up front so the runtime holds no output memory after the
+call. Writing the whole image in one reservation is the degenerate single-chunk
+case the transfer contract allows.
+
+A closure is refused with a named reason rather than partially written. It names
+an environment inside this run, so it has no value-arena representation and
+cannot be a value the host still holds after the call returns. A reservation the
+host refuses is backpressure, not a crash.
+
 ## Intended, not shipped
 
-- The produced value crossing back. `vehje_runtime_execute` evaluates and then
-  discards the value, returning only a result code, so a program's answer
-  cannot yet leave the runtime. The value will cross through a `VehjeSink` in
-  the value-image layout pinned by round `202607251109`, written depth-first
-  with children before parents. This is the next gate.
 - Family operations and host calls. The framework owns no family, so `Raw` is
   dispatched to a consumer-provided handler rather than interpreted here. This
   is how arithmetic and host services arrive, and it is the runtime half of the
