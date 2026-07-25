@@ -1,90 +1,131 @@
 # vehje-runtime-zig. Design
 
-Zig implementation of the vehje runtime. Consumes the C ABI
-(vehje-runtime-abi); implements the entry points with a Vehje-
-IR interpreter, scratch-var folding, and generative expansion.
+The Zig implementation of the vehje runtime: the executor of a `Checked`
+residual. It consumes the tier-tagged wire residual across the C ABI
+(`vehje-runtime-abi`), evaluates it against the runtime environment, and
+produces a value. It pulls no `std`, holds no allocator, and works over
+host-lent memory.
 
-## Scope
+It implements no build-environment semantics. Constant evaluation and macro
+expansion are reductions the Rust compile side has already discharged, and the
+effect proof guarantees no such construct survives into the residual, so the
+runtime never has to recognise one.
 
-- Arena allocator. per-session state owning compile-time
- buffers.
-- IR interpreter. evaluates macro bodies + generative subgraph
- blueprints against the incoming ABI node buffers.
-- Scratch-var evaluator. folds compile-time expressions to byte
- blobs the compiler re-inserts into the AST.
-- TokenStream emitter. macros return AbiToken arrays.
-- Error reporter. maps Zig-side failures to AbiDiagnostic.
+## The tier-0 execution model
 
-## Round-skeleton scope
+State: shipped. The `Arena` tier interprets the serialized node arena directly.
+It is the reference semantics, the form the `Bytecode` tier (the CFG-of-blocks
+linear form, intended) is later measured against for agreement and for speed.
 
-Phase 6 skeleton round (2026-04-20) ships:
+The decode mirrors `vehje-runtime-abi`'s tier-0 serialization exactly: a
+seven-word header, then fixed seven-word node records, then the flat
+child-index pool, then the string blob, little-endian throughout so every
+target reads the same bytes. Sections are found by arithmetic on the header's
+counts, so reaching node `i`, a pool entry, or the blob needs no scan.
 
-- `build.zig` declaring a `vehje_runtime` shared-library
- target. Output: `zig-out/lib/libvehje_runtime.{so|dylib|dll}`.
-- `src/runtime.zig` exporting three `extern "C"` stubs matching
- the Rust `vehje-runtime-abi` exports:
- - `vehje_runtime_new() ?*anyopaque` → null.
- - `vehje_runtime_free(?*anyopaque) void` → no-op.
- - `vehje_runtime_execute(?*anyopaque, [*]const u8, usize) i32`
- → `VEHJE_RESULT_ERR` (`-1`).
- - `pub const VEHJE_RESULT_OK: i32 = 0;` (+ `_ERR`,
- `_NULL_HANDLE`, `_INVALID_INPUT` matching the Rust
- discriminants).
-- `README.md` describing the tree + build workflow.
-- `.gitignore` excluding `zig-out/`, `zig-cache/`.
-- `BACKLOG.md` listing deferred runtime features.
+Binders match by their `Sym` bits. The wire carries one word per binder, the
+stable binder identity the compile side minted, so a `Var` binds to its `Let`
+by integer equality. The runtime holds no interner and never sees a name.
+
+## Environments
+
+State: shipped. An environment is a caller-lent bump arena of linked bindings,
+not a popping stack. A binding records its binder's `Sym` bits, its value, and
+the binding it extends; an environment is the index of a chain head.
+
+The reason is closures. Capturing an environment costs recording one index, and
+a closure that outlives the scope it was written in still reads the bindings it
+captured. A popping stack cannot promise that, because the entries the closure
+referred to would be gone or reused by the time it is called. Nothing is freed
+within a run, and exhausting the lent arena is a named refusal, not an overrun.
+
+## The evaluated set
+
+State: shipped.
+
+- Literals: unit, boolean, and integer.
+- `Var`, resolved against the environment chain by `Sym` bits.
+- `Let`, including the recursive form. A recursive binding is in scope for its
+  own value, so the closure that value produces captures a chain already naming
+  it, which is what lets a recursive function reach itself.
+- `If`, evaluating its condition and then exactly one branch.
+- `Lambda`, producing a closure over the environment it was evaluated in, so
+  scoping is lexical: a closure reads the binding visible where it was written,
+  not one that happens to shadow it at the call site.
+- `Apply`, applying one argument at a time, because multi-parameter lambdas
+  desugar to nested `Lambda`.
+
+## The refusal set
+
+State: shipped. Every failure is a named error, never a wrong answer: an
+unbound variable, an application whose callee is not a closure, a form or
+literal kind this tier does not evaluate, an exhausted environment arena, and a
+corrupt index or record reaching past the image.
+
+## The C ABI surface
+
+State: shipped. `vehje_runtime_new`, `vehje_runtime_free`,
+`vehje_runtime_execute`, and the `VEHJE_RESULT_OK`, `VEHJE_RESULT_ERR`,
+`VEHJE_RESULT_NULL_HANDLE`, and `VEHJE_RESULT_INVALID_INPUT` constants
+mirroring the Rust discriminants.
 
 ### `VehjeResult` ABI layout. scalar i32
 
-The Rust side declares `#[repr(i32)] enum VehjeResult { Ok = 0,
-Err = -1, NullHandle = -2, InvalidInput = -3 }`. On System V
-x86-64 and Apple ARM64 this lowers to a scalar-in-register
-return. The Zig side returns plain `i32` directly, giving
-identical register-use on every target.
+The Rust side declares `#[repr(i32)] enum VehjeResult { Ok = 0, Err = -1,
+NullHandle = -2, InvalidInput = -3 }`. On System V x86-64 and Apple ARM64 this
+lowers to a scalar-in-register return. The Zig side returns plain `i32`
+directly, giving identical register-use on every target.
 
 Alternative considered and rejected: mirror the Rust enum via
-`pub const VehjeResult = extern struct { code: i32 }` (a
-one-field wrapper struct). Rejected because on MSVC Windows
-x64 a one-field extern struct returns via hidden-pointer
-(sret) while a `#[repr(i32)]` enum returns in `eax`. the two
-sides would disagree on the calling convention. Scalar `i32`
-return is the trivially portable form across every ABI.
+`pub const VehjeResult = extern struct { code: i32 }` (a one-field wrapper
+struct). Rejected because on MSVC Windows x64 a one-field extern struct returns
+via hidden-pointer (sret) while a `#[repr(i32)]` enum returns in `eax`, so the
+two sides would disagree on the calling convention. A scalar `i32` return is
+the trivially portable form across every ABI.
 
-Named constants (`VEHJE_RESULT_OK`, `VEHJE_RESULT_ERR`,
-`VEHJE_RESULT_NULL_HANDLE`, `VEHJE_RESULT_INVALID_INPUT`)
-mirror the Rust discriminants exactly and give Zig-side call
+Named constants mirror the Rust discriminants exactly and give Zig-side call
 sites a readable form instead of bare integer literals.
 
-Real interpreter body, arena allocator, scratch-var evaluator,
-TokenStream emitter, and Zig test suite are all BACKLOG.
+## Intended, not shipped
+
+- The produced value crossing back. `vehje_runtime_execute` evaluates and then
+  discards the value, returning only a result code, so a program's answer
+  cannot yet leave the runtime. The value will cross through a `VehjeSink` in
+  the value-image layout pinned by round `202607251109`, written depth-first
+  with children before parents. This is the next gate.
+- Family operations and host calls. The framework owns no family, so `Raw` is
+  dispatched to a consumer-provided handler rather than interpreted here. This
+  is how arithmetic and host services arrive, and it is the runtime half of the
+  handler discipline.
+- Strings, sequences, and records as values, and the remaining Core forms
+  (`Project`, `Match`, `Iter`, `Interp`, `Handle`).
+- The `Bytecode` tier over the CFG-of-blocks form.
+- Per-session arena state, and diagnostics mapped to the ABI diagnostic shape.
 
 ## Non-scope
 
 - The ABI contract itself (`vehje-runtime-abi`).
-- The compiler-side dispatch (`vehje-runtime-driver`).
-- Runtime performance tuning (post-Phase 6).
+- The compiler-side dispatch and the embedding of this artifact
+  (`vehje-runtime-driver`).
+- Any build-environment semantics. The effect proof discharges them before the
+  residual is emitted.
 
 ## Build integration
 
 - `build.zig` drives the Zig compilation.
 - Output: `zig-out/lib/libvehje_runtime.{so|dylib|dll}`.
-- Target-triple-specific builds; a distribution bundle pairs the
- Rust compiler binary with the matching dylib for each supported
- platform.
-- Mockspace does not build this tree. it ships source but
- cargo / mockspace lints ignore the `.zig` files. The Zig side
- is validated only by running `zig build` manually or in CI.
+- Target-triple-specific builds; a distribution bundle pairs the Rust compiler
+  binary with the matching dylib for each supported platform.
+- The `.zig` tree is not built by the Rust workspace tooling. It is validated by
+  running `zig build` and `zig build test`.
 
 ## Dependencies
 
-- Standard Zig library only. No third-party Zig packages. No
- runtime allocator. arena-only.
+- The standard Zig library only. No third-party Zig packages, and no runtime
+  allocator: memory is host-lent.
 
 ## Sources
 
-- 202604191301/202604191300_research.macros-slice3.md (macro interp
- path)
-- 202604191301/202604191300_research.scratch-variables.md
-- 202604191301/202604191300_research.generative-pipeline.md
-- 202604262100_changelist.doc.md (R2 round)
-- 202604264100_changelist.doc.md (Phase 6 skeleton round)
+- `202607251109` (the produced-value crossing contract, and this document's
+  correction from the superseded skeleton description)
+- `vehje-runtime-abi/src/wire/serialize.rs` (the tier-0 layout this decodes)

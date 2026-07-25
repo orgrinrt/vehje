@@ -68,6 +68,38 @@ discipline with no collector and no refcount.
 - The backing memory is host-lent up front; the runtime holds no output memory
   after a call.
 
+### The value image: the pinned byte layout
+
+`#[repr(C)]` fixes a Rust in-memory shape, not a cross-language one: `USize` is
+platform-width and the tag takes the C enum width, so a Zig writer and a Rust
+reader would be agreeing only by luck. The residual met this problem first and
+solved it by pinning fixed little-endian words. The value image takes the same
+answer rather than inventing a second convention.
+
+The layout is a header of fixed little-endian words (magic, version, node count,
+pool count, region count, blob length, root), then fixed-width value-node
+records, then the flat child-index pool, then the region table, then the byte
+blob. Records are fixed width so a reader indexes node `i` in constant time
+without scanning, and the image is self-contained and position-independent,
+which is what lets the wire form equal the in-process form.
+
+Nodes emit depth-first, children before parents. A parent therefore records
+child indices it already knows, so nothing is back-patched, and a child index is
+always strictly below its parent's. That single monotone check is the whole
+acyclicity proof for an untrusted image: a decode is linear and needs no cycle
+search.
+
+- `write_value`. Serialises a `ValueArena` into a caller-provided byte buffer,
+  reporting the bytes written, or `Isnt` when the buffer cannot hold the image.
+- `ValueImage`. The reader over an untrusted image. Every index and span is
+  bounds-checked against the image, so a malformed input is a refusal and never
+  a read past the end.
+
+A closure has no representation here. A closure names an environment inside one
+run of the runtime, so it cannot be a value the host still holds after the call
+returns. A program whose final value is a closure is refused with a named
+reason, not written as a partial record.
+
 ## The sink (the sink module)
 
 - `VehjeSink`. The reserve-then-commit two-function transfer contract, one
