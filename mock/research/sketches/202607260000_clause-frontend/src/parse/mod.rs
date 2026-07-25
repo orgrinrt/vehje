@@ -6,6 +6,7 @@
 //! stack buffer and refuses past it, the same lent-bound discipline the arenas
 //! use.
 
+pub mod block;
 pub mod expr;
 pub mod pat;
 pub mod ty;
