@@ -54,6 +54,10 @@ pub const OP_MAKE_SEQ: u32 = 5;
 /// sketch's README.
 pub const OP_LEN: u32 = 6;
 pub const OP_AT: u32 = 7;
+/// Extend a sequence, yielding a new one. Values are immutable, so this is a
+/// construction rather than a mutation, which is what keeps the lease proof
+/// static.
+pub const OP_PUSH: u32 = 8;
 
 pub const Error = error{
     UnexpectedByte,
@@ -78,8 +82,20 @@ const Lexer = struct {
     i: usize = 0,
 
     fn next(self: *Lexer) Error!Token {
-        while (self.i < self.src.len and (self.src[self.i] == ' ' or self.src[self.i] == '\n' or self.src[self.i] == '\t' or self.src[self.i] == '\r')) {
-            self.i += 1;
+        // Whitespace and line comments are trivia. A doc-comment form belongs
+        // here later, because the doc pass consumes it and a lexer that folds it
+        // into trivia makes that pass impossible.
+        while (self.i < self.src.len) {
+            const ch = self.src[self.i];
+            if (ch == ' ' or ch == '\n' or ch == '\t' or ch == '\r') {
+                self.i += 1;
+                continue;
+            }
+            if (ch == '/' and self.i + 1 < self.src.len and self.src[self.i + 1] == '/') {
+                while (self.i < self.src.len and self.src[self.i] != '\n') self.i += 1;
+                continue;
+            }
+            break;
         }
         const start = self.i;
         if (self.i >= self.src.len) return .{ .kind = .eof, .start = start, .end = start, .value = 0 };
@@ -463,6 +479,7 @@ pub const Parser = struct {
             const t = self.lx.src[self.tok.start..self.tok.end];
             if (std.mem.eql(u8, t, "len")) builtin = OP_LEN;
             if (std.mem.eql(u8, t, "at")) builtin = OP_AT;
+            if (std.mem.eql(u8, t, "push")) builtin = OP_PUSH;
             if (builtin != null) {
                 try self.bump();
                 if (self.tok.kind != .lparen) return Error.UnexpectedToken;

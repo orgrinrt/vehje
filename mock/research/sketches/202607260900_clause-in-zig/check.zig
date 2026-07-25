@@ -420,6 +420,13 @@ fn infer(img: *const Image, idx: u32, ctx: *Ctx, cur: u32) Error!u32 {
                 try ctx.unify(st, want);
                 return et;
             }
+            if (lo == cl.OP_PUSH) {
+                const st = try infer(img, try img.pooled(start + 1), ctx, cur);
+                const vt = try infer(img, try img.pooled(start + 2), ctx, cur);
+                const want = try ctx.alloc(.{ .seq = vt });
+                try ctx.unify(st, want);
+                return want;
+            }
             const sig = try opType(ctx, lo);
             var k: u32 = 1;
             while (k < len) : (k += 1) {
@@ -444,15 +451,15 @@ pub fn check(image: []const u8, ctx: *Ctx) Error!u32 {
 const Shape = enum { int, boolean, str, func, record, seq };
 
 fn typeOf(src: []const u8) !Shape {
-    var node_buf: [512 * cl.NODE_WORDS]u32 = undefined;
-    var pool_buf: [256]u32 = undefined;
-    var name_buf: [64][]const u8 = undefined;
-    var blob_buf: [2048]u8 = undefined;
-    var image: [16384]u8 = undefined;
-    var types: [1024]Ty = undefined;
-    var subst: [256]u32 = undefined;
-    var env: [256]TyBinding = undefined;
-    var fields: [256]Field = undefined;
+    var node_buf: [8192 * cl.NODE_WORDS]u32 = undefined;
+    var pool_buf: [4096]u32 = undefined;
+    var name_buf: [512][]const u8 = undefined;
+    var blob_buf: [8192]u8 = undefined;
+    var image: [524288]u8 = undefined;
+    var types: [32768]Ty = undefined;
+    var subst: [8192]u32 = undefined;
+    var env: [4096]TyBinding = undefined;
+    var fields: [4096]Field = undefined;
 
     var b = cl.Builder{ .nodes = &node_buf, .pool = &pool_buf, .blob = &blob_buf };
     var names = cl.Names{ .buf = &name_buf };

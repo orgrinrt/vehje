@@ -1,0 +1,89 @@
+// The beginning of Clause's standard library, written in Clause.
+//
+// The lead designer's call 3: the stdlib ships with the language, it is written
+// in Clause, and the language is not complete until that is true. Writing it
+// here rather than in Zig is the point: every gap it hits is a finding about the
+// language rather than a missing convenience.
+//
+// Everything below is ordinary Clause. There is no privileged syntax and no
+// compiler support for any of it. The only primitives it rests on are len, at,
+// and push, which the language definition supplies as sequence operations.
+//
+// Each function is written as a recursive worker plus a wrapper that seeds it,
+// because this subset has no loops. That is not a workaround: an unbounded loop
+// is a recursive binding applied to itself, and the recursion is the honest
+// spelling of it until loops land.
+
+fn fold_from(f, s, i, acc) {
+    if i < len(s) { fold_from(f, s, i + 1, f(acc, at(s, i))) } else { acc }
+}
+
+// Left fold. The shape every other function here is a special case of.
+fn fold(f, init, s) { fold_from(f, s, 0, init) }
+
+fn map_from(f, s, i, acc) {
+    if i < len(s) { map_from(f, s, i + 1, push(acc, f(at(s, i)))) } else { acc }
+}
+
+// Apply f to every element. The result's element type is f's result type, not
+// the source's, which is why map is genuinely generic in two variables.
+fn map(f, s) { map_from(f, s, 0, []) }
+
+fn filter_from(p, s, i, acc) {
+    if i < len(s) {
+        filter_from(p, s, i + 1, if p(at(s, i)) { push(acc, at(s, i)) } else { acc })
+    } else {
+        acc
+    }
+}
+
+// Keep the elements p accepts.
+fn filter(p, s) { filter_from(p, s, 0, []) }
+
+fn reverse_from(s, i, acc) {
+    if i < len(s) { reverse_from(s, i + 1, push(acc, at(s, len(s) - 1 - i))) } else { acc }
+}
+
+fn reverse(s) { reverse_from(s, 0, []) }
+
+fn range_from(n, i, acc) {
+    if i < n { range_from(n, i + 1, push(acc, i)) } else { acc }
+}
+
+// The integers from zero up to n, exclusive.
+fn range(n) { range_from(n, 0, []) }
+
+fn add2(a, b) { a + b }
+fn mul2(a, b) { a * b }
+
+fn sum(s) { fold(add2, 0, s) }
+fn product(s) { fold(mul2, 1, s) }
+
+fn count_from(p, s, i, acc) {
+    if i < len(s) {
+        count_from(p, s, i + 1, if p(at(s, i)) { acc + 1 } else { acc })
+    } else {
+        acc
+    }
+}
+
+// How many elements p accepts. Written directly rather than as
+// len(filter(p, s)) so it allocates nothing in the value arena.
+fn count(p, s) { count_from(p, s, 0, 0) }
+
+fn max2(a, b) { if a < b { b } else { a } }
+fn min2(a, b) { if a < b { a } else { b } }
+
+fn all_from(p, s, i) {
+    if i < len(s) { if p(at(s, i)) { all_from(p, s, i + 1) } else { 0 < 0 } } else { 0 < 1 }
+}
+
+// Whether p accepts every element. `0 < 1` and `0 < 0` spell true and false,
+// because this subset has no boolean literals yet.
+fn all(p, s) { all_from(p, s, 0) }
+
+fn any_from(p, s, i) {
+    if i < len(s) { if p(at(s, i)) { 0 < 1 } else { any_from(p, s, i + 1) } } else { 0 < 0 }
+}
+
+fn any(p, s) { any_from(p, s, 0) }

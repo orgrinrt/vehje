@@ -335,6 +335,26 @@ fn evalNode(img: *const Image, idx: u32, env: *Env, cur: u32) Error!Value {
                 if (i < 0 or @as(u32, @intCast(i)) >= q.len) return Error.OutOfRange;
                 return env.vals[q.start + @as(u32, @intCast(i))];
             }
+            if (op == cl.OP_PUSH) {
+                const s0 = try evalNode(img, try img.pooled(start + 1), env, cur);
+                const v = try evalNode(img, try img.pooled(start + 2), env, cur);
+                const q = switch (s0) {
+                    .seq => |q| q,
+                    else => return Error.NotASequence,
+                };
+                // A fresh span, because the source sequence is immutable and may
+                // still be referenced. Copying is the honest cost of that.
+                const first = env.nval;
+                if (@as(usize, env.nval) + q.len + 1 > env.vals.len) return Error.ValArenaFull;
+                var k: u32 = 0;
+                while (k < q.len) : (k += 1) {
+                    env.vals[env.nval] = env.vals[q.start + k];
+                    env.nval += 1;
+                }
+                env.vals[env.nval] = v;
+                env.nval += 1;
+                return Value{ .seq = .{ .start = first, .len = q.len + 1 } };
+            }
             if (len < 1 or len > 4) return Error.TooManyOperands;
             var args: [3]i64 = undefined;
             var k: u32 = 1;
@@ -349,14 +369,14 @@ fn evalNode(img: *const Image, idx: u32, env: *Env, cur: u32) Error!Value {
 
 /// Source text to a value, with no Rust and no host anywhere in the path.
 pub fn run(src: []const u8) !i64 {
-    var node_buf: [512 * cl.NODE_WORDS]u32 = undefined;
-    var pool_buf: [256]u32 = undefined;
-    var name_buf: [64][]const u8 = undefined;
-    var blob_buf: [2048]u8 = undefined;
-    var image: [16384]u8 = undefined;
-    var slots: [512]Binding = undefined;
-    var recs: [256]RecEntry = undefined;
-    var vals: [256]Value = undefined;
+    var node_buf: [8192 * cl.NODE_WORDS]u32 = undefined;
+    var pool_buf: [4096]u32 = undefined;
+    var name_buf: [512][]const u8 = undefined;
+    var blob_buf: [8192]u8 = undefined;
+    var image: [524288]u8 = undefined;
+    var slots: [8192]Binding = undefined;
+    var recs: [2048]RecEntry = undefined;
+    var vals: [8192]Value = undefined;
 
     var b = cl.Builder{ .nodes = &node_buf, .pool = &pool_buf, .blob = &blob_buf };
     var names = cl.Names{ .buf = &name_buf };
@@ -369,10 +389,10 @@ pub fn run(src: []const u8) !i64 {
     // the proving. This is the junction the shipped pipeline still lacks:
     // `serialize` documents itself as taking a checked program while its
     // signature takes a bare arena, so nothing enforces the order there.
-    var types: [1024]chk.Ty = undefined;
-    var subst: [256]u32 = undefined;
-    var tenv: [256]chk.TyBinding = undefined;
-    var tfields: [256]chk.Field = undefined;
+    var types: [32768]chk.Ty = undefined;
+    var subst: [8192]u32 = undefined;
+    var tenv: [4096]chk.TyBinding = undefined;
+    var tfields: [4096]chk.Field = undefined;
     var ctx = chk.Ctx{ .types = &types, .subst = &subst, .env = &tenv, .fields = &tfields };
     _ = try chk.check(image[0..len], &ctx);
 
@@ -381,18 +401,34 @@ pub fn run(src: []const u8) !i64 {
     return (try evalNode(&img, img.root, &env, ENV_NIL)).asInt();
 }
 
+/// The standard library, written in Clause. Embedded rather than read at run
+/// time so the tests exercise the same bytes that would ship.
+pub const STD = @embedFile("std.clause");
+
+/// Run a program with the standard library in scope, which is simply the
+/// library's text followed by the program's: a `fn` declaration's body is
+/// everything after it, so prepending the library nests the program inside it.
+pub fn runWithStd(src: []const u8) !i64 {
+    var joined: [16384]u8 = undefined;
+    if (STD.len + 1 + src.len > joined.len) return Error.Corrupt;
+    @memcpy(joined[0..STD.len], STD);
+    joined[STD.len] = '\n';
+    @memcpy(joined[STD.len + 1 ..][0..src.len], src);
+    return run(joined[0 .. STD.len + 1 + src.len]);
+}
+
 /// Source text to a string value. Separate from `run` because a string value
 /// borrows the image, which lives in this frame, so the bytes are copied into
 /// the caller's buffer rather than returned as a dangling slice.
 pub fn runStr(src: []const u8, out: []u8) ![]const u8 {
-    var node_buf: [512 * cl.NODE_WORDS]u32 = undefined;
-    var pool_buf: [256]u32 = undefined;
-    var name_buf: [64][]const u8 = undefined;
-    var blob_buf: [2048]u8 = undefined;
-    var image: [16384]u8 = undefined;
-    var slots: [512]Binding = undefined;
-    var recs: [256]RecEntry = undefined;
-    var vals: [256]Value = undefined;
+    var node_buf: [8192 * cl.NODE_WORDS]u32 = undefined;
+    var pool_buf: [4096]u32 = undefined;
+    var name_buf: [512][]const u8 = undefined;
+    var blob_buf: [8192]u8 = undefined;
+    var image: [524288]u8 = undefined;
+    var slots: [8192]Binding = undefined;
+    var recs: [2048]RecEntry = undefined;
+    var vals: [8192]Value = undefined;
 
     var b = cl.Builder{ .nodes = &node_buf, .pool = &pool_buf, .blob = &blob_buf };
     var names = cl.Names{ .buf = &name_buf };
@@ -400,10 +436,10 @@ pub fn runStr(src: []const u8, out: []u8) ![]const u8 {
     const root = try p.program();
     const len = try cl.writeImage(&b, root, &image);
 
-    var types: [1024]chk.Ty = undefined;
-    var subst: [256]u32 = undefined;
-    var tenv: [256]chk.TyBinding = undefined;
-    var tfields: [256]chk.Field = undefined;
+    var types: [32768]chk.Ty = undefined;
+    var subst: [8192]u32 = undefined;
+    var tenv: [4096]chk.TyBinding = undefined;
+    var tfields: [4096]chk.Field = undefined;
     var ctx = chk.Ctx{ .types = &types, .subst = &subst, .env = &tenv, .fields = &tfields };
     _ = try chk.check(image[0..len], &ctx);
 
@@ -570,4 +606,81 @@ test "indexing a non-sequence is refused before evaluation" {
 
 test "an out-of-range index is a runtime refusal, since length is not in the type" {
     try std.testing.expectError(Error.OutOfRange, run("at([1, 2], 5)"));
+}
+
+test "push extends a sequence without mutating it" {
+    try std.testing.expectEqual(@as(i64, 3), try run("len(push([1, 2], 3))"));
+    try std.testing.expectEqual(@as(i64, 3), try run("at(push([1, 2], 3), 2)"));
+    // The source is unchanged, because values are immutable.
+    try std.testing.expectEqual(@as(i64, 2), try run("let s = [1, 2]; let t = push(s, 3); len(s)"));
+}
+
+test "push is homogeneous with its sequence" {
+    try std.testing.expectError(chk.Error.Mismatch, run("len(push([1, 2], \"three\"))"));
+}
+
+test "the standard library is written in clause and it runs" {
+    try std.testing.expectEqual(@as(i64, 6), try runWithStd("sum([1, 2, 3])"));
+    try std.testing.expectEqual(@as(i64, 24), try runWithStd("product([1, 2, 3, 4])"));
+    try std.testing.expectEqual(@as(i64, 10), try runWithStd("sum(range(5))"));
+}
+
+test "map and filter are higher-order and generic" {
+    try std.testing.expectEqual(@as(i64, 12), try runWithStd(
+        \\fn double(n) { n * 2 }
+        \\sum(map(double, [1, 2, 3]))
+    ));
+    try std.testing.expectEqual(@as(i64, 2), try runWithStd(
+        \\fn big(n) { 2 < n }
+        \\len(filter(big, [1, 2, 3, 4]))
+    ));
+    try std.testing.expectEqual(@as(i64, 2), try runWithStd(
+        \\fn positive(n) { 0 < n }
+        \\count(positive, [1, 0, 3])
+    ));
+}
+
+test "map changes the element type, so misusing the result is refused" {
+    // map(positive, ints) is a sequence of booleans, so feeding it back to a
+    // predicate over integers is a type error. The checker finding this is the
+    // point: it means map is generic in two variables, not one.
+    try std.testing.expectError(chk.Error.Mismatch, runWithStd(
+        \\fn positive(n) { 0 < n }
+        \\count(positive, map(positive, [1, 2, 3]))
+    ));
+}
+
+test "fold is the shape the others are special cases of" {
+    try std.testing.expectEqual(@as(i64, 15), try runWithStd("fold(add2, 0, [1, 2, 3, 4, 5])"));
+    try std.testing.expectEqual(@as(i64, 5), try runWithStd("fold(max2, 0, [3, 5, 1])"));
+}
+
+test "reverse preserves length and flips order" {
+    try std.testing.expectEqual(@as(i64, 3), try runWithStd("len(reverse([1, 2, 3]))"));
+    try std.testing.expectEqual(@as(i64, 1), try runWithStd("at(reverse([1, 2, 3]), 2)"));
+    try std.testing.expectEqual(@as(i64, 3), try runWithStd("at(reverse([1, 2, 3]), 0)"));
+}
+
+test "all and any quantify over a sequence" {
+    try std.testing.expectEqual(@as(i64, 1), try runWithStd(
+        \\fn positive(n) { 0 < n }
+        \\if all(positive, [1, 2, 3]) { 1 } else { 0 }
+    ));
+    try std.testing.expectEqual(@as(i64, 0), try runWithStd(
+        \\fn positive(n) { 0 < n }
+        \\if all(positive, [1, 0, 3]) { 1 } else { 0 }
+    ));
+    try std.testing.expectEqual(@as(i64, 1), try runWithStd(
+        \\fn big(n) { 2 < n }
+        \\if any(big, [1, 2, 3]) { 1 } else { 0 }
+    ));
+}
+
+test "the library composes with itself" {
+    // range(5) is [0,1,2,3,4]; 1 < n keeps 2,3,4; doubled is 4,6,8; sum 18.
+    try std.testing.expectEqual(@as(i64, 18), try runWithStd(
+        \\fn double(n) { n * 2 }
+        \\fn odd_ish(n) { 1 < n }
+        \\sum(map(double, filter(odd_ish, range(5))))
+    ));
 }
