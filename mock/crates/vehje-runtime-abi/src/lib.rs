@@ -29,6 +29,7 @@ pub mod encode;
 pub mod entry;
 pub mod sink;
 pub mod value;
+pub mod value_image;
 pub mod wire;
 
 /// The format-agnostic residual encoder contract and node walk.
@@ -43,6 +44,9 @@ pub use wire::{
 
 /// The value-arena a produced value crosses back in.
 pub use value::{BlobSpan, Region, RegionId, ValueArena, ValueList, ValueNode, ValueRef, ValueTag};
+
+/// The pinned value-image byte layout: the writer and the untrusted reader.
+pub use value_image::{write_value, ValueImage};
 
 /// The reserve-then-commit transfer sink.
 pub use sink::{CommitFn, ReserveFn, VehjeSink};

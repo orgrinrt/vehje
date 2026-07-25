@@ -54,9 +54,9 @@ pub struct RegionId(pub USize);
 pub enum ValueTag {
     /// The unit value.
     Unit,
-    /// A boolean, in the record's inline payload.
+    /// A boolean, one byte in the record's blob span.
     Bool,
-    /// A 64-bit integer, in the record's inline payload.
+    /// A 64-bit integer, eight little-endian bytes in the record's blob span.
     Int,
     /// A string, spanning the byte blob.
     Str,
