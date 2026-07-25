@@ -3,6 +3,19 @@
 const std = @import("std");
 const rt = @import("runtime.zig");
 const value_image = @import("value_image.zig");
+const varena = @import("value_arena.zig");
+
+// The value arena every test lends the runtime. One backing, reset per call, so
+// a test never sees another test's nodes and none of them has to size its own.
+var ta_slots: [512]varena.ValueNode = undefined;
+var ta_pool: [1024]u32 = undefined;
+var ta_blob: [8192]u8 = undefined;
+var ta = varena.ValueArena{ .slots = &.{}, .pool = &.{}, .blob = &.{} };
+
+fn arenaRef() *varena.ValueArena {
+    ta = .{ .slots = ta_slots[0..], .pool = ta_pool[0..], .blob = ta_blob[0..] };
+    return &ta;
+}
 
 const WORD = rt.WORD;
 const HEADER_WORDS = rt.HEADER_WORDS;
@@ -130,7 +143,7 @@ const Build = struct {
 
 fn run(image: []const u8) EvalError!Value {
     var slots: [64]Binding = undefined;
-    return evalImage(image, slots[0..], null, null);
+    return evalImage(image, slots[0..], null, null, arenaRef());
 }
 
 test "let and if evaluate to a value" {
@@ -225,7 +238,7 @@ test "exhausting the lent environment arena is reported, not overrun" {
     const root = b.let(1, b.int(1), mid);
     const image = b.finish(root);
     var slots: [2]Binding = undefined;
-    try std.testing.expectError(EvalError.EnvFull, evalImage(image, slots[0..], null, null));
+    try std.testing.expectError(EvalError.EnvFull, evalImage(image, slots[0..], null, null, arenaRef()));
 }
 
 // ── the value crossing ────────────────────────────────────────────────────
@@ -357,7 +370,7 @@ fn hostOf() VehjeHost {
 
 fn runWithHost(image: []const u8, host: ?*const VehjeHost) EvalError!Value {
     var slots: [64]Binding = undefined;
-    return evalImage(image, slots[0..], host, null);
+    return evalImage(image, slots[0..], host, null, arenaRef());
 }
 
 test "a family operation reaches its handler and computes" {
@@ -469,7 +482,7 @@ test "a string reaches a handler with its bytes intact" {
     var session = Session{ .scratch = scratch[0..] };
     const h = VehjeHost{ .call = echoHost, .userdata = null };
     var slots: [16]Binding = undefined;
-    const v = try evalImage(b.finish(root), slots[0..], &h, &session);
+    const v = try evalImage(b.finish(root), slots[0..], &h, &session, arenaRef());
     try std.testing.expectEqualStrings("world", v.str);
 }
 
@@ -482,7 +495,7 @@ test "a returned string survives the call, having been copied into scratch" {
     var session = Session{ .scratch = scratch[0..] };
     const h = VehjeHost{ .call = echoHost, .userdata = null };
     var slots: [16]Binding = undefined;
-    const v = try evalImage(b.finish(root), slots[0..], &h, &session);
+    const v = try evalImage(b.finish(root), slots[0..], &h, &session, arenaRef());
     // The value points into the scratch, not at the handler's operand.
     try std.testing.expect(v.str.ptr == scratch[0..].ptr);
     try std.testing.expectEqualStrings("kept", v.str);
@@ -495,11 +508,11 @@ test "returning a string with no scratch, or too little, is named" {
     const h = VehjeHost{ .call = echoHost, .userdata = null };
     var slots: [16]Binding = undefined;
 
-    try std.testing.expectError(EvalError.NoScratch, evalImage(image, slots[0..], &h, null));
+    try std.testing.expectError(EvalError.NoScratch, evalImage(image, slots[0..], &h, null, arenaRef()));
 
     var tiny: [3]u8 = undefined;
     var session = Session{ .scratch = tiny[0..] };
-    try std.testing.expectError(EvalError.ScratchFull, evalImage(image, slots[0..], &h, &session));
+    try std.testing.expectError(EvalError.ScratchFull, evalImage(image, slots[0..], &h, &session, arenaRef()));
 }
 
 test "a string value marshals into the value image" {
@@ -517,4 +530,102 @@ test "a string value marshals into the value image" {
     const node = 7 * 4;
     try std.testing.expectEqual(@intFromEnum(value_image.Tag.str), imageWord(out, node));
     try std.testing.expectEqualStrings("out", out[node + 6 * 4 ..]);
+}
+
+// A host that builds a record: it ignores its operands and returns
+// `{ name: "ok", count: 7 }` as a value image written into a static buffer.
+var record_buf: [512]u8 = undefined;
+
+fn recordHost(
+    userdata: ?*anyopaque,
+    family: u32,
+    args: [*]const rt.VehjeOperand,
+    argc: usize,
+    out: *rt.VehjeOperand,
+) callconv(.c) i32 {
+    _ = userdata;
+    _ = family;
+    _ = args;
+    _ = argc;
+    var slots: [8]varena.ValueNode = undefined;
+    var pool: [8]u32 = undefined;
+    var blob: [64]u8 = undefined;
+    var a = varena.ValueArena{ .slots = slots[0..], .pool = pool[0..], .blob = blob[0..] };
+    const k0 = a.allocStr("name") catch return -1;
+    const v0 = a.allocStr("ok") catch return -1;
+    const k1 = a.allocStr("count") catch return -1;
+    const v1 = a.allocInt(7) catch return -1;
+    const rec = a.allocRecord(&.{ k0, v0, k1, v1 }) catch return -1;
+    const n = varena.writeTree(record_buf[0..], &a, rec) catch return -1;
+    out.* = .{ .tag = rt.COMPOUND_RECORD, .payload = @intCast(n), .bytes = record_buf[0..].ptr };
+    return 0;
+}
+
+/// A host that returns bytes which are not a value image at all.
+fn badImageHost(
+    userdata: ?*anyopaque,
+    family: u32,
+    args: [*]const rt.VehjeOperand,
+    argc: usize,
+    out: *rt.VehjeOperand,
+) callconv(.c) i32 {
+    _ = userdata;
+    _ = family;
+    _ = args;
+    _ = argc;
+    const junk = "not an image at all, not even close";
+    out.* = .{ .tag = rt.COMPOUND_RECORD, .payload = junk.len, .bytes = junk.ptr };
+    return 0;
+}
+
+test "a handler can return a record, and it becomes the program's value" {
+    var b = Build{};
+    const root = b.raw(1, &.{b.int(0)});
+    var scratch: [512]u8 = undefined;
+    var session = Session{ .scratch = scratch[0..] };
+    const h = VehjeHost{ .call = recordHost, .userdata = null };
+    var slots: [16]Binding = undefined;
+    const arena = arenaRef();
+    const v = try evalImage(b.finish(root), slots[0..], &h, &session, arena);
+
+    // the value is a compound living in the arena, with its fields alternating
+    // key then value in the child pool
+    const node = arena.node(v.compound);
+    try std.testing.expectEqual(value_image.Tag.record, node.tag);
+    try std.testing.expectEqual(@as(u32, 4), node.children.len);
+    const k1 = arena.node(arena.child(node.children, 2));
+    const v1 = arena.node(arena.child(node.children, 3));
+    try std.testing.expectEqualStrings("count", arena.blobOf(k1.blob));
+    try std.testing.expectEqual(@as(i64, 7), v1.payload);
+}
+
+test "a returned image the reader rejects is BadImage, not a wrong value" {
+    var b = Build{};
+    const root = b.raw(1, &.{b.int(0)});
+    var scratch: [512]u8 = undefined;
+    var session = Session{ .scratch = scratch[0..] };
+    const h = VehjeHost{ .call = badImageHost, .userdata = null };
+    var slots: [16]Binding = undefined;
+    try std.testing.expectError(
+        EvalError.BadImage,
+        evalImage(b.finish(root), slots[0..], &h, &session, arenaRef()),
+    );
+}
+
+test "a record crosses back to the host as a value image" {
+    var b = Build{};
+    const root = b.raw(1, &.{b.int(0)});
+    var scratch: [512]u8 = undefined;
+    var session = Session{ .scratch = scratch[0..] };
+    const h = VehjeHost{ .call = recordHost, .userdata = null };
+    var slots: [16]Binding = undefined;
+    const arena = arenaRef();
+    const v = try evalImage(b.finish(root), slots[0..], &h, &session, arena);
+
+    var out: [1024]u8 = undefined;
+    const n = try varena.writeTree(out[0..], arena, v.compound);
+    const r = try value_image.Reader.parse(out[0..n]);
+    try r.validate();
+    try std.testing.expectEqual(value_image.Tag.record, try r.tagOf(r.root));
+    try std.testing.expectEqualStrings("name", try r.blob(try r.child(r.root, 0)));
 }
