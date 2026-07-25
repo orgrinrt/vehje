@@ -26,7 +26,7 @@ anywhere in the path.
 
 ## Result
 
-Yes. `zig test eval.zig`, eleven tests, all passing:
+Yes. `zig test eval.zig`, 40 tests, all passing. The core of it:
 
 ```
 1 + 2 * 3                                                   ==> 7
@@ -132,7 +132,7 @@ and that is a pass between check and evaluation that does not exist.
 ## Inference, in the runtime, before evaluation
 
 `check.zig` is Hindley-Milner over the same image, with generalisation at binding
-sites. Nine tests, all passing. It refuses what the untyped evaluator accepted:
+sites. It refuses what the untyped evaluator accepted:
 
 ```
 if 1 { 1 } else { 2 }                      refused, Mismatch
