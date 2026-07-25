@@ -46,6 +46,7 @@ pub const PAT_RANGE: u32 = 26;
 /// No guard on this arm.
 pub const NO_GUARD: u32 = 0xFFFF_FFFF;
 
+pub const LIT_UNIT: u32 = 0;
 pub const LIT_INT: u32 = 2;
 pub const LIT_STR: u32 = 3;
 
@@ -173,7 +174,7 @@ pub const Error = error{
 
 // ---------------------------------------------------------------- lexer
 
-const Kind = enum { int, str_lit, ident, dot, colon, lbracket, rbracket, arrow, kw_trait, kw_impl, kw_for, kw_type, kw_match, kw_while, kw_mut, kw_mod, kw_use, kw_in, kw_macro, bang, colon_colon, kw_if_guard, dotdot, dotdot_eq, pipe, fat_arrow, underscore, plus_assign, minus_assign, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
+const Kind = enum { int, str_lit, ident, dot, colon, lbracket, rbracket, arrow, kw_trait, kw_impl, kw_for, kw_type, kw_match, kw_while, kw_mut, kw_mod, kw_use, kw_in, kw_macro, kw_pub, bang, pound, colon_colon, kw_if_guard, dotdot, dotdot_eq, pipe, fat_arrow, underscore, plus_assign, minus_assign, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
 
 const Token = struct { kind: Kind, start: usize, end: usize, value: i64 };
 
@@ -242,6 +243,8 @@ const Lexer = struct {
                 .kw_in
             else if (std.mem.eql(u8, text, "macro"))
                 .kw_macro
+            else if (std.mem.eql(u8, text, "pub"))
+                .kw_pub
             else if (std.mem.eql(u8, text, "_"))
                 .underscore
             else if (std.mem.eql(u8, text, "if"))
@@ -299,6 +302,7 @@ const Lexer = struct {
             '.' => .dot,
             '|' => .pipe,
             '!' => .bang,
+            '#' => .pound,
             '[' => .lbracket,
             ']' => .rbracket,
             ':' => .colon,
@@ -337,6 +341,15 @@ pub const Builder = struct {
         var k: usize = 0;
         while (k < NODE_WORDS) : (k += 1) self.slot(idx, k).* = 0;
         self.slot(idx, 0).* = tag;
+        return idx;
+    }
+
+    /// The unit value. A function of no arguments takes one of these, so that
+    /// "no arguments" is still an application and the Core needs no nullary
+    /// form.
+    pub fn unit(self: *Builder) Error!u32 {
+        const idx = try self.alloc(TAG_LIT);
+        self.slot(idx, 1).* = LIT_UNIT;
         return idx;
     }
 
@@ -667,7 +680,29 @@ pub const Parser = struct {
     /// A program is a sequence of `let` bindings followed by a tail expression,
     /// which is exactly the shape `Let` nests into: each binding's body is
     /// everything after it.
+    /// Attributes are parsed and dropped. They are metadata for a later stage
+    /// (a target, a doc pass) and carry no meaning to the checker or the
+    /// evaluator, so erasing them here is the honest treatment rather than a
+    /// shortcut: nothing downstream has asked for them yet.
+    fn skipAttributes(self: *Parser) Error!void {
+        while (self.tok.kind == .pound) {
+            try self.bump();
+            try self.expect(.lbracket);
+            var depth: u32 = 1;
+            while (depth > 0) {
+                if (self.tok.kind == .eof) return Error.UnexpectedToken;
+                if (self.tok.kind == .lbracket) depth += 1;
+                if (self.tok.kind == .rbracket) depth -= 1;
+                try self.bump();
+            }
+        }
+    }
+
     pub fn program(self: *Parser) Error!u32 {
+        try self.skipAttributes();
+        // `pub` at the top level is accepted and means nothing: there is no
+        // enclosing module to be private from.
+        if (self.tok.kind == .kw_pub) try self.bump();
         if (self.tok.kind == .kw_trait) {
             // A trait declares a method's shape. It binds nothing and erases
             // entirely; only the checker ever sees it.
@@ -1066,6 +1101,11 @@ pub const Parser = struct {
         const body = try self.program();
         try self.expect(.rbrace);
         var f = body;
+        if (np == 0) {
+            // A nullary function still binds something, from the synthetic
+            // range so it cannot shadow a source name.
+            f = try self.b.lambda(SYN_SYM_BASE + 0xFFFF, f);
+        }
         var k = np;
         while (k > 0) {
             k -= 1;
@@ -1077,6 +1117,34 @@ pub const Parser = struct {
     /// A module body: items, then a record of them. A module IS a record, so a
     /// path is a projection and nothing new is needed to represent one.
     fn moduleBody(self: *Parser, names_out: []u32, srcs: [][]const u8, n: *usize) Error!u32 {
+        try self.skipAttributes();
+        var is_pub = false;
+        if (self.tok.kind == .kw_pub) {
+            try self.bump();
+            is_pub = true;
+        }
+        if (self.tok.kind == .kw_mod) {
+            // A nested module is an item like any other: it binds a record, and
+            // it is exported only if it is public.
+            try self.bump();
+            if (self.tok.kind != .ident) return Error.UnexpectedToken;
+            const sub_src = self.lx.src[self.tok.start..self.tok.end];
+            const sub_name = try self.names.intern(sub_src);
+            try self.bump();
+            try self.expect(.lbrace);
+            var sub_syms: [32]u32 = undefined;
+            var sub_srcs: [32][]const u8 = undefined;
+            var sub_n: usize = 0;
+            const value = try self.moduleBody(&sub_syms, &sub_srcs, &sub_n);
+            try self.expect(.rbrace);
+            if (is_pub) {
+                if (n.* == names_out.len) return Error.TooManyParams;
+                names_out[n.*] = sub_name;
+                srcs[n.*] = sub_src;
+                n.* += 1;
+            }
+            return self.b.let(sub_name, value, try self.moduleBody(names_out, srcs, n));
+        }
         if (self.tok.kind == .rbrace) {
             var kv: [32]u32 = undefined;
             var i: usize = 0;
@@ -1090,14 +1158,18 @@ pub const Parser = struct {
         if (self.tok.kind == .kw_fn) {
             const start_tok = self.tok;
             const d = try self.fnDecl();
-            if (n.* == names_out.len) return Error.TooManyParams;
-            names_out[n.*] = d.name;
-            // The item's source text is its key, read back from the token that
-            // opened the declaration.
-            var lx2 = Lexer{ .src = self.lx.src, .i = start_tok.end };
-            const nt = try lx2.next();
-            srcs[n.*] = self.lx.src[nt.start..nt.end];
-            n.* += 1;
+            // A private item is still bound inside the module, so its siblings
+            // can call it; it simply does not become a field. Reaching it from
+            // outside then fails as a missing field, which is the right answer
+            // arrived at without a second mechanism.
+            if (is_pub) {
+                if (n.* == names_out.len) return Error.TooManyParams;
+                names_out[n.*] = d.name;
+                var lx2 = Lexer{ .src = self.lx.src, .i = start_tok.end };
+                const nt = try lx2.next();
+                srcs[n.*] = self.lx.src[nt.start..nt.end];
+                n.* += 1;
+            }
             return self.b.letRec(d.name, d.value, try self.moduleBody(names_out, srcs, n));
         }
         return Error.UnexpectedToken;
@@ -1491,7 +1563,13 @@ pub const Parser = struct {
                 if (self.tok.kind == .comma) try self.bump();
             }
             try self.expect(.rparen);
-            if (na == 0) return Error.Unsupported;
+            if (na == 0) {
+                // A call with no arguments passes unit, matching the unit
+                // parameter a nullary declaration takes. "No arguments" stays an
+                // application, so the Core needs no nullary form.
+                args[0] = try self.b.unit();
+                na = 1;
+            }
             var i: usize = 0;
             while (i < na) : (i += 1) {
                 e = try self.b.apply(e, args[i .. i + 1]);
@@ -1530,6 +1608,10 @@ pub const Parser = struct {
             },
             .lparen => {
                 try self.bump();
+                if (self.tok.kind == .rparen) {
+                    try self.bump();
+                    return self.b.unit();
+                }
                 const saved = self.allow_record;
                 self.allow_record = true;
                 const e = try self.expression();

@@ -38,6 +38,7 @@ pub const NONE: u32 = 0xFFFF_FFFF;
 /// A type. `func` names its parameter and result by arena index, so the
 /// representation is flat and nothing points at anything it outlives.
 pub const Ty = union(enum) {
+    unit,
     int,
     boolean,
     str,
@@ -159,6 +160,7 @@ pub const Ctx = struct {
             else => {},
         }
         return switch (self.types[ra]) {
+            .unit => if (self.types[rb] == .unit) {} else Error.Mismatch,
             .int => if (self.types[rb] == .int) {} else Error.Mismatch,
             .boolean => if (self.types[rb] == .boolean) {} else Error.Mismatch,
         .str => if (self.types[rb] == .str) {} else Error.Mismatch,
@@ -234,7 +236,7 @@ pub const Ctx = struct {
         const r = self.resolve(t);
         return switch (self.types[r]) {
             .tvar => |v| if (v >= first and v < first + count) map[v - first] else r,
-            .int, .boolean, .str => r,
+            .unit, .int, .boolean, .str => r,
             .seq => |e| try self.alloc(.{ .seq = try self.copy(e, first, count, map) }),
             .func => |f| blk: {
                 const p = try self.copy(f.p, first, count, map);
@@ -449,6 +451,7 @@ fn infer(img: *const Image, idx: u32, ctx: *Ctx, cur: u32) Error!u32 {
     switch (try img.word(idx, 0)) {
         cl.TAG_LIT => return switch (try img.word(idx, 1)) {
             cl.LIT_INT => ctx.alloc(.int),
+            cl.LIT_UNIT => ctx.alloc(.unit),
             cl.LIT_STR => ctx.alloc(.str),
             else => Error.Unsupported,
         },
@@ -756,7 +759,7 @@ fn discharge(ctx: *Ctx) Error!void {
 
 // ---------------------------------------------------------------- tests
 
-const Shape = enum { int, boolean, str, func, record, seq };
+const Shape = enum { unit, int, boolean, str, func, record, seq };
 
 fn typeOf(src: []const u8) !Shape {
     var node_buf: [8192 * cl.NODE_WORDS]u32 = undefined;
@@ -793,6 +796,7 @@ fn typeOf(src: []const u8) !Shape {
     };
     const t = try check(image[0..len], &ctx);
     return switch (ctx.types[t]) {
+        .unit => .unit,
         .int => .int,
         .boolean => .boolean,
         .str => .str,

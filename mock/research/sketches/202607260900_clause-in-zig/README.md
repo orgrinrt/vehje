@@ -368,6 +368,27 @@ M::missing(5)                                    refused, NoSuchField
 M::double("not a number")                        refused, Mismatch
 ```
 
+```
+mod M { fn double(n) { n * 2 } pub fn quad(n) { double(double(n)) } }
+M::quad(5)                                       ==> 20
+M::double(5)                                     refused, NoSuchField
+
+mod Outer { pub mod Inner { pub fn six() { 6 } } }
+Outer::Inner::six()                              ==> 6
+
+#[inline] fn double(n) { n * 2 }  double(5)      ==> 10
+```
+
+**Items are private by default**, as in Rust. A private item is still bound
+inside the module so its siblings can call it; it simply does not become a field
+of the record. Reaching it from outside then fails as a missing field, which is
+the right answer arrived at without a second mechanism. Modules nest, and a
+private inner module is private the same way.
+
+Attributes parse and erase. They are metadata for a later stage and nothing
+downstream has asked for them yet, so dropping them is the honest treatment
+rather than a shortcut.
+
 **A module is a record of its items.** `mod M { ... }` binds `M` to a record
 whose fields are the items; `M::f` is a projection; `use M::f;` is an ordinary
 binding of `f` to that projection. So modules are first-class values that can be
@@ -432,9 +453,8 @@ integers, strings, names, `let`, `fn` with recursion and closures and currying,
 three-operation prelude, single-method traits with impls, coherence, inferred
 bounds, associated types, and pattern matching. It does not have multi-method
 real exhaustiveness checking,
-syntactic macros over token streams, `loop`, row polymorphism, nested or
-re-exported modules,
-visibility, attributes, a separate resolve pass, or monomorphisation, nor the
+syntactic macros over token streams, `loop`, row polymorphism, re-exported modules,
+a separate resolve pass, or monomorphisation, nor the
 rest of the surface the
 normative grammar (`mock/research/original-docs/CLAUSE_EBNF.md`) requires.
 Nothing is done until the full intended language is expressible.

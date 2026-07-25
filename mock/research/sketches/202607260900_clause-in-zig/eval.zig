@@ -111,6 +111,7 @@ const Closure = struct { param: u32, body: u32, env: u32 };
 const RecEntry = struct { key: []const u8, val: Value };
 
 const Value = union(enum) {
+    unit,
     int: i64,
     record: struct { start: u32, len: u32 },
     seq: struct { start: u32, len: u32 },
@@ -294,6 +295,7 @@ fn evalNode(img: *const Image, idx: u32, env: *Env, cur: u32) Error!Value {
                 const hi = try img.word(idx, 3);
                 return Value{ .int = @bitCast((@as(u64, hi) << 32) | @as(u64, lo)) };
             },
+            cl.LIT_UNIT => return Value.unit,
             cl.LIT_STR => return Value{ .str = try img.blob(try img.word(idx, 2), try img.word(idx, 3)) },
             else => return Error.Unsupported,
         },
@@ -1082,13 +1084,13 @@ test "the loop's state keeps its type" {
 
 test "a module groups items and a path reaches them" {
     try std.testing.expectEqual(@as(i64, 10), try run(
-        \\mod M { fn double(n) { n * 2 } }
+        \\mod M { pub fn double(n) { n * 2 } }
         \\M::double(5)
     ));
     try std.testing.expectEqual(@as(i64, 11), try run(
         \\mod M {
-        \\  fn double(n) { n * 2 }
-        \\  fn bump(n) { n + 1 }
+        \\  pub fn double(n) { n * 2 }
+        \\  pub fn bump(n) { n + 1 }
         \\}
         \\M::bump(M::double(5))
     ));
@@ -1098,7 +1100,7 @@ test "items inside a module see each other" {
     try std.testing.expectEqual(@as(i64, 21), try run(
         \\mod M {
         \\  fn double(n) { n * 2 }
-        \\  fn quad_plus(n) { double(double(n)) + 1 }
+        \\  pub fn quad_plus(n) { double(double(n)) + 1 }
         \\}
         \\M::quad_plus(5)
     ));
@@ -1106,14 +1108,14 @@ test "items inside a module see each other" {
 
 test "a module's function may recurse" {
     try std.testing.expectEqual(@as(i64, 120), try run(
-        \\mod M { fn fact(n) { if n < 2 { 1 } else { n * fact(n - 1) } } }
+        \\mod M { pub fn fact(n) { if n < 2 { 1 } else { n * fact(n - 1) } } }
         \\M::fact(5)
     ));
 }
 
 test "use brings one item into scope" {
     try std.testing.expectEqual(@as(i64, 10), try run(
-        \\mod M { fn double(n) { n * 2 } }
+        \\mod M { pub fn double(n) { n * 2 } }
         \\use M::double;
         \\double(5)
     ));
@@ -1121,7 +1123,7 @@ test "use brings one item into scope" {
 
 test "a module is a value, so its items can be taken out and used" {
     try std.testing.expectEqual(@as(i64, 8), try run(
-        \\mod M { fn double(n) { n * 2 } }
+        \\mod M { pub fn double(n) { n * 2 } }
         \\let d = M.double;
         \\d(4)
     ));
@@ -1132,7 +1134,7 @@ test "projecting off a parameter is refused, for want of row polymorphism" {
     // parameter's type to be "some record with a double field", which is a row
     // type. Refusing is honest; inferring a concrete record here would be wrong.
     try std.testing.expectError(chk.Error.Mismatch, run(
-        \\mod M { fn double(n) { n * 2 } }
+        \\mod M { pub fn double(n) { n * 2 } }
         \\fn apply_double(m, v) { m.double(v) }
         \\apply_double(M, 4)
     ));
@@ -1140,14 +1142,14 @@ test "projecting off a parameter is refused, for want of row polymorphism" {
 
 test "reaching a name a module does not have is refused" {
     try std.testing.expectError(chk.Error.NoSuchField, run(
-        \\mod M { fn double(n) { n * 2 } }
+        \\mod M { pub fn double(n) { n * 2 } }
         \\M::missing(5)
     ));
 }
 
 test "a module's items keep their types across the path" {
     try std.testing.expectError(chk.Error.Mismatch, run(
-        \\mod M { fn double(n) { n * 2 } }
+        \\mod M { pub fn double(n) { n * 2 } }
         \\M::double("not a number")
     ));
 }
@@ -1448,4 +1450,66 @@ test "naming an undeclared supertrait is refused" {
         \\trait Derived: Nope { fn derived(Self) -> Int }
         \\1
     ));
+}
+
+test "a private item is reachable inside its module and not outside" {
+    // quad_plus calls double, which is private. The call works; reaching double
+    // from outside does not, and it fails as a missing field because a private
+    // item simply is not one.
+    try std.testing.expectEqual(@as(i64, 21), try run(
+        \\mod M {
+        \\  fn double(n) { n * 2 }
+        \\  pub fn quad_plus(n) { double(double(n)) + 1 }
+        \\}
+        \\M::quad_plus(5)
+    ));
+    try std.testing.expectError(chk.Error.NoSuchField, run(
+        \\mod M {
+        \\  fn double(n) { n * 2 }
+        \\  pub fn quad_plus(n) { double(double(n)) + 1 }
+        \\}
+        \\M::double(5)
+    ));
+}
+
+test "modules nest, and a private inner module stays private" {
+    try std.testing.expectEqual(@as(i64, 12), try run(
+        \\mod Outer {
+        \\  pub mod Inner { pub fn six() { 6 } }
+        \\  pub fn twelve() { Inner::six() * 2 }
+        \\}
+        \\Outer::twelve()
+    ));
+    try std.testing.expectEqual(@as(i64, 6), try run(
+        \\mod Outer { pub mod Inner { pub fn six() { 6 } } }
+        \\Outer::Inner::six()
+    ));
+    try std.testing.expectError(chk.Error.NoSuchField, run(
+        \\mod Outer { mod Inner { pub fn six() { 6 } } pub fn twelve() { Inner::six() * 2 } }
+        \\Outer::Inner::six()
+    ));
+}
+
+test "attributes are parsed and erased" {
+    try std.testing.expectEqual(@as(i64, 10), try run(
+        \\#[inline]
+        \\fn double(n) { n * 2 }
+        \\double(5)
+    ));
+    try std.testing.expectEqual(@as(i64, 6), try run(
+        \\#[doc]
+        \\#[cfg(anything, nested[deeper])]
+        \\mod M { #[export] pub fn six() { 6 } }
+        \\M::six()
+    ));
+}
+
+test "unit is a value and a nullary function takes one" {
+    try std.testing.expectEqual(@as(i64, 6), try run("fn six() { 6 } six()"));
+    try std.testing.expectEqual(@as(i64, 12), try run("fn six() { 6 } six() + six()"));
+}
+
+test "unit does not unify with anything else" {
+    try std.testing.expectError(chk.Error.Mismatch, run("fn six() { 6 } six() + ()"));
+    try std.testing.expectError(chk.Error.Mismatch, run("if 1 < 2 { () } else { 1 }"));
 }
