@@ -18,7 +18,7 @@ use arvo::strategy::Hot;
 use arvo::{Bool, Int, Maybe, USize};
 
 use hilavitkutin_str::{ArenaInterner, StringInterner};
-use hilavitkutin_sym::Interner;
+use hilavitkutin_sym::Sym;
 use vehje_ir::{Arena, FamilyId, Literal, Node, NodeList, NodeRef};
 
 use crate::Tier;
@@ -86,6 +86,12 @@ pub trait ResidualEncoder {
     /// A resolved string payload (a name, a key, a string literal).
     fn text(&mut self, s: &str) -> Maybe<()>; // lint:allow(no-bare-string) reason: resolved name bytes crossing to the encoder; the interner already resolved it; tracked: #207
 
+    /// A binder identity payload (a `Var`, `Let.name`, or `Lambda.param`): the
+    /// `Sym`'s stable 32-bit bits, the identity a runtime binds and looks up by.
+    /// Distinct from `text`: a binder is not resolved to a string, so a minted
+    /// binder (no backing string) and a source name encode the same way.
+    fn binder(&mut self, sym: Sym) -> Maybe<()>;
+
     /// A child-node reference payload.
     fn child(&mut self, r: NodeRef) -> Maybe<()>;
 
@@ -142,27 +148,24 @@ pub fn encode<A: ArenaInterner, E: ResidualEncoder>(
                     }
                 }
             }
-            // FIXME: a binder Sym of the string domain (kind 0b000, a widened
-            // source name) resolves to its text here, as before the flip. A
-            // MINTED binder (BinderDomain, kind 0b001) has no backing string,
-            // so `Interner::resolve` returns Isnt and the `?` fails. No minting
-            // exists yet (the Anf/MacroExpand catamorphism is Round B); when it
-            // lands, the wire format must encode a minted binder by its Sym
-            // bits, not by resolved text. Applies to Var, Let.name, Lambda.param.
+            // Binders encode by their Sym bits (the stable identity the runtime
+            // binds and looks up by), not by resolved text: a minted binder has
+            // no backing string, and a source name's blob offset is not a stable
+            // identity. Applies to Var, Let.name, and Lambda.param.
             Node::Var(s) => {
                 encoder.begin_node(index, NodeTag::Var)?;
-                encoder.text(Interner::resolve(interner, s)?)?;
+                encoder.binder(s)?;
             }
             Node::Let { rec, name, value, body } => {
                 encoder.begin_node(index, NodeTag::Let)?;
                 encoder.flag(rec)?;
-                encoder.text(Interner::resolve(interner, name)?)?;
+                encoder.binder(name)?;
                 encoder.child(value)?;
                 encoder.child(body)?;
             }
             Node::Lambda { param, body } => {
                 encoder.begin_node(index, NodeTag::Lambda)?;
-                encoder.text(Interner::resolve(interner, param)?)?;
+                encoder.binder(param)?;
                 encoder.child(body)?;
             }
             Node::Apply { callee, args } => {

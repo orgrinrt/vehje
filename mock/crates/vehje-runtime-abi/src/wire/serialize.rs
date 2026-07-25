@@ -25,6 +25,7 @@ use arvo::strategy::Hot;
 use arvo::{Bool, Identity, Int, Maybe, USize};
 
 use hilavitkutin_str::{ArenaInterner, StringInterner};
+use hilavitkutin_sym::Sym;
 use vehje_ir::{Arena, FamilyId, NodeList, NodeRef};
 
 use crate::encode::{encode, LitTag, NodeTag, ResidualEncoder};
@@ -224,6 +225,12 @@ impl ResidualEncoder for FlatArenaEncoder<'_> {
         Maybe::Is(())
     }
 
+    fn binder(&mut self, sym: Sym) -> Maybe<()> {
+        let at = self.take(1);
+        put_u32(self.out, at, sym.to_bits().to_raw()); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: the 32-bit binder identity at the FFI wire boundary; tracked: #207
+        Maybe::Is(())
+    }
+
     fn list(&mut self, l: NodeList) -> Maybe<()> {
         let at = self.take(2);
         put_index(self.out, at, l.start);
@@ -342,7 +349,7 @@ mod tests {
     }
 
     #[test]
-    fn tier0_carries_strings_in_the_blob() {
+    fn tier0_encodes_binders_by_sym_bits_and_strings_in_the_blob() {
         use arvo::Bool;
         use hilavitkutin_str::str_const;
 
@@ -351,12 +358,15 @@ mod tests {
         let mut pool = [NodeRef::new(USize::ZERO); 8];
         let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
 
-        // let x = () in x: "x" is appended once for the Var (node 1) and
-        // once for the Let name (node 2), no dedup, so the blob is "xx"
+        // let x = "hi" in x: the Str literal's text goes to the blob; the binder
+        // x (at the Var and the Let name) encodes by its Sym bits, not text, and
+        // the same bits appear at both sites, which is the stable binder identity
+        // the runtime resolves variables by.
         let x = str_const!("x").as_sym();
-        let unit = at(b.lit(Literal::Unit, Span::default())); // node 0
+        let x_bits = x.to_bits().to_raw();
+        let hi = at(b.lit(Literal::Str(str_const!("hi")), Span::default())); // node 0
         let var = at(b.var(x, Span::default())); // node 1
-        let root = at(b.let_(Bool::FALSE, x, unit, var, Span::default())); // node 2
+        let root = at(b.let_(Bool::FALSE, x, hi, var, Span::default())); // node 2
         let arena = b.into_arena();
 
         let interner = StringInterner::new(NoArena);
@@ -366,29 +376,35 @@ mod tests {
             Maybe::Isnt => panic!("serialize failed"),
         };
 
-        // three nodes, no pooled lists, a two-byte blob
+        // three nodes, no pooled lists, a two-byte blob ("hi" from the Str
+        // literal; the binder does not go to the blob).
         assert_eq!(get_u32(&buf, 3 * WORD), 3);
         assert_eq!(get_u32(&buf, 4 * WORD), 0);
         assert_eq!(get_u32(&buf, BLOB_LEN_AT), 2);
 
-        // the blob sits just past the (empty) pool and reads back as "xx"
         let blob_start = HEADER_WORDS * WORD + 3 * NODE_WORDS * WORD;
-        assert_eq!(&buf[blob_start..blob_start + 2], b"xx");
+        assert_eq!(&buf[blob_start..blob_start + 2], b"hi");
         assert_eq!(written.0, blob_start + 2);
 
-        // Var (node 1) points at the first "x": offset 0, len 1
+        // node 0: a Str literal, its text at blob offset 0 len 2.
+        let lit_at = HEADER_WORDS * WORD;
+        assert_eq!(get_u32(&buf, lit_at), tag_code(NodeTag::Lit));
+        assert_eq!(get_u32(&buf, lit_at + 2 * WORD), 0); // str offset
+        assert_eq!(get_u32(&buf, lit_at + 3 * WORD), 2); // str len
+
+        // Var (node 1): one binder word, x's Sym bits.
         let var_at = HEADER_WORDS * WORD + NODE_WORDS * WORD;
         assert_eq!(get_u32(&buf, var_at), tag_code(NodeTag::Var));
-        assert_eq!(get_u32(&buf, var_at + WORD), 0);
-        assert_eq!(get_u32(&buf, var_at + 2 * WORD), 1);
+        assert_eq!(get_u32(&buf, var_at + WORD), x_bits);
 
-        // Let (node 2): name is the second "x" (offset 1, len 1), and its
-        // value/body children point at nodes 0 and 1
+        // Let (node 2): rec flag, then the SAME binder bits as the Var (stable
+        // identity), then the value/body children (nodes 0 and 1), shifted by
+        // the one-word binder slot.
         let let_at = HEADER_WORDS * WORD + 2 * NODE_WORDS * WORD;
         assert_eq!(get_u32(&buf, let_at), tag_code(NodeTag::Let));
-        assert_eq!(get_u32(&buf, let_at + 2 * WORD), 1); // name offset
-        assert_eq!(get_u32(&buf, let_at + 3 * WORD), 1); // name len
-        assert_eq!(get_u32(&buf, let_at + 4 * WORD), 0); // value = node 0
-        assert_eq!(get_u32(&buf, let_at + 5 * WORD), 1); // body = node 1
+        assert_eq!(get_u32(&buf, let_at + WORD), 0); // rec = false
+        assert_eq!(get_u32(&buf, let_at + 2 * WORD), x_bits); // name bits, == Var's
+        assert_eq!(get_u32(&buf, let_at + 3 * WORD), 0); // value = node 0
+        assert_eq!(get_u32(&buf, let_at + 4 * WORD), 1); // body = node 1
     }
 }
