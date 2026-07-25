@@ -1712,3 +1712,69 @@ test "two breaks in one loop must agree on a type" {
 test "break outside a loop is refused" {
     try std.testing.expectError(chk.Error.BreakOutsideLoop, run("break 1;"));
 }
+
+test "return leaves a function early" {
+    try std.testing.expectEqual(@as(i64, 1), try run(
+        \\fn sign(n) { if n < 0 { return 0 - 1; } if 0 < n { return 1; } 0 }
+        \\sign(7)
+    ));
+    try std.testing.expectEqual(@as(i64, -1), try run(
+        \\fn sign(n) { if n < 0 { return 0 - 1; } if 0 < n { return 1; } 0 }
+        \\sign(-7)
+    ));
+    try std.testing.expectEqual(@as(i64, 0), try run(
+        \\fn sign(n) { if n < 0 { return 0 - 1; } if 0 < n { return 1; } 0 }
+        \\sign(0)
+    ));
+}
+
+test "return's payload must be the function's result type" {
+    try std.testing.expectError(chk.Error.Mismatch, run(
+        \\fn f(n) { if n < 0 { return "text"; } 1 }
+        \\f(2)
+    ));
+}
+
+test "return from inside a loop leaves the function, not the loop" {
+    try std.testing.expectEqual(@as(i64, 3), try run(
+        \\fn first_big(s) {
+        \\  let mut i = 0;
+        \\  while i < len(s) {
+        \\    if 2 < at(s, i) { return at(s, i); }
+        \\    i += 1;
+        \\  }
+        \\  0
+        \\}
+        \\first_big([1, 2, 3, 4])
+    ));
+}
+
+test "continue skips to the next iteration" {
+    // 1 and 2 are skipped, so the total is 3 + 4.
+    try std.testing.expectEqual(@as(i64, 7), try run(
+        \\let mut total = 0;
+        \\for x in [1, 2, 3, 4] {
+        \\  if x < 3 { continue; }
+        \\  total += x;
+        \\}
+        \\total
+    ));
+}
+
+test "break and continue nest, each finding its own handler" {
+    // i = 1 and 2 continue; 3 and 4 add one each; 5 breaks. So total is 2.
+    try std.testing.expectEqual(@as(i64, 2), try run(
+        \\let mut total = 0;
+        \\let mut i = 0;
+        \\loop {
+        \\  i += 1;
+        \\  if 4 < i { break total; }
+        \\  if i < 3 { continue; }
+        \\  total += 1;
+        \\}
+    ));
+}
+
+test "return outside a function is refused" {
+    try std.testing.expectError(chk.Error.BreakOutsideLoop, run("return 1;"));
+}

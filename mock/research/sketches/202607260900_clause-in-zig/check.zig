@@ -62,6 +62,11 @@ pub const Field = struct { key: []const u8, ty: u32 };
 /// will look for it.
 pub const Constraint = struct { ty: u32, assoc: u32, trait_idx: u32, method_idx: u8, node: u32 };
 
+/// A handler in scope: which operation it services, and the type that
+/// operation's payload carries. A perform finds its own handler by operation,
+/// not merely the innermost one, because handlers for different operations nest.
+pub const Handled = struct { op: u32, param: u32 };
+
 /// A binding's type, plus how many leading variables are quantified. A scheme
 /// with `quantified == 0` is a plain monotype; anything higher is a generic.
 const Scheme = struct { ty: u32, quantified: u32, first: u32 };
@@ -91,7 +96,7 @@ pub const Ctx = struct {
     /// The type each enclosing handler yields, innermost last. A perform's
     /// payload must match the handler that will catch it, and handling is
     /// lexical, so a stack is the whole of the resolution.
-    handled: [16]u32 = undefined,
+    handled: [32]Handled = undefined,
     nhandled: u32 = 0,
 
     fn alloc(self: *Ctx, t: Ty) Error!u32 {
@@ -600,27 +605,37 @@ fn infer(img: *const Image, idx: u32, ctx: *Ctx, cur: u32) Error!u32 {
             return result orelse Error.Unsupported;
         },
         cl.TAG_HANDLE => {
-            // The handler's result type is what its clause yields, and the
-            // clause's parameter is what a perform carries. Both are the same
-            // variable, so a break's payload and the loop's value agree.
-            const yield = try ctx.fresh();
+            // Two distinct types here, and conflating them was the mistake the
+            // second operation exposed: what the operation carries, and what the
+            // handler as a whole yields. For break they coincide; for continue
+            // they do not, since continue carries nothing and the handler yields
+            // the next iteration.
+            const op = try img.word(idx, 2);
+            const param = try ctx.fresh();
             if (ctx.nhandled == ctx.handled.len) return Error.TooManyConstraints;
-            ctx.handled[ctx.nhandled] = yield;
+            ctx.handled[ctx.nhandled] = .{ .op = op, .param = param };
             ctx.nhandled += 1;
-            _ = try infer(img, try img.word(idx, 1), ctx, cur);
+            const bt = try infer(img, try img.word(idx, 1), ctx, cur);
             ctx.nhandled -= 1;
-            const scope = try ctx.push(try img.word(idx, 3), .{ .ty = yield, .quantified = 0, .first = 0 }, cur);
+            const scope = try ctx.push(try img.word(idx, 3), .{ .ty = param, .quantified = 0, .first = 0 }, cur);
             const ct = try infer(img, try img.word(idx, 4), ctx, scope);
-            try ctx.unify(ct, yield);
-            return yield;
+            // The clause replaces the handled computation, so the two must agree.
+            try ctx.unify(ct, bt);
+            return bt;
         },
         cl.TAG_PERFORM => {
-            if (ctx.nhandled == 0) return Error.BreakOutsideLoop;
-            const at = try infer(img, try img.word(idx, 2), ctx, cur);
-            try ctx.unify(at, ctx.handled[ctx.nhandled - 1]);
-            // A perform never returns, so its type is free: whatever the
-            // context needs it to be.
-            return ctx.fresh();
+            const op = try img.word(idx, 1);
+            var h = ctx.nhandled;
+            while (h > 0) {
+                h -= 1;
+                if (ctx.handled[h].op != op) continue;
+                const at = try infer(img, try img.word(idx, 2), ctx, cur);
+                try ctx.unify(at, ctx.handled[h].param);
+                // A perform never returns, so its type is free: whatever the
+                // context needs it to be.
+                return ctx.fresh();
+            }
+            return Error.BreakOutsideLoop;
         },
         cl.TAG_IF => {
             const ct = try infer(img, try img.word(idx, 1), ctx, cur);

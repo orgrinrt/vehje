@@ -35,6 +35,11 @@ pub const TAG_PERFORM: u32 = 12;
 
 /// The operation a `break` performs. One fixed symbol, from the synthetic range.
 pub const BREAK_OP: u32 = SYN_SYM_BASE + 0xF000;
+/// Leaving a function early, and skipping to the next iteration. The same
+/// non-resuming discharge as break, differing only in which handler catches it
+/// and what that handler's clause yields.
+pub const RETURN_OP: u32 = SYN_SYM_BASE + 0xF100;
+pub const CONTINUE_OP: u32 = SYN_SYM_BASE + 0xF200;
 
 /// Pattern nodes. They live in the same arena as expressions but are never
 /// evaluated as expressions; the match arm is the only thing that reads them.
@@ -167,6 +172,11 @@ pub const MacroDecl = struct {
 /// subtree, and whether it refers to itself.
 pub const Bounded = struct { sym: u32, value: u32, recursive: bool };
 
+/// An open loop: its function binder, how many mutable locals it threads, and
+/// its index binder when it is a `for` (NO_INDEX otherwise).
+pub const LoopCtx = struct { sym: u32, n: u32, i_sym: u32 };
+pub const NO_INDEX: u32 = 0xFFFF_FFFF;
+
 pub const Error = error{
     UnexpectedByte,
     UnexpectedToken,
@@ -193,7 +203,7 @@ pub const Error = error{
 
 // ---------------------------------------------------------------- lexer
 
-const Kind = enum { int, str_lit, ident, dot, colon, lbracket, rbracket, arrow, kw_trait, kw_impl, kw_for, kw_type, kw_match, kw_while, kw_mut, kw_mod, kw_use, kw_in, kw_macro, kw_pub, kw_loop, kw_break, bang, pound, colon_colon, kw_if_guard, dotdot, dotdot_eq, pipe, fat_arrow, underscore, plus_assign, minus_assign, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, slash, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
+const Kind = enum { int, str_lit, ident, dot, colon, lbracket, rbracket, arrow, kw_trait, kw_impl, kw_for, kw_type, kw_match, kw_while, kw_mut, kw_mod, kw_use, kw_in, kw_macro, kw_pub, kw_loop, kw_break, kw_return, kw_continue, bang, pound, colon_colon, kw_if_guard, dotdot, dotdot_eq, pipe, fat_arrow, underscore, plus_assign, minus_assign, kw_let, kw_fn, kw_if, kw_else, plus, minus, star, lt, slash, assign, semi, comma, lparen, rparen, lbrace, rbrace, eof };
 
 const Token = struct { kind: Kind, start: usize, end: usize, value: i64 };
 
@@ -268,6 +278,10 @@ const Lexer = struct {
                 .kw_loop
             else if (std.mem.eql(u8, text, "break"))
                 .kw_break
+            else if (std.mem.eql(u8, text, "return"))
+                .kw_return
+            else if (std.mem.eql(u8, text, "continue"))
+                .kw_continue
             else if (std.mem.eql(u8, text, "_"))
                 .underscore
             else if (std.mem.eql(u8, text, "if"))
@@ -664,6 +678,12 @@ pub const Parser = struct {
     /// While cloning, a self-reference is rewritten to the copy's own binder, so
     /// a recursive function's copy recurses into itself rather than back into
     /// the original.
+    /// The loops currently open, innermost last. `continue` needs the enclosing
+    /// loop's binder and its index, because the next iteration is built at the
+    /// continue site rather than in the handler: only there are the values the
+    /// body rebound actually in scope.
+    loop_ctx: [8]LoopCtx = undefined,
+    nloopctx: u32 = 0,
     rename_from: u32 = 0xFFFF_FFFF,
     rename_to: u32 = 0,
     nspecs: u32 = 0,
@@ -992,9 +1012,18 @@ pub const Parser = struct {
             self.nmuts += 1;
             const n = self.nmuts;
 
-            const body = try self.forBody(loop_sym, n, i_sym, s_sym, elem);
+            if (self.nloopctx == self.loop_ctx.len) return Error.TooManyParams;
+            self.loop_ctx[self.nloopctx] = .{ .sym = loop_sym, .n = n, .i_sym = i_sym };
+            self.nloopctx += 1;
+            const raw = try self.forBody(loop_sym, n, i_sym, s_sym, elem);
+            self.nloopctx -= 1;
             try self.expect(.rbrace);
             self.nmuts -= 1;
+            // Continue in a `for` must advance the index, or it would spin on
+            // the same element forever. The handler's clause is therefore the
+            // increment and the recursive call, not the call alone.
+            const csym_f = SYN_SYM_BASE + 0xC000 + self.nloops;
+            const body = try self.b.handle(raw, CONTINUE_OP, csym_f, try self.b.variable(csym_f));
             const rest = try self.program();
 
             const len_call = try self.b.variadic(OP_LEN, &[_]u32{try self.b.variable(s_sym)});
@@ -1019,6 +1048,27 @@ pub const Parser = struct {
             const looped = try self.b.letRec(loop_sym, f, call);
             return self.b.let(s_sym, seq, looped);
         }
+        if (self.tok.kind == .kw_return) {
+            try self.bump();
+            const payload = if (self.tok.kind == .semi) try self.b.unit() else try self.expression();
+            try self.expect(.semi);
+            return self.b.perform(RETURN_OP, payload);
+        }
+        if (self.tok.kind == .kw_continue) {
+            try self.bump();
+            try self.expect(.semi);
+            if (self.nloopctx == 0) return Error.UnexpectedToken;
+            const lc = self.loop_ctx[self.nloopctx - 1];
+            // The next iteration is the payload, built here so it reads the
+            // values this body rebound. Building it in the handler instead
+            // reads the loop's parameters, which is the same iteration again.
+            var nxt = try self.loopCall(lc.sym, lc.n);
+            if (lc.i_sym != NO_INDEX) {
+                const bumped_c = try self.b.arith(OP_ADD, try self.b.variable(lc.i_sym), try self.b.lit(1));
+                nxt = try self.b.let(lc.i_sym, bumped_c, nxt);
+            }
+            return self.b.perform(CONTINUE_OP, nxt);
+        }
         if (self.tok.kind == .kw_break) {
             // A break is a statement wherever a statement may stand, not only
             // at the top of a loop body: it performs an operation, and where the
@@ -1038,8 +1088,16 @@ pub const Parser = struct {
             const loop_sym = LOOP_SYM_BASE + self.nloops;
             self.nloops += 1;
             const n = self.nmuts;
-            const body = try self.loopBody(loop_sym, n);
+            if (self.nloopctx == self.loop_ctx.len) return Error.TooManyParams;
+            self.loop_ctx[self.nloopctx] = .{ .sym = loop_sym, .n = n, .i_sym = NO_INDEX };
+            self.nloopctx += 1;
+            const raw_body = try self.loopBody(loop_sym, n);
+            self.nloopctx -= 1;
             try self.expect(.rbrace);
+            // Continue skips the rest of this turn: the handler's clause is the
+            // recursive call, so discharging it starts the next iteration.
+            const csym = SYN_SYM_BASE + 0xD000 + self.nloops;
+            const body = try self.b.handle(raw_body, CONTINUE_OP, csym, try self.b.variable(csym));
 
             var f = body;
             var k = n;
@@ -1087,8 +1145,17 @@ pub const Parser = struct {
             self.nloops += 1;
             const n = self.nmuts;
 
-            const body = try self.loopBody(loop_sym, n);
+            if (self.nloopctx == self.loop_ctx.len) return Error.TooManyParams;
+            self.loop_ctx[self.nloopctx] = .{ .sym = loop_sym, .n = n, .i_sym = NO_INDEX };
+            self.nloopctx += 1;
+            const raw = try self.loopBody(loop_sym, n);
+            self.nloopctx -= 1;
             try self.expect(.rbrace);
+            // Continue in a `while` re-tests the condition without running the
+            // rest of the body, which is what makes the user's own increment
+            // skippable exactly as it is in C.
+            const csym_w = SYN_SYM_BASE + 0xB000 + self.nloops;
+            const body = try self.b.handle(raw, CONTINUE_OP, csym_w, try self.b.variable(csym_w));
             const rest = try self.program();
             const branch = try self.b.cond(cond, body, rest);
 
@@ -1121,6 +1188,14 @@ pub const Parser = struct {
             }
             const body = try self.program();
             return self.b.let(name, value, body);
+        }
+        // A block-shaped expression may stand as a statement with more
+        // following it, which is how a function body reads as a sequence of
+        // guarded early exits rather than as one nested expression.
+        if (self.tok.kind == .kw_if or self.tok.kind == .kw_match) {
+            const e = try self.expression();
+            if (self.tok.kind == .semi) try self.bump();
+            return self.thenRest(e);
         }
         return self.expression();
     }
@@ -1207,7 +1282,12 @@ pub const Parser = struct {
         self.cur_binding = saved_binding;
         self.cur_uses_trait = saved_uses;
         try self.expect(.rbrace);
-        var f = body;
+        // Every function body handles return: the clause yields what the return
+        // carried, which is the same non-resuming discharge break uses.
+        const rsym = SYN_SYM_BASE + 0xE000 + (self.nloops * 4 + 3);
+        self.nloops += 1;
+        const handled_body = try self.b.handle(body, RETURN_OP, rsym, try self.b.variable(rsym));
+        var f = handled_body;
         if (np == 0) {
             // A nullary function still binds something, from the synthetic
             // range so it cannot shadow a source name.
@@ -1263,6 +1343,15 @@ pub const Parser = struct {
                 self.b.nodes[@as(usize, idx) * NODE_WORDS + 1] = self.b.nodes[src + 1];
                 self.b.nodes[@as(usize, idx) * NODE_WORDS + 2] = bo;
                 return idx;
+            },
+            TAG_HANDLE => {
+                const bo = try self.cloneSubtree(self.b.nodes[src + 1]);
+                const cl2 = try self.cloneSubtree(self.b.nodes[src + 4]);
+                return self.b.handle(bo, self.b.nodes[src + 2], self.b.nodes[src + 3], cl2);
+            },
+            TAG_PERFORM => {
+                const a = try self.cloneSubtree(self.b.nodes[src + 2]);
+                return self.b.perform(self.b.nodes[src + 1], a);
             },
             TAG_IF => {
                 const c = try self.cloneSubtree(self.b.nodes[src + 1]);
@@ -1341,6 +1430,11 @@ pub const Parser = struct {
                 self.markSubtree(self.b.nodes[base + 4], marks);
             },
             TAG_LAMBDA => self.markSubtree(self.b.nodes[base + 2], marks),
+            TAG_HANDLE => {
+                self.markSubtree(self.b.nodes[base + 1], marks);
+                self.markSubtree(self.b.nodes[base + 4], marks);
+            },
+            TAG_PERFORM => self.markSubtree(self.b.nodes[base + 2], marks),
             TAG_IF => {
                 self.markSubtree(self.b.nodes[base + 1], marks);
                 self.markSubtree(self.b.nodes[base + 2], marks);
@@ -1499,6 +1593,9 @@ pub const Parser = struct {
             TAG_LET => return self.selfReferences(self.b.nodes[base + 3], sym) or
                 self.selfReferences(self.b.nodes[base + 4], sym),
             TAG_LAMBDA => return self.selfReferences(self.b.nodes[base + 2], sym),
+            TAG_HANDLE => return self.selfReferences(self.b.nodes[base + 1], sym) or
+                self.selfReferences(self.b.nodes[base + 4], sym),
+            TAG_PERFORM => return self.selfReferences(self.b.nodes[base + 2], sym),
             TAG_IF => return self.selfReferences(self.b.nodes[base + 1], sym) or
                 self.selfReferences(self.b.nodes[base + 2], sym) or
                 self.selfReferences(self.b.nodes[base + 3], sym),
@@ -1608,6 +1705,12 @@ pub const Parser = struct {
                 const c = try self.constEval(self.b.nodes[base + 1], env, vals);
                 const branch = if (c != 0) self.b.nodes[base + 2] else self.b.nodes[base + 3];
                 return self.constEval(branch, env, vals);
+            },
+            TAG_HANDLE => {
+                // A macro body carries a return handler like any other body. It
+                // is transparent to constant evaluation, because a constant
+                // cannot perform.
+                return self.constEval(self.b.nodes[base + 1], env, vals);
             },
             TAG_RAW => {
                 const start = self.b.nodes[base + 2];

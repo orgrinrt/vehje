@@ -400,10 +400,49 @@ At run time the effect **propagates as an error with its value beside it rather
 than as a jump**, so every frame between the perform and its handler still gets
 to return. That is what would let a later `finally` run at each frame.
 
-Adding it surfaced three plain gaps that had never come up: `break` had to be a
-statement wherever a statement may stand rather than only at the top of a loop
-body, `if` had to work without `else` (yielding unit, since `If` is total), and
-an empty block had to be unit. All three are ordinary shapes, not corner cases.
+`return` and `continue` are the same discharge with different operations:
+
+```
+fn sign(n) { if n < 0 { return 0 - 1; } if 0 < n { return 1; } 0 }
+sign(-7)                                         ==> -1
+
+fn first_big(s) {
+  let mut i = 0;
+  while i < len(s) { if 2 < at(s, i) { return at(s, i); } i += 1; }
+  0
+}
+first_big([1, 2, 3, 4])                          ==> 3
+
+for x in [1, 2, 3, 4] { if x < 3 { continue; } total += x; }  ==> 7
+
+fn f(n) { if n < 0 { return "text"; } 1 }        refused, Mismatch
+return 1;   (outside a function)                 refused
+```
+
+Every function body carries a return handler and every loop body a continue
+handler, so a `return` inside a loop leaves the function rather than the loop:
+the perform finds the handler for *its* operation, not the innermost one. That
+lookup by operation is what the second and third operations forced, and it
+exposed a conflation worth naming: a handler has two distinct types, what the
+operation carries and what the handler yields. For `break` they coincide, which
+is why one variable served while break was the only operation. For `continue`
+they do not, since continue carries nothing and the handler yields the next
+iteration.
+
+**Continue's next iteration is built at the `continue` site, not in the
+handler.** That was a real bug rather than a detail: the handler's clause sits
+outside the body, so it reads the loop's parameters rather than the values the
+body rebound, and the loop spins on the same iteration forever. Building the call
+where the rebound values are in scope is the fix, and for a `for` it carries the
+index advance too, or continue would sit on the same element.
+
+Adding all this surfaced four plain gaps that had never come up: an early exit
+had to be a statement wherever a statement may stand rather than only at the top
+of a loop body, `if` had to work without `else` (yielding unit, since `If` is
+total), an empty block had to be unit, and a block-shaped expression had to be
+able to stand as a statement with more following it, which is what makes a
+function body read as a sequence of guarded early exits. All four are ordinary
+shapes, not corner cases.
 
 **Loops are bounded by the evaluator's stack.** Each iteration is a call, and the
 evaluator does not yet trampoline (task #49), so a long loop overflows where a
