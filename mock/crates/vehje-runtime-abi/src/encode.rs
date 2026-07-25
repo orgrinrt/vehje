@@ -19,7 +19,7 @@ use arvo::{Bool, Int, Maybe, USize};
 
 use hilavitkutin_str::{ArenaInterner, StringInterner};
 use hilavitkutin_sym::Sym;
-use vehje_ir::{Arena, FamilyId, Literal, Node, NodeList, NodeRef};
+use vehje_ir::{Arena, Clause, ClauseList, FamilyId, Literal, Node, NodeList, NodeRef};
 
 use crate::Tier;
 
@@ -38,6 +38,8 @@ pub enum NodeTag {
     Interp,
     Raw,
     Handle,
+    /// Perform an operation, serviced by the innermost matching clause.
+    Perform,
 }
 
 /// A `Lit` node's literal kind, written before the literal's payload.
@@ -98,6 +100,12 @@ pub trait ResidualEncoder {
     /// A child-list payload (a slice of the child-index pool).
     fn list(&mut self, l: NodeList) -> Maybe<()>;
 
+    /// A clause-list payload: a `{ start, len }` slice of the clause section.
+    fn clause_list(&mut self, l: ClauseList) -> Maybe<()>;
+
+    /// The clause section, written once after the pool.
+    fn clauses(&mut self, clauses: &[Clause]) -> Maybe<()>;
+
     /// A family id payload (the `Raw` escape hatch).
     fn family(&mut self, id: FamilyId) -> Maybe<()>;
 
@@ -123,6 +131,7 @@ pub fn encode<A: ArenaInterner, E: ResidualEncoder>(
     mut encoder: E,
 ) -> Maybe<USize> {
     let pool = arena.pool();
+    let clauses = arena.all_clauses();
     encoder.begin(arena.len(), USize(pool.len()), root, tier)?;
 
     let node_count = arena.len().0;
@@ -206,12 +215,18 @@ pub fn encode<A: ArenaInterner, E: ResidualEncoder>(
             Node::Handle { body, clauses } => {
                 encoder.begin_node(index, NodeTag::Handle)?;
                 encoder.child(body)?;
-                encoder.list(clauses)?;
+                encoder.clause_list(clauses)?;
+            }
+            Node::Perform { op, args } => {
+                encoder.begin_node(index, NodeTag::Perform)?;
+                encoder.binder(op)?;
+                encoder.list(args)?;
             }
         }
         i += 1;
     }
 
     encoder.pool(pool)?;
+    encoder.clauses(clauses)?;
     encoder.finish()
 }

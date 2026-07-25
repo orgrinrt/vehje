@@ -5,6 +5,7 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
+hilavitkutin-sym.workspace = true
 vehje-ir.workspace = true
 vehje-resolve.workspace = true
 vehje-signature.workspace = true

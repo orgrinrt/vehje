@@ -115,7 +115,18 @@ pub fn hash_of(arena: &Arena<'_>, at: NodeRef) -> StructuralHash {
         }
         Node::Handle { body, clauses } => {
             h = fold_child(h, body);
-            for c in arena.list(clauses) {
+            // a clause's four authored words all fold, so two handlers differing
+            // only in an operation identity cannot hash equal.
+            for c in arena.clauses(clauses) {
+                h = mix(h, sym_word(c.op));
+                h = mix(h, sym_word(c.resume));
+                h = mix(h, arity_word(c.arity));
+                h = fold_child(h, c.body);
+            }
+        }
+        Node::Perform { op, args } => {
+            h = mix(h, sym_word(op));
+            for c in arena.list(args) {
                 h = fold_child(h, *c);
             }
         }
@@ -138,6 +149,7 @@ fn discriminant(node: &Node) -> u64 { // lint:allow(no-bare-numeric) lint:allow(
         Node::Interp { .. } => 10,
         Node::Raw { .. } => 11,
         Node::Handle { .. } => 12,
+        Node::Perform { .. } => 13,
     }
 }
 
@@ -185,6 +197,11 @@ fn sym_word(s: Sym) -> u64 { // lint:allow(no-bare-numeric) lint:allow(arvo-type
     s.to_bits().to_raw() as u64 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: 32-bit interned handle widened to a hash-domain word; tracked: #207
 }
 
+/// A clause's operand arity as a hash word.
+fn arity_word(a: arvo::Uint<8, arvo::strategy::Hot>) -> u64 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: arity widened to a 64-bit hash word; tracked: #207
+    a.to_raw() as u64 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: 8-bit arity as a hash-domain word; tracked: #207
+}
+
 /// A family id as a hash word, for the `Raw` discriminant contribution.
 fn family_word(family: crate::node::FamilyId) -> u64 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: family id widened to a 64-bit hash word; tracked: #207
     family.get().to_raw() as u64 // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: family id as a hash-domain word; tracked: #207
@@ -222,7 +239,7 @@ mod tests {
     #[test]
     fn distinct_int_literals_hash_distinct() {
         let (mut n, mut s, mut p) = arena4();
-        let mut b = Builder::new(Arena::new(&mut n, &mut s, &mut p));
+        let mut b = Builder::new(Arena::new(&mut n, &mut s, &mut p, &mut []));
         let one = at(b.lit(Literal::Int(Int::<64, Hot>::from_raw(1)), Span::default()));
         let two = at(b.lit(Literal::Int(Int::<64, Hot>::from_raw(2)), Span::default()));
         let arena = b.into_arena();
@@ -232,7 +249,7 @@ mod tests {
     #[test]
     fn distinct_bool_literals_hash_distinct() {
         let (mut n, mut s, mut p) = arena4();
-        let mut b = Builder::new(Arena::new(&mut n, &mut s, &mut p));
+        let mut b = Builder::new(Arena::new(&mut n, &mut s, &mut p, &mut []));
         let t = at(b.lit(Literal::Bool(Bool::TRUE), Span::default()));
         let f = at(b.lit(Literal::Bool(Bool::FALSE), Span::default()));
         let arena = b.into_arena();
@@ -243,7 +260,7 @@ mod tests {
     #[test]
     fn distinct_vars_hash_distinct() {
         let (mut n, mut s, mut p) = arena4();
-        let mut b = Builder::new(Arena::new(&mut n, &mut s, &mut p));
+        let mut b = Builder::new(Arena::new(&mut n, &mut s, &mut p, &mut []));
         let x = at(b.var(str_const!("x").as_sym(), Span::default()));
         let y = at(b.var(str_const!("y").as_sym(), Span::default()));
         let arena = b.into_arena();
@@ -254,7 +271,7 @@ mod tests {
     #[test]
     fn equal_int_literals_hash_equal() {
         let (mut n, mut s, mut p) = arena4();
-        let mut b = Builder::new(Arena::new(&mut n, &mut s, &mut p));
+        let mut b = Builder::new(Arena::new(&mut n, &mut s, &mut p, &mut []));
         let a = at(b.lit(Literal::Int(Int::<64, Hot>::from_raw(7)), Span::default()));
         let c = at(b.lit(Literal::Int(Int::<64, Hot>::from_raw(7)), Span::default()));
         let arena = b.into_arena();

@@ -69,7 +69,7 @@ mod tests {
     #[test]
     fn builder_accepts_source_and_minted_binders() {
         let (mut n, mut s, mut p) = arena4();
-        let mut b = Builder::new(Arena::new(&mut n, &mut s, &mut p));
+        let mut b = Builder::new(Arena::new(&mut n, &mut s, &mut p, &mut []));
         let body = at(b.lit(Literal::Unit, Span::default()));
         let source = str_const!("x").as_sym();
         let minted = Sym::new(<BinderDomain as Domain>::KIND, Bits::<28, Hot>::from_raw(0));
@@ -93,12 +93,12 @@ mod tests {
     fn var_hash_reflects_binder_domain() {
         let id = Bits::<28, Hot>::from_raw(5);
         let (mut n1, mut s1, mut p1) = arena4();
-        let mut b1 = Builder::new(Arena::new(&mut n1, &mut s1, &mut p1));
+        let mut b1 = Builder::new(Arena::new(&mut n1, &mut s1, &mut p1, &mut []));
         let src = at(b1.var(Sym::new(Str::STR_DOMAIN, id), Span::default()));
         let a1 = b1.into_arena();
 
         let (mut n2, mut s2, mut p2) = arena4();
-        let mut b2 = Builder::new(Arena::new(&mut n2, &mut s2, &mut p2));
+        let mut b2 = Builder::new(Arena::new(&mut n2, &mut s2, &mut p2, &mut []));
         let minted = at(b2.var(Sym::new(<BinderDomain as Domain>::KIND, id), Span::default()));
         let a2 = b2.into_arena();
 

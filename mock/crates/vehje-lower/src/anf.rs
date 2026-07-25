@@ -9,7 +9,7 @@
 
 use arvo::{Bool, Identity, Maybe, USize};
 use hilavitkutin_sym::{Generator, Sym};
-use vehje_ir::{BinderDomain, Builder, Node, NodeRef, Span};
+use vehje_ir::{BinderDomain, Builder, Clause, Node, NodeRef, Span};
 
 use crate::Rewrite;
 
@@ -136,11 +136,42 @@ fn flatten(
         }
         Node::Handle { body, clauses } => {
             let bo = normalize_term(b, body, rw, binders)?;
-            let mut clause_roots: [NodeRef; ARG_CAP] = [dummy_ref(); ARG_CAP];
-            let m = normalize_list(b, clauses, rw, binders, &mut clause_roots)?;
-            let list = b.alloc_list(&clause_roots[..m])?;
+            // A clause is not a term, so it is not normalised as one: its BODY
+            // is normalised and the authored words carry through unchanged.
+            let mut out: [Clause; ARG_CAP] = [dummy_clause(); ARG_CAP];
+            let n = b.arena().clauses(clauses).len().min(ARG_CAP);
+            let mut i = 0;
+            while i < n {
+                let c = b.arena().clauses(clauses)[i];
+                let body = normalize_term(b, c.body, rw, binders)?;
+                out[i] = Clause { body, ..c };
+                i += 1;
+            }
+            let list = b.alloc_clauses(&out[..n])?;
             b.handle(bo, list, Span::default())
         }
+        Node::Perform { op, args } => {
+            let mut arg_roots: [NodeRef; ARG_CAP] = [dummy_ref(); ARG_CAP];
+            let m = normalize_list(b, args, rw, binders, &mut arg_roots)?;
+            let list = b.alloc_list(&arg_roots[..m])?;
+            b.perform(op, list, Span::default())
+        }
+    }
+}
+
+/// A placeholder `Sym` for a fixed scratch buffer, never read.
+fn dummy_sym() -> Sym {
+    Sym::new(<BinderDomain as hilavitkutin_sym::Domain>::KIND, arvo::Bits::from_raw(0)) // lint:allow(no-bare-numeric) reason: scratch placeholder id; tracked: #207
+}
+
+/// A placeholder clause for a fixed scratch buffer, never read.
+fn dummy_clause() -> Clause {
+    Clause {
+        op: dummy_sym(),
+        resume: dummy_sym(),
+        arity: arvo::Uint::<8, arvo::strategy::Hot>::from_raw(0), // lint:allow(no-bare-numeric) reason: scratch placeholder; tracked: #207
+        body: dummy_ref(),
+        span: Span::default(),
     }
 }
 

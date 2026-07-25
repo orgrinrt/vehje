@@ -183,12 +183,18 @@ fn walk<H: FamilyResolve>(
             Outcome::Ok(())
         }
         Node::Handle { body, clauses } => {
-            // FIXME: a handler clause binds the operation and the resumption;
-            // once the clause representation lands, push those binders before
-            // walking the clause body. M-level walks the body and the clause
-            // bodies without the operation/resumption binders.
+            // The clause's operands curry through its body's lambda chain, so
+            // the binder scope needs nothing pushed here: the `Lambda` arm
+            // already pushes one frame per parameter. The resumption binder is
+            // reserved and unbound, so it pushes nothing either.
             walk(arena, body, scope, hook)?;
-            for child in arena.list(clauses) {
+            for c in arena.clauses(clauses) {
+                walk(arena, c.body, scope, hook)?;
+            }
+            Outcome::Ok(())
+        }
+        Node::Perform { args, .. } => {
+            for child in arena.list(args) {
                 walk(arena, *child, scope, hook)?;
             }
             Outcome::Ok(())
@@ -321,7 +327,13 @@ fn walk_record<H: FamilyResolve>(
         }
         Node::Handle { body, clauses } => {
             walk_record(arena, body, scope, res, hook)?;
-            for child in arena.list(clauses) {
+            for c in arena.clauses(clauses) {
+                walk_record(arena, c.body, scope, res, hook)?;
+            }
+            Outcome::Ok(())
+        }
+        Node::Perform { args, .. } => {
+            for child in arena.list(args) {
                 walk_record(arena, *child, scope, res, hook)?;
             }
             Outcome::Ok(())
@@ -349,7 +361,7 @@ mod tests {
         let mut nodes = [Node::Lit(Literal::Unit); 8];
         let mut spans = [Span::default(); 8];
         let mut pool = [NodeRef::new(USize::ZERO); 8];
-        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
 
         // let x = () in x
         let x = str_const!("x").as_sym();
@@ -366,7 +378,7 @@ mod tests {
         let mut nodes = [Node::Lit(Literal::Unit); 8];
         let mut spans = [Span::default(); 8];
         let mut pool = [NodeRef::new(USize::ZERO); 8];
-        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
 
         // a bare, unbound reference to y
         let y = str_const!("y").as_sym();
@@ -384,7 +396,7 @@ mod tests {
         let mut nodes = [Node::Lit(Literal::Unit); 8];
         let mut spans = [Span::default(); 8];
         let mut pool = [NodeRef::new(USize::ZERO); 8];
-        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
 
         // let rec f = f in f: the bound value references the binding itself,
         // which resolves only because `rec` puts the binder in scope for it.
@@ -402,7 +414,7 @@ mod tests {
         let mut nodes = [Node::Lit(Literal::Unit); 8];
         let mut spans = [Span::default(); 8];
         let mut pool = [NodeRef::new(USize::ZERO); 8];
-        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
 
         // let f = f in f (non-recursive): the value's `f` is unbound, so the
         // rec flag is load-bearing: without it this same shape resolves, with
@@ -431,7 +443,7 @@ mod tests {
         let mut nodes = [Node::Lit(Literal::Unit); 8];
         let mut spans = [Span::default(); 8];
         let mut pool = [NodeRef::new(USize::ZERO); 8];
-        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
 
         // let x = () in Raw(family, [x]): the Var inside the family node is a
         // real reference and must resolve, because the pass descends into the
@@ -452,7 +464,7 @@ mod tests {
         let mut nodes = [Node::Lit(Literal::Unit); 8];
         let mut spans = [Span::default(); 8];
         let mut pool = [NodeRef::new(USize::ZERO); 8];
-        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
 
         // Raw(family, [y]) with y unbound: the descent still refuses the inner
         // unbound reference, so a family node is not a hiding place.

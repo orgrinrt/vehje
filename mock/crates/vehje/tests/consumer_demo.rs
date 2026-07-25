@@ -83,7 +83,7 @@ fn a_consumer_family_and_target_attach_end_to_end() {
     let mut nodes = [Node::Lit(Literal::Unit); 8];
     let mut spans = [Span::default(); 8];
     let mut pool = [NodeRef::new(USize::ZERO); 8];
-    let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+    let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
 
     // Raw(Demo, [()]): a Core unit literal inside the consumer's family node.
     let unit = at(b.lit(Literal::Unit, Span::default()));

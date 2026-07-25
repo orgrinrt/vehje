@@ -24,7 +24,7 @@ fn const_fold_folds_if_true_to_the_taken_branch() {
     let mut nodes = [Node::Lit(Literal::Unit); 8];
     let mut spans = [Span::default(); 8];
     let mut pool = [NodeRef::new(USize::ZERO); 8];
-    let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+    let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
 
     // if true then 1 else 2: distinct branches make the fold observable.
     let cond = at(b.lit(Literal::Bool(Bool::TRUE), Span::default()));
@@ -44,7 +44,7 @@ fn const_fold_folds_if_false_to_the_else_branch() {
     let mut nodes = [Node::Lit(Literal::Unit); 8];
     let mut spans = [Span::default(); 8];
     let mut pool = [NodeRef::new(USize::ZERO); 8];
-    let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+    let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
 
     let cond = at(b.lit(Literal::Bool(Bool::FALSE), Span::default()));
     let a = int(&mut b, Int::<64, Hot>::from_raw(1));
@@ -63,7 +63,7 @@ fn cse_does_not_share_variables_avoiding_capture() {
     let mut nodes = [Node::Lit(Literal::Unit); 8];
     let mut spans = [Span::default(); 8];
     let mut pool = [NodeRef::new(USize::ZERO); 8];
-    let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+    let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
 
     // two Var("x")s that (in a real program) could resolve to different
     // binders. CSE must NOT merge them, or it captures. Only variable-free
@@ -89,7 +89,7 @@ fn cse_shares_two_equal_subtrees() {
     let mut nodes = [Node::Lit(Literal::Unit); 8];
     let mut spans = [Span::default(); 8];
     let mut pool = [NodeRef::new(USize::ZERO); 8];
-    let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+    let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
 
     // two structurally equal Int(7)s under one parent: CSE redirects the
     // later to the earlier.
@@ -110,7 +110,7 @@ fn cheap_lowering_preserves_a_trivial_program() {
     let mut nodes = [Node::Lit(Literal::Unit); 8];
     let mut spans = [Span::default(); 8];
     let mut pool = [NodeRef::new(USize::ZERO); 8];
-    let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+    let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
     let unit = at(b.lit(Literal::Unit, Span::default()));
 
     let mut remap = [Maybe::Isnt; 8];
@@ -134,7 +134,7 @@ fn anf_leaves_atoms_untouched() {
     let mut nodes = [Node::Lit(Literal::Unit); 16];
     let mut spans = [Span::default(); 16];
     let mut pool = [NodeRef::new(USize::ZERO); 16];
-    let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+    let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
     let x = at(b.var(str_const!("x").as_sym(), Span::default()));
     let before = b.arena().len();
     let mut remap = [Maybe::Isnt; 16];
@@ -151,7 +151,7 @@ fn anf_hoists_a_compound_apply_arg() {
     let mut nodes = [Node::Lit(Literal::Unit); 32];
     let mut spans = [Span::default(); 32];
     let mut pool = [NodeRef::new(USize::ZERO); 32];
-    let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+    let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
     let f = at(b.var(str_const!("f").as_sym(), Span::default()));
     let g = at(b.var(str_const!("g").as_sym(), Span::default()));
     let x = at(b.var(str_const!("x").as_sym(), Span::default()));
@@ -188,7 +188,7 @@ fn anf_flattens_nested_compounds() {
     let mut nodes = [Node::Lit(Literal::Unit); 48];
     let mut spans = [Span::default(); 48];
     let mut pool = [NodeRef::new(USize::ZERO); 48];
-    let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+    let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
     let f = at(b.var(str_const!("f").as_sym(), Span::default()));
     let g = at(b.var(str_const!("g").as_sym(), Span::default()));
     let h = at(b.var(str_const!("h").as_sym(), Span::default()));
@@ -226,7 +226,7 @@ fn anf_flattens_let_chains() {
     let mut nodes = [Node::Lit(Literal::Unit); 32];
     let mut spans = [Span::default(); 32];
     let mut pool = [NodeRef::new(USize::ZERO); 32];
-    let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+    let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
     let a_name = str_const!("a").as_sym();
     let b_name = str_const!("b").as_sym();
     let u1 = at(b.lit(Literal::Unit, Span::default()));
@@ -255,7 +255,7 @@ fn anf_branches_are_separate_contexts() {
     let mut nodes = [Node::Lit(Literal::Unit); 48];
     let mut spans = [Span::default(); 48];
     let mut pool = [NodeRef::new(USize::ZERO); 48];
-    let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+    let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
     let c = at(b.var(str_const!("c").as_sym(), Span::default()));
     let f = at(b.var(str_const!("f").as_sym(), Span::default()));
     let g = at(b.var(str_const!("g").as_sym(), Span::default()));
@@ -285,7 +285,7 @@ fn anf_minted_binder_cannot_capture() {
     let mut nodes = [Node::Lit(Literal::Unit); 32];
     let mut spans = [Span::default(); 32];
     let mut pool = [NodeRef::new(USize::ZERO); 32];
-    let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+    let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
     let f = at(b.var(str_const!("f").as_sym(), Span::default()));
     let g = at(b.var(str_const!("g").as_sym(), Span::default()));
     let x = at(b.var(str_const!("x").as_sym(), Span::default()));
@@ -311,7 +311,7 @@ fn anf_returns_isnt_on_arena_full() {
     let mut nodes = [Node::Lit(Literal::Unit); 5];
     let mut spans = [Span::default(); 5];
     let mut pool = [NodeRef::new(USize::ZERO); 5];
-    let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+    let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
     let f = at(b.var(str_const!("f").as_sym(), Span::default()));
     let g = at(b.var(str_const!("g").as_sym(), Span::default()));
     let x = at(b.var(str_const!("x").as_sym(), Span::default()));
@@ -331,7 +331,7 @@ fn anf_returns_isnt_on_scratch_overflow() {
     let mut nodes = [Node::Lit(Literal::Unit); 256];
     let mut spans = [Span::default(); 256];
     let mut pool = [NodeRef::new(USize::ZERO); 256];
-    let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+    let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
     let f = at(b.var(str_const!("f").as_sym(), Span::default()));
     let g = at(b.var(str_const!("g").as_sym(), Span::default()));
     let x = at(b.var(str_const!("x").as_sym(), Span::default()));

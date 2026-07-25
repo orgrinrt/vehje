@@ -12,7 +12,7 @@ use hilavitkutin_str::Str;
 use hilavitkutin_sym::Sym;
 
 use crate::arena::Arena;
-use crate::node::{FamilyId, Literal, Node, NodeList, NodeRef};
+use crate::node::{Clause, ClauseList, FamilyId, Literal, Node, NodeList, NodeRef};
 use crate::span::Span;
 
 /// Builds Core nodes into a caller-provided arena.
@@ -101,7 +101,18 @@ impl<'a> Builder<'a> {
 
     /// Handle `body` with the given handler clauses (resumable
     /// algebraic-effect handlers).
-    pub fn handle(&mut self, body: NodeRef, clauses: NodeList, span: Span) -> Maybe<NodeRef> {
+    pub fn handle(&mut self, body: NodeRef, clauses: ClauseList, span: Span) -> Maybe<NodeRef> {
         self.arena.push(Node::Handle { body, clauses }, span)
+    }
+
+    /// Perform `op` with `args`, to be serviced by the innermost enclosing
+    /// clause whose operation matches.
+    pub fn perform(&mut self, op: Sym, args: NodeList, span: Span) -> Maybe<NodeRef> {
+        self.arena.push(Node::Perform { op, args }, span)
+    }
+
+    /// Append handler clauses to the clause region, returning their handle.
+    pub fn alloc_clauses(&mut self, clauses: &[Clause]) -> Maybe<ClauseList> {
+        self.arena.alloc_clauses(clauses)
     }
 }

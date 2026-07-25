@@ -149,6 +149,7 @@ impl Target for DebugTarget {
                 Node::Interp { .. } => b"interp ",
                 Node::Raw { .. } => b"raw ",
                 Node::Handle { .. } => b"handle ",
+                Node::Perform { .. } => b"perform ",
             };
             sink.push_bulk(tag);
         });
@@ -201,7 +202,7 @@ mod tests {
         let mut nodes = [Node::Lit(Literal::Unit); 8];
         let mut spans = [Span::default(); 8];
         let mut pool = [NodeRef::new(USize::ZERO); 8];
-        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
 
         // let x = () in x
         let x = str_const!("x").as_sym();
@@ -239,7 +240,7 @@ mod tests {
         let mut nodes = [Node::Lit(Literal::Unit); 8];
         let mut spans = [Span::default(); 8];
         let mut pool = [NodeRef::new(USize::ZERO); 8];
-        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
 
         // let x = () in x, driven through the public `run` entry end to end.
         let x = str_const!("x").as_sym();

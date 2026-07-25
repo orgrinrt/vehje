@@ -18,7 +18,8 @@
 
 use core::marker::PhantomData;
 
-use arvo::Outcome;
+use arvo::{Bool, Maybe, Outcome};
+use hilavitkutin_sym::Sym;
 
 use arvo::USize;
 use vehje_ir::{
@@ -67,6 +68,8 @@ pub enum CheckError {
     /// A lease that cannot be placed (a value escapes past what its type can
     /// express, at the avoidance boundary).
     UnplaceableLease { at: NodeRef },
+    /// More nested handler frames than the walk's lent bound allows.
+    HandlerDepthExceeded { at: NodeRef },
     /// A family node's own check failed.
     FamilyRule { at: NodeRef },
     /// The caller-lent grade region is smaller than the node arena, so a
@@ -208,9 +211,131 @@ pub fn check_with<'a, H: FamilyCheck>(
     grades: &mut GradeTable<'_>,
     hook: &H,
 ) -> Outcome<Graded<'a>, CheckError> {
-    match infer(arena, root, res, grades, hook) {
+    match infer(arena, root, res, grades, hook, &HandlerScope::empty()) {
         Outcome::Ok(_) => Outcome::Ok(Graded::new(arena, root)),
         Outcome::Err(e) => Outcome::Err(e),
+    }
+}
+
+/// A never-matching placeholder for the handler-scope buffer.
+const ZERO_SYM: Sym = Sym::new(hilavitkutin_sym::SymKind::from_raw(0b111), arvo::Bits::from_raw(0)); // lint:allow(no-bare-numeric) reason: scratch placeholder; tracked: #207
+
+/// The most handler frames one walk may nest.
+const HANDLER_DEPTH: usize = 64; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: a lent walk bound; tracked: #207
+
+/// The operations lexically in scope, each paired with the `Handle` that
+/// services it.
+///
+/// Carried down the walk the way `resolve` carries binders, which is what lets
+/// a handled `Perform` contribute nothing to the effect mask IN THE FIRST PLACE.
+/// The alternative, subtracting a mask at the `Handle`, is unsound when two
+/// operations share a slot; this formulation avoids the question rather than
+/// answering it.
+#[derive(Copy, Clone)]
+struct HandlerScope {
+    ops: [(Sym, NodeRef); HANDLER_DEPTH],
+    len: USize,
+}
+
+impl HandlerScope {
+    const fn empty() -> Self {
+        Self { ops: [(ZERO_SYM, NodeRef::new(USize(0))); HANDLER_DEPTH], len: USize(0) }
+    }
+
+    /// The innermost `Handle` servicing `op`, if any.
+    fn lookup(&self, op: Sym) -> Maybe<NodeRef> {
+        let mut i = self.len.0;
+        while i > 0 {
+            i -= 1;
+            if self.ops[i].0 == op {
+                return Maybe::Is(self.ops[i].1);
+            }
+        }
+        Maybe::Isnt
+    }
+
+    fn push(&mut self, op: Sym, owner: NodeRef) -> Bool {
+        if self.len.0 >= HANDLER_DEPTH {
+            return Bool(false);
+        }
+        self.ops[self.len.0] = (op, owner);
+        self.len = USize(self.len.0 + 1);
+        Bool(true)
+    }
+}
+
+/// Walk `body` for operations a handler above services, putting that handler's
+/// slot on `reach`.
+///
+/// This is the promotion half of the escape rule. It descends the term without
+/// grading it, because the grades are already recorded by the time a `Lambda`
+/// promotes; it is looking only for which enclosing handlers the body can still
+/// reach through a performed operation.
+fn promote_latent(
+    arena: &Arena<'_>,
+    at: NodeRef,
+    res: &Resolution<'_>,
+    handled: &HandlerScope,
+    reach: &mut ReachMask,
+) {
+    if at.index().0 >= arena.len().0 {
+        return;
+    }
+    match arena.get(at) {
+        Node::Perform { op, args } => {
+            if let Maybe::Is(owner) = handled.lookup(op) {
+                reach.insert(slot_of(owner));
+            }
+            for a in arena.list(args) {
+                promote_latent(arena, *a, res, handled, reach);
+            }
+        }
+        Node::Handle { body, clauses } => {
+            // an operation this handler services is discharged here, so it does
+            // not reach past it; only the ones it does not service promote.
+            let mut inner = *handled;
+            for c in arena.clauses(clauses) {
+                let _ = inner.push(c.op, at);
+            }
+            promote_latent(arena, body, res, &inner, reach);
+            for c in arena.clauses(clauses) {
+                promote_latent(arena, c.body, res, handled, reach);
+            }
+        }
+        Node::Lit(_) | Node::Var(_) => {}
+        Node::Let { value, body, .. } => {
+            promote_latent(arena, value, res, handled, reach);
+            promote_latent(arena, body, res, handled, reach);
+        }
+        Node::Lambda { body, .. } => promote_latent(arena, body, res, handled, reach),
+        Node::Apply { callee, args } => {
+            promote_latent(arena, callee, res, handled, reach);
+            for a in arena.list(args) {
+                promote_latent(arena, *a, res, handled, reach);
+            }
+        }
+        Node::Project { base, .. } => promote_latent(arena, base, res, handled, reach),
+        Node::If { cond, then_branch, else_branch } => {
+            promote_latent(arena, cond, res, handled, reach);
+            promote_latent(arena, then_branch, res, handled, reach);
+            promote_latent(arena, else_branch, res, handled, reach);
+        }
+        Node::Match { scrutinee, arms } => {
+            promote_latent(arena, scrutinee, res, handled, reach);
+            for a in arena.list(arms) {
+                promote_latent(arena, *a, res, handled, reach);
+            }
+        }
+        Node::Iter { seq, body } => {
+            promote_latent(arena, seq, res, handled, reach);
+            promote_latent(arena, body, res, handled, reach);
+        }
+        Node::Interp { value } => promote_latent(arena, value, res, handled, reach),
+        Node::Raw { payload, .. } => {
+            for c in arena.list(payload) {
+                promote_latent(arena, *c, res, handled, reach);
+            }
+        }
     }
 }
 
@@ -223,6 +348,7 @@ fn infer<H: FamilyCheck>(
     res: &Resolution<'_>,
     grades: &mut GradeTable<'_>,
     hook: &H,
+    handled: &HandlerScope,
 ) -> Outcome<Grade, CheckError> {
     if at.index().0 >= arena.len().0 {
         return Outcome::Err(CheckError::DanglingRef { at });
@@ -233,11 +359,15 @@ fn infer<H: FamilyCheck>(
     // contributes its resolved binder's slot.
     let mut effect = EffectMask::empty();
     let mut reach = ReachMask::empty();
-    let mut child = |c: NodeRef, grades: &mut GradeTable<'_>| -> Outcome<(), CheckError> {
-        match infer(arena, c, res, grades, hook) {
+    let child = |c: NodeRef,
+                 grades: &mut GradeTable<'_>,
+                 effect: &mut EffectMask,
+                 reach: &mut ReachMask|
+     -> Outcome<(), CheckError> {
+        match infer(arena, c, res, grades, hook, handled) {
             Outcome::Ok(g) => {
-                effect = effect.join(g.effect);
-                reach = reach.join(g.lease.0);
+                *effect = effect.join(g.effect);
+                *reach = reach.join(g.lease.0);
                 Outcome::Ok(())
             }
             Outcome::Err(e) => Outcome::Err(e),
@@ -253,56 +383,99 @@ fn infer<H: FamilyCheck>(
             }
         }
         Node::Let { value, body, .. } => {
-            child(value, grades)?;
-            child(body, grades)?;
+            child(value, grades, &mut effect, &mut reach)?;
+            child(body, grades, &mut effect, &mut reach)?;
             // the binder rule: the variable this `Let` introduces does not
             // escape its own binder, so drop its slot from the combined reach.
             reach.remove(slot_of(at));
         }
         Node::Lambda { body, .. } => {
-            child(body, grades)?;
+            child(body, grades, &mut effect, &mut reach)?;
             // the closure-escape reach obligation: the parameter this `Lambda`
             // binds does not escape, so its slot is dropped here.
             reach.remove(slot_of(at));
+            // THE LATENT-EFFECT PROMOTION. The effect axis records that the
+            // BODY performs; the coeffect axis has to record that the lambda
+            // VALUE can perform later. So every operation the body performs
+            // that a handler above services puts that handler's slot on this
+            // value's reach, and the `Handle` arm refuses a result that names
+            // it. This is the first genuine effect-and-lease interaction rule
+            // in the system; it is intended, not proven.
+            promote_latent(arena, body, res, handled, &mut reach);
         }
         Node::Apply { callee, args } => {
-            child(callee, grades)?;
+            child(callee, grades, &mut effect, &mut reach)?;
             for a in arena.list(args) {
-                child(*a, grades)?;
+                child(*a, grades, &mut effect, &mut reach)?;
             }
         }
-        Node::Project { base, .. } => child(base, grades)?,
+        Node::Project { base, .. } => child(base, grades, &mut effect, &mut reach)?,
         Node::If { cond, then_branch, else_branch } => {
-            child(cond, grades)?;
-            child(then_branch, grades)?;
-            child(else_branch, grades)?;
+            child(cond, grades, &mut effect, &mut reach)?;
+            child(then_branch, grades, &mut effect, &mut reach)?;
+            child(else_branch, grades, &mut effect, &mut reach)?;
         }
         Node::Match { scrutinee, arms } => {
-            child(scrutinee, grades)?;
+            child(scrutinee, grades, &mut effect, &mut reach)?;
             for a in arena.list(arms) {
-                child(*a, grades)?;
+                child(*a, grades, &mut effect, &mut reach)?;
             }
         }
         Node::Iter { seq, body } => {
-            child(seq, grades)?;
-            child(body, grades)?;
+            child(seq, grades, &mut effect, &mut reach)?;
+            child(body, grades, &mut effect, &mut reach)?;
         }
-        Node::Interp { value } => child(value, grades)?,
+        Node::Interp { value } => child(value, grades, &mut effect, &mut reach)?,
         Node::Raw { family, payload } => {
             // descend into the family node's payload, joining each child's grade,
             // then join the family operation's own declared effect from the hook.
             for c in arena.list(payload) {
-                child(*c, grades)?;
+                child(*c, grades, &mut effect, &mut reach)?;
             }
             effect = effect.join(hook.effect_of_raw(family));
         }
         Node::Handle { body, clauses } => {
-            child(body, grades)?;
-            for c in arena.list(clauses) {
-                child(*c, grades)?;
+            // the clause operations are in scope for the BODY, so a `Perform`
+            // under it never reaches the effect mask at all.
+            let mut inner = *handled;
+            for c in arena.clauses(clauses) {
+                if !inner.push(c.op, at).0 {
+                    return Outcome::Err(CheckError::HandlerDepthExceeded { at });
+                }
             }
-            // FIXME: a handled operation drops out of the residual's effect the
-            // way a reduced build-env effect does; subtract the handled ops.
+            let body_grade = match infer(arena, body, res, grades, hook, &inner) {
+                Outcome::Ok(g) => g,
+                Outcome::Err(e) => return Outcome::Err(e),
+            };
+            effect = effect.join(body_grade.effect);
+            reach = reach.join(body_grade.lease.0);
+
+            // THE ESCAPE CHECK. A `Perform` is not a value, so a direct escape
+            // is impossible; the residual case is a lambda whose body performs,
+            // returned out of here and called after the handler is gone. The
+            // `Lambda` arm promotes that latent effect onto the lambda's reach,
+            // so a body whose reach names this handler is exactly that case.
+            if body_grade.lease.0.contains(slot_of(at)).0 {
+                return Outcome::Err(CheckError::UnplaceableLease { at });
+            }
+
+            // a clause body is checked OUTSIDE its own handler, which is what
+            // stops a clause from handling the operation it services.
+            for c in arena.clauses(clauses) {
+                child(c.body, grades, &mut effect, &mut reach)?;
+            }
+        }
+        Node::Perform { op, args } => {
+            for a in arena.list(args) {
+                child(*a, grades, &mut effect, &mut reach)?;
+            }
+            // a lexically handled operation is discharged here and does not
+            // escape, so it contributes nothing. An unhandled one is a real
+            // effect of this program and populates the mask, where the target's
+            // `Permits` set is what decides whether it may ship.
+            if let Maybe::Isnt = handled.lookup(op) {
+                effect.insert(USize(slot_of(at).0));
+            }
         }
     }
     let grade = Grade {
@@ -323,7 +496,7 @@ fn infer<H: FamilyCheck>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use arvo::{Bool, Identity, Maybe, USize};
+    use arvo::{Bool, Maybe, USize};
     use hilavitkutin_str::str_const;
     use vehje_ir::{Builder, Literal, Span};
     use vehje_resolve::resolve_into;
@@ -346,8 +519,8 @@ mod tests {
     fn checks_and_grades_a_program() {
         let mut nodes = [Node::Lit(Literal::Unit); 8];
         let mut spans = [Span::default(); 8];
-        let mut pool = [NodeRef::new(USize::ZERO); 8];
-        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+        let mut pool = [NodeRef::new(USize(0)); 8];
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
         let unit = at(b.lit(Literal::Unit, Span::default()));
         let root = at(b.if_(unit, unit, unit, Span::default()));
         let arena = b.into_arena();
@@ -367,8 +540,8 @@ mod tests {
     fn refuses_a_too_small_grade_region() {
         let mut nodes = [Node::Lit(Literal::Unit); 8];
         let mut spans = [Span::default(); 8];
-        let mut pool = [NodeRef::new(USize::ZERO); 8];
-        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+        let mut pool = [NodeRef::new(USize(0)); 8];
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
         let unit = at(b.lit(Literal::Unit, Span::default()));
         let root = at(b.if_(unit, unit, unit, Span::default()));
         let arena = b.into_arena();
@@ -392,8 +565,8 @@ mod tests {
     fn binder_rule_drops_the_bound_slot() {
         let mut nodes = [Node::Lit(Literal::Unit); 8];
         let mut spans = [Span::default(); 8];
-        let mut pool = [NodeRef::new(USize::ZERO); 8];
-        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+        let mut pool = [NodeRef::new(USize(0)); 8];
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
 
         // let x = () in x: the body reaches the binder, and the binder rule
         // drops the binder's own slot, so the Let's reach set is empty.
@@ -429,8 +602,8 @@ mod tests {
     fn refuses_a_dangling_root() {
         let mut nodes = [Node::Lit(Literal::Unit); 4];
         let mut spans = [Span::default(); 4];
-        let mut pool = [NodeRef::new(USize::ZERO); 4];
-        let b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+        let mut pool = [NodeRef::new(USize(0)); 4];
+        let b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
         let arena = b.into_arena();
 
         // a root past the end of the (empty) arena: check must refuse it rather
@@ -451,8 +624,8 @@ mod tests {
     fn family_check_hook_effect_reaches_the_raw_grade() {
         let mut nodes = [Node::Lit(Literal::Unit); 8];
         let mut spans = [Span::default(); 8];
-        let mut pool = [NodeRef::new(USize::ZERO); 8];
-        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+        let mut pool = [NodeRef::new(USize(0)); 8];
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
 
         // Raw(family, [()]): the family declares an effect through the hook, and
         // the Raw node's grade must carry it on top of the children's.

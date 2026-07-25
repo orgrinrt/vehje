@@ -26,7 +26,7 @@ use arvo::{Bool, Identity, Int, Maybe, USize};
 
 use hilavitkutin_str::{ArenaInterner, StringInterner};
 use hilavitkutin_sym::Sym;
-use vehje_ir::{Arena, FamilyId, NodeList, NodeRef};
+use vehje_ir::{Arena, Clause, ClauseList, FamilyId, NodeList, NodeRef};
 
 use crate::encode::{encode, LitTag, NodeTag, ResidualEncoder};
 use crate::wire::residual::Tier;
@@ -41,16 +41,21 @@ type Cursor = USize;
 /// Wire magic: the ASCII bytes `VEH0`, little-endian.
 const MAGIC: u32 = 0x3048_4556; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI wire magic word; the byte layout is the contract; tracked: #207
 /// Wire format version.
-const VERSION: u32 = 1; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI wire version word; tracked: #207
+const VERSION: u32 = 2; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI wire version word; tracked: #207
 
 /// Bytes per wire word.
 const WORD: usize = 4; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI wire word size; tracked: #207
-/// Header words: magic, version, tier, node_count, pool_count, blob_len, root.
-const HEADER_WORDS: usize = 7; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI wire header width; tracked: #207
+/// Header words: magic, version, tier, node_count, pool_count, blob_len, root,
+/// clause_count. The clause count is the eighth, added with the clause section.
+const HEADER_WORDS: usize = 8; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI wire header width; tracked: #207
 /// Words per node record: a tag word plus six payload words.
 const NODE_WORDS: usize = 7; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI wire node-record width; tracked: #207
 /// Byte offset of the header's `blob_len` word (back-patched at finish).
 const BLOB_LEN_AT: usize = 5 * 4; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI wire header slot; tracked: #207
+/// Byte offset of the header's `clause_count` word.
+const CLAUSE_COUNT_AT: usize = 7 * 4; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI wire header slot; tracked: #207
+/// Words per clause record: op, resume, arity, body.
+const CLAUSE_WORDS: usize = 4; // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI wire clause-record width; tracked: #207
 
 const fn tag_code(tag: NodeTag) -> u32 { // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI wire tag code; tracked: #207
     match tag {
@@ -66,6 +71,7 @@ const fn tag_code(tag: NodeTag) -> u32 { // lint:allow(no-bare-numeric) lint:all
         NodeTag::Interp => 9, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI wire tag code; tracked: #207
         NodeTag::Raw => 10, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI wire tag code; tracked: #207
         NodeTag::Handle => 11, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI wire tag code; tracked: #207
+        NodeTag::Perform => 12, // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI wire tag code; tracked: #207
     }
 }
 
@@ -120,12 +126,14 @@ struct FlatArenaEncoder<'o> {
     slot: Cursor,
     blob_start: Cursor,
     blob: Cursor,
+    /// End of the clause section, which follows the blob. Zero until written.
+    clause_end: Cursor,
 }
 
 impl<'o> FlatArenaEncoder<'o> {
     fn new(out: &'o mut [u8]) -> Self {
         let z = USize::ZERO;
-        Self { out, nodes_at: z, node_base: z, slot: z, blob_start: z, blob: z }
+        Self { out, nodes_at: z, node_base: z, slot: z, blob_start: z, blob: z, clause_end: z }
     }
 
     /// The byte offset of the current record's next payload slot, advancing
@@ -244,6 +252,37 @@ impl ResidualEncoder for FlatArenaEncoder<'_> {
         Maybe::Is(())
     }
 
+    fn clause_list(&mut self, l: ClauseList) -> Maybe<()> {
+        let at = self.take(2);
+        put_index(self.out, at, l.start);
+        put_index(self.out, at + WORD, l.len);
+        Maybe::Is(())
+    }
+
+    /// The clause section follows the blob, four words per clause.
+    ///
+    /// Written without advancing the blob cursor, so `finish` still computes the
+    /// blob's own length rather than the blob plus the clauses.
+    fn clauses(&mut self, clauses: &[Clause]) -> Maybe<()> {
+        let at = self.blob.0;
+        let end = at + clauses.len() * CLAUSE_WORDS * WORD;
+        if self.out.len() < end {
+            return Maybe::Isnt;
+        }
+        let mut j = 0;
+        while j < clauses.len() {
+            let base = at + j * CLAUSE_WORDS * WORD;
+            put_u32(self.out, base, clauses[j].op.to_bits().to_raw());
+            put_u32(self.out, base + WORD, clauses[j].resume.to_bits().to_raw());
+            put_u32(self.out, base + 2 * WORD, u32::from(clauses[j].arity.to_raw())); // lint:allow(no-bare-numeric) lint:allow(arvo-types-only) reason: FFI wire arity word; tracked: #207
+            put_index(self.out, base + 3 * WORD, clauses[j].body.index());
+            j += 1;
+        }
+        put_len(self.out, CLAUSE_COUNT_AT, clauses.len());
+        self.clause_end = USize(end);
+        Maybe::Is(())
+    }
+
     fn pool(&mut self, pool: &[NodeRef]) -> Maybe<()> {
         // the pool sits immediately before the blob; its base is the blob
         // start minus the pool's own byte length
@@ -259,6 +298,7 @@ impl ResidualEncoder for FlatArenaEncoder<'_> {
     fn finish(self) -> Maybe<USize> {
         let blob_len = self.blob.0 - self.blob_start.0;
         put_len(self.out, BLOB_LEN_AT, blob_len);
+        let _ = self.clause_end;
         Maybe::Is(self.blob)
     }
 }
@@ -312,7 +352,7 @@ mod tests {
         let mut nodes = [Node::Lit(Literal::Unit); 8];
         let mut spans = [Span::default(); 8];
         let mut pool = [NodeRef::new(USize::ZERO); 8];
-        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
 
         // apply(u0, [u1, u2]) with unit atoms: exercises nodes + the pool,
         // no strings so the blob stays empty
@@ -356,7 +396,7 @@ mod tests {
         let mut nodes = [Node::Lit(Literal::Unit); 8];
         let mut spans = [Span::default(); 8];
         let mut pool = [NodeRef::new(USize::ZERO); 8];
-        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
 
         // let x = "hi" in x: the Str literal's text goes to the blob; the binder
         // x (at the Var and the Let name) encodes by its Sym bits, not text, and

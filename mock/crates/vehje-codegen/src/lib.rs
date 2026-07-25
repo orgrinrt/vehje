@@ -126,8 +126,13 @@ pub fn fold_core<F: FnMut(&Node)>(arena: &Arena<'_>, at: NodeRef, visit: &mut F)
         Node::Interp { value } => fold_core(arena, value, visit),
         Node::Handle { body, clauses } => {
             fold_core(arena, body, visit);
-            for child in arena.list(clauses) {
-                fold_core(arena, *child, visit);
+            for c in arena.clauses(clauses) {
+                fold_core(arena, c.body, visit);
+            }
+        }
+        Node::Perform { args, .. } => {
+            for c in arena.list(args) {
+                fold_core(arena, *c, visit);
             }
         }
     }
@@ -161,7 +166,7 @@ mod tests {
         let mut nodes = [Node::Lit(Literal::Unit); 8];
         let mut spans = [Span::default(); 8];
         let mut pool = [NodeRef::new(USize::ZERO); 8];
-        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool));
+        let mut b = Builder::new(Arena::new(&mut nodes, &mut spans, &mut pool, &mut []));
 
         // Raw(family, [(), ()]): the two Lit children must be visited, so a
         // target's `visit` sees a family node's Core sub-structure.

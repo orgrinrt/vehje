@@ -171,7 +171,12 @@ fn fold_consts(arena: &Arena<'_>, at: NodeRef, rw: &mut Rewrite<'_>) {
         Node::Interp { value } => fold_consts(arena, value, rw),
         Node::Handle { body, clauses } => {
             fold_consts(arena, body, rw);
-            for c in arena.list(clauses) {
+            for c in arena.clauses(clauses) {
+                fold_consts(arena, c.body, rw);
+            }
+        }
+        Node::Perform { args, .. } => {
+            for c in arena.list(args) {
                 fold_consts(arena, *c, rw);
             }
         }
@@ -272,7 +277,14 @@ fn cse_share(
         Node::Interp { value } => cse_share(arena, value, rw, table).0,
         Node::Handle { body, clauses } => {
             let mut vf = cse_share(arena, body, rw, table).0;
-            for c in arena.list(clauses) {
+            for c in arena.clauses(clauses) {
+                vf = cse_share(arena, c.body, rw, table).0 && vf;
+            }
+            vf
+        }
+        Node::Perform { args, .. } => {
+            let mut vf = true;
+            for c in arena.list(args) {
                 vf = cse_share(arena, *c, rw, table).0 && vf;
             }
             vf
@@ -356,7 +368,10 @@ fn structurally_equal(arena: &Arena<'_>, a: NodeRef, b: NodeRef) -> Bool {
             f1 == f2 && lists_equal(arena, p1, p2).0
         }
         (Node::Handle { body: b1, clauses: c1 }, Node::Handle { body: b2, clauses: c2 }) => {
-            structurally_equal(arena, b1, b2).0 && lists_equal(arena, c1, c2).0
+            structurally_equal(arena, b1, b2).0 && clause_lists_equal(arena, c1, c2).0
+        }
+        (Node::Perform { op: o1, args: a1 }, Node::Perform { op: o2, args: a2 }) => {
+            o1 == o2 && lists_equal(arena, a1, a2).0
         }
         _ => false,
     };
@@ -364,6 +379,28 @@ fn structurally_equal(arena: &Arena<'_>, a: NodeRef, b: NodeRef) -> Bool {
 }
 
 /// Structural equality over two child lists: same length, pairwise equal.
+fn clause_lists_equal(arena: &Arena<'_>, a: vehje_ir::ClauseList, b: vehje_ir::ClauseList) -> Bool {
+    if a.len.0 != b.len.0 {
+        return Bool(false);
+    }
+    let ca = arena.clauses(a);
+    let cb = arena.clauses(b);
+    let mut i = 0;
+    while i < ca.len() {
+        // the authored words must agree AND the bodies must be structurally
+        // equal; two handlers differing only in operation are not the same node.
+        if ca[i].op != cb[i].op
+            || ca[i].resume != cb[i].resume
+            || ca[i].arity != cb[i].arity
+            || !structurally_equal(arena, ca[i].body, cb[i].body).0
+        {
+            return Bool(false);
+        }
+        i += 1;
+    }
+    Bool(true)
+}
+
 fn lists_equal(arena: &Arena<'_>, a: vehje_ir::NodeList, b: vehje_ir::NodeList) -> Bool {
     if a.len.0 != b.len.0 {
         return Bool(false);

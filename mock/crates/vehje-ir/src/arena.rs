@@ -17,7 +17,7 @@
 
 use arvo::{Identity, Maybe, USize};
 
-use crate::node::{Node, NodeList, NodeRef};
+use crate::node::{Clause, ClauseList, Node, NodeList, NodeRef};
 use crate::span::Span;
 
 /// A bump-allocated IR arena over caller-provided memory.
@@ -30,14 +30,63 @@ pub struct Arena<'a> {
     node_len: USize,
     pool: &'a mut [NodeRef],
     pool_len: USize,
+    clauses: &'a mut [Clause],
+    clause_len: USize,
 }
 
 impl<'a> Arena<'a> {
-    /// Wrap three caller-provided regions: the node arena, the child-index
-    /// pool, and the span side-table (parallel to the node arena, so it is
-    /// sized like it). All cursors start empty.
-    pub fn new(nodes: &'a mut [Node], spans: &'a mut [Span], pool: &'a mut [NodeRef]) -> Self {
-        Self { nodes, spans, node_len: USize::ZERO, pool, pool_len: USize::ZERO }
+    /// Wrap four caller-provided regions: the node arena, the span side-table
+    /// (parallel to the node arena, so it is sized like it), the child-index
+    /// pool, and the clause region. All cursors start empty.
+    ///
+    /// The clause region is a fourth region rather than a reuse of the pool
+    /// because the pool's element type is [`NodeRef`] and a clause carries a
+    /// `Sym`, so packing one into the other is a pun. The cost is that the host
+    /// sizes and lends one more buffer, which is the fourth instance of a cost
+    /// already paid three times.
+    pub fn new(
+        nodes: &'a mut [Node],
+        spans: &'a mut [Span],
+        pool: &'a mut [NodeRef],
+        clauses: &'a mut [Clause],
+    ) -> Self {
+        Self {
+            nodes,
+            spans,
+            node_len: USize::ZERO,
+            pool,
+            pool_len: USize::ZERO,
+            clauses,
+            clause_len: USize::ZERO,
+        }
+    }
+
+    /// Copy `clauses` into the clause region, returning the list handle.
+    /// `Isnt` if the region cannot fit them, which is a refusal rather than a
+    /// growth point.
+    #[must_use]
+    pub fn alloc_clauses(&mut self, clauses: &[Clause]) -> Maybe<ClauseList> {
+        let start = self.clause_len;
+        let end = start.0 + clauses.len();
+        if end > self.clauses.len() {
+            return Maybe::Isnt;
+        }
+        self.clauses[start.0..end].copy_from_slice(clauses);
+        self.clause_len = USize(end);
+        Maybe::Is(ClauseList { start, len: USize(clauses.len()) })
+    }
+
+    /// The whole live clause region, for the encoder's clause section.
+    pub fn all_clauses(&self) -> &[Clause] {
+        &self.clauses[..self.clause_len.0]
+    }
+
+    /// The clauses a [`ClauseList`] addresses, clamped to the live region so a
+    /// malformed list is an empty slice rather than a panic.
+    pub fn clauses(&self, list: ClauseList) -> &[Clause] {
+        let start = list.start.0.min(self.clause_len.0);
+        let end = (start + list.len.0).min(self.clause_len.0);
+        &self.clauses[start..end]
     }
 
     /// Append a node with its source span, returning its handle. `Isnt` if
@@ -132,7 +181,7 @@ mod tests {
         let mut nodes = [Node::Lit(Literal::Unit); 4];
         let mut spans = [Span::default(); 4];
         let mut pool = [NodeRef::new(USize::ZERO); 4];
-        let mut a = Arena::new(&mut nodes, &mut spans, &mut pool);
+        let mut a = Arena::new(&mut nodes, &mut spans, &mut pool, &mut []);
 
         // a node with the default (empty) span, then one with a distinct span.
         // the raw offsets are built through arvo's from_raw at the

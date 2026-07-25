@@ -38,7 +38,7 @@ pub use grade::{
 };
 pub use hash::{hash_of, StructuralHash};
 pub use intern::{ArenaInterner, Str, StringInterner};
-pub use node::{FamilyId, Literal, Node, NodeList, NodeRef};
+pub use node::{Clause, ClauseList, FamilyId, Literal, Node, NodeList, NodeRef};
 pub use hilavitkutin_sym::Sym;
 pub use span::{ByteOffset, FileId, Span};
 pub use target::TargetSets;
