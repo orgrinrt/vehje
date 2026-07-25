@@ -4883,3 +4883,73 @@ variants = ["variants/dru_s_plain/target/release/dru_s_plain", "variants/dru_s_r
 [[bench.dedup_reuse_shared.sizes]]
 n = 16384
 variants = ["variants/dru_s_plain/target/release/dru_s_plain", "variants/dru_s_reuse/target/release/dru_s_reuse", "variants/dru_s_dedup/target/release/dru_s_dedup", "variants/dru_s_both/target/release/dru_s_both"]
+
+# >>> string_interning (generated)
+[bench.str_compare_light]
+title = "Runtime string interning, 1 compare per build: the templating norm"
+workload = "realistic"
+master_seed = 0x5eed_57a1_0725_0011
+[bench.str_compare_light.normalise]
+baseline = "str_l_plain"
+mode = "subtract"
+[[bench.str_compare_light.sizes]]
+n = 64
+variants = ["variants/str_l_plain/target/release/str_l_plain", "variants/str_l_eager/target/release/str_l_eager", "variants/str_l_lazy/target/release/str_l_lazy"]
+[[bench.str_compare_light.sizes]]
+n = 256
+variants = ["variants/str_l_plain/target/release/str_l_plain", "variants/str_l_eager/target/release/str_l_eager", "variants/str_l_lazy/target/release/str_l_lazy"]
+[[bench.str_compare_light.sizes]]
+n = 1024
+variants = ["variants/str_l_plain/target/release/str_l_plain", "variants/str_l_eager/target/release/str_l_eager", "variants/str_l_lazy/target/release/str_l_lazy"]
+[[bench.str_compare_light.sizes]]
+n = 4096
+variants = ["variants/str_l_plain/target/release/str_l_plain", "variants/str_l_eager/target/release/str_l_eager", "variants/str_l_lazy/target/release/str_l_lazy"]
+[[bench.str_compare_light.sizes]]
+n = 16384
+variants = ["variants/str_l_plain/target/release/str_l_plain", "variants/str_l_eager/target/release/str_l_eager", "variants/str_l_lazy/target/release/str_l_lazy"]
+
+[bench.str_compare_heavy]
+title = "Runtime string interning, 8 compares per build: interning's best case"
+workload = "realistic"
+master_seed = 0x5eed_57a1_0725_0012
+[bench.str_compare_heavy.normalise]
+baseline = "str_h_plain"
+mode = "subtract"
+[[bench.str_compare_heavy.sizes]]
+n = 64
+variants = ["variants/str_h_plain/target/release/str_h_plain", "variants/str_h_eager/target/release/str_h_eager", "variants/str_h_lazy/target/release/str_h_lazy"]
+[[bench.str_compare_heavy.sizes]]
+n = 256
+variants = ["variants/str_h_plain/target/release/str_h_plain", "variants/str_h_eager/target/release/str_h_eager", "variants/str_h_lazy/target/release/str_h_lazy"]
+[[bench.str_compare_heavy.sizes]]
+n = 1024
+variants = ["variants/str_h_plain/target/release/str_h_plain", "variants/str_h_eager/target/release/str_h_eager", "variants/str_h_lazy/target/release/str_h_lazy"]
+[[bench.str_compare_heavy.sizes]]
+n = 4096
+variants = ["variants/str_h_plain/target/release/str_h_plain", "variants/str_h_eager/target/release/str_h_eager", "variants/str_h_lazy/target/release/str_h_lazy"]
+[[bench.str_compare_heavy.sizes]]
+n = 16384
+variants = ["variants/str_h_plain/target/release/str_h_plain", "variants/str_h_eager/target/release/str_h_eager", "variants/str_h_lazy/target/release/str_h_lazy"]
+
+[bench.str_compare_equal]
+title = "Runtime string interning, 8 compares of EQUAL strings: byte compare cannot exit early"
+workload = "realistic"
+master_seed = 0x5eed_57a1_0725_0013
+[bench.str_compare_equal.normalise]
+baseline = "str_e_plain"
+mode = "subtract"
+[[bench.str_compare_equal.sizes]]
+n = 64
+variants = ["variants/str_e_plain/target/release/str_e_plain", "variants/str_e_eager/target/release/str_e_eager", "variants/str_e_lazy/target/release/str_e_lazy"]
+[[bench.str_compare_equal.sizes]]
+n = 256
+variants = ["variants/str_e_plain/target/release/str_e_plain", "variants/str_e_eager/target/release/str_e_eager", "variants/str_e_lazy/target/release/str_e_lazy"]
+[[bench.str_compare_equal.sizes]]
+n = 1024
+variants = ["variants/str_e_plain/target/release/str_e_plain", "variants/str_e_eager/target/release/str_e_eager", "variants/str_e_lazy/target/release/str_e_lazy"]
+[[bench.str_compare_equal.sizes]]
+n = 4096
+variants = ["variants/str_e_plain/target/release/str_e_plain", "variants/str_e_eager/target/release/str_e_eager", "variants/str_e_lazy/target/release/str_e_lazy"]
+[[bench.str_compare_equal.sizes]]
+n = 16384
+variants = ["variants/str_e_plain/target/release/str_e_plain", "variants/str_e_eager/target/release/str_e_eager", "variants/str_e_lazy/target/release/str_e_lazy"]

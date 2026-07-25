@@ -1,0 +1,7 @@
+# schema_v1	timestamp	git_commit	benchmark	variant	n	mode	median_ns	ci_lo_ns	ci_hi_ns
+1784971989	54fa1215	str_compare_heavy_n256	str_h_eager	256	warm	8544.2	8390.7	8740.6
+1784971989	54fa1215	str_compare_heavy_n256	str_h_lazy	256	warm	10531.7	10159.8	11426.0
+1784971989	54fa1215	str_compare_heavy_n256	str_h_plain	256	warm	1876.2	1874.8	2013.7
+1784972111	54fa1215	str_compare_heavy_n256	str_h_eager	256	warm	6893.3	6740.6	7183.3
+1784972111	54fa1215	str_compare_heavy_n256	str_h_lazy	256	warm	8925.8	8489.3	9074.6
+1784972111	54fa1215	str_compare_heavy_n256	str_h_plain	256	warm	1852.1	1844.8	2078.9
