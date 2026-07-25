@@ -29,6 +29,13 @@ the runtime needs no `std`. The crate is `#![no_std]` with no alloc, and the
   case the transfer contract allows. A buffer too small to hold the image
   refuses the reservation, which the runtime reads as backpressure rather than
   as a failure to write.
+- The host surface the driver passes through. A family operation reaches a
+  consumer-provided handler, and the driver carries that host record from
+  whoever embeds it to the runtime. It implements no family itself, which is
+  the same posture it takes with the sink: it moves the contract, it does not
+  interpret it. Execution therefore comes in two shapes, one without a host for
+  programs that need none and one with; the hostless shape is the honest
+  default rather than a lesser path.
 - `dispatch`. Hand a `Checked` residual to the runtime through the wire ABI and
   read back its outcome, mapping the wire diagnostics to `vehje-ir::Diagnostic`.
 - `Reader`. The safe value-arena reader. The runtime output is a

@@ -69,9 +69,10 @@ State: shipped. `vehje_runtime_new`, `vehje_runtime_free`,
 `VEHJE_RESULT_NULL_HANDLE`, and `VEHJE_RESULT_INVALID_INPUT` constants
 mirroring the Rust discriminants.
 
-`vehje_runtime_execute` takes a sink pointer alongside the residual bytes. A
-null sink means the host wanted only the outcome, so evaluating is the whole
-job; a non-null one receives the produced value.
+`vehje_runtime_execute` takes a sink pointer and a host pointer alongside the
+residual bytes. A null sink means the host wanted only the outcome, so
+evaluating is the whole job; a non-null one receives the produced value. A null
+host means the program is expected to need none.
 
 ### `VehjeResult` ABI layout. scalar i32
 
@@ -103,12 +104,40 @@ an environment inside this run, so it has no value-arena representation and
 cannot be a value the host still holds after the call returns. A reservation the
 host refuses is backpressure, not a crash.
 
+## Family operations reach their handler
+
+State: shipped. An effect is an operation, a handler is what services it, and a
+host-call is a runtime-effect operation the host handles. So the runtime's job
+is not to know what a family means. Its job is to evaluate the operation's
+operands and hand them to whoever declared the family, then take the result back
+as a value. That is what keeps the framework free of any family while making
+every family executable.
+
+`Raw` carries a family id and a payload list. The runtime evaluates each payload
+child left to right, because a host call may have effects and the order operands
+are produced in is part of what a program means, collects the results into a
+fixed-capacity operand buffer, and calls the host with the family id and that
+buffer. Exceeding the buffer is a named refusal, in keeping with every other
+bound here being lent rather than assumed.
+
+An operand is a small record of a kind tag and a payload word, covering unit,
+boolean, and integer, which is the runtime's whole value set. The tag values are
+the value image's scalar tags, so one vocabulary describes a scalar wherever it
+appears rather than two that have to be kept in agreement. A compound operand
+has no representation yet; when sequences and records become values, they arrive
+through the value image and this form gains an explicit escape.
+
+The failure modes stay distinguishable. A `Raw` under a null host is a named
+refusal rather than a crash, and a non-zero result code from the host propagates
+as an evaluation error, so a host that refuses an operation is never confused
+with a host that produced a value.
+
 ## Intended, not shipped
 
-- Family operations and host calls. The framework owns no family, so `Raw` is
-  dispatched to a consumer-provided handler rather than interpreted here. This
-  is how arithmetic and host services arrive, and it is the runtime half of the
-  handler discipline.
+- Compound operands for a family operation. A sequence or a record cannot be
+  passed to a handler yet, because neither is a value here yet.
+- The compile-stage counterpart, where a handler services a macro operation at
+  its binding time. That is the same discipline aimed at the other stage.
 - Strings, sequences, and records as values, and the remaining Core forms
   (`Project`, `Match`, `Iter`, `Interp`, `Handle`).
 - The `Bytecode` tier over the CFG-of-blocks form.
