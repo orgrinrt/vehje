@@ -254,3 +254,64 @@ No runtime liveness check, no assurance-dial fallback. The static proof is the
 identity, and its failure is an existential finding to report rather than a
 degradation to engineer around. This is the sharpest acceptance bar in the
 project and it belongs to the same assumption as call 12.
+
+## Calls 19 to 22, and a correction to the escalation filter (2026-07-26)
+
+**Call 19. Resumption never crosses the C ABI.** Continuations are captured and
+resumed entirely inside the runtime; the host sees completed results. op: "Option
+1, as already designed. The thing to bench is whether to do it recursively with a
+scratch buffer/allocation given to us by the host, or several. The mechanism
+itself is pretty clear: we get allocations and we use them."
+
+So the open question is not *where* continuations live but *how many* host-lent
+buffers the capture uses, which is the N-buffer arena bench already owed. The ABI
+shape is not a variable.
+
+**Call 20. The framework is opinionless about modules.** op: "Stdlib is the same
+as user modules. But what modules are, is entirely dependent on the lang, not our
+concern. We are opinionless on that front. The only thing we need is to create the
+proper typestate, cons-list abstractions to statically prove they will be sound
+and valid, once we write the actual language representation and contract suite in
+the rust side. Some language wants to do it on their statical parts (aot or jit)
+and some want to do it in flight dynamically; we shouldn't try or attempt to
+control the loading, nor the definition of modules or libraries. That's all
+language specific."
+
+What the framework owes is the typestate and cons-list abstractions that prove
+module composition sound. What a module *is*, and how it loads, belongs to each
+language definition. The stdlib is not a special case; it is a module like any
+other, and its shape is Clause's call, made when Clause's definition is written.
+
+**Call 21. Loop encoding is an implementation detail, not an op call.** op: "This
+sounds like an impl detail that shouldn't be brought to me. Rather, seen what
+canon says for the *intent*, and for the *impl detail* of how to achieve it,
+benches and research of prior art should be the answers, as always."
+
+**Call 22. The emitter-seam mechanism is not yet an op question.** Presented with
+three candidate mechanisms, op: "This needs more context, I can't make the call
+based on this. Intuitively, all three sound wrong, but I might be missing
+context." The option set was the defect, not the answer. It returns to research
+and prior art before it is put to op again, and it is **not** re-asked with a
+softer framing.
+
+### The escalation filter, corrected
+
+Twice in one session the agent escalated something the canon had already settled
+at the intent level, and once it escalated a question that belonged to a consumer
+language rather than to the framework. The filter that was in use was "am I
+uncertain". The filter that applies is:
+
+1. **Does the canon state the intent?** If yes, and what remains is *how* to
+   achieve it, that is a mechanism question. Mechanism questions are answered by
+   benches and prior-art research, by the agent. Ordering, encoding choices, and
+   representation are all mechanism.
+2. **Is this the framework's question at all?** Some questions belong to a
+   consumer language and are answered when that language's definition is written.
+   Asking op to settle them at framework level imports a consumer's concern into
+   the framework, which is the thing the extension pattern exists to prevent.
+3. **Only then**, if the canon is genuinely silent on the intent, or the call is
+   irreversible and outward-facing, does it go to op, with an option set the agent
+   has enough context to have built honestly.
+
+Being uncertain is not the trigger. Uncertainty is usually the signal to go read
+the canon, run a bench, or survey prior art.
