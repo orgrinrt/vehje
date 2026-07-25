@@ -1,0 +1,50 @@
+955b46b0 chore: lock src changelist for the driver embedding
+9d866795 feat: the driver runs a program and reads its value back
+0f9ece07 docs: src changelist for the driver embedding
+77fb7c64 chore: lock doc changelist for the driver embedding
+8255c571 docs: the driver embeds via the stack loader and the value returns
+e37d5ef2 docs: open round for the host driving the runtime
+884830b8 feat: a produced value crosses back through the sink
+fb0d5de9 chore: close the value image round
+fdc95c70 chore: lock src changelist for the value image
+0334f02d feat: pin the value image layout with a writer and reader
+323c979e docs: src changelist for the value image writer and reader
+5c99f643 chore: lock doc changelist for the value crossing contract
+a196d797 docs: pin the value image layout and correct the runtime design
+d8f16172 docs: doc changelist for the value crossing contract
+1c3739db docs: open round for the produced-value crossing contract
+d4133023 feat: zig runtime evaluates lambdas, application, and recursion
+64825fda feat: zig tier-arena tree-walk interpreter evaluates a program to a value
+c1fdc6be chore: close design round 202607251019
+d9d756b1 chore: lock src changelist for wire-binder Sym bits
+6b94961a feat: encode residual binders by Sym bits, not resolved text
+b05108a1 docs: src changelist for wiring binders by Sym bits
+74412e9d chore: lock doc changelist for wire-binder Sym bits
+3198e8e2 chore: open round to wire binders by Sym bits
+7773a755 fix: build the zig runtime under zig 0.16 (addLibrary API)
+d3e54305 research: CFG memo open question, block execution model (linear vs tree, tier-tied)
+b1ab5429 research: correct CFG memo, wire node image is block-ordered not ANF-arena-ordered
+b178d814 research: CFG-of-blocks lowering design (ANF -> block/function tables)
+07eb40e4 chore: close design round 202607250259
+e868a500 chore: lock src changelist for wiring run end to end
+0b2d8da8 feat: wire run through resolve, check, and emit
+15ca06a0 docs: src changelist for wiring run end to end
+a3539e30 chore: lock doc changelist for wiring run end to end
+7a5668c0 docs: vehje run drives resolve/check/emit end to end
+72898685 chore: open round to wire run end to end
+d6c1fb0d chore: close design round 202607250247
+81da6569 chore: lock src changelist for the grade-region must_use fix
+5a102ad6 fix: propagate a grade-region set failure instead of dropping it
+3875f41e docs: src changelist for the grade-region must_use fix
+3932000c chore: lock doc changelist for grade-region must_use fix
+9157a1bd chore: open round for the grade-region must_use fix
+7bbf9e7b chore: close design round 202607250240
+5398ea3b chore: lock src changelist for the vehje-lower ANF split
+35bf4197 refactor: move the ANF catamorphism to a sibling anf module
+13241d47 docs: src changelist for the vehje-lower ANF split
+40ebd6c1 chore: lock doc changelist for vehje-lower ANF split
+55d4b0be chore: open round to split the vehje-lower ANF module
+405b9eb5 chore: close design round 202607250218
+8d7267fa chore: lock src changelist for the ANF catamorphism
+10fe8f89 feat: implement the node-creating ANF catamorphism
+54819f45 docs: src changelist for the ANF catamorphism
