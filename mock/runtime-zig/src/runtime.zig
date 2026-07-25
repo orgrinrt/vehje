@@ -22,6 +22,7 @@
 //! produced value across the ABI (into a host value arena) is the next gate.
 
 const std = @import("std");
+const value_image = @import("value_image.zig");
 
 pub const VEHJE_RESULT_OK: i32 = 0;
 pub const VEHJE_RESULT_ERR: i32 = -1;
@@ -29,30 +30,30 @@ pub const VEHJE_RESULT_NULL_HANDLE: i32 = -2;
 pub const VEHJE_RESULT_INVALID_INPUT: i32 = -3;
 
 // Wire format constants, mirroring `vehje-runtime-abi/src/wire/serialize.rs`.
-const WORD: usize = 4;
-const HEADER_WORDS: usize = 7;
-const NODE_WORDS: usize = 7;
-const MAGIC: u32 = 0x3048_4556; // "VEH0" little-endian
+pub const WORD: usize = 4;
+pub const HEADER_WORDS: usize = 7;
+pub const NODE_WORDS: usize = 7;
+pub const MAGIC: u32 = 0x3048_4556; // "VEH0" little-endian
 
 // Node tag codes.
-const TAG_LIT: u32 = 0;
-const TAG_VAR: u32 = 1;
-const TAG_LET: u32 = 2;
-const TAG_LAMBDA: u32 = 3;
-const TAG_APPLY: u32 = 4;
-const TAG_PROJECT: u32 = 5;
-const TAG_IF: u32 = 6;
-const TAG_MATCH: u32 = 7;
-const TAG_ITER: u32 = 8;
-const TAG_INTERP: u32 = 9;
-const TAG_RAW: u32 = 10;
-const TAG_HANDLE: u32 = 11;
+pub const TAG_LIT: u32 = 0;
+pub const TAG_VAR: u32 = 1;
+pub const TAG_LET: u32 = 2;
+pub const TAG_LAMBDA: u32 = 3;
+pub const TAG_APPLY: u32 = 4;
+pub const TAG_PROJECT: u32 = 5;
+pub const TAG_IF: u32 = 6;
+pub const TAG_MATCH: u32 = 7;
+pub const TAG_ITER: u32 = 8;
+pub const TAG_INTERP: u32 = 9;
+pub const TAG_RAW: u32 = 10;
+pub const TAG_HANDLE: u32 = 11;
 
 // Literal sub-tag codes.
-const LIT_UNIT: u32 = 0;
-const LIT_BOOL: u32 = 1;
-const LIT_INT: u32 = 2;
-const LIT_STR: u32 = 3;
+pub const LIT_UNIT: u32 = 0;
+pub const LIT_BOOL: u32 = 1;
+pub const LIT_INT: u32 = 2;
+pub const LIT_STR: u32 = 3;
 
 /// The empty environment: the parent of a binding introduced at top level.
 pub const ENV_NIL: u32 = 0xFFFF_FFFF;
@@ -84,7 +85,7 @@ pub const EvalError = error{
 /// One environment binding: a binder's `Sym` bits, its value, and the binding
 /// it extends. A chain of these is an environment; capturing one is recording
 /// its index.
-const Binding = struct { sym: u32, val: Value, parent: u32 };
+pub const Binding = struct { sym: u32, val: Value, parent: u32 };
 
 /// The caller-lent environment arena. Bump-allocated, never popped, so a
 /// captured environment stays readable for the whole run.
@@ -251,195 +252,58 @@ export fn vehje_runtime_free(rt: ?*anyopaque) void {
     _ = rt;
 }
 
-export fn vehje_runtime_execute(
+/// The host's reserve-then-commit transfer sink, mirroring
+/// `vehje-runtime-abi`'s `#[repr(C)] VehjeSink`.
+///
+/// `reserve` returns backing for the next chunk or null (the backpressure
+/// signal); `commit` advances the sink by the bytes actually written. The
+/// runtime never retains the sink past the call.
+pub const VehjeSink = extern struct {
+    reserve: *const fn (userdata: ?*anyopaque, hint: usize) callconv(.c) ?[*]u8,
+    commit: *const fn (userdata: ?*anyopaque, written: usize) callconv(.c) void,
+    userdata: ?*anyopaque,
+};
+
+/// Serialise a produced value into `out`, returning the bytes written.
+///
+/// A closure is refused: it names an environment inside this run, so it has no
+/// value-arena representation and cannot be a value the host still holds after
+/// the call returns.
+fn marshal(v: Value, out: []u8) !usize {
+    return switch (v) {
+        .unit => value_image.writeScalar(out, .unit, &.{}),
+        .boolean => |b| value_image.writeScalar(out, .boolean, &.{@intFromBool(b)}),
+        .int => |n| blk: {
+            const payload = value_image.intPayload(n);
+            break :blk value_image.writeScalar(out, .int, payload[0..]);
+        },
+        .closure => error.NotRepresentable,
+    };
+}
+
+pub export fn vehje_runtime_execute(
     rt: ?*anyopaque,
     input: [*]const u8,
     len: usize,
+    sink: ?*const VehjeSink,
 ) i32 {
     _ = rt;
     var slots: [1024]Binding = undefined;
-    // FIXME: the produced value is discarded; returning it across the C ABI
-    // into a host value arena is the next gate. For now a successful evaluation
-    // returns OK, an evaluation error returns ERR.
-    _ = evalImage(input[0..len], slots[0..]) catch return VEHJE_RESULT_ERR;
+    const v = evalImage(input[0..len], slots[0..]) catch return VEHJE_RESULT_ERR;
+
+    // With no sink the host wanted only the outcome, so evaluating was the
+    // whole job. With one, the value crosses back as a value image.
+    const s = sink orelse return VEHJE_RESULT_OK;
+
+    var buf: [64]u8 = undefined;
+    const n = marshal(v, buf[0..]) catch return VEHJE_RESULT_ERR;
+    const dst = s.reserve(s.userdata, n) orelse return VEHJE_RESULT_ERR;
+    @memcpy(dst[0..n], buf[0..n]);
+    s.commit(s.userdata, n);
     return VEHJE_RESULT_OK;
 }
 
-// ── tests ─────────────────────────────────────────────────────────────────
-
-fn putU32(buf: []u8, at: usize, w: u32) void {
-    buf[at] = @truncate(w & 0xff);
-    buf[at + 1] = @truncate((w >> 8) & 0xff);
-    buf[at + 2] = @truncate((w >> 16) & 0xff);
-    buf[at + 3] = @truncate((w >> 24) & 0xff);
-}
-
-/// A wire-image builder, so a test states the program rather than the bytes.
-const Build = struct {
-    buf: [2048]u8 = [_]u8{0} ** 2048,
-    n: u32 = 0,
-    pool: [32]u32 = undefined,
-    pool_n: u32 = 0,
-
-    /// Append a node record: `tag` plus its payload words in encoder order.
-    fn node(self: *Build, tag: u32, payload: []const u32) u32 {
-        const at = HEADER_WORDS * WORD + @as(usize, self.n) * NODE_WORDS * WORD;
-        putU32(self.buf[0..], at, tag);
-        for (payload, 0..) |w, i| putU32(self.buf[0..], at + (i + 1) * WORD, w);
-        self.n += 1;
-        return self.n - 1;
-    }
-
-    fn unit(self: *Build) u32 {
-        return self.node(TAG_LIT, &.{LIT_UNIT});
-    }
-    fn int(self: *Build, v: i64) u32 {
-        const bits: u64 = @bitCast(v);
-        return self.node(TAG_LIT, &.{ LIT_INT, @truncate(bits), @truncate(bits >> 32) });
-    }
-    fn boolean(self: *Build, b: bool) u32 {
-        return self.node(TAG_LIT, &.{ LIT_BOOL, @intFromBool(b) });
-    }
-    fn varRef(self: *Build, sym: u32) u32 {
-        return self.node(TAG_VAR, &.{sym});
-    }
-    fn lambda(self: *Build, param: u32, body: u32) u32 {
-        return self.node(TAG_LAMBDA, &.{ param, body });
-    }
-    fn let(self: *Build, sym: u32, value: u32, body: u32) u32 {
-        return self.node(TAG_LET, &.{ 0, sym, value, body });
-    }
-    fn letRec(self: *Build, sym: u32, value: u32, body: u32) u32 {
-        return self.node(TAG_LET, &.{ 1, sym, value, body });
-    }
-    fn if_(self: *Build, c: u32, t: u32, e: u32) u32 {
-        return self.node(TAG_IF, &.{ c, t, e });
-    }
-
-    /// Apply `callee` to `args`, pooling the argument list.
-    fn apply(self: *Build, callee: u32, args: []const u32) u32 {
-        const start = self.pool_n;
-        for (args) |a| {
-            self.pool[self.pool_n] = a;
-            self.pool_n += 1;
-        }
-        return self.node(TAG_APPLY, &.{ callee, start, @intCast(args.len) });
-    }
-
-    /// Write the header and pool, returning the finished image.
-    fn finish(self: *Build, root: u32) []const u8 {
-        putU32(self.buf[0..], 0 * WORD, MAGIC);
-        putU32(self.buf[0..], 1 * WORD, 1); // version
-        putU32(self.buf[0..], 2 * WORD, 0); // tier = Arena
-        putU32(self.buf[0..], 3 * WORD, self.n);
-        putU32(self.buf[0..], 4 * WORD, self.pool_n);
-        putU32(self.buf[0..], 5 * WORD, 0); // blob_len
-        putU32(self.buf[0..], 6 * WORD, root);
-        const pool_base = HEADER_WORDS * WORD + @as(usize, self.n) * NODE_WORDS * WORD;
-        var i: u32 = 0;
-        while (i < self.pool_n) : (i += 1) {
-            putU32(self.buf[0..], pool_base + @as(usize, i) * WORD, self.pool[i]);
-        }
-        return self.buf[0 .. pool_base + @as(usize, self.pool_n) * WORD];
-    }
-};
-
-fn run(image: []const u8) EvalError!Value {
-    var slots: [64]Binding = undefined;
-    return evalImage(image, slots[0..]);
-}
-
-test "let and if evaluate to a value" {
-    // let x = 1 in if true then x else 2  =>  1
-    var b = Build{};
-    const x: u32 = 0xABCD_1234;
-    const body = b.if_(b.boolean(true), b.varRef(x), b.int(2));
-    const root = b.let(x, b.int(1), body);
-    try std.testing.expectEqual(Value{ .int = 1 }, try run(b.finish(root)));
-}
-
-test "the false branch is taken and a free Var is unbound" {
-    var b = Build{};
-    const root = b.if_(b.boolean(false), b.int(1), b.int(2));
-    try std.testing.expectEqual(Value{ .int = 2 }, try run(b.finish(root)));
-
-    var b2 = Build{};
-    const free = b2.varRef(42);
-    try std.testing.expectError(EvalError.Unbound, run(b2.finish(free)));
-}
-
-test "a lambda applies to its argument" {
-    // (\x -> x) 7  =>  7
-    var b = Build{};
-    const x: u32 = 11;
-    const id = b.lambda(x, b.varRef(x));
-    const root = b.apply(id, &.{b.int(7)});
-    try std.testing.expectEqual(Value{ .int = 7 }, try run(b.finish(root)));
-}
-
-test "a closure reads a binding from where it was written, not where it is called" {
-    // let a = 5 in (let f = (\x -> a) in (let a = 99 in f 0))  =>  5
-    //
-    // The inner `a` shadows the outer one at the call site. `f` captured the
-    // chain that names the outer `a`, so it still reads 5: capture is by the
-    // environment the Lambda was evaluated in, not by the caller's scope.
-    var b = Build{};
-    const a: u32 = 1;
-    const f: u32 = 2;
-    const x: u32 = 3;
-    const call = b.apply(b.varRef(f), &.{b.int(0)});
-    const inner = b.let(a, b.int(99), call);
-    const bind_f = b.let(f, b.lambda(x, b.varRef(a)), inner);
-    const root = b.let(a, b.int(5), bind_f);
-    try std.testing.expectEqual(Value{ .int = 5 }, try run(b.finish(root)));
-}
-
-test "a multi-argument apply curries through nested lambdas" {
-    // (\x -> \y -> y) 1 2  =>  2
-    var b = Build{};
-    const x: u32 = 4;
-    const y: u32 = 5;
-    const inner = b.lambda(y, b.varRef(y));
-    const outer = b.lambda(x, inner);
-    const root = b.apply(outer, &.{ b.int(1), b.int(2) });
-    try std.testing.expectEqual(Value{ .int = 2 }, try run(b.finish(root)));
-}
-
-test "a recursive binding is in scope for its own value" {
-    // let rec f = (\x -> if x then 1 else f true) in f false  =>  1
-    //
-    // The body recurses once: `f false` takes the else branch and calls
-    // `f true`, which takes the then branch. This only terminates if the
-    // closure's captured chain names `f`, which is what `rec` provides.
-    var b = Build{};
-    const f: u32 = 6;
-    const x: u32 = 7;
-    const recur = b.apply(b.varRef(f), &.{b.boolean(true)});
-    const body = b.if_(b.varRef(x), b.int(1), recur);
-    const root = b.letRec(f, b.lambda(x, body), b.apply(b.varRef(f), &.{b.boolean(false)}));
-    try std.testing.expectEqual(Value{ .int = 1 }, try run(b.finish(root)));
-}
-
-test "applying a non-closure is an error, not a wrong answer" {
-    var b = Build{};
-    const root = b.apply(b.int(1), &.{b.int(2)});
-    try std.testing.expectError(EvalError.NotCallable, run(b.finish(root)));
-}
-
-test "a node index past the arena is refused" {
-    var b = Build{};
-    _ = b.int(1);
-    const image = b.finish(9); // root names a node that does not exist
-    try std.testing.expectError(EvalError.Corrupt, run(image));
-}
-
-test "exhausting the lent environment arena is reported, not overrun" {
-    // Each `let` consumes one slot; two slots cannot hold three bindings.
-    var b = Build{};
-    const inner = b.let(3, b.int(3), b.varRef(3));
-    const mid = b.let(2, b.int(2), inner);
-    const root = b.let(1, b.int(1), mid);
-    const image = b.finish(root);
-    var slots: [2]Binding = undefined;
-    try std.testing.expectError(EvalError.EnvFull, evalImage(image, slots[0..]));
+test {
+    // Keep the split-out suite discoverable from this root.
+    _ = @import("runtime_test.zig");
 }
