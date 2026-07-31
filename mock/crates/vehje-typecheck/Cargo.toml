@@ -12,8 +12,6 @@ arvo.workspace = true
 arvo-bitmask.workspace = true
 hilavitkutin-api.workspace = true
 
-[build-dependencies]
-mockspace.workspace = true
 
 [features]
 default = []

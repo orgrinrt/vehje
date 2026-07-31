@@ -12,8 +12,6 @@ vehje-syntax.workspace = true
 hilavitkutin-str.workspace = true
 notko.workspace = true
 
-[build-dependencies]
-mockspace.workspace = true
 
 [features]
 default = []

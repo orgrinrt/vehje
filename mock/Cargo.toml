@@ -20,7 +20,6 @@ edition = "2024"
 license = "MPL-2.0"
 
 [workspace.dependencies]
-mockspace = { git = "ssh://git@github.com/hiisi-digital/mockspace.git", branch = "main" }
 
 # Consumed substrate. Resolved to live git deps as the Vehje workspace
 # grows into real crates.
