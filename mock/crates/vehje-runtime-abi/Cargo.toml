@@ -8,8 +8,6 @@ license.workspace = true
 arvo.workspace = true
 vehje-ir.workspace = true
 
-[build-dependencies]
-mockspace.workspace = true
 
 [features]
 default = ["std"]
