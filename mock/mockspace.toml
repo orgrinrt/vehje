@@ -1,6 +1,7 @@
 project_name = "vehje"
 crate_prefix = "vehje"
 abi_version = 1
+mockspace_branch = "dev"
 
 proc_macro_crates = []
 module_crates = []
@@ -83,11 +84,6 @@ commit = "error"
 build = "error"
 push = "error"
 
-[lints.no-bare-vec]
-commit = "warn"
-build = "warn"
-push = "warn"
-
 # Commit + push gates are `error` post-#130. Drift sites all remediated
 # or carved out (SHAME.md + trailing lint:allow with `tracked: #131`
 # for the vehje-resolve collection-field skeleton storages).
@@ -111,16 +107,6 @@ push = "error"
 commit = "error"
 build = "error"
 push = "error"
-
-[lints.no-box]
-commit = "warn"
-build = "warn"
-push = "warn"
-
-[lints.no-float]
-commit = "warn"
-build = "warn"
-push = "warn"
 
 # Post-hilavitkutin-str crates (vehje consumes Str interning) must
 # not introduce bare `const NAME: &str` / `static NAME: &str`. The
@@ -256,4 +242,4 @@ severity = "advisory"
 severity = "advisory"
 
 [lint-crates]
-mockspace-hilavitkutin-stack-lints = { git = "ssh://git@github.com/orgrinrt/mockspace-hilavitkutin-stack-lints.git", branch = "main" }
+mockspace-extra-lints = { git = "ssh://git@github.com/orgrinrt/mockspace-hilavitkutin-stack-lints.git", branch = "dev" }
