@@ -3,8 +3,6 @@
 <div align="center" style="text-align: center;">
 
 [![GitHub Stars](https://img.shields.io/github/stars/orgrinrt/vehje.svg)](https://github.com/orgrinrt/vehje/stargazers)
-[![Crates.io](https://img.shields.io/crates/v/vehje)](https://crates.io/crates/vehje)
-[![docs.rs](https://img.shields.io/docsrs/vehje)](https://docs.rs/vehje)
 [![GitHub Issues](https://img.shields.io/github/issues/orgrinrt/vehje.svg)](https://github.com/orgrinrt/vehje/issues)
 ![License](https://img.shields.io/github/license/orgrinrt/vehje?color=%23009689)
 
@@ -16,11 +14,11 @@
 
 What ships is the IR. Either the runtime executes it directly, or a pluggable backend lowers the IR one more step and emits the result in whatever form the target's host already accepts: Lua source for an embedded interpreter, a Wasm module for a sandboxed runtime, a configuration tree for an engine that reads everything as data. The transpilation path is where the typed surface earns its keep: a target that is neither typed nor strict gains an authoring layer above it that is both.
 
-The C ABI between compiler and runtime is the boundary contract. The runtime is written in Zig, ships as a small, optimised binary suitable for embedding alongside other code, and never sees source: it consumes IR the compiler has already proven valid. The compiler itself runs `no_std`, with no allocator, no dyn dispatch, and no surprise platform calls; the entire compile lifetime is under explicit control. Targets and backends slot in through that same explicit boundary; the surface is pluggable by design, and a new emission target arrives without forking `vehje`.
+The C ABI between compiler and runtime is the boundary contract. The runtime is written in Zig, ships as a small binary suitable for embedding alongside other code, and never sees source: it consumes IR the compiler has already proven valid. The compiler's front-end phases (tokens through resolved IR) run `no_std`, with no allocator and no surprise platform calls; host-side phases that need `std` facilities, such as name resolution and the CLI binary, opt into `std` explicitly instead of inheriting the front-end's discipline. Dynamic dispatch is confined to a small set of documented extension-point registries (the validator list, the codegen target list) rather than spread through the pipeline. Targets and backends slot in through that same explicit boundary; the surface is pluggable by design, and a new emission target arrives without forking `vehje`.
 
 ## The source surface
 
-vehje has a typed, modular surface. Types are declared up front and enforced by the compiler; tagged enums plus trait dispatch take the place of dynamic dispatch and runtime type checks. Diagnostics carry phase, span, and the values the compiler saw; warnings are denied at the crate root. Developers coming from Rust will find much of the syntax and semantics familiar. The language has its own item kinds where it needs them: `event` for typed event hooks, `expect` / `actual` for cross-crate paired declarations, `sealed` for closing a trait against external implementation.
+vehje has a typed, modular surface. Types are declared up front and enforced by the compiler; tagged enums plus trait dispatch take the place of dynamic dispatch and runtime type checks. Diagnostics carry phase, severity, and span, plus a static message string and related secondary spans; warnings are denied at the crate root. Developers coming from Rust will find much of the syntax and semantics familiar. The language has its own item kinds where it needs them: `event` for typed event hooks, `expect` / `actual` for cross-crate paired declarations, `sealed` for closing a trait against external implementation.
 
 Three axes are intentionally unusual. Numerics are exact-width and fixed-point native: write `i23`, `u14`, `fixed<2, 9>`, whatever range and precision the value calls for; the compiler picks the storage container under arvo's strategy markers. Floats are discouraged in favour of fixed-point arithmetic but available through arvo when a workload genuinely calls for them; pick fast or strict explicitly, with `f24` the default fast variant and `f24!` the strict counterpart for paths where determinism or precision matters more than throughput. Macros are proc-only and run as scheduler passes inside the compiler; the AST never leaves vehje's own arena, and macro-emitted items go through the same type-checking that authored items do.
 
@@ -79,11 +77,13 @@ pub fn run<C: audio::Channel>(channel: &C, buf: &mut [audio::Sample], id: u11) -
 
 ## The compiler
 
-The compiler runs as a hilavitkutin pipeline. The front-end emits IR through a fixed sequence of WorkUnits: tokens (`vehje-lex`), AST (`vehje-syntax`), resolved scopes and bindings (`vehje-resolve`), typed and coherence-checked items (`vehje-typecheck`). Macro expansions, validators, and content lints are also WorkUnits, scheduled into the same DAG. Pipeline state (symbol tables, type contexts, diagnostics, the IR itself) lives in scheduler-owned Resources and Columns. The back-end emits IR through `vehje-codegen`, which sits at the end of the pipeline as one more WorkUnit.
+The compiler is designed to run as a hilavitkutin pipeline. The front-end emits IR through a fixed sequence of WorkUnits: tokens (`vehje-lex`), AST (`vehje-syntax`), resolved scopes and bindings (`vehje-resolve`), typed and coherence-checked items (`vehje-typecheck`). Macro expansions, validators, and content lints are also meant to be WorkUnits, scheduled into the same DAG, with pipeline state (symbol tables, type contexts, diagnostics, the IR itself) living in scheduler-owned Resources and Columns, and the back-end emitting IR through `vehje-codegen` as one more WorkUnit at the end of the pipeline. That wiring is `vehje-schedule`'s target shape; today the crate ships only the `CompilerSchedule` marker type, and the real pass DAG is follow-up work.
 
-Front-end crates are `#![no_std]` with no allocator; they produce IR without ever materialising runtime state. Cross-compilation is first-class: nothing in the pipeline assumes the host platform matches the runtime's target. The compiler ships as a single static binary per host platform.
+Front-end crates are `#![no_std]` with no allocator; they produce IR without ever materialising runtime state. Nothing in the pipeline assumes the host platform matches the runtime's target, so cross-compilation needs no special-casing. The compiler ships as a single static binary per host platform.
 
 ```rust
+// aspirational: the intended WorkUnit shape once vehje-schedule's
+// real pass DAG lands. `vehje::pass::CoherenceCtx` does not exist yet.
 // custom validator: a hilavitkutin WorkUnit. reads resolved items,
 // writes diagnostics for coherence violations.
 
@@ -116,30 +116,28 @@ impl WorkUnit<Always> for NoUnusedSealed {
 
 ## Pluggable backends
 
-A backend ships as a hilavitkutin extension: a cdylib loaded through hilavitkutin-linking's pull-based symbol resolution, with no linker magic, no runtime registry, no init-ordering dance. Loading, invoking, and dropping a backend happens at any point during a compile, independent of any siblings.
-
-vehje wraps hilavitkutin's extension interface in its own thin layer that generates the C ABI descriptor underneath an ergonomic Rust-shaped trait. The wrapper covers ABI versioning, item-kind acceptance, stage declarations, and the IR-handover-and-text-emit contract. A vehje build refuses to load a backend whose ABI version doesn't match, surfaced as a load-time diagnostic.
+A backend is a Rust crate that implements `vehje-codegen`'s `CodegenTarget` trait and registers into the compiler's const `TargetRegistry`; this is a statically linked extension point, not a dynamically loaded plugin. `vehje-jomini` (Clausewitz engine bytecode, a planned sibling repo) is the first target meant to ship outside the two built-ins, `NativeTarget` and `JominiTarget`. The finalised trait carries associated `NAME` and `VERSION` consts, `accepts(kind)` for AST-node routing, `stages()` to opt into pipeline stages, and a `compile` entry point for lowering and emission.
 
 ```rust
-// a backend cdylib that emits text in another target language.
+// design: the finalised CodegenTarget shape a target crate implements.
+// the shipped skeleton today registers a narrower, object-safe form
+// (`name(&self)`, `emit(&self, ctx, bytes, diagnostics)`) behind the
+// same TargetRegistry, with NativeTarget and JominiTarget as stubs.
 
-use vehje::extension::{backend, Backend, ItemKind, Unit, Output};
-use vehje::diagnostic::Diagnostic;
-use arvo::Bool;
-use notko::Outcome;
+pub trait CodegenTarget: Send + Sync + 'static {
+    const NAME: &'static str;
+    const VERSION: u32;
 
-#[backend(name = "my_target", abi_version = 1)]
-pub struct MyTarget;
+    fn accepts(&self, kind: AstNodeKind) -> bool;
+    fn stages(&self) -> &'static [Stage];
 
-impl Backend for MyTarget {
-    fn accepts(&self, kind: ItemKind) -> Bool {
-        matches!(kind, ItemKind::Function | ItemKind::Const | ItemKind::Event).into()
-    }
+    fn compile(
+        &self,
+        unit: &TypedUnit,
+        ctx: &mut CodegenCtx<'_>,
+    ) -> Outcome<CodegenOutput, Diagnostic>;
 
-    fn compile(&self, unit: &Unit) -> Outcome<Output, Diagnostic> {
-        // lowering + emission; output shape depends on what the target host accepts.
-        Outcome::Ok(Output::empty())
-    }
+    fn render_diagnostic(&self, err: &TargetError) -> Diagnostic;
 }
 ```
 
@@ -151,16 +149,18 @@ The execution path is interpreter-shaped initially, with bytecode dispatch over 
 
 ```rust
 // host program embedding the vehje runtime via the C ABI.
+// skeleton bodies today: vehje_runtime_new always returns null,
+// vehje_runtime_execute always returns VehjeResult::Err.
 
-use vehje_runtime_abi::{VehjeRuntime, VehjeResult};
+use vehje_runtime_abi::{vehje_runtime_execute, vehje_runtime_free, vehje_runtime_new, VehjeResult};
 
-fn run(artefact: &CStr) -> VehjeResult {
-    let rt = unsafe { VehjeRuntime::open(artefact.as_ptr()) };
-    let result = unsafe { rt.execute() };
+fn run(input: *const u8, len: arvo::USize) -> VehjeResult {
+    let rt = unsafe { vehje_runtime_new() };
+    let result = unsafe { vehje_runtime_execute(rt, input, len) };
     if result != VehjeResult::Ok {
-        // surface diagnostic via vehje_runtime_diagnostic; details elided.
+        // surface a diagnostic once vehje_runtime_diagnostic lands; details elided.
     }
-    unsafe { rt.free() };
+    unsafe { vehje_runtime_free(rt) };
     result
 }
 ```
@@ -171,7 +171,7 @@ vehje is in the design phase. The crate split, language item kinds, IR shape, an
 
 The lex pass has a real body for ASCII identifiers, keywords, integer literals, operators, comments, and trivia attachment; string, char, float, raw, and byte literals are deferred to follow-up rounds. The parser, resolver, typecheck framework, scheduler, and codegen target trait have type surfaces in place and skeleton bodies; per-production parser rounds, validator bodies, and codegen lowering land milestone by milestone. The runtime ABI is committed at the descriptor level (opaque handle, scalar result, diagnostic shape); the Zig runtime currently exposes the three entry points as stubs and gains its interpreter body alongside the parser and resolver work.
 
-vehje tracks unstable rustc features (`adt_const_params`, `generic_const_exprs`, `const_trait_impl`, `try_trait_v2`) where they unlock work in `arvo` and `hilavitkutin` that vehje consumes; features known to have soundness issues are intentionally skipped.
+vehje tracks unstable rustc features (`adt_const_params`, `generic_const_exprs`, `const_trait_impl`, `try_trait_v2`) where they enable work in `arvo` and `hilavitkutin` that vehje consumes; features known to have soundness issues are intentionally skipped.
 
 ## Support
 
@@ -185,4 +185,4 @@ Whether you use this project, have learned something from it, or just like it, p
 
 `SPDX-License-Identifier: MPL-2.0`
 
-> You can check out the full license [here](https://github.com/orgrinrt/vehje/blob/dev/LICENSE)
+> You can check out the full license [here](https://github.com/orgrinrt/vehje/blob/main/LICENSE)
