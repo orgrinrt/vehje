@@ -13,9 +13,6 @@ hilavitkutin-api.workspace = true
 hilavitkutin-linking = { workspace = true, optional = true }
 notko.workspace = true
 
-[build-dependencies]
-mockspace.workspace = true
-
 [features]
 default = ["std"]
 # The embedding does not need `std`: loading goes through

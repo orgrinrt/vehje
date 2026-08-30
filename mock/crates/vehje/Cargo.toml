@@ -23,8 +23,5 @@ arvo-bits.workspace = true
 notko.workspace = true
 hilavitkutin-api.workspace = true
 
-[build-dependencies]
-mockspace.workspace = true
-
 [features]
 default = []

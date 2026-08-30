@@ -11,9 +11,6 @@ notko.workspace = true
 vehje-ir.workspace = true
 vehje-fixpoint.workspace = true
 
-[build-dependencies]
-mockspace.workspace = true
-
 [dev-dependencies]
 hilavitkutin-str.workspace = true
 arvo-bits.workspace = true
