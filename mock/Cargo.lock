@@ -533,7 +533,6 @@ dependencies = [
  "arvo-bits",
  "hilavitkutin-api",
  "hilavitkutin-str",
- "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
  "vehje-codegen",
  "vehje-ir",
@@ -551,7 +550,6 @@ version = "0.1.0"
 dependencies = [
  "arvo",
  "hilavitkutin-api",
- "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
  "vehje-ir",
  "vehje-typecheck",
@@ -566,7 +564,6 @@ dependencies = [
  "arvo-graph",
  "arvo-hash",
  "hilavitkutin-api",
- "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
 ]
 
@@ -581,7 +578,6 @@ dependencies = [
  "hilavitkutin-api",
  "hilavitkutin-str",
  "hilavitkutin-sym",
- "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
 ]
 
@@ -593,7 +589,6 @@ dependencies = [
  "arvo-bits",
  "hilavitkutin-str",
  "hilavitkutin-sym",
- "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
  "vehje-fixpoint",
  "vehje-ir",
@@ -607,7 +602,6 @@ dependencies = [
  "arvo-bits",
  "hilavitkutin-str",
  "hilavitkutin-sym",
- "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
  "vehje-ir",
 ]
@@ -620,7 +614,6 @@ dependencies = [
  "arvo-bits",
  "hilavitkutin-str",
  "hilavitkutin-sym",
- "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "vehje-ir",
 ]
 
@@ -631,7 +624,6 @@ dependencies = [
  "arvo",
  "hilavitkutin-api",
  "hilavitkutin-linking",
- "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
  "vehje-ir",
  "vehje-runtime-abi",
@@ -645,7 +637,6 @@ dependencies = [
  "arvo",
  "arvo-bits",
  "arvo-hash",
- "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
  "vehje-ir",
  "vehje-signature",
@@ -658,7 +649,6 @@ dependencies = [
  "arvo",
  "arvo-bitmask",
  "arvo-graph",
- "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "vehje-ir",
 ]
 
@@ -668,7 +658,6 @@ version = "0.1.0"
 dependencies = [
  "arvo",
  "hilavitkutin-api",
- "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
  "vehje-ir",
 ]
@@ -683,7 +672,6 @@ dependencies = [
  "hilavitkutin-api",
  "hilavitkutin-str",
  "hilavitkutin-sym",
- "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
  "vehje-fixpoint",
  "vehje-ir",
