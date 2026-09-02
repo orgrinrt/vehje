@@ -27,10 +27,10 @@ correctness; warnings that mask mistakes stay off.
 
 - `?` propagation with tagged error enums is the default.
 - Infallible paths may use `.unwrap()` only when the compiler cannot
-  see the invariant (rare). In that case, attach a short `// invariant:`
-  comment explaining why the unwrap is sound.
+ see the invariant (rare). In that case, attach a short `// invariant:`
+ comment explaining why the unwrap is sound.
 - `.expect("foo")` with a message is no better than `.unwrap()`. it
-  still panics. Return a `Result` instead.
+ still panics. Return a `Result` instead.
 
 ### Tagged enums + trait dispatch, not duck typing
 
@@ -38,13 +38,13 @@ The Python prototype leans on Protocol + `isinstance` checks. The Rust
 port does not. Model variation as:
 
 - A tagged `enum` when the set is closed (token kinds, AST nodes,
-  binding forms).
+ binding forms).
 - A trait with a blanket impl + newtypes when the set is open but
-  known at compile time (pass registrations, validator rules).
+ known at compile time (pass registrations, validator rules).
 - A trait object (`dyn Trait`). avoid. Compile-time monomorphisation
-  is the house style; `dyn` / `TypeId` / `std::any` are forbidden in
-  framework code. Leaf tooling that genuinely needs heterogeneous
-  storage may use `dyn`, with a design-round note explaining why.
+ is the house style; `dyn` / `TypeId` / `std::any` are forbidden in
+ framework code. Leaf tooling that genuinely needs heterogeneous
+ storage may use `dyn`, with a design-round note explaining why.
 
 ### Descriptive errors
 
@@ -80,7 +80,7 @@ type, check the foundation crates:
 
 - DAG topology, traversal, dominators. `arvo-graph`.
 - Read/write sets, artifact tracking, dense-or-sparse bitmasks.
-  `arvo-bitmask`.
+ `arvo-bitmask`.
 - Sparse containers. `arvo-sparse`.
 - Pipeline morsel execution, scheduler, pools. `hilavitkutin`.
 
@@ -91,7 +91,7 @@ behaviour locally.
 ### Single-binary distribution
 
 No dynamic runtime deps. No `dlopen` plugin loading from the compiler
-layer. No reliance on an ambient Python / Deno / JVM / .NET runtime.
+layer. No reliance on an ambient Python / Deno / JVM /.NET runtime.
 Extension points are added at compile time via trait impls in
 extension repos (`vehje-jomini`, future), not at runtime.
 
@@ -105,13 +105,13 @@ language front-end, not a game adapter.
 ### Tests and coverage
 
 - Tests next to source in `#[cfg(test)] mod tests { }` for unit
-  coverage.
+ coverage.
 - Integration tests in `tests/` per crate.
 - The Python prototype's test corpus at
-  `~/Dev/stellar-heritage/tools/vehje/` is the **parity oracle**:
-  port relevant test cases to Rust, run them against the Rust
-  implementation, verify semantic equivalence. Do not translate the
-  Python implementation itself; translate the test intent.
+ `~/Dev/stellar-heritage/tools/vehje/` is the **parity oracle**:
+ port relevant test cases to Rust, run them against the Rust
+ implementation, verify semantic equivalence. Do not translate the
+ Python implementation itself; translate the test intent.
 
 ### File size
 

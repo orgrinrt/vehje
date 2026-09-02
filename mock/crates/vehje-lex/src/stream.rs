@@ -7,21 +7,24 @@
 //! `kind == TokenKind::Eof`; subsequent calls after EOF return
 //! `Maybe::Isnt`.
 
-use vehje_ir::TokenKind;
 use notko::Maybe;
+use vehje_ir::TokenKind;
 
 use crate::lexer::Lexer;
 use crate::token::Token;
 
 /// Single-token-lookahead stream.
 pub struct TokenStream<'a> {
-    lexer: Lexer<'a>,
+    lexer:  Lexer<'a>,
     peeked: Maybe<Maybe<Token>>,
 }
 
 impl<'a> TokenStream<'a> {
     pub fn new(lexer: Lexer<'a>) -> Self {
-        Self { lexer, peeked: Maybe::Isnt }
+        Self {
+            lexer,
+            peeked: Maybe::Isnt,
+        }
     }
 
     /// Peek at the next token without consuming it.
@@ -48,7 +51,8 @@ impl<'a> TokenStream<'a> {
     }
 
     /// `true` if the next token is `Eof` or the stream is drained.
-    pub fn is_at_end(&mut self) -> bool {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+    pub fn is_at_end(&mut self) -> bool {
+        // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         match self.peek() {
             Maybe::Is(t) => t.kind == TokenKind::Eof,
             Maybe::Isnt => true,

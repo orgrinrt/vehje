@@ -6,16 +6,17 @@
 
 use std::path::Path;
 
+use notko::Outcome;
 use vehje_runtime_driver::{LoaderError, RuntimeLoader};
 
 #[test]
 fn load_nonexistent_returns_not_implemented() {
     let result = RuntimeLoader::load(Path::new("/nonexistent/libvehje_runtime.dylib"));
-    assert!(matches!(result, Err(LoaderError::NotImplemented)));
+    assert!(matches!(result, Outcome::Err(LoaderError::NotImplemented)));
 }
 
 #[test]
 fn load_bogus_returns_not_implemented() {
     let result = RuntimeLoader::load(Path::new("bogus-name"));
-    assert!(matches!(result, Err(LoaderError::NotImplemented)));
+    assert!(matches!(result, Outcome::Err(LoaderError::NotImplemented)));
 }

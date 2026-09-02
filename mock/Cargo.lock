@@ -14,49 +14,139 @@ dependencies = [
 [[package]]
 name = "arvo"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#24afda0a663fadf1f689b9ec37a4abafd7f6abcf"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#5776b61d87098f8cf323dba769e0780e6d0b1357"
 dependencies = [
- "mockspace",
+ "arvo-bits",
+ "arvo-bits-contracts",
+ "arvo-numeric-contracts",
+ "arvo-storage",
+ "arvo-strategy",
+ "arvo-transparent",
+ "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=dev)",
  "notko",
 ]
 
 [[package]]
 name = "arvo-bitmask"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#24afda0a663fadf1f689b9ec37a4abafd7f6abcf"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#5776b61d87098f8cf323dba769e0780e6d0b1357"
 dependencies = [
  "arvo",
  "arvo-bits",
+ "arvo-bits-contracts",
+ "arvo-mask-contracts",
  "arvo-tensor",
- "mockspace",
+ "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=dev)",
 ]
 
 [[package]]
 name = "arvo-bits"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#24afda0a663fadf1f689b9ec37a4abafd7f6abcf"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#5776b61d87098f8cf323dba769e0780e6d0b1357"
 dependencies = [
- "arvo",
- "mockspace",
+ "arvo-bits-contracts",
+ "arvo-storage",
+ "arvo-strategy",
+ "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=dev)",
+]
+
+[[package]]
+name = "arvo-bits-contracts"
+version = "0.1.0"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#5776b61d87098f8cf323dba769e0780e6d0b1357"
+dependencies = [
+ "arvo-storage",
+ "arvo-strategy",
+ "arvo-transparent",
+ "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=dev)",
+ "notko",
 ]
 
 [[package]]
 name = "arvo-graph"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#541e4c775c7dba31c5e905c316a95330c35d3461"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#5776b61d87098f8cf323dba769e0780e6d0b1357"
 dependencies = [
  "arvo",
  "arvo-bitmask",
- "mockspace",
+ "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=dev)",
+]
+
+[[package]]
+name = "arvo-mask-contracts"
+version = "0.1.0"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#5776b61d87098f8cf323dba769e0780e6d0b1357"
+dependencies = [
+ "arvo-bits-contracts",
+ "arvo-storage",
+ "arvo-strategy",
+ "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=dev)",
+ "notko",
+]
+
+[[package]]
+name = "arvo-numeric-contracts"
+version = "0.1.0"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#5776b61d87098f8cf323dba769e0780e6d0b1357"
+dependencies = [
+ "arvo-bits-contracts",
+ "arvo-storage",
+ "arvo-strategy",
+ "arvo-transparent",
+ "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=dev)",
+ "notko",
+]
+
+[[package]]
+name = "arvo-refit"
+version = "0.1.0"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#5776b61d87098f8cf323dba769e0780e6d0b1357"
+dependencies = [
+ "arvo-bitmask",
+ "arvo-bits-contracts",
+ "arvo-mask-contracts",
+ "arvo-storage",
+ "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=dev)",
+ "notko",
+]
+
+[[package]]
+name = "arvo-storage"
+version = "0.1.0"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#5776b61d87098f8cf323dba769e0780e6d0b1357"
+dependencies = [
+ "arvo-strategy",
+ "arvo-transparent",
+ "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=dev)",
+ "notko",
+]
+
+[[package]]
+name = "arvo-strategy"
+version = "0.1.0"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#5776b61d87098f8cf323dba769e0780e6d0b1357"
+dependencies = [
+ "arvo-transparent",
+ "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=dev)",
+ "notko",
 ]
 
 [[package]]
 name = "arvo-tensor"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#24afda0a663fadf1f689b9ec37a4abafd7f6abcf"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#5776b61d87098f8cf323dba769e0780e6d0b1357"
 dependencies = [
  "arvo",
- "mockspace",
+ "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=dev)",
+]
+
+[[package]]
+name = "arvo-transparent"
+version = "0.1.0"
+source = "git+ssh://git@github.com/orgrinrt/arvo.git?branch=dev#5776b61d87098f8cf323dba769e0780e6d0b1357"
+dependencies = [
+ "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=dev)",
+ "notko",
 ]
 
 [[package]]
@@ -96,27 +186,28 @@ checksum = "4f467dd6dccf739c208452f8014c75c18bb8301b050ad1cfb27153803edb0f51"
 [[package]]
 name = "hilavitkutin-api"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/hilavitkutin.git?branch=dev#56d325665b824b508ba4349e8ad9909d93962870"
+source = "git+ssh://git@github.com/orgrinrt/hilavitkutin.git?branch=dev#3c0d0d5d02f5fd5e60575ea74e8037db30b2daa6"
 dependencies = [
  "arvo",
  "arvo-bitmask",
  "hilavitkutin-ctx",
- "mockspace",
+ "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
 ]
 
 [[package]]
 name = "hilavitkutin-ctx"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/hilavitkutin.git?branch=dev#56d325665b824b508ba4349e8ad9909d93962870"
+source = "git+ssh://git@github.com/orgrinrt/hilavitkutin.git?branch=dev#3c0d0d5d02f5fd5e60575ea74e8037db30b2daa6"
 
 [[package]]
 name = "hilavitkutin-str"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/hilavitkutin.git?branch=dev#56d325665b824b508ba4349e8ad9909d93962870"
+source = "git+ssh://git@github.com/orgrinrt/hilavitkutin.git?branch=dev#3c0d0d5d02f5fd5e60575ea74e8037db30b2daa6"
 dependencies = [
  "arvo",
  "arvo-bits",
+ "arvo-refit",
  "notko",
 ]
 
@@ -149,10 +240,23 @@ checksum = "f8ca58f447f06ed17d5fc4043ce1b10dd205e060fb3ce5b979b8ed8e59ff3f79"
 [[package]]
 name = "mockspace"
 version = "0.1.0"
-source = "git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main#acf2861fa9589593e4086cabbfb4b37089b0e88a"
+source = "git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=dev#8f6ec66e99e762ca3b432051d9c6e55a6f5e923c"
 dependencies = [
  "libloading",
- "mockspace-lint-rules",
+ "mockspace-lint-rules 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=dev)",
+ "serde",
+ "toml_edit",
+ "tree-sitter",
+ "tree-sitter-rust",
+]
+
+[[package]]
+name = "mockspace"
+version = "0.1.0"
+source = "git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main#0d2f5cf25b60aa7cce214ce72f883720044ef143"
+dependencies = [
+ "libloading",
+ "mockspace-lint-rules 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "serde",
  "toml_edit",
  "tree-sitter",
@@ -162,7 +266,16 @@ dependencies = [
 [[package]]
 name = "mockspace-lint-rules"
 version = "0.1.0"
-source = "git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main#acf2861fa9589593e4086cabbfb4b37089b0e88a"
+source = "git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=dev#8f6ec66e99e762ca3b432051d9c6e55a6f5e923c"
+dependencies = [
+ "tree-sitter",
+ "tree-sitter-rust",
+]
+
+[[package]]
+name = "mockspace-lint-rules"
+version = "0.1.0"
+source = "git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main#0d2f5cf25b60aa7cce214ce72f883720044ef143"
 dependencies = [
  "tree-sitter",
  "tree-sitter-rust",
@@ -171,7 +284,7 @@ dependencies = [
 [[package]]
 name = "notko"
 version = "0.1.0"
-source = "git+ssh://git@github.com/orgrinrt/notko.git?branch=dev#d76b04a4aa0cd2c2ab0bb21ff80834d1e4290c67"
+source = "git+ssh://git@github.com/orgrinrt/notko.git?branch=dev#c2e5b195b695595eb3c8153eea59ff1501894a2d"
 
 [[package]]
 name = "proc-macro2"
@@ -350,7 +463,7 @@ checksum = "e6e4313cd5fcd3dad5cafa179702e2b244f760991f45397d14d4ebf38247da75"
 name = "vehje"
 version = "0.1.0"
 dependencies = [
- "mockspace",
+ "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
  "vehje-codegen",
  "vehje-ir",
@@ -364,8 +477,9 @@ dependencies = [
 name = "vehje-codegen"
 version = "0.1.0"
 dependencies = [
+ "arvo",
  "hilavitkutin-api",
- "mockspace",
+ "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
  "vehje-ir",
  "vehje-resolve",
@@ -375,14 +489,14 @@ dependencies = [
 name = "vehje-ir"
 version = "0.1.0"
 dependencies = [
- "mockspace",
+ "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
 ]
 
 [[package]]
 name = "vehje-lex"
 version = "0.1.0"
 dependencies = [
- "mockspace",
+ "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
  "vehje-ir",
 ]
@@ -394,7 +508,7 @@ dependencies = [
  "arvo",
  "arvo-bits",
  "hilavitkutin-str",
- "mockspace",
+ "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
  "vehje-ir",
  "vehje-syntax",
@@ -405,7 +519,7 @@ name = "vehje-runtime-abi"
 version = "0.1.0"
 dependencies = [
  "arvo",
- "mockspace",
+ "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "vehje-ir",
 ]
 
@@ -414,7 +528,7 @@ name = "vehje-runtime-driver"
 version = "0.1.0"
 dependencies = [
  "hilavitkutin-api",
- "mockspace",
+ "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
  "vehje-ir",
  "vehje-runtime-abi",
@@ -425,8 +539,9 @@ dependencies = [
 name = "vehje-runtime-tests"
 version = "0.1.0"
 dependencies = [
+ "arvo",
  "hilavitkutin-api",
- "mockspace",
+ "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
  "vehje-runtime-abi",
  "vehje-runtime-driver",
@@ -439,7 +554,7 @@ dependencies = [
  "arvo",
  "arvo-bitmask",
  "arvo-graph",
- "mockspace",
+ "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "vehje-ir",
  "vehje-typecheck",
 ]
@@ -448,8 +563,9 @@ dependencies = [
 name = "vehje-syntax"
 version = "0.1.0"
 dependencies = [
+ "arvo",
  "hilavitkutin-api",
- "mockspace",
+ "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "notko",
  "vehje-ir",
  "vehje-lex",
@@ -462,7 +578,7 @@ dependencies = [
  "arvo",
  "arvo-bitmask",
  "hilavitkutin-api",
- "mockspace",
+ "mockspace 0.1.0 (git+ssh://git@github.com/hiisi-digital/mockspace.git?branch=main)",
  "vehje-ir",
  "vehje-resolve",
  "vehje-syntax",

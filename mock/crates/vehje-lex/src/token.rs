@@ -15,18 +15,26 @@ use crate::trivia::TriviaSet;
 /// All three fields are `Copy`; tokens are trivially duplicated.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
 pub struct Token {
-    pub kind: TokenKind,
-    pub span: Span,
+    pub kind:   TokenKind,
+    pub span:   Span,
     pub trivia: TriviaSet,
 }
 
 impl Token {
     pub const fn new(kind: TokenKind, span: Span, trivia: TriviaSet) -> Self {
-        Self { kind, span, trivia }
+        Self {
+            kind,
+            span,
+            trivia,
+        }
     }
 
     /// Construct a token with an empty trivia set.
     pub const fn bare(kind: TokenKind, span: Span) -> Self {
-        Self { kind, span, trivia: TriviaSet::new() }
+        Self {
+            kind,
+            span,
+            trivia: TriviaSet::new(),
+        }
     }
 }

@@ -28,26 +28,39 @@ fn artifact_kind_variants_distinct() {
 
 #[test]
 fn artifact_construction() {
+    // Bytes and diagnostics are now caller-owned sinks; the
+    // artifact carries only the emitted-payload kind. See round
+    // 5d codegen redesign.
     let artifact = CodegenArtifact::empty(ArtifactKind::Binary);
     assert_eq!(artifact.kind, ArtifactKind::Binary);
-    assert!(artifact.bytes.is_empty());
-    assert!(artifact.diagnostics.is_empty());
 }
 
 #[test]
 fn codegen_error_variants_construct() {
     let errs = [
-        CodegenError::TargetNotFound { name: "x" },
-        CodegenError::UnsupportedFeature { feature: "y" },
-        CodegenError::LoweringFailed { message: "z" },
+        CodegenError::TargetNotFound {
+            name: "x",
+        },
+        CodegenError::UnsupportedFeature {
+            feature: "y",
+        },
+        CodegenError::LoweringFailed {
+            message: "z",
+        },
         CodegenError::NotImplemented,
     ];
     for err in errs {
         match err {
-            CodegenError::TargetNotFound { name } => assert_eq!(name, "x"),
-            CodegenError::UnsupportedFeature { feature } => assert_eq!(feature, "y"),
-            CodegenError::LoweringFailed { message } => assert_eq!(message, "z"),
-            CodegenError::NotImplemented => {}
+            CodegenError::TargetNotFound {
+                name,
+            } => assert_eq!(name, "x"),
+            CodegenError::UnsupportedFeature {
+                feature,
+            } => assert_eq!(feature, "y"),
+            CodegenError::LoweringFailed {
+                message,
+            } => assert_eq!(message, "z"),
+            CodegenError::NotImplemented => {},
         }
     }
 }

@@ -18,13 +18,13 @@ registered in the const `TargetRegistry`.
 ## Non-scope
 
 - Concrete target backends (real LLVM/cranelift lowering for
-  `NativeTarget`; Clausewitz script emission for `JominiTarget`
-  via the future `vehje-jomini` sibling repo). Each ships in
-  its own follow-up round or its own repo.
+ `NativeTarget`; Clausewitz script emission for `JominiTarget`
+ via the future `vehje-jomini` sibling repo). Each ships in
+ its own follow-up round or its own repo.
 - Pass DAG scheduling (vehje-schedule).
 - Target-specific IR lowering (BACKLOG).
 - Target-selection priority chain (CLI → package → workspace →
-  builtin) (deferred BACKLOG).
+ builtin) (deferred BACKLOG).
 
 ## Extension-point contract (R3, finalised 2026-04-26)
 
@@ -35,19 +35,19 @@ R3 finalised a richer shape:
 
 ```rust
 pub trait CodegenTarget: Send + Sync + 'static {
-    const NAME: &'static str;
-    const VERSION: u32;
+ const NAME: &'static str;
+ const VERSION: u32;
 
-    fn accepts(&self, kind: AstNodeKind) -> bool;
-    fn stages(&self) -> &'static [Stage];
+ fn accepts(&self, kind: AstNodeKind) -> bool;
+ fn stages(&self) -> &'static [Stage];
 
-    fn compile(
-        &self,
-        unit: &TypedUnit,
-        ctx: &mut CodegenCtx<'_>,
-    ) -> Outcome<CodegenOutput, Diagnostic>;
+ fn compile(
+ &self,
+ unit: &TypedUnit,
+ ctx: &mut CodegenCtx<'_>,
+ ) -> Outcome<CodegenOutput, Diagnostic>;
 
-    fn render_diagnostic(&self, err: &TargetError) -> Diagnostic;
+ fn render_diagnostic(&self, err: &TargetError) -> Diagnostic;
 }
 ```
 
@@ -61,13 +61,13 @@ gymnastics:
 
 ```rust
 pub trait CodegenTarget: Sync {
-    fn name(&self) -> &'static str;
-    fn emit(
-        &self,
-        ctx: &CodegenCtx,
-        bytes: &mut impl ByteEmitter,
-        diagnostics: &mut impl DiagnosticSink<Diagnostic>,
-    ) -> Outcome<CodegenArtifact, CodegenError>;
+ fn name(&self) -> &'static str;
+ fn emit(
+ &self,
+ ctx: &CodegenCtx,
+ bytes: &mut impl ByteEmitter,
+ diagnostics: &mut impl DiagnosticSink<Diagnostic>,
+ ) -> Outcome<CodegenArtifact, CodegenError>;
 }
 ```
 
@@ -113,9 +113,9 @@ real body). Both are stubs this round. `emit` returns an empty
 ## Module layout
 
 - `target.rs`. `CodegenTarget` trait (skeleton instance-method
-  form of the R3 contract).
+ form of the R3 contract).
 - `registry.rs`. `TargetRegistry` ZST with const `TARGETS`
-  slice + `lookup` + `emit_for` associated functions.
+ slice + `lookup` + `emit_for` associated functions.
 - `ctx.rs`. `CodegenCtx<'a>` bundling `&Resolved`.
 - `artifact.rs`. `CodegenArtifact` + `ArtifactKind`.
 - `error.rs`. `CodegenError` enum.
@@ -129,12 +129,5 @@ features land): `codegen.rs` (top-level driver), `target_ir.rs`
 `selection.rs` (priority chain), `stage.rs` (pipeline stages),
 `diagnostics.rs` (per-target rendering).
 
-## Sources
 
-- 202604191300_topic.vehje-design-seed.md
-- 202604191300_topic.vehje-compiler-prune-plan-seed.md (codegen
-  + extension target prior art)
-- 202604191500_changelist.doc.md (R1 round)
-- 202604262300_changelist.doc.lock.md (R3. extension-point
-  contract, finalised 2026-04-26)
-- 202604263900_changelist.doc.md (skeleton round, this round)
+Round-by-round history is recorded in `mock/research/vehje-codegen-history.md` (Tier 2).

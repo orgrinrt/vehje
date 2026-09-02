@@ -10,12 +10,13 @@
 //! `'static` lifetimes only.
 //!
 //! Dynamic registration (a `register` method for plugin targets,
-//! e.g. for `vehje-jomini` loaded via `dlopen`) is BACKLOG , 
+//! e.g. for `vehje-jomini` loaded via `dlopen`) is BACKLOG ,
 //! the skeleton round ships only the two built-in targets.
 
-use vehje_ir::Diagnostic;
 use hilavitkutin_api::{ByteEmitter, DiagnosticSink};
 use notko::{Maybe, Outcome};
+use vehje_ir::Diagnostic;
+use vehje_resolve::Resolved;
 
 use crate::artifact::CodegenArtifact;
 use crate::ctx::CodegenCtx;
@@ -23,7 +24,6 @@ use crate::error::CodegenError;
 use crate::jomini::JominiTarget;
 use crate::native::NativeTarget;
 use crate::target::CodegenTarget;
-use vehje_resolve::Resolved;
 
 /// Target registry, const iteration surface over every
 /// codegen target shipped in vehje-codegen.
@@ -49,7 +49,8 @@ impl TargetRegistry {
     /// linear but the list is tiny (two entries this round; at
     /// most a handful even after plugin loading); a hashmap is not
     /// justified.
-    pub fn lookup(name: &str) -> Maybe<&'static dyn CodegenTarget> {  // lint:allow(no-bare-string) tracked: #207
+    pub fn lookup(name: &str) -> Maybe<&'static dyn CodegenTarget> {
+        // lint:allow(no-bare-string) tracked: #207
         for target in Self::TARGETS {
             if target.name() == name {
                 return Maybe::Is(*target);
@@ -69,14 +70,18 @@ impl TargetRegistry {
     /// follow-up round retrofits a richer error carrier if the
     /// sentinel surfaces as painful in practice.
     pub fn emit_for(
-        name: &str,  // lint:allow(no-bare-string) tracked: #207
+        name: &str, // lint:allow(no-bare-string) tracked: #207
         ctx: &CodegenCtx,
         bytes: &mut dyn ByteEmitter,
         diagnostics: &mut dyn DiagnosticSink<Diagnostic>,
     ) -> Outcome<CodegenArtifact, CodegenError> {
         match Self::lookup(name) {
             Maybe::Is(target) => target.emit(ctx, bytes, diagnostics),
-            Maybe::Isnt => Outcome::Err(CodegenError::TargetNotFound { name: "" }),
+            Maybe::Isnt => {
+                Outcome::Err(CodegenError::TargetNotFound {
+                    name: "",
+                })
+            },
         }
     }
 }
@@ -103,7 +108,7 @@ impl TargetRegistry {
 /// at render time.
 pub fn emit(
     resolved: &Resolved,
-    target_name: &str,  // lint:allow(no-bare-string) tracked: #207
+    target_name: &str, // lint:allow(no-bare-string) tracked: #207
     bytes: &mut dyn ByteEmitter,
     diagnostics: &mut dyn DiagnosticSink<Diagnostic>,
 ) -> Outcome<CodegenArtifact, CodegenError> {

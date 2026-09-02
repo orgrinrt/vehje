@@ -10,9 +10,9 @@
 //! Skeleton round: every entry is `Maybe::Isnt`; the resolver does
 //! not walk the AST.
 
-use arvo::newtype::Bool;
-use vehje_syntax::Ast;
+use arvo::Bool;
 use notko::Maybe;
+use vehje_syntax::Ast;
 
 use crate::scope::ScopeTree;
 use crate::symbol::Symbol;
@@ -27,8 +27,8 @@ use crate::symbol::Symbol;
 /// - `resolution`, a flat map from `NodeId.0` to `Maybe<Symbol>`.
 #[derive(Clone, Debug, Default)]
 pub struct Resolved {
-    ast: Ast,
-    scopes: ScopeTree,
+    ast:        Ast,
+    scopes:     ScopeTree,
     resolution: Vec<Maybe<Symbol>>, // lint:allow(bare_collection) reason: skeleton resolution-map storage; re-expressed as scheduler-managed Column<Maybe<Symbol>> + persistence sidecar once #131 / #134 land (see SHAME.md `## Resolved`); tracked: #131
 }
 
@@ -37,15 +37,20 @@ impl Resolved {
     /// `ScopeTree`, empty resolution vec.
     pub fn empty() -> Self {
         Self {
-            ast: Ast::default(),
-            scopes: ScopeTree::default(),
+            ast:        Ast::default(),
+            scopes:     ScopeTree::default(),
             resolution: Vec::new(), // lint:allow(bare_collection) reason: skeleton empty-init; tracked: #131
         }
     }
 
     /// Construct a `Resolved` from its parts.
-    pub fn new(ast: Ast, scopes: ScopeTree, resolution: Vec<Maybe<Symbol>>) -> Self { // lint:allow(bare_collection) reason: skeleton resolver hand-off surface; re-expressed once #131 lands; tracked: #131
-        Self { ast, scopes, resolution }
+    pub fn new(ast: Ast, scopes: ScopeTree, resolution: Vec<Maybe<Symbol>>) -> Self {
+        // lint:allow(bare_collection) reason: skeleton resolver hand-off surface; re-expressed once #131 lands; tracked: #131
+        Self {
+            ast,
+            scopes,
+            resolution,
+        }
     }
 
     /// Borrow the AST.

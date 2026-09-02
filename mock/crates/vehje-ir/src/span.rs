@@ -17,14 +17,14 @@
 /// meaningful within the workspace session that minted it.
 #[repr(transparent)]
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
-pub struct FileId(pub u32);  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207 lint:allow(no-public-raw-field) tracked: #207
+pub struct FileId(pub u32); // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207 lint:allow(no-public-raw-field) tracked: #207
 
 /// A byte offset into a source buffer.
 ///
 /// Stored as `u32`; sources larger than 4 GiB are out of scope.
 #[repr(transparent)]
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
-pub struct ByteOffset(pub u32);  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207 lint:allow(no-public-raw-field) tracked: #207
+pub struct ByteOffset(pub u32); // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207 lint:allow(no-public-raw-field) tracked: #207
 
 /// A half-open byte range `[start, end)` inside the source file `file`.
 ///
@@ -33,24 +33,30 @@ pub struct ByteOffset(pub u32);  // lint:allow(arvo-types-only) lint:allow(no-ba
 /// point.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
 pub struct Span {
-    pub file: FileId,
+    pub file:  FileId,
     pub start: ByteOffset,
-    pub end: ByteOffset,
+    pub end:   ByteOffset,
 }
 
 impl Span {
     /// Construct a new span from raw parts.
     pub const fn new(file: FileId, start: ByteOffset, end: ByteOffset) -> Self {
-        Self { file, start, end }
+        Self {
+            file,
+            start,
+            end,
+        }
     }
 
     /// Length of the span in bytes.
-    pub const fn len(self) -> u32 {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+    pub const fn len(self) -> u32 {
+        // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         self.end.0.saturating_sub(self.start.0)
     }
 
     /// `true` if the span covers zero bytes.
-    pub const fn is_empty(self) -> bool {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+    pub const fn is_empty(self) -> bool {
+        // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         self.start.0 == self.end.0
     }
 }

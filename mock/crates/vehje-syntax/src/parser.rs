@@ -11,11 +11,10 @@
 //! path, binary, unary, call, block, let, if, match, fn, type,
 //! struct, enum, module, pattern) lands as its own micro-round.
 
-use vehje_ir::TokenKind;
-use vehje_ir::{AstNodeKind, ByteOffset, FileId, Span};
-use vehje_lex::Token;
 use hilavitkutin_api::DiagnosticSink;
 use notko::{Maybe, Outcome};
+use vehje_ir::{AstNodeKind, ByteOffset, FileId, Span, TokenKind};
+use vehje_lex::Token;
 
 use crate::ast::{Ast, AstNode};
 use crate::error::SyntaxError;
@@ -27,20 +26,20 @@ use crate::error::SyntaxError;
 /// span index, AST node id). `Copy` + `Ord` so the parser can
 /// compare / advance freely.
 #[repr(transparent)]
-#[derive(
-    Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default,
-)]
-pub struct TokenCursor(pub u32);  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207 lint:allow(no-public-raw-field) tracked: #207
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+pub struct TokenCursor(pub u32); // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207 lint:allow(no-public-raw-field) tracked: #207
 
 impl TokenCursor {
     /// Construct a cursor pointing at the token at index `idx`.
-    pub const fn new(idx: u32) -> Self {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+    pub const fn new(idx: u32) -> Self {
+        // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         Self(idx)
     }
 
     /// The cursor index as a `usize` for slice indexing.
-    pub const fn as_usize(self) -> usize {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
-        self.0 as usize  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+    pub const fn as_usize(self) -> usize {
+        // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+        self.0 as usize // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     }
 
     /// A cursor advanced by one position.
@@ -56,14 +55,18 @@ impl TokenCursor {
 pub struct Parser<'a> {
     tokens: &'a [Token],
     cursor: TokenCursor,
-    ast: Ast,
+    ast:    Ast,
 }
 
 impl<'a> Parser<'a> {
     /// Build a parser over `tokens`, starting at offset 0 with an
     /// empty AST.
     pub fn new(tokens: &'a [Token]) -> Self {
-        Self { tokens, cursor: TokenCursor::new(0), ast: Ast::empty() }
+        Self {
+            tokens,
+            cursor: TokenCursor::new(0),
+            ast: Ast::empty(),
+        }
     }
 
     /// Token at the current cursor, or `Maybe::Isnt` if at end.
@@ -81,7 +84,8 @@ impl<'a> Parser<'a> {
 
     /// Token `offset` positions past the cursor, or `Maybe::Isnt`
     /// if out of range.
-    pub fn peek_at(&self, offset: usize) -> Maybe<&Token> {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+    pub fn peek_at(&self, offset: usize) -> Maybe<&Token> {
+        // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         match self.tokens.get(self.cursor.as_usize() + offset) {
             Some(t) => Maybe::Is(t),
             None => Maybe::Isnt,
@@ -101,13 +105,15 @@ impl<'a> Parser<'a> {
     }
 
     /// `true` if the current token has the given kind.
-    pub fn at(&self, kind: TokenKind) -> bool {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+    pub fn at(&self, kind: TokenKind) -> bool {
+        // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         self.peek_kind() == Maybe::Is(kind)
     }
 
     /// `true` if the cursor is past the end of the slice or the
     /// current token is `Eof`. Both conventions terminate parse.
-    pub fn is_eof(&self) -> bool {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+    pub fn is_eof(&self) -> bool {
+        // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
         match self.peek_kind() {
             Maybe::Isnt => true,
             Maybe::Is(TokenKind::Eof) => true,
@@ -143,10 +149,7 @@ impl<'a> Parser<'a> {
     /// `errors` is `&mut dyn DiagnosticSink<SyntaxError>` so the
     /// parser can flow through the free `parse` fn (which also
     /// takes a dyn sink) without monomorphisation mismatches.
-    pub fn parse(
-        mut self,
-        errors: &mut dyn DiagnosticSink<SyntaxError>,
-    ) -> Outcome<Ast, ()> {
+    pub fn parse(mut self, errors: &mut dyn DiagnosticSink<SyntaxError>) -> Outcome<Ast, ()> {
         if self.is_eof() {
             return Outcome::Ok(self.ast);
         }
@@ -158,15 +161,12 @@ impl<'a> Parser<'a> {
             let id = match self.ast.push(node) {
                 Maybe::Is(id) => id,
                 Maybe::Isnt => {
-                    errors.push(SyntaxError::unexpected_token(
-                        span,
-                        "AST arena full",
-                    ));
+                    errors.push(SyntaxError::unexpected_token(span, "AST arena full"));
                     return Outcome::Err(());
                 },
             };
             self.ast.set_root(id);
-            self.bump();
+            let _ = self.bump();
 
             if !self.is_eof() {
                 errors.push(SyntaxError::unexpected_token(
@@ -207,9 +207,6 @@ impl<'a> Parser<'a> {
 ///
 /// Every deferred production flips from `UnexpectedToken` to a
 /// real parse in its own follow-up round.
-pub fn parse(
-    tokens: &[Token],
-    errors: &mut dyn DiagnosticSink<SyntaxError>,
-) -> Outcome<Ast, ()> {
+pub fn parse(tokens: &[Token], errors: &mut dyn DiagnosticSink<SyntaxError>) -> Outcome<Ast, ()> {
     Parser::new(tokens).parse(errors)
 }

@@ -23,7 +23,9 @@ pub struct ValidatorCtx<'a> {
 impl<'a> ValidatorCtx<'a> {
     /// Construct a context around `resolved`.
     pub fn new(resolved: &'a Resolved) -> Self {
-        Self { resolved }
+        Self {
+            resolved,
+        }
     }
 
     /// Borrow the resolver output.

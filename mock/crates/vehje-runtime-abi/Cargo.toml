@@ -8,8 +8,6 @@ license.workspace = true
 arvo.workspace = true
 vehje-ir.workspace = true
 
-[build-dependencies]
-mockspace.workspace = true
 
 [features]
 default = ["std"]
@@ -22,6 +20,6 @@ std = []
 [lib]
 # cdylib: the Rust-side exports `extern "C"` entry points the Zig
 # runtime consumes via dlopen. Also `rlib` so downstream Rust
-# crates (clause-runtime-driver, clause-runtime-tests) can depend
+# crates (vehje-runtime-driver, vehje-runtime-tests) can depend
 # on the type surface directly without going through FFI.
 crate-type = ["rlib", "cdylib"]

@@ -47,7 +47,7 @@ fn empty_input_emits_only_eof() {
     let mut lx = Lexer::from_str("", FileId(0));
     let t = lx.next().unwrap();
     assert_eq!(t.kind, TokenKind::Eof);
-    assert!(lx.next().is_none());
+    assert!(lx.next().isnt());
 }
 
 #[test]
@@ -67,6 +67,11 @@ fn newline_between_tokens_ends_trailing_of_first() {
     let b = lx.next().unwrap();
     assert_eq!(a.kind, TokenKind::Ident);
     assert_eq!(b.kind, TokenKind::Ident);
-    assert!(a.trivia.trailing().iter().any(|tr| tr.kind == TriviaKind::Whitespace));
+    assert!(
+        a.trivia
+            .trailing()
+            .iter()
+            .any(|tr| tr.kind == TriviaKind::Whitespace)
+    );
     assert!(b.trivia.leading().is_empty());
 }

@@ -2,17 +2,11 @@
 
 use vehje_ir::{ByteOffset, DiagPhase, Diagnostic, FileId, Severity, Span};
 
-const DUMMY_SPAN: Span =
-    Span::new(FileId(0), ByteOffset(0), ByteOffset(0));
+const DUMMY_SPAN: Span = Span::new(FileId(0), ByteOffset(0), ByteOffset(0));
 
 #[test]
 fn diagnostic_new_preserves_fields() {
-    let d = Diagnostic::new(
-        DiagPhase::Syntax,
-        Severity::Warning,
-        DUMMY_SPAN,
-        "hello",
-    );
+    let d = Diagnostic::new(DiagPhase::Syntax, Severity::Warning, DUMMY_SPAN, "hello");
     assert_eq!(d.phase, DiagPhase::Syntax);
     assert_eq!(d.severity, Severity::Warning);
     assert_eq!(d.span, DUMMY_SPAN);
@@ -50,11 +44,11 @@ fn diagnostic_with_related_labels() {
         Span::new(FileId(1), ByteOffset(2), ByteOffset(3)),
     ];
     let d = Diagnostic {
-        phase: DiagPhase::Resolve,
+        phase:    DiagPhase::Resolve,
         severity: Severity::Info,
-        span: DUMMY_SPAN,
-        message: "with labels",
-        related: RELATED,
+        span:     DUMMY_SPAN,
+        message:  "with labels",
+        related:  RELATED,
     };
     assert_eq!(d.related.len(), 2);
     assert_eq!(d.phase, DiagPhase::Resolve);

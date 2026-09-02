@@ -18,7 +18,7 @@ use vehje_ir::{DiagPhase, Diagnostic, Severity, Span};
 /// additional kinds (missing delimiter, invalid pattern, ambiguous
 /// operator) arrive alongside the production that first emits them.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
-#[repr(u8)]  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+#[repr(u8)] // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
 pub enum SyntaxErrorKind {
     /// A token appeared where none of the active productions expect
     /// one.
@@ -43,35 +43,42 @@ impl Default for SyntaxErrorKind {
 /// whole error costs nothing to pass around.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub struct SyntaxError {
-    pub kind: SyntaxErrorKind,
-    pub span: Span,
+    pub kind:    SyntaxErrorKind,
+    pub span:    Span,
     pub message: &'static str,
 }
 
 impl SyntaxError {
     /// Construct an `UnexpectedToken` error.
     pub const fn unexpected_token(span: Span, message: &'static str) -> Self {
-        Self { kind: SyntaxErrorKind::UnexpectedToken, span, message }
+        Self {
+            kind: SyntaxErrorKind::UnexpectedToken,
+            span,
+            message,
+        }
     }
 
     /// Construct an `UnexpectedEof` error.
     pub const fn unexpected_eof(span: Span, message: &'static str) -> Self {
-        Self { kind: SyntaxErrorKind::UnexpectedEof, span, message }
+        Self {
+            kind: SyntaxErrorKind::UnexpectedEof,
+            span,
+            message,
+        }
     }
 
     /// Construct an `InvalidLiteral` error.
     pub const fn invalid_literal(span: Span, message: &'static str) -> Self {
-        Self { kind: SyntaxErrorKind::InvalidLiteral, span, message }
+        Self {
+            kind: SyntaxErrorKind::InvalidLiteral,
+            span,
+            message,
+        }
     }
 }
 
 impl From<SyntaxError> for Diagnostic {
     fn from(err: SyntaxError) -> Self {
-        Diagnostic::new(
-            DiagPhase::Syntax,
-            Severity::Error,
-            err.span,
-            err.message,
-        )
+        Diagnostic::new(DiagPhase::Syntax, Severity::Error, err.span, err.message)
     }
 }

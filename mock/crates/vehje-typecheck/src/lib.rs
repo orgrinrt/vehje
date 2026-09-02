@@ -49,7 +49,7 @@ pub use bind_target_shape::BindTargetShape;
 pub use coherence::Coherence;
 pub use ctx::ValidatorCtx;
 pub use orphan_rule::OrphanRule;
-pub use registry::{typecheck, ValidatorRegistry};
+pub use registry::{ValidatorRegistry, typecheck};
 pub use strict1::Strict1;
 pub use strict2::Strict2;
 pub use strict3::Strict3;
@@ -58,6 +58,5 @@ pub use strict5::Strict5;
 pub use strict6::Strict6;
 pub use strict7::Strict7;
 pub use validator::Validator;
-
 pub use vehje_ir::{Diagnostic, NodeId, Span};
 pub use vehje_resolve::Resolved;

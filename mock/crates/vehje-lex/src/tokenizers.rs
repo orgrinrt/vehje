@@ -10,26 +10,29 @@
 //! Every helper uses only `Cursor` for source access and ASCII-only
 //! char classes. Non-ASCII identifier support is a deferred concern.
 
-use vehje_ir::TokenKind;
 use notko::Maybe;
+use vehje_ir::TokenKind;
 
 use crate::cursor::Cursor;
 use crate::keyword::lookup_keyword;
 use crate::trivia::TriviaKind;
 
 /// `true` if `b` can start an identifier (ASCII letter or `_`).
-pub const fn is_ident_start(b: u8) -> bool {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+pub const fn is_ident_start(b: u8) -> bool {
+    // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     matches!(b, b'a'..=b'z' | b'A'..=b'Z' | b'_')
 }
 
 /// `true` if `b` may continue an identifier (start chars plus digits).
-pub const fn is_ident_cont(b: u8) -> bool {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+pub const fn is_ident_cont(b: u8) -> bool {
+    // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     matches!(b, b'a'..=b'z' | b'A'..=b'Z' | b'_' | b'0'..=b'9')
 }
 
 /// `true` if `b` is an ASCII decimal digit.
-pub const fn is_digit(b: u8) -> bool {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
-    matches!(b, b'0'..=b'9')
+pub const fn is_digit(b: u8) -> bool {
+    // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+    matches!(b, b'0' ..= b'9')
 }
 
 /// `true` if `b` is whitespace we classify as `TriviaKind::Whitespace`.
@@ -37,7 +40,8 @@ pub const fn is_digit(b: u8) -> bool {  // lint:allow(arvo-types-only) lint:allo
 /// Space, tab, CR, LF, form-feed, vertical tab. Rust follows Unicode
 /// Pattern_White_Space; we keep the ASCII subset here and let a
 /// future unicode round widen it.
-pub const fn is_whitespace(b: u8) -> bool {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+pub const fn is_whitespace(b: u8) -> bool {
+    // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     matches!(b, b' ' | b'\t' | b'\r' | b'\n' | 0x0B | 0x0C)
 }
 
@@ -47,16 +51,16 @@ pub const fn is_whitespace(b: u8) -> bool {  // lint:allow(arvo-types-only) lint
 /// and the `(start, end)` byte-offset pair.
 pub fn read_ident_or_keyword(c: &mut Cursor<'_>) -> (TokenKind, u32, u32) {
     let start = c.pos_u32();
-    c.bump_byte();
+    let _ = c.bump_byte();
     while let Maybe::Is(b) = c.peek_byte() {
         if is_ident_cont(b) {
-            c.bump_byte();
+            let _ = c.bump_byte();
         } else {
             break;
         }
     }
     let end = c.pos_u32();
-    let slice = &c.src()[start as usize..end as usize];  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+    let slice = &c.src()[start as usize .. end as usize]; // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     let text = match core::str::from_utf8(slice) {
         Ok(s) => s,
         Err(_) => "",
@@ -77,7 +81,7 @@ pub fn read_int_literal(c: &mut Cursor<'_>) -> (TokenKind, u32, u32) {
     let start = c.pos_u32();
     while let Maybe::Is(b) = c.peek_byte() {
         if is_digit(b) {
-            c.bump_byte();
+            let _ = c.bump_byte();
         } else {
             break;
         }
@@ -92,13 +96,13 @@ pub fn read_int_literal(c: &mut Cursor<'_>) -> (TokenKind, u32, u32) {
 /// Returns `(kind, start, end)`.
 pub fn read_line_comment(c: &mut Cursor<'_>) -> (TriviaKind, u32, u32) {
     let start = c.pos_u32();
-    c.bump_byte();
-    c.bump_byte();
+    let _ = c.bump_byte();
+    let _ = c.bump_byte();
     while let Maybe::Is(b) = c.peek_byte() {
         if b == b'\n' {
             break;
         }
-        c.bump_byte();
+        let _ = c.bump_byte();
     }
     let end = c.pos_u32();
     (TriviaKind::LineComment, start, end)
@@ -111,15 +115,15 @@ pub fn read_line_comment(c: &mut Cursor<'_>) -> (TriviaKind, u32, u32) {
 /// `unterminated block comment` diagnostic.
 pub fn read_block_comment(c: &mut Cursor<'_>) -> (TriviaKind, u32, u32) {
     let start = c.pos_u32();
-    c.bump_byte();
-    c.bump_byte();
+    let _ = c.bump_byte();
+    let _ = c.bump_byte();
     while let Maybe::Is(b) = c.peek_byte() {
         if b == b'*' && c.peek_byte_at(1) == Maybe::Is(b'/') {
-            c.bump_byte();
-            c.bump_byte();
+            let _ = c.bump_byte();
+            let _ = c.bump_byte();
             break;
         }
-        c.bump_byte();
+        let _ = c.bump_byte();
     }
     let end = c.pos_u32();
     (TriviaKind::BlockComment, start, end)
@@ -131,7 +135,7 @@ pub fn read_whitespace(c: &mut Cursor<'_>) -> (TriviaKind, u32, u32) {
     let start = c.pos_u32();
     while let Maybe::Is(b) = c.peek_byte() {
         if is_whitespace(b) {
-            c.bump_byte();
+            let _ = c.bump_byte();
         } else {
             break;
         }
@@ -169,7 +173,8 @@ pub fn read_operator_or_punct(c: &mut Cursor<'_>) -> Maybe<(TokenKind, u32, u32)
     Maybe::Isnt
 }
 
-fn three_byte_op(b0: u8, b1: Maybe<u8>, b2: Maybe<u8>) -> Maybe<TokenKind> {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+fn three_byte_op(b0: u8, b1: Maybe<u8>, b2: Maybe<u8>) -> Maybe<TokenKind> {
+    // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     let b1 = match b1 {
         Maybe::Is(b) => b,
         Maybe::Isnt => return Maybe::Isnt,
@@ -187,7 +192,8 @@ fn three_byte_op(b0: u8, b1: Maybe<u8>, b2: Maybe<u8>) -> Maybe<TokenKind> {  //
     })
 }
 
-fn two_byte_op(b0: u8, b1: Maybe<u8>) -> Maybe<TokenKind> {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+fn two_byte_op(b0: u8, b1: Maybe<u8>) -> Maybe<TokenKind> {
+    // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     let b1 = match b1 {
         Maybe::Is(b) => b,
         Maybe::Isnt => return Maybe::Isnt,
@@ -217,7 +223,8 @@ fn two_byte_op(b0: u8, b1: Maybe<u8>) -> Maybe<TokenKind> {  // lint:allow(arvo-
     })
 }
 
-fn one_byte_op(b0: u8) -> Maybe<TokenKind> {  // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
+fn one_byte_op(b0: u8) -> Maybe<TokenKind> {
+    // lint:allow(arvo-types-only) lint:allow(no-bare-numeric) tracked: #207
     Maybe::Is(match b0 {
         b'+' => TokenKind::Plus,
         b'-' => TokenKind::Minus,

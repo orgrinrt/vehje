@@ -1,12 +1,13 @@
 //! Longest-match operator and punctuation recognition.
 
+use notko::Maybe;
 use vehje_ir::{FileId, TokenKind};
 use vehje_lex::Lexer;
 
 fn kinds(src: &str) -> Vec<TokenKind> {
     let mut lx = Lexer::from_str(src, FileId(0));
     let mut out = Vec::new();
-    while let Some(t) = lx.next() {
+    while let Maybe::Is(t) = lx.next() {
         out.push(t.kind);
     }
     out
@@ -90,8 +91,9 @@ fn longest_match_wins() {
     // Adjacent `>>` is a single `Shr`.
     assert_eq!(kinds(">>"), vec![TokenKind::Shr, TokenKind::Eof]);
     // A space breaks longest-match, two `Gt`s.
-    assert_eq!(
-        kinds("> >"),
-        vec![TokenKind::Gt, TokenKind::Gt, TokenKind::Eof]
-    );
+    assert_eq!(kinds("> >"), vec![
+        TokenKind::Gt,
+        TokenKind::Gt,
+        TokenKind::Eof
+    ]);
 }

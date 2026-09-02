@@ -17,8 +17,8 @@
 //! per variant. Per-variant rendering lands alongside the rule
 //! that produces the error.
 
-use vehje_ir::{DiagPhase, Diagnostic, Severity, Span};
 use hilavitkutin_str::Str;
+use vehje_ir::{DiagPhase, Diagnostic, Severity, Span};
 
 /// Name-resolution failure.
 ///
@@ -37,9 +37,9 @@ pub enum ResolveError {
     /// The same name was declared twice in the same scope.
     DuplicateDefinition {
         /// The declared name.
-        name: Str,
+        name:      Str,
         /// Span of the duplicate declaration.
-        span: Span,
+        span:      Span,
         /// Span of the previous declaration.
         prev_span: Span,
     },
@@ -49,8 +49,14 @@ impl ResolveError {
     /// Primary span of this error.
     pub fn span(&self) -> Span {
         match self {
-            Self::UnresolvedIdentifier { span, .. } => *span,
-            Self::DuplicateDefinition { span, .. } => *span,
+            Self::UnresolvedIdentifier {
+                span,
+                ..
+            } => *span,
+            Self::DuplicateDefinition {
+                span,
+                ..
+            } => *span,
         }
     }
 }
@@ -59,8 +65,12 @@ impl From<ResolveError> for Diagnostic {
     fn from(err: ResolveError) -> Self {
         let span = err.span();
         let message: &'static str = match err {
-            ResolveError::UnresolvedIdentifier { .. } => "unresolved identifier",
-            ResolveError::DuplicateDefinition { .. } => "duplicate definition",
+            ResolveError::UnresolvedIdentifier {
+                ..
+            } => "unresolved identifier",
+            ResolveError::DuplicateDefinition {
+                ..
+            } => "duplicate definition",
         };
         Diagnostic::new(DiagPhase::Resolve, Severity::Error, span, message)
     }
